@@ -195,7 +195,7 @@ let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
     | _ -> exp in
   aux body
 
-let create_block_template iprog (prog : C.prog_decl) (proc : C.proc_decl)
+let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
     (blocks: C.exp list) =
   let is_var_decl (exp: C.exp) = match exp with
     | C.VarDecl _ -> true
@@ -238,24 +238,19 @@ let create_block_template iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
                               I.prog_hp_decls = n_hp_decls} in
     let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
+    let () = if is_return_blocks blocks then
+        Syn.is_return_cand := true
+      else Syn.is_return_cand := false in
+    let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
+    let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+    let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
+                   |> CP.remove_dups_svl in
+    let () = Syn.syn_res_vars := res_vars in
     try
       let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
-      let _ = Synthesizer.synthesize_entailments n_iprog n_prog n_proc in
+      let _ = Synthesizer.synthesize_c_stmts n_iprog n_prog n_proc in
       None
     with _ -> None
-
-let repair_block (iprog: I.prog_decl) (cprog: C.prog_decl) cproc block =
-  let _ = create_block_template iprog cprog cproc block in
-  None
-  (* match n_prog, n_proc with
-   * | None, None | Some _, None | None, Some _ -> None
-   * | Some prog, Some cproc ->
-   *   try
-   *     let _ = Typechecker.check_proc_wrapper iprog prog cproc None [] in
-   *     let () = x_binfo_pp "start synthesis process" no_pos in
-   *     (\* let _ = Synthesizer.synthesize_entailments iprog prog cproc in *\)
-   *     None
-   *   with _ -> None *)
 
 let repair_cproc iprog =
   match !Typechecker.repair_proc with
@@ -275,11 +270,11 @@ let repair_cproc iprog =
     let () = x_binfo_hp (add_str "blocks" pr_leaves) blocks no_pos in
     (* to generate all traces leading to the error *)
     (* BUT, first try all leave blocks first *)
-    let _ = blocks |> List.map (repair_block iprog cprog cproc) in
+    let _ = blocks |> List.map (repair_blocks iprog cprog cproc) in
     None
   | _ -> None
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =
-  let tmp = repair_iprog iprog in
-  (* let tmp = repair_cproc iprog in *)
+  (* let tmp = repair_iprog iprog in *)
+  let tmp = repair_cproc iprog in
   tmp

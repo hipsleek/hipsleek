@@ -4,6 +4,7 @@ open Globals
 open VarGen
 open Gen
 open Mcpure
+open Exc.GTable
 
 module CF = Cformula
 module CP = Cpure
@@ -295,6 +296,7 @@ let is_synthesis_tree_success stree : bool =
 (*********************************************************************
  * Printing
  *********************************************************************)
+let pr_cast_exp exp = Cprinter.string_of_exp exp
 
 let pr_cast_exp_opt exp = match exp with
   | None -> "None"
@@ -302,9 +304,6 @@ let pr_cast_exp_opt exp = match exp with
 
 let pr_iast_exp = Iprinter.string_of_exp_repair
 let pr_iast_exp_opt = Iprinter.string_of_exp_repair
-let pr_cast_exp exp = match exp with
-  | None -> "None"
-  | Some e -> Cprinter.string_of_exp e
 
 let pr_iast_exp_opt exp = match exp with
   | None -> "None"
@@ -1058,18 +1057,30 @@ let rec remove_exists_vars_pf (formula:CP.formula) = match formula with
 (*****************************************************
   * Synthesize CAST and IAST exp
  ********************************************************)
-let var_to_cast sv loc =
+let var_to_iast sv loc =
   Iast.Var { exp_var_name = CP.name_of_sv sv;
              exp_var_pos = loc }
 
-let num_to_cast num loc =
+let var_to_cast sv loc =
+  C.Var {
+    C.exp_var_name = CP.name_of_sv sv;
+    C.exp_var_type = CP.type_of_sv sv;
+    C.exp_var_pos = loc }
+
+let num_to_iast num loc =
   Iast.IntLit { exp_int_lit_val = num;
                 exp_int_lit_pos = loc}
 
+let num_to_cast num loc =
+  C.IConst {
+    C.exp_iconst_val = num;
+    C.exp_iconst_pos = loc
+  }
+
 let rec exp_to_iast (exp: CP.exp) = match exp with
-  | CP.Var (sv, loc) ->  var_to_cast sv loc
+  | CP.Var (sv, loc) ->  var_to_iast sv loc
   | CP.Null loc -> I.Null loc
-  | CP.IConst (num, loc) -> num_to_cast num loc
+  | CP.IConst (num, loc) -> num_to_iast num loc
   | CP.Add (e1, e2, loc) ->
     let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
     I.Binary { I.exp_binary_op = I.OpPlus;
@@ -1099,6 +1110,64 @@ let rec exp_to_iast (exp: CP.exp) = match exp with
                I.exp_binary_path_id = None;
                I.exp_binary_pos = loc}
   | _ -> report_error no_pos ("exp_to_iast:" ^ (pr_exp exp) ^"not handled")
+
+let mkCSeq exp1 exp2 = C.mkSeq Void exp1 exp2 no_pos
+
+let rec exp2cast (exp: CP.exp) = match exp with
+  | CP.Var (sv, loc) -> var_to_cast sv loc
+  | CP.Null loc -> C.Null loc
+  | CP.IConst (num, loc) ->
+    let num = num_to_cast num loc in
+    num
+    (* let name = fresh_name() in
+     * let var = C.VarDecl {
+     *     C.exp_var_decl_type = Int;
+     *     C.exp_var_decl_name = name;
+     *     C.exp_var_decl_pos = no_pos;
+     *   } in
+     * let assign = C.Assign {
+     *     exp_assign_lhs = name;
+     *     exp_assign_rhs = num;
+     *     exp_assign_pos = no_pos
+     *   } in
+     * let seq = mkCSeq var assign in
+     * seq *)
+  | CP.Add (e1, e2, loc) ->
+    let n_e1, n_e2 = exp2cast e1, exp2cast e2 in
+    let name = C.mingle_name "add" [Int; Int] in
+    (* let args = [n_e1; n_e2] in *)
+    C.SCall {
+      C.exp_scall_type = Int;
+      C.exp_scall_method_name = name;
+      C.exp_scall_lock = None;
+      C.exp_scall_arguments = [];
+      C.exp_scall_ho_arg = None;
+      C.exp_scall_is_rec = false;
+      C.exp_scall_path_id = None;
+      C.exp_scall_pos = no_pos
+    }
+  (* | CP.Subtract (e1, e2, loc) ->
+   *   let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
+   *   I.Binary { I.exp_binary_op = I.OpMinus;
+   *              I.exp_binary_oper1 = n_e1;
+   *              I.exp_binary_oper2 = n_e2;
+   *              I.exp_binary_path_id = None;
+   *              I.exp_binary_pos = loc}
+   * | CP.Mult (e1, e2, loc) ->
+   *   let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
+   *   I.Binary { I.exp_binary_op = I.OpMult;
+   *              I.exp_binary_oper1 = n_e1;
+   *              I.exp_binary_oper2 = n_e2;
+   *              I.exp_binary_path_id = None;
+   *              I.exp_binary_pos = loc}
+   * | CP.Div (e1, e2, loc) ->
+   *   let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
+   *   I.Binary { I.exp_binary_op = I.OpDiv;
+   *              I.exp_binary_oper1 = n_e1;
+   *              I.exp_binary_oper2 = n_e2;
+   *              I.exp_binary_path_id = None;
+   *              I.exp_binary_pos = loc} *)
+  | _ -> report_error no_pos ("exp2cast:" ^ (pr_exp exp) ^"not handled")
 
 let pf_to_iast (pf: CP.p_formula) = match pf with
   | CP.Eq (e1, e2, loc) ->
@@ -1151,6 +1220,37 @@ let mkVar sv = I.mkVar (CP.name_of_sv sv) no_pos
 let mkAssign exp1 exp2 = I.mkAssign I.OpAssign exp1 exp2 None no_pos
 
 let mkSeq exp1 exp2 = I.mkSeq exp1 exp2 no_pos
+
+let st_core2cast st : Cast.exp option = match st.stc_rule with
+  | RlSkip -> None
+  | RlReturn rule ->
+    let typ = CP.get_exp_type rule.r_exp in
+    let name = fresh_name() in
+    let var = C.VarDecl {
+        C.exp_var_decl_type = typ;
+        C.exp_var_decl_name = name;
+        C.exp_var_decl_pos = no_pos;
+      } in
+    let exp = exp2cast rule.r_exp in
+    let assign = C.Assign {
+        C.exp_assign_lhs = name;
+        C.exp_assign_rhs = exp;
+        C.exp_assign_pos = no_pos;
+      } in
+    let return = C.Sharp {
+        exp_sharp_type = typ;
+        exp_sharp_flow_type = C.Sharp_ct {
+            CF.formula_flow_interval = !ret_flow_int;
+            CF.formula_flow_link = None};
+        exp_sharp_val = C.Sharp_var (typ, name);
+        exp_sharp_unpack = false;
+        exp_sharp_path_id = None;
+        exp_sharp_pos = no_pos;
+      } in
+    let seq = mkCSeq var assign in
+    let seq = mkCSeq seq return in
+    Some seq
+  | _ -> report_error no_pos "st_core2cast unhandled"
 
 let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with

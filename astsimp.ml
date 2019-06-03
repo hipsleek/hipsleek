@@ -6005,7 +6005,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         | None -> 
           if CP.are_same_types cret_type C.void_type then
             (C.Sharp ({ C.exp_sharp_type = C.void_type;
-                        C.exp_sharp_flow_type = C.Sharp_ct 
+                        C.exp_sharp_flow_type = C.Sharp_ct
                             {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
                         C.exp_sharp_val = Cast.Sharp_no_val;
                         C.exp_sharp_unpack = false;

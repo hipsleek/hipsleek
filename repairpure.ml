@@ -56,6 +56,12 @@ let is_return_exp (exp:I.exp) =
   | I.Return _ -> true
   | _ -> false
 
+let is_return_blocks (blocks : C.exp list) =
+  let aux (exp: C.exp) = match exp with
+    | C.Sharp _ -> true
+    | _ -> false in
+  List.exists aux blocks
+    
 let read_file filename =
   let lines = ref [] in
   let chan = open_in filename in

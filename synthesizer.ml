@@ -844,9 +844,6 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
-  (* let vars = CP.intersect all_vars vars |> CP.remove_dups_svl in *)
-  (* if vars = [] then (iprog, false)
-   * else *)
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
@@ -858,6 +855,23 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let n_iprocs = List.map (fun x -> if contains pname x.Iast.proc_name
                             then n_proc else x) i_procs in
   ({iprog with I.prog_proc_decls = n_iprocs}, res)
+
+let synthesize_cast iprog prog proc pre_cond post_cond vars =
+  let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
+  let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let st = synthesize_one_goal goal in
+  let st_status = get_synthesis_tree_status st in
+  let cast = match st_status with
+    | StValid st_core ->
+      let c_exp = st_core2cast st_core in
+      if c_exp = None then c_exp
+      else
+        let () = x_binfo_hp (add_str "exp" pr_cast_exp_opt) c_exp no_pos in
+        c_exp
+    | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
+      None in
+  None
 
 let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
@@ -893,4 +907,41 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
             repair_res := Some n_iprog
           with _ -> ()
         else () in
+    List.iter helper hps_list
+
+let synthesize_c_stmts (iprog:IA.prog_decl) prog proc =
+  let entailments = !Synthesis.entailments |> List.rev in
+  let start_time = get_time () in
+  let hps = SB.solve_entailments prog entailments in
+  let solve_time = get_time() -. start_time in
+  match hps with
+  | None -> ()
+  | Some hps_list ->
+    let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
+        iprog.IA.prog_proc_decls in
+    let decl_vars = match iproc.IA.proc_body with
+      | None -> []
+      | Some exp -> get_var_decls (Gen.unsome !repair_pos) exp in
+    let syn_vars = proc.Cast.proc_args
+                   |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
+    let stop = ref false in
+    let helper hps =
+      if !stop then ()
+      else
+        let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
+        let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
+        let post = post_hp.Cast.hp_formula |> unprime_formula in
+        let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
+        let _ = synthesize_cast iprog prog proc
+            pre post syn_vars in
+        () in
+        (* if res then
+         *   try
+         *     let cprog, _ = Astsimp.trans_prog n_iprog in
+         *     let () = Typechecker.check_prog_wrapper n_iprog cprog in
+         *     let () = stop := true in
+         *     repair_res := Some n_iprog
+         *   with _ -> ()
+         * else () in *)
     List.iter helper hps_list
