@@ -61,7 +61,7 @@ let is_return_blocks (blocks : C.exp list) =
     | C.Sharp _ -> true
     | _ -> false in
   List.exists aux blocks
-    
+
 let read_file filename =
   let lines = ref [] in
   let chan = open_in filename in
@@ -177,9 +177,6 @@ let create_fcode_proc (args : typed_ident list) typ =
               (string_of_typ_repair typ) ^  " " ^ fcode_str ^ "(" ^ arg_str ^ ")\n" ^
               "requires P(" ^ arg_names ^ ")\n" ^
               "ensures Q(" ^ arg_names ^ ");" in
-  let lines = read_file "prelude.ss" in
-  let line = String.concat "\n" lines in
-  let fcode = line ^ "\n" ^ fcode in
   let n_prog = Parser.parse_hip_string "fcode" fcode in
   n_prog
 

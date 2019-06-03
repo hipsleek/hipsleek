@@ -5970,9 +5970,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           in
           (* let () = Debug.info_hprint (add_str "field_types" (pr_list string_of_typ)) field_types no_pos in *)
           let nargs = List.length field_types in
-          let tmp = 
+          let tmp =
             if args==[] then List.map (fun t -> (None,t)) field_types
-            else List.map (fun x -> (let (e,t)=helper x in (Some e,t))) args 
+            else List.map (fun x -> (let (e,t)=helper x in (Some e,t))) args
           in
           let (cargs, cts) = List.split tmp in
           let parg_types = List.map (fun ft -> x_add trans_type prog ft pos) field_types in
@@ -6056,7 +6056,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     C.exp_assign_pos = e_pos;} in
                 let shar = C.Sharp ({
                     C.exp_sharp_type = C.void_type;
-                    C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
+                    C.exp_sharp_flow_type = C.Sharp_ct
+                        {CF.formula_flow_interval = !ret_flow_int;
+                         CF.formula_flow_link = None};
                     C.exp_sharp_unpack = false;
                     C.exp_sharp_val = Cast.Sharp_var (ct,fn);
                     C.exp_sharp_path_id = pi;
@@ -6066,21 +6068,20 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     C.exp_seq_exp1 = init_e;
                     C.exp_seq_exp2 = shar;
                     C.exp_seq_pos = e_pos;} in
-                C.Seq { 
+                C.Seq {
                   C.exp_seq_type = C.void_type;
                   C.exp_seq_exp1 = vd;
                   C.exp_seq_exp2 = tmp_e1;
-                  C.exp_seq_pos = e_pos;} in 
-            begin
-              (* Debug.info_hprint (add_str "return(iast-e)" Iprinter.string_of_exp) e e_pos; *)
-              (* Debug.info_hprint (add_str "return(cast-ce)" Cprinter.string_of_exp) ce e_pos; *)
-              (* Debug.info_hprint (add_str "return(cast-tmp_e2)" Cprinter.string_of_exp) tmp_e2 e_pos; *)
+                  C.exp_seq_pos = e_pos;} in
               (tmp_e2, C.void_type)
-            end
           else
-            Err.report_error { Err.error_loc = proc.I.proc_loc; Err.error_text = "return type doesn't match" }
+            Err.report_error {
+              Err.error_loc = proc.I.proc_loc;
+              Err.error_text = "return type doesn't match" }
       end
-    | I.Seq { I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2; I.exp_seq_pos = pos }->
+    | I.Seq { I.exp_seq_exp1 = e1;
+              I.exp_seq_exp2 = e2;
+              I.exp_seq_pos = pos } ->
       let (ce1', te1) = x_add trans_exp prog proc e1 in
       let (ce2, te2) = x_add trans_exp prog proc e2 in
       let ce1 = insert_dummy_vars ce1' pos in
@@ -6092,12 +6093,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
     | I.This { I.exp_this_pos = pos } ->
       if Gen.is_some proc.I.proc_data_decl then
         (let cdef = Gen.unsome proc.I.proc_data_decl in
-         let ct = Named cdef.I.data_name in 
+         let ct = Named cdef.I.data_name in
          ((C.This { C.exp_this_type = ct; C.exp_this_pos = pos; }), ct))
       else
-        Err.report_error { Err.error_loc = pos; Err.error_text = "\"this\" can only be used in members of a class";}
-    | I.Unary {I.exp_unary_op = u_op; I.exp_unary_exp = e; I.exp_unary_path_id = pid; I.exp_unary_pos = pos;} ->
-      (*let pi = stub_branch_point_id "fresh_unary_call" in*)
+        Err.report_error {
+          Err.error_loc = pos;
+          Err.error_text = "\"this\" can only be used in members of a class";}
+    | I.Unary {
+        I.exp_unary_op = u_op;
+        I.exp_unary_exp = e;
+        I.exp_unary_path_id = pid;
+        I.exp_unary_pos = pos;} ->
       (match u_op with
        | I.OpNot ->
          let u_call = "not___" in
@@ -6109,18 +6115,22 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_path_id = pid;
              I.exp_call_nrecv_pos = pos;} in helper call_e
        | I.OpPostInc ->
-         if not (!Globals.check_integer_overflow) then 
+         if not (!Globals.check_integer_overflow) then
            let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
            let fn_decl = I.VarDecl{
                I.exp_var_decl_type = I.int_type;
-               I.exp_var_decl_decls = [ (fn, (Some e), pos) ];
-               I.exp_var_decl_pos = pos; } in
+               I.exp_var_decl_decls = [ (fn, (Some e), pos)];
+               I.exp_var_decl_pos = pos;
+             } in
            let add1_e = I.Binary {
                I.exp_binary_op = I.OpPlus;
                I.exp_binary_oper1 = e;
-               I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+               I.exp_binary_oper2 = I.IntLit {
+                   I.exp_int_lit_val = 1;
+                   I.exp_int_lit_pos = pos; };
                I.exp_binary_path_id = pid;
-               I.exp_binary_pos = pos; } in
+               I.exp_binary_pos = pos;
+             } in
            let assign_e = I.Assign {
                I.exp_assign_op = I.OpAssign;
                I.exp_assign_lhs = e;
@@ -6129,27 +6139,37 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                I.exp_assign_pos = pos; } in
            let seq1 = I.Seq {
                I.exp_seq_exp1 = assign_e;
-               I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
-               I.exp_seq_pos = pos; } in
+               I.exp_seq_exp2 = I.Var {
+                   I.exp_var_name = fn;
+                   I.exp_var_pos = pos; };
+               I.exp_seq_pos = pos;
+             } in
            let seq2 = I.Seq {
                I.exp_seq_exp1 = fn_decl;
                I.exp_seq_exp2 = seq1;
                I.exp_seq_pos = pos; } in
-           helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
-         else 
+           helper (I.Block {
+               I.exp_block_local_vars = [];
+               I.exp_block_body = seq2;
+               I.exp_block_jump_label = I.NoJumpLabel;
+               I.exp_block_pos = pos;})
+         else
            let add1_e = I.Binary {
                I.exp_binary_op = I.OpPlus;
                I.exp_binary_oper1 = e;
-               I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+               I.exp_binary_oper2 = I.IntLit {
+                   I.exp_int_lit_val = 1;
+                   I.exp_int_lit_pos = pos; };
                I.exp_binary_path_id = pid;
-               I.exp_binary_pos = pos; } in
+               I.exp_binary_pos = pos;
+             } in
            helper (I.Assign {
                I.exp_assign_op = I.OpAssign;
                I.exp_assign_lhs = e;
                I.exp_assign_rhs = add1_e;
                I.exp_assign_path_id = None;
-               I.exp_assign_pos = pos;})                     
-       | I.OpPostDec -> 
+               I.exp_assign_pos = pos;})
+       | I.OpPostDec ->
          let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
          let fn_decl = I.VarDecl {
              I.exp_var_decl_type = I.int_type;
@@ -6158,7 +6178,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
          let sub1_e = I.Binary {
              I.exp_binary_op = I.OpMinus;
              I.exp_binary_oper1 = e;
-             I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+             I.exp_binary_oper2 = I.IntLit {
+                 I.exp_int_lit_val = 1;
+                 I.exp_int_lit_pos = pos; };
              I.exp_binary_path_id = pid;
              I.exp_binary_pos = pos;} in
          let assign_e = I.Assign {
@@ -6166,21 +6188,27 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_assign_lhs = e;
              I.exp_assign_rhs = sub1_e;
              I.exp_assign_path_id = None;
-             I.exp_assign_pos = pos; } in
+             I.exp_assign_pos = pos;
+           } in
          let seq1 = I.Seq {
              I.exp_seq_exp1 = assign_e;
-             I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
+             I.exp_seq_exp2 = I.Var { I.exp_var_name = fn;
+                                      I.exp_var_pos = pos; };
              I.exp_seq_pos = pos; } in
          let seq2 = I.Seq {
              I.exp_seq_exp1 = fn_decl;
              I.exp_seq_exp2 = seq1;
              I.exp_seq_pos = pos; } in
-         helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+         helper (I.Block { I.exp_block_local_vars = [];
+                           I.exp_block_body = seq2;
+                           I.exp_block_jump_label = I.NoJumpLabel;
+                           I.exp_block_pos = pos;})
        | I.OpPreInc ->
          let add1_e = I.Binary {
              I.exp_binary_op = I.OpPlus;
              I.exp_binary_oper1 = e;
-             I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+             I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1;
+                                             I.exp_int_lit_pos = pos; };
              I.exp_binary_path_id = pid;
              I.exp_binary_pos = pos; } in
          let assign_e = I.Assign {
@@ -6193,12 +6221,16 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_seq_exp1 = assign_e;
              I.exp_seq_exp2 = e;
              I.exp_seq_pos = pos;} in
-         helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+         helper (I.Block { I.exp_block_local_vars = [];
+                           I.exp_block_body = seq;
+                           I.exp_block_jump_label = I.NoJumpLabel;
+                           I.exp_block_pos = pos;})
        | I.OpPreDec ->
          let sub1_e = I.Binary {
              I.exp_binary_op = I.OpMinus;
              I.exp_binary_oper1 = e;
-             I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+             I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1;
+                                             I.exp_int_lit_pos = pos; };
              I.exp_binary_path_id = pid;
              I.exp_binary_pos = pos; } in
          let assign_e = I.Assign {
@@ -6211,7 +6243,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_seq_exp1 = assign_e;
              I.exp_seq_exp2 = e;
              I.exp_seq_pos = pos; } in
-         helper (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+         helper (I.Block { exp_block_local_vars = [];
+                           I.exp_block_body = seq;
+                           I.exp_block_jump_label = I.NoJumpLabel;
+                           I.exp_block_pos = pos;})
        | I.OpUMinus ->
          let sub_e = I.Binary {
              I.exp_binary_op = I.OpMinus;

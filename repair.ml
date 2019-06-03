@@ -218,9 +218,10 @@ let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let n_data_decls = iprog.I.prog_data_decls
                        @ fcode_prog.I.prog_data_decls
                        |> Gen.BList.remove_dups_eq eq_data_decl in
-    let fcode_prog = {iprog with I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
-                                 I.prog_proc_decls
-                                 = fcode_prog.I.prog_proc_decls} in
+    let fcode_prog = {iprog with
+                      I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
+                      I.prog_proc_decls = iprog.I.prog_proc_decls @
+                                          fcode_prog.I.prog_proc_decls} in
     let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
     let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
     let n_body = create_tmpl_body exp replace_pos pos_list var_decls in
@@ -228,9 +229,7 @@ let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let fcode_cprocs = C.list_of_procs fcode_cprog in
     let n_prog = C.replace_proc prog n_proc in
     let all_procs = C.list_of_procs n_prog in
-    let () = x_binfo_hp (add_str "proc" string_of_int) (List.length all_procs) no_pos in
     let all_procs = all_procs @ fcode_cprocs in
-    let () = x_binfo_hp (add_str "proc" string_of_int) (List.length all_procs) no_pos in
     let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
     let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
     let n_prog = {prog with new_proc_decls = n_hashtbl;
