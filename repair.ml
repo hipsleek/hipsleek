@@ -248,7 +248,7 @@ let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let () = Syn.syn_res_vars := res_vars in
     try
       let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
-      let _ = Synthesizer.synthesize_c_stmts n_iprog n_prog n_proc in
+      let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
       None
     with _ -> None
 
@@ -275,6 +275,6 @@ let repair_cproc iprog =
   | _ -> None
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =
-  let tmp = repair_iprog iprog in
-  (* let tmp = repair_cproc iprog in *)
+  (* let tmp = repair_iprog iprog in *)
+  let tmp = repair_cproc iprog in
   tmp

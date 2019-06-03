@@ -912,13 +912,11 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
         else () in
     List.iter helper hps_list
 
-let synthesize_c_stmts (iprog:IA.prog_decl) prog proc =
+let infer_block_specs (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
-  let start_time = get_time () in
   let hps = SB.solve_entailments prog entailments in
-  let solve_time = get_time() -. start_time in
   match hps with
-  | None -> ()
+  | None -> None
   | Some hps_list ->
     let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
         iprog.IA.prog_proc_decls in
@@ -930,21 +928,10 @@ let synthesize_c_stmts (iprog:IA.prog_decl) prog proc =
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     let stop = ref false in
     let helper hps =
-      if !stop then ()
-      else
-        let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
-        let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
-        let post = post_hp.Cast.hp_formula |> unprime_formula in
-        let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
-        let n_proc = synthesize_cast iprog prog proc
-            pre post syn_vars in
-        (* () in *)
-        if n_proc != None then
-          try
-            let n_proc = n_proc |> Gen.unsome in
-            let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
-            let () = stop := true in
-            repair_c_res := Some n_proc
-          with _ -> ()
-        else () in
-    List.iter helper hps_list
+      let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
+      let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
+      let post = post_hp.Cast.hp_formula |> unprime_formula in
+      let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
+      (pre, post) in
+    let specs = hps_list |> List.map helper in
+    Some specs

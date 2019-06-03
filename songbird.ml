@@ -845,13 +845,6 @@ let solve_entailments prog entails =
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
-    (* if vdefns_list != [] then
-     *   let vdefns = List.hd vdefns_list in
-     *   let () = x_binfo_hp (add_str "vdefns" SBC.pr_vdfs) vdefns no_pos in
-     *   let hps = translate_back_vdefns prog vdefns in
-     *   let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
-     *   Some hps
-     * else None *)
   else None
 
 let get_vars_in_fault_ents ents =
