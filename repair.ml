@@ -218,10 +218,12 @@ let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let n_data_decls = iprog.I.prog_data_decls
                        @ fcode_prog.I.prog_data_decls
                        |> Gen.BList.remove_dups_eq eq_data_decl in
+    let eq_proc x y = eq_str x.I.proc_name y.I.proc_name in
+    let procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
+                |> Gen.BList.remove_dups_eq eq_proc in
     let fcode_prog = {iprog with
                       I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
-                      I.prog_proc_decls = iprog.I.prog_proc_decls @
-                                          fcode_prog.I.prog_proc_decls} in
+                      I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
     let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
     let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
     let n_body = create_tmpl_body exp replace_pos pos_list var_decls in
@@ -254,6 +256,7 @@ let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
 let repair_cproc iprog =
   match !Typechecker.repair_proc with
   | Some r_proc_name ->
+    let () = Globals.start_repair := true in
     let cprog, _ = Astsimp.trans_prog iprog in
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = create_blocks cproc in
