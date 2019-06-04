@@ -163,39 +163,6 @@ let repair_iprog (iprog:I.prog_decl) =
       List.hd res
   | _ -> None
 
-let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
-  let pr_pos = string_of_loc in
-  let fcode = create_cast_fcode var_decls replace_pos in
-  let () = x_tinfo_hp (add_str "fcode" Cprinter.string_of_exp) fcode no_pos in
-  let rec aux exp = match exp with
-    | C.Block e ->
-      let n_e = aux e.C.exp_block_body in
-      C.Block {e with exp_block_body = n_e}
-    | C.Seq e ->
-      let e1 = e.C.exp_seq_exp1 in
-      let e1_pos = e1 |> C.pos_of_exp in
-      if List.mem e1_pos pos_list then aux e.C.exp_seq_exp2
-      else
-        let e2 = e.C.exp_seq_exp2 in
-        let e2_pos = e2 |> C.pos_of_exp in
-        if List.mem e2_pos pos_list then aux e1
-        else C.Seq {e with exp_seq_exp1 = aux e1;
-                           exp_seq_exp2 = aux e2}
-    | C.Assign e ->
-      let loc = e.C.exp_assign_pos in
-      if VarGen.eq_loc e.C.exp_assign_pos replace_pos then fcode
-      else exp
-    | Label e ->
-      let n_e = aux e.C.exp_label_exp in
-      Label {e with exp_label_exp = n_e}
-    | C.Cond e ->
-      let e1 = aux e.C.exp_cond_then_arm in
-      let e2 = aux e.C.exp_cond_else_arm in
-      C.Cond {e with exp_cond_then_arm = e1;
-                     exp_cond_else_arm = e2}
-    | _ -> exp in
-  aux body
-
 let repair_straight_line n_iprog n_prog proc (blocks : C.exp) specs =
   let args = proc.C.proc_args in
   let loc = proc.C.proc_loc in
@@ -214,69 +181,69 @@ let repair_straight_line n_iprog n_prog proc (blocks : C.exp) specs =
   (* let _ = Typechecker.check_exp n_prog proc blocks init_ctx (-1, "repair") in *)
   None
 
-let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
-    (blocks: C.exp list) =
+let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
+    (block: C.exp list) =
   let is_var_decl (exp: C.exp) = match exp with
     | C.VarDecl _ -> true
     | _ -> false in
-  let blocks = List.filter (fun x -> not(is_var_decl x)) blocks in
-  if blocks = [] then None
-  else
-    let () = x_tinfo_hp (add_str "blocks" pr_c_exps) blocks no_pos in
-    let pos_list = blocks |> List.map C.pos_of_exp in
-    let replace_pos = List.hd pos_list in
-    let pos_list = List.tl pos_list in
-    let exp = proc.C.proc_body |> Gen.unsome in
-    let proc_args = proc.C.proc_args in
-    let var_decls = get_var_decls replace_pos exp in
-    let var_decls = proc_args @ var_decls in
-    let fcode_prog = create_fcode_proc var_decls Void in
-    let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
-    let n_hp_decls = iprog.I.prog_hp_decls @ fcode_prog.I.prog_hp_decls in
-    let eq_data_decl x y = eq_str x.I.data_name y.I.data_name in
-    let n_data_decls = iprog.I.prog_data_decls
-                       @ fcode_prog.I.prog_data_decls
-                       |> Gen.BList.remove_dups_eq eq_data_decl in
-    let eq_proc x y = eq_str x.I.proc_name y.I.proc_name in
-    let procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
-                |> Gen.BList.remove_dups_eq eq_proc in
-    let fcode_prog = {iprog with
-                      I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
-                      I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
-    let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
-    let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
-    let n_body = create_tmpl_body exp replace_pos pos_list var_decls in
-    let n_proc = {proc with C.proc_body = Some n_body} in
-    let fcode_cprocs = C.list_of_procs fcode_cprog in
-    let n_prog = C.replace_proc prog n_proc in
-    let all_procs = C.list_of_procs n_prog in
-    let all_procs = all_procs @ fcode_cprocs in
-    let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
-    let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
-    let n_prog = {prog with new_proc_decls = n_hashtbl;
-                            C.prog_hp_decls = c_hp_decls} in
-    let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
-                              I.prog_hp_decls = n_hp_decls} in
-    let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
-    let () = if is_return_blocks blocks then
-        Syn.is_return_cand := true
-      else Syn.is_return_cand := false in
-    let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
-    let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
-    let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
-                   |> CP.remove_dups_svl in
-    let () = Syn.syn_res_vars := res_vars in
-    try
-      let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
-      let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
-      if specs = None then None
-      else
-        let specs = specs |> Gen.unsome in
-        let blocks = create_blocks_exp blocks in
-        let _ = specs |> List.map
-                  (repair_straight_line n_iprog n_prog n_proc blocks) in
+  (* let block = List.filter (fun x -> not(is_var_decl x)) block in
+   * if block = [] then None
+   * else *)
+  let pos_list = block |> List.map C.pos_of_exp |> List.rev in
+  let replace_pos = List.hd pos_list in
+  let pos_list = List.tl pos_list in
+  let exp = proc.C.proc_body |> Gen.unsome in
+  let proc_args = proc.C.proc_args in
+  let var_decls = get_var_decls replace_pos exp in
+  let var_decls = proc_args @ var_decls in
+  let fcode_prog = create_fcode_proc var_decls Void in
+  let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
+  let n_hp_decls = iprog.I.prog_hp_decls @ fcode_prog.I.prog_hp_decls in
+  let eq_data_decl x y = eq_str x.I.data_name y.I.data_name in
+  let n_data_decls = iprog.I.prog_data_decls
+                     @ fcode_prog.I.prog_data_decls
+                     |> Gen.BList.remove_dups_eq eq_data_decl in
+  let eq_proc x y = eq_str x.I.proc_name y.I.proc_name in
+  let procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
+              |> Gen.BList.remove_dups_eq eq_proc in
+  let fcode_prog = {iprog with
+                    I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
+                    I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
+  let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
+  let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
+  let n_body = create_tmpl_body exp replace_pos pos_list var_decls in
+  let n_proc = {proc with C.proc_body = Some n_body} in
+  let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
+  let fcode_cprocs = C.list_of_procs fcode_cprog in
+  let n_prog = C.replace_proc prog n_proc in
+  let all_procs = C.list_of_procs n_prog in
+  let all_procs = all_procs @ fcode_cprocs in
+  let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
+  let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
+  let n_prog = {prog with new_proc_decls = n_hashtbl;
+                          C.prog_hp_decls = c_hp_decls} in
+  let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
+                            I.prog_hp_decls = n_hp_decls} in
+  let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
+  let () = if is_return_block block then
+      Syn.is_return_cand := true
+    else Syn.is_return_cand := false in
+  let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
+  let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+  let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
+                 |> CP.remove_dups_svl in
+  let () = Syn.syn_res_vars := res_vars in
+  try
+    let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
+    let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
+    if specs = None then None
+    else
+      let specs = specs |> Gen.unsome in
+      let block = create_blocks_exp block in
+      let _ = specs |> List.map
+                (repair_straight_line n_iprog n_prog n_proc block) in
       None
-    with _ -> None
+  with _ -> None
 
 let repair_cproc iprog =
   match !Typechecker.repair_proc with
@@ -294,10 +261,11 @@ let repair_cproc iprog =
     let () = x_tinfo_hp (add_str "check_post" pr_cp) check_post no_pos in
     let pairs = List.combine leaf_nodes check_post in
     let blocks = pairs |> List.filter (fun (_, x) -> x) |> List.map fst in
+    let blocks = List.filter (fun x -> x != []) blocks in
     let () = x_binfo_hp (add_str "blocks" pr_leaves) blocks no_pos in
     (* to generate all traces leading to the error *)
     (* BUT, first try all leave blocks first *)
-    let _ = blocks |> List.map (repair_blocks iprog cprog cproc) in
+    let _ = blocks |> List.map (repair_block iprog cprog cproc) in
     None
   | _ -> None
 

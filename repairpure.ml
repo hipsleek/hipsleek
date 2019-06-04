@@ -56,7 +56,7 @@ let is_return_exp (exp:I.exp) =
   | I.Return _ -> true
   | _ -> false
 
-let is_return_blocks (blocks : C.exp list) =
+let is_return_block (blocks : C.exp list) =
   let aux (exp: C.exp) = match exp with
     | C.Sharp _ -> true
     | _ -> false in
@@ -725,4 +725,41 @@ let mk_block_proc (proc: C.proc_decl) block_exp args specs =
   proc
 
 (* check_exp for straight-line code fragment only *)
-(* let check_exp_repair *) 
+(* let check_exp_repair *)
+
+let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
+  let pr_pos = string_of_loc in
+  let fcode = create_cast_fcode var_decls replace_pos in
+  let () = x_tinfo_hp (add_str "fcode" Cprinter.string_of_exp) fcode no_pos in
+  let () = x_binfo_hp (add_str "replace_pos" string_of_loc) replace_pos no_pos in
+  let () = x_binfo_hp (add_str "replace_pos" (pr_list string_of_loc)) pos_list no_pos in
+  let rec aux exp = match exp with
+    | C.Block e ->
+      let n_e = aux e.C.exp_block_body in
+      C.Block {e with exp_block_body = n_e}
+    | C.Seq e ->
+      let e1 = e.C.exp_seq_exp1 in
+      let e1_pos = e1 |> C.pos_of_exp in
+      let () = x_binfo_hp (add_str "e1_pos" string_of_loc) e1_pos no_pos in
+      if List.mem e1_pos pos_list then aux e.C.exp_seq_exp2
+      else
+        let e2 = e.C.exp_seq_exp2 in
+        let e2_pos = e2 |> C.pos_of_exp in
+        let () = x_binfo_hp (add_str "e2_pos" string_of_loc) e2_pos no_pos in
+        if List.mem e2_pos pos_list then aux e1
+        else C.Seq {e with exp_seq_exp1 = aux e1;
+                           exp_seq_exp2 = aux e2}
+    | C.Label e ->
+      let n_e = aux e.C.exp_label_exp in
+      Label {e with exp_label_exp = n_e}
+    | C.Cond e ->
+      let e1 = aux e.C.exp_cond_then_arm in
+      let e2 = aux e.C.exp_cond_else_arm in
+      C.Cond {e with exp_cond_then_arm = e1;
+                     exp_cond_else_arm = e2}
+    | _ ->
+      let loc = C.pos_of_exp exp in
+      let () = x_binfo_hp (add_str "pos" string_of_loc) loc no_pos in
+      if VarGen.eq_loc loc replace_pos then fcode
+      else exp in
+  aux body
