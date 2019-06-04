@@ -4919,7 +4919,6 @@ let string_of_proc_decl p =
       ^ (if Gen.is_empty p.proc_by_copy_params then ""
          else ("\n@copy " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_copy_params)) ^ "\n"))
       ^ (if p.proc_is_recursive then " rec\n" else "\n")
-      (* ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n" *)
       ^ "static (stk)" ^ (string_of_struc_formula (p.proc_stk_of_static_specs # top)) ^ "\n"
       ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
       ^ (match p.proc_body with

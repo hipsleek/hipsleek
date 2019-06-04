@@ -571,6 +571,13 @@ let repair_prog_with_templ iprog cond_op =
     None
   with _ as e -> None
 
+let create_blocks_exp (blocks: C.exp list) =
+  match blocks with
+  | [] -> failwith "blocks cannot be empty"
+  | [head] -> head
+  | head :: tail ->
+    List.fold_left Syn.mkCSeq head tail
+
 let create_tmpl_proc proc replaced_exp vars heuristic =
   let var_names = List.map fst vars in
   let pr_exp = Iprinter.string_of_exp_repair in
@@ -668,3 +675,54 @@ let repair_by_mutation (iprog:I.prog_decl) (repairing_proc:I.proc_decl) =
         Some n_iprog
       with _ -> None in
   List.map (fun x -> check_candidate iprog x) candidates
+
+let mk_specs (pre_cond, post_cond) =
+  let assume_f = CF.mkEBase post_cond None no_pos in
+  let post = CF.mkEAssume_simp [] post_cond assume_f (-1, "post") in
+  let base = CF.mkEBase_with_cont (CP.mkTrue no_pos) (Some post) no_pos in
+  let specs = CF.mkEBase pre_cond (Some base) no_pos in
+  specs
+
+let mk_block_proc (proc: C.proc_decl) block_exp args specs =
+  let dynamic_f = CF.mkBase_simp CF.HFalse
+                     (Mcpure.mix_of_pure (CP.mkFalse no_pos)) in
+  let dynamic_specs = CF.mkEBase dynamic_f None no_pos in
+  let proc = {
+    C.proc_name = "block_fragment";
+    C.proc_source = proc.C.proc_source;
+    C.proc_flags = proc.C.proc_flags;
+    C.proc_args = [];
+    C.proc_ho_arg = None;
+    C.proc_args_wi = [];
+    C.proc_imm_args = [];
+    C.proc_return = Void;
+    C.proc_important_vars =  [];
+    C.proc_dynamic_specs = dynamic_specs;
+    C.proc_stk_of_static_specs = new Gen.stack_pr "static-specs"
+      Cprinter.string_of_struc_formula (==);
+    C.proc_hprel_ass = [];
+    C.proc_hprel_unkmap = [];
+    C.proc_sel_hps = [];
+    C.proc_sel_post_hps = [];
+    C.proc_hpdefs = [];
+    C.proc_callee_hpdefs = [];
+    C.proc_by_name_params = [];
+    C.proc_by_copy_params = [];
+    C.proc_by_value_params = [];
+    C.proc_body = Some block_exp;
+    C.proc_logical_vars = [];
+    C.proc_call_order = 0;
+    C.proc_is_main = false;
+    C.proc_is_invoked = false;
+    C.proc_verified_domains = [];
+    C.proc_is_recursive = false;
+    C.proc_file = proc.C.proc_file;
+    C.proc_loc = proc.C.proc_loc;
+    C.proc_test_comps = None;
+  } in
+  let () = proc.C.proc_stk_of_static_specs # push_pr
+             (x_loc ^ "init of proc_stk_of_static_specs") specs in
+  proc
+
+(* check_exp for straight-line code fragment only *)
+(* let check_exp_repair *) 

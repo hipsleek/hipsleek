@@ -4395,8 +4395,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
              Cast.mingle_name proc.I.proc_name arg_types
            else proc.I.proc_mingled_name in
          let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
-           else proc.Iast.proc_args_wi
-         in
+           else proc.Iast.proc_args_wi in
          let cproc = {
            C.proc_name = proc_name;
            C.proc_source = proc.I.proc_source;
@@ -4432,8 +4431,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          let () = cproc.C.proc_stk_of_static_specs # push_pr
              (x_loc ^ "init of proc_stk_of_static_specs")
              final_static_specs_list in
-         (E.pop_scope (); cproc)))
-  in
+         (E.pop_scope (); cproc))) in
   wrap_proving_kind (PK_Trans_Proc) trans_proc_x_op ()
 
 and ident_to_spec_var id n_tl p prog =

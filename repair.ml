@@ -10,6 +10,7 @@ module CP = Cpure
 module CF = Cformula
 module Syn = Synthesis
 module I = Iast
+module LO2 = Label_only.Lab2_List
 
 let pr_proc = Iprinter.string_of_proc_decl_repair
 let pr_cproc = Cprinter.string_of_proc_decl 1
@@ -195,6 +196,24 @@ let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
     | _ -> exp in
   aux body
 
+let repair_straight_line n_iprog n_prog proc (blocks : C.exp) specs =
+  let args = proc.C.proc_args in
+  let loc = proc.C.proc_loc in
+  let fsvars = List.map (fun (t, v) -> CP.mk_typed_sv t v) args in
+  let pf = (CF.no_change fsvars loc) in
+  let nox = CF.formula_of_pure_N pf loc in
+  let pre, post = specs in
+  let new_f = CF.mkStar_combine pre nox CF.Flow_combine no_pos in
+  let init_form = new_f in
+  let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled loc in
+  let init_ctx = CF.build_context init_ctx1 init_form loc in
+  (* step 2: check post_condition *)
+  let specs = mk_specs specs in
+  let block_proc = mk_block_proc proc blocks args specs in
+  let () = x_binfo_hp (add_str "block_proc" pr_cproc) block_proc no_pos in
+  (* let _ = Typechecker.check_exp n_prog proc blocks init_ctx (-1, "repair") in *)
+  None
+
 let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
     (blocks: C.exp list) =
   let is_var_decl (exp: C.exp) = match exp with
@@ -250,6 +269,12 @@ let repair_blocks iprog (prog : C.prog_decl) (proc : C.proc_decl)
     try
       let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
       let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
+      if specs = None then None
+      else
+        let specs = specs |> Gen.unsome in
+        let blocks = create_blocks_exp blocks in
+        let _ = specs |> List.map
+                  (repair_straight_line n_iprog n_prog n_proc blocks) in
       None
     with _ -> None
 

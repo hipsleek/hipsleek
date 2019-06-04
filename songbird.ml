@@ -1302,7 +1302,7 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
 and heap_entail_after_sat_struc ?(pf=None) prog ctx conseq =
   let () = x_tinfo_pp "SONGBIRD Prover activated" no_pos in
   Debug.no_2 "SB.heap_entail_after_sat_struc" Cprinter.string_of_context
-    Cprinter.string_of_struc_formula
-    (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
-    (fun _ _ -> heap_entail_after_sat_struc_x  ~pf:pf prog ctx conseq) ctx conseq
+  Cprinter.string_of_struc_formula
+  (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
+  (fun _ _ -> heap_entail_after_sat_struc_x ~pf:pf prog ctx conseq) ctx conseq
 
