@@ -10,10 +10,17 @@ module CF = Cformula
 module Syn = Synthesis
 module I = Iast
 
-let pr_proc = Iprinter.string_of_proc_decl
+let pr_proc = Iprinter.string_of_proc_decl_repair
+let pr_cproc = Cprinter.string_of_proc_decl 1
+let pr_iprog = Iprinter.string_of_program
+let pr_cprog = Cprinter.string_of_program
 let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
 let pr_struc_f = Cprinter.string_of_struc_formula
+let pr_hps = pr_list Iprinter.string_of_hp_decl
+let pr_exps = pr_list Iprinter.string_of_exp
+let pr_c_exps = pr_list Cprinter.string_of_exp
+
 let next_proc = ref false
 let stop = ref false
 
@@ -578,7 +585,7 @@ let create_blocks_exp (blocks: C.exp list) =
   | head :: tail ->
     List.fold_left Syn.mkCSeq head tail
 
-let create_tmpl_proc proc replaced_exp vars heuristic =
+let create_tmpl_proc_pure proc replaced_exp vars heuristic =
   let var_names = List.map fst vars in
   let pr_exp = Iprinter.string_of_exp_repair in
   let () = x_tinfo_hp (add_str "exp input: " pr_exp) (replaced_exp) no_pos in
@@ -602,7 +609,7 @@ let repair_one_statement (iprog:I.prog_decl) proc exp is_cond vars heuristic =
   let pr_exp = Iprinter.string_of_exp_repair in
   let () = x_tinfo_hp (add_str "exp candidate: " pr_exp) exp no_pos in
   if !stop then let () = next_proc := false in None
-  else let n_proc_exp = create_tmpl_proc proc exp vars heuristic in
+  else let n_proc_exp = create_tmpl_proc_pure proc exp vars heuristic in
     let () = x_dinfo_pp "marking \n" no_pos in
     match n_proc_exp with
     | None -> let () = next_proc := false in None
@@ -727,12 +734,11 @@ let mk_block_proc (proc: C.proc_decl) block_exp args specs =
 (* check_exp for straight-line code fragment only *)
 (* let check_exp_repair *)
 
-let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
+let create_tmpl_body (body : C.exp) pos_list var_decls =
+  let replace_pos = List.hd pos_list in
+  let pos_list = List.tl pos_list in
   let pr_pos = string_of_loc in
   let fcode = create_cast_fcode var_decls replace_pos in
-  let () = x_tinfo_hp (add_str "fcode" Cprinter.string_of_exp) fcode no_pos in
-  let () = x_binfo_hp (add_str "replace_pos" string_of_loc) replace_pos no_pos in
-  let () = x_binfo_hp (add_str "replace_pos" (pr_list string_of_loc)) pos_list no_pos in
   let rec aux exp = match exp with
     | C.Block e ->
       let n_e = aux e.C.exp_block_body in
@@ -740,12 +746,10 @@ let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
     | C.Seq e ->
       let e1 = e.C.exp_seq_exp1 in
       let e1_pos = e1 |> C.pos_of_exp in
-      let () = x_binfo_hp (add_str "e1_pos" string_of_loc) e1_pos no_pos in
       if List.mem e1_pos pos_list then aux e.C.exp_seq_exp2
       else
         let e2 = e.C.exp_seq_exp2 in
         let e2_pos = e2 |> C.pos_of_exp in
-        let () = x_binfo_hp (add_str "e2_pos" string_of_loc) e2_pos no_pos in
         if List.mem e2_pos pos_list then aux e1
         else C.Seq {e with exp_seq_exp1 = aux e1;
                            exp_seq_exp2 = aux e2}
@@ -763,3 +767,55 @@ let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
       if VarGen.eq_loc loc replace_pos then fcode
       else exp in
   aux body
+
+let is_var_decl (exp: C.exp) = match exp with
+    | C.VarDecl _ -> true
+    | _ -> false
+
+let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
+    (block: C.exp list) =
+  let pos_list = block |> List.map C.pos_of_exp |> List.rev in
+  let replace_pos = List.hd pos_list in
+  let exp = proc.C.proc_body |> Gen.unsome in
+  let proc_args = proc.C.proc_args in
+  let var_decls = get_var_decls replace_pos exp in
+  let var_decls = proc_args @ var_decls in
+  let fcode_prog = create_fcode_proc var_decls Void in
+  let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
+  let n_hp_decls = iprog.I.prog_hp_decls @ fcode_prog.I.prog_hp_decls in
+  let eq_data_decl x y = eq_str x.I.data_name y.I.data_name in
+  let n_data_decls = iprog.I.prog_data_decls
+                     @ fcode_prog.I.prog_data_decls
+                     |> Gen.BList.remove_dups_eq eq_data_decl in
+  let eq_proc x y = eq_str x.I.proc_name y.I.proc_name in
+  let procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
+              |> Gen.BList.remove_dups_eq eq_proc in
+  let fcode_prog = {iprog with
+                    I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
+                    I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
+  let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
+  let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
+  let n_body = create_tmpl_body exp pos_list var_decls in
+  let n_proc = {proc with C.proc_body = Some n_body} in
+  let () = x_tinfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
+  let fcode_cprocs = C.list_of_procs fcode_cprog in
+  let n_prog = C.replace_proc prog n_proc in
+  let all_procs = C.list_of_procs n_prog in
+  let all_procs = all_procs @ fcode_cprocs in
+  let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
+  let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
+  let n_prog = {prog with new_proc_decls = n_hashtbl;
+                          C.prog_hp_decls = c_hp_decls} in
+  let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
+                            I.prog_hp_decls = n_hp_decls} in
+  let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
+  let () = if is_return_block block then
+      Syn.is_return_cand := true
+    else Syn.is_return_cand := false in
+  let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
+  let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+  let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
+                 |> CP.remove_dups_svl in
+  let () = Syn.syn_res_vars := res_vars in
+  (n_iprog, n_prog, n_proc)
+

@@ -12,17 +12,6 @@ module Syn = Synthesis
 module I = Iast
 module LO2 = Label_only.Lab2_List
 
-let pr_proc = Iprinter.string_of_proc_decl_repair
-let pr_cproc = Cprinter.string_of_proc_decl 1
-let pr_iprog = Iprinter.string_of_program
-let pr_cprog = Cprinter.string_of_program
-let pr_ctx = Cprinter.string_of_list_failesc_context
-let pr_formula = Cprinter.string_of_formula
-let pr_struc_f = Cprinter.string_of_struc_formula
-let pr_hps = pr_list Iprinter.string_of_hp_decl
-let pr_exps = pr_list Iprinter.string_of_exp
-let pr_c_exps = pr_list Cprinter.string_of_exp
-
 let filter_cand buggy_loc cand =
   match buggy_loc with
   | Some b_loc ->
@@ -183,56 +172,7 @@ let repair_straight_line n_iprog n_prog proc (blocks : C.exp) specs =
 
 let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =
-  let is_var_decl (exp: C.exp) = match exp with
-    | C.VarDecl _ -> true
-    | _ -> false in
-  (* let block = List.filter (fun x -> not(is_var_decl x)) block in
-   * if block = [] then None
-   * else *)
-  let pos_list = block |> List.map C.pos_of_exp |> List.rev in
-  let replace_pos = List.hd pos_list in
-  let pos_list = List.tl pos_list in
-  let exp = proc.C.proc_body |> Gen.unsome in
-  let proc_args = proc.C.proc_args in
-  let var_decls = get_var_decls replace_pos exp in
-  let var_decls = proc_args @ var_decls in
-  let fcode_prog = create_fcode_proc var_decls Void in
-  let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
-  let n_hp_decls = iprog.I.prog_hp_decls @ fcode_prog.I.prog_hp_decls in
-  let eq_data_decl x y = eq_str x.I.data_name y.I.data_name in
-  let n_data_decls = iprog.I.prog_data_decls
-                     @ fcode_prog.I.prog_data_decls
-                     |> Gen.BList.remove_dups_eq eq_data_decl in
-  let eq_proc x y = eq_str x.I.proc_name y.I.proc_name in
-  let procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
-              |> Gen.BList.remove_dups_eq eq_proc in
-  let fcode_prog = {iprog with
-                    I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
-                    I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
-  let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
-  let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
-  let n_body = create_tmpl_body exp replace_pos pos_list var_decls in
-  let n_proc = {proc with C.proc_body = Some n_body} in
-  let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
-  let fcode_cprocs = C.list_of_procs fcode_cprog in
-  let n_prog = C.replace_proc prog n_proc in
-  let all_procs = C.list_of_procs n_prog in
-  let all_procs = all_procs @ fcode_cprocs in
-  let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
-  let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
-  let n_prog = {prog with new_proc_decls = n_hashtbl;
-                          C.prog_hp_decls = c_hp_decls} in
-  let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
-                            I.prog_hp_decls = n_hp_decls} in
-  let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
-  let () = if is_return_block block then
-      Syn.is_return_cand := true
-    else Syn.is_return_cand := false in
-  let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
-  let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
-  let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
-                 |> CP.remove_dups_svl in
-  let () = Syn.syn_res_vars := res_vars in
+  let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc block in
   try
     let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
     let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
@@ -244,6 +184,11 @@ let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
                 (repair_straight_line n_iprog n_prog n_proc block) in
       None
   with _ -> None
+
+(* let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
+ *     (block: C.exp list) =
+ *   let specs = infer_specs iprog prog proc block in
+ *   None *)
 
 let repair_cproc iprog =
   match !Typechecker.repair_proc with
