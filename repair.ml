@@ -152,7 +152,7 @@ let repair_iprog (iprog:I.prog_decl) =
       List.hd res
   | _ -> None
 
-let repair_straight_line n_iprog n_prog proc (blocks : C.exp) specs =
+let repair_straight_line n_iprog n_prog proc block specs =
   let args = proc.C.proc_args in
   let loc = proc.C.proc_loc in
   let fsvars = List.map (fun (t, v) -> CP.mk_typed_sv t v) args in
@@ -165,9 +165,13 @@ let repair_straight_line n_iprog n_prog proc (blocks : C.exp) specs =
   let init_ctx = CF.build_context init_ctx1 init_form loc in
   (* step 2: check post_condition *)
   let specs = mk_specs specs in
-  let block_proc = mk_block_proc proc blocks args specs in
-  let () = x_binfo_hp (add_str "block_proc" pr_cproc) block_proc no_pos in
-  (* let _ = Typechecker.check_exp n_prog proc blocks init_ctx (-1, "repair") in *)
+  let init_esc = [((0,""),[])] in
+  let lfe = [CF.mk_failesc_context init_ctx [] init_esc] in
+  let block = create_block_exp block in
+  (* let block_proc = mk_block_proc proc block args specs in
+   * let () = x_binfo_hp (add_str "block_proc" pr_cproc) block_proc no_pos in *)
+  (* let n_ctx = check_exp_repair n_prog lfe block in *)
+
   None
 
 let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
@@ -179,16 +183,10 @@ let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     if specs = None then None
     else
       let specs = specs |> Gen.unsome in
-      let block = create_blocks_exp block in
       let _ = specs |> List.map
                 (repair_straight_line n_iprog n_prog n_proc block) in
       None
   with _ -> None
-
-(* let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
- *     (block: C.exp list) =
- *   let specs = infer_specs iprog prog proc block in
- *   None *)
 
 let repair_cproc iprog =
   match !Typechecker.repair_proc with

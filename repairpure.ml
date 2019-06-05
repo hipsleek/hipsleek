@@ -3,12 +3,14 @@ open VarGen
 open Printf
 open Gen.Basic
 open Globals
+open Exc.GTable
 
 module C = Cast
 module CP = Cpure
 module CF = Cformula
 module Syn = Synthesis
 module I = Iast
+module MCP = Mcpure
 
 let pr_proc = Iprinter.string_of_proc_decl_repair
 let pr_cproc = Cprinter.string_of_proc_decl 1
@@ -20,6 +22,7 @@ let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_hps = pr_list Iprinter.string_of_hp_decl
 let pr_exps = pr_list Iprinter.string_of_exp
 let pr_c_exps = pr_list Cprinter.string_of_exp
+let pr_c_exp =  Cprinter.string_of_exp
 
 let next_proc = ref false
 let stop = ref false
@@ -578,8 +581,8 @@ let repair_prog_with_templ iprog cond_op =
     None
   with _ as e -> None
 
-let create_blocks_exp (blocks: C.exp list) =
-  match blocks with
+let create_block_exp (block: C.exp list) =
+  match block with
   | [] -> failwith "blocks cannot be empty"
   | [head] -> head
   | head :: tail ->
@@ -691,8 +694,8 @@ let mk_specs (pre_cond, post_cond) =
   specs
 
 let mk_block_proc (proc: C.proc_decl) block_exp args specs =
-  let dynamic_f = CF.mkBase_simp CF.HFalse
-                     (Mcpure.mix_of_pure (CP.mkFalse no_pos)) in
+  let pf = MCP.mix_of_pure (CP.mkFalse no_pos) in
+  let dynamic_f = CF.mkBase_simp CF.HFalse pf in
   let dynamic_specs = CF.mkEBase dynamic_f None no_pos in
   let proc = {
     C.proc_name = "block_fragment";
@@ -819,3 +822,119 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let () = Syn.syn_res_vars := res_vars in
   (n_iprog, n_prog, n_proc)
 
+
+(* create a simple check_proc for repair *)
+let rec check_exp_repair prog (ctx:CF.list_failesc_context) (exp: C.exp) =
+  let rec aux ctx exp = match exp with
+    | C.Label e -> aux ctx e.C.exp_label_exp
+    | C.Seq e ->
+      let e1 = e.C.exp_seq_exp1 in
+      let e2 = e.C.exp_seq_exp2 in
+      let ctx1 = aux ctx e1 in
+      aux ctx1 e2
+    | C.Var {
+        C.exp_var_type = t;
+        C.exp_var_name = v;
+        C.exp_var_pos = pos
+      } ->
+      ctx
+    | C.IConst {
+        C.exp_iconst_val = i;
+        C.exp_iconst_pos = pos
+      } ->
+      let num = CP.IConst (i, pos) in
+      let res_var = CP.Var (CP.mkRes C.int_type, pos) in
+      let eq = CP.mkEqExp res_var num pos in
+      let f = CF.formula_of_mix_formula (MCP.mix_of_pure eq) pos in
+      CF.normalize_max_renaming_list_failesc_context f pos true ctx
+    | C.Assign {
+        C.exp_assign_lhs = v;
+        C.exp_assign_rhs = rhs;
+        C.exp_assign_pos = pos;
+      } ->
+      let ctx1 = aux ctx rhs in
+      let fct c1 =
+        let t0 = Gen.unsome (C.type_of_exp rhs) in
+        let t = if is_null_type t0 then
+            let svl = CF.fv c1.CF.es_formula in
+            try
+              let orig_sv = List.find (fun sv ->
+                  String.compare (CP.name_of_spec_var sv) v = 0) svl in
+              CP.type_of_spec_var orig_sv
+            with _ -> t0
+          else t0 in
+        let vsv = CP.SpecVar (t, v, Primed) in
+        let tmp_vsv = CP.fresh_spec_var vsv in
+        let compose_es =
+          CF.subst [(vsv, tmp_vsv); ((CP.mkRes t), vsv)] c1.CF.es_formula in
+        (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
+      CF.transform_list_failesc_context (idf,idf,fct) ctx1
+    | C.VarDecl _ -> ctx
+    | C.Sharp {
+        C.exp_sharp_type =t;
+        C.exp_sharp_flow_type = ft;
+        C.exp_sharp_val = v;
+        C.exp_sharp_unpack = un;
+        C.exp_sharp_path_id = pid;
+        C.exp_sharp_pos = pos }	->
+      let look_up_typ_first_fld obj_name =
+        let dclr = C.look_up_data_def_raw prog.C.prog_data_decls obj_name in
+        let (t,_),_ = (List.hd dclr.Cast.data_fields) in
+        t in
+      let nctx = match v with
+        | Sharp_var (t,v) ->
+          let t1 = (C.get_sharp_flow ft) in
+          let ctx, vr,vf =
+            let sharp_val = CP.SpecVar (t, v, Primed) in
+            let eres_var = CP.mkeRes t in
+            let res_var = CP.mkRes t in
+            if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int then
+              match t with
+              | Named objn -> (
+                  let ft = (look_up_typ_first_fld objn) in
+                  let res_inside_exc = (CP.mkRes ft) in
+                  try
+                    let dnode =Cfutil.look_up_first_field prog ctx objn in
+                    let v_exc = (List.find (fun sv ->
+                        (Cpure.type_of_spec_var sv)== ft)
+                        dnode.Cformula.h_formula_data_arguments) in
+                    let fr_v_exc = CP.fresh_spec_var v_exc in
+                    let p = CP.mkEqVar v_exc res_inside_exc pos in
+                    let ctx_w_pure = CF.combine_pure_list_failesc_context
+                        (MCP.mix_of_pure p) pos true ctx in
+                    (ctx_w_pure,eres_var,sharp_val)
+                  with _ -> (ctx,eres_var,sharp_val))
+              | _ -> ctx,eres_var, sharp_val
+            else ctx, res_var, sharp_val in
+          let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
+          CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
+        | _ -> report_error no_pos "Sharp: not handled" in
+      let r = match ft with
+        | Sharp_ct nf ->
+          if not un then
+            let helper es = CF.Ctx {
+                es with CF.es_formula = CF.set_flow_in_formula nf es.CF.es_formula} in
+            CF.transform_list_failesc_context (idf,idf, helper) nctx
+          else
+            let helper es = CF.Ctx {
+                es with CF.es_formula = CF.set_flow_to_link_f []
+                            es.CF.es_formula no_pos} in
+            CF.transform_list_failesc_context (idf,idf, helper) nctx
+        | Sharp_id v ->
+          CF.transform_list_failesc_context
+            (idf,idf,
+             (fun es -> CF.Ctx
+                 {es with
+                  CF.es_formula =
+                    CF.set_flow_in_formula (CF.get_flow_from_stack v [] pos)
+                      es.CF.es_formula})) nctx in
+      let res = CF.add_path_id_ctx_failesc_list r (pid,0) (-1) in
+      res
+
+    | _ -> report_error no_pos
+             ("check_exp_repair: not handled" ^ (pr_c_exp exp)) in
+  aux ctx exp
+
+(* create template block: when specs of block is inferred *)
+
+(* let create_tmpl_block proc block *)

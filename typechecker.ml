@@ -36,6 +36,7 @@ module SB = Songbird
 let pr_sv = Cprinter.string_of_spec_var
 let pr_context = Cprinter.string_of_context
 let pr_pf = Cprinter.string_of_pure_formula
+let pr_failesc_ctx = Cprinter.string_of_list_failesc_context
 
 let store_label = new store LO2.unlabelled LO2.string_of
 let save_flags = ref (fun ()->()) ;;
@@ -149,8 +150,8 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl)
      * ((CP.spec_var * int list) * CP.xpure_view) list * bool =
   let () = pre_ctr # reset in
   let () = post_ctr # reset in
-  let f = wrap_proving_kind PK_Check_Specs (x_add check_specs_infer_a0 prog proc
-                                              ctx e0 do_infer) in
+  let f = wrap_proving_kind PK_Check_Specs
+      (x_add check_specs_infer_a0 prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list
 
 (* Termination *)
@@ -249,7 +250,8 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl)
   let classic_flag = CF.determine_infer_classic sp in
   let ck_sp x = (check_specs_infer_a prog proc ctx e0 do_infer) x in
   (* CLASSIC: Set classic reasoning for hip with infer[@classic] spec *)
-  let fn x = if classic_flag then wrap_classic x_loc (Some true) ck_sp x else ck_sp x in
+  let fn x = if classic_flag
+    then wrap_classic x_loc (Some true) ck_sp x else ck_sp x in
   let fn x =
     if field_imm_flag then wrap_field_imm (Some true) fn x
     else fn x in
@@ -258,7 +260,6 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl)
     else fn x in
   Debug.no_3 "check_specs_infer" pr0 pr1 pr_exp pr3
     (fun _ _ _ -> fn sp) ctx sp e0
-
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
     (e0:exp) (do_infer:bool) (spec: CF.struc_formula) :
@@ -278,7 +279,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
     let () = x_tinfo_hp (add_str "spec: " Cprinter.string_of_struc_formula) spec no_pos in
     match spec with
     | CF.ECase b ->
-      x_binfo_zp (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
       let r =
         List.map (fun (c1, c2) ->
             let nctx = CF.transform_context (SV.combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
@@ -1494,18 +1494,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           | _ -> PK_Assert_Assume)
          (wrap_classic x_loc atype (assert_op_wrapper))) ()
 
-    | Assign ({
+    | Assign {
         exp_assign_lhs = v;
         exp_assign_rhs = rhs;
-        exp_assign_pos = pos }) ->
+        exp_assign_pos = pos
+      } ->
       let pr = Cprinter.string_of_exp in
       let () = x_tinfo_hp (add_str "ctx before rhs: "
-                             Cprinter.string_of_list_failesc_context) ctx no_pos
-      in
+                             Cprinter.string_of_list_failesc_context) ctx no_pos in
       let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr
           (Cprinter.string_of_list_failesc_context) (fun rhs ->
-              x_add check_exp prog proc ctx rhs post_start_label) rhs
-      in
+              x_add check_exp prog proc ctx rhs post_start_label) rhs in
       let assign_op () =
         begin
           let () = proving_loc # set pos in
@@ -1568,8 +1567,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let () = x_tinfo_hp (add_str "ctx Assign final: "
                              Cprinter.string_of_list_failesc_context) res no_pos in
             res
-        end
-      in
+        end in
       Gen.Profiling.push_time "[check_exp] Assign";
       let res = wrap_proving_kind PK_Assign_Stmt assign_op () in
       Gen.Profiling.pop_time "[check_exp] Assign";
@@ -2122,8 +2120,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       let c =
         if !Globals.infer_lvar_slicing then
           CP.set_il_formula c (Some (false, fresh_int(), [res_v]))
-        else c
-      in
+        else c in
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       Gen.Profiling.pop_time "[check_exp] IConst";
@@ -2616,8 +2613,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (*********************************************)
         let b =
           let () = check_var_read_perm ~msg:"(var access)" prog ctx pos v t in
-          true
-        in
+          true in
         let res =
           (* if (not b) then res (*do not have permission for variable v*) *)
           (* else                                                          *)
@@ -2626,8 +2622,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let tmp = CF.formula_of_mix_formula
                 (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t)
                                     (CP.SpecVar (t, v, Primed)) pos)) pos in
-            CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
-        in
+            CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
         Gen.Profiling.pop_time "[check_exp] Var";
         res
       end
@@ -2644,22 +2639,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         VP.add_vperm_sets_list_failesc_ctx vp ctx
       else ctx
     | Unit pos -> ctx
-    | Sharp ({exp_sharp_type =t;
+    | Sharp {exp_sharp_type =t;
               exp_sharp_flow_type = ft;(*P.flow_typ*)
               exp_sharp_val = v; (*maybe none*)
               exp_sharp_unpack = un;
               (*true if it must get the new flow from the second element of the current flow pair*)
               exp_sharp_path_id = pid;
-              exp_sharp_pos = pos})	->
+              exp_sharp_pos = pos}	->
       (**********INTERNAL************)
-      let () = x_tinfo_hp (add_str "sharp start: "
-                             Cprinter.string_of_list_failesc_context) ctx no_pos
-      in
-      let look_up_typ_first_fld obj_name=
+      let () = x_tinfo_hp (add_str "sharp start: " pr_failesc_ctx) ctx no_pos in
+      let look_up_typ_first_fld obj_name =
         let dclr = x_add Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
         let (t,_),_ = (List.hd dclr.Cast.data_fields) in
-        t
-      in
+        t in
       let nctx = match v with
         | Sharp_var (t,v) ->
           let t1 = (get_sharp_flow ft) in
@@ -2684,26 +2676,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                     let p = CP.mkEqVar v_exc res_inside_exc pos in
                     let ctx_w_pure = CF.combine_pure_list_failesc_context
                         (MCP.mix_of_pure p) pos true ctx in
-                    let () = x_tinfo_hp (add_str "ctx_w_pure"
-                                           Cprinter.string_of_list_failesc_context)
+                    let () = x_tinfo_hp (add_str "ctx_w_pure" pr_failesc_ctx)
                         ctx_w_pure no_pos in
-                    let () = x_tinfo_hp (add_str "res_inside_exc"
-                                           Cprinter.string_of_spec_var)
+                    let () = x_tinfo_hp (add_str "res_inside_exc" pr_sv)
                         res_inside_exc no_pos in
-                    let () = x_tinfo_hp (add_str "fr_v_exc"
-                                           Cprinter.string_of_spec_var) fr_v_exc
+                    let () = x_tinfo_hp (add_str "fr_v_exc" pr_sv) fr_v_exc
                         no_pos in
-                    let () = x_tinfo_hp (add_str "sharp_val"
-                                           Cprinter.string_of_spec_var)
-                        sharp_val no_pos in
+                    let () = x_tinfo_hp (add_str "sharp_val" pr_sv) sharp_val no_pos in
                     (ctx_w_pure,eres_var,sharp_val)
-                  with _ ->
-                    (ctx,eres_var,sharp_val)
-                )
-              | _ ->
-                ctx,eres_var, sharp_val
-            else ctx, res_var, sharp_val
-          in
+                  with _ -> (ctx,eres_var,sharp_val))
+              | _ -> ctx,eres_var, sharp_val
+            else ctx, res_var, sharp_val in
           let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
           let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
           ctx1
@@ -2720,6 +2703,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           in
           CF.transform_list_failesc_context (idf,idf,fct) ctx
         | Sharp_no_val -> ctx in
+
       let r = match ft with
         | Sharp_ct nf ->
           if not un then
@@ -2745,9 +2729,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                               pos)
                       es.CF.es_formula})) nctx in
       let res = CF.add_path_id_ctx_failesc_list r (pid,0) (-1) in
-      let () = x_tinfo_hp (add_str "ctx sharp after: "
-                               Cprinter.string_of_list_failesc_context) res no_pos
-      in
+      let () = x_tinfo_hp (add_str "ctx sharp after: " pr_failesc_ctx) res no_pos in
       res
     | Try ({exp_try_body = body;
             exp_catch_clause = cc;
