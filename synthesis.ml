@@ -310,6 +310,10 @@ let pr_iast_exp_opt exp = match exp with
   | None -> "None"
   | Some e -> Iprinter.string_of_exp_repair e
 
+let pr_c_exp_opt exp = match exp with
+  | None -> "None"
+  | Some e -> Cprinter.string_of_exp e
+
 let pr_goal goal =
   let vars = goal.gl_vars in
   let pr_svs = pr_list Cprinter.string_of_typed_spec_var in

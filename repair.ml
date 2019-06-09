@@ -209,7 +209,8 @@ let repair_straight_line n_iprog n_prog proc block specs =
     (* let _ = check_exp_repair n_prog block_proc init_ctx n_block_body in *)
     let () = x_binfo_pp "START SYNTHESIS REPAIR-BLOCK SOLUTION" no_pos in
     let () = Syn.repair_pos := Some replace_pos in
-    let _ = Synthesizer.synthesize_entailments n_iprog n_prog block_proc in
+    let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls in
+    let _ = Synthesizer.synthesize_block_statements n_prog block_proc var_decls in
 
     None
 
