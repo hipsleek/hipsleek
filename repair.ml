@@ -152,6 +152,10 @@ let repair_iprog (iprog:I.prog_decl) =
       List.hd res
   | _ -> None
 
+let repair_sl_candidate proc args candidate =
+  let tmpl_proc = create_tmpl_block proc candidate args in
+  None
+
 let repair_straight_line n_iprog n_prog proc block specs =
   let args = proc.C.proc_args in
   let loc = proc.C.proc_loc in
@@ -166,13 +170,48 @@ let repair_straight_line n_iprog n_prog proc block specs =
   (* step 2: check post_condition *)
   let specs = mk_specs specs in
   let init_esc = [((0,""),[])] in
-  let lfe = [CF.mk_failesc_context init_ctx [] init_esc] in
-  let block = create_block_exp block in
-  (* let block_proc = mk_block_proc proc block args specs in
-   * let () = x_binfo_hp (add_str "block_proc" pr_cproc) block_proc no_pos in *)
-  (* let n_ctx = check_exp_repair n_prog lfe block in *)
+  let init_ctx = [CF.mk_failesc_context init_ctx [] init_esc] in
+  let block_exp = create_block_exp block in
+  (*filter blocks to get suspect statement*)
+  let statements = block |> List.filter is_assign_exp in
+  let () = x_binfo_hp (add_str "candidate" pr_c_exps) statements no_pos in
 
-  None
+  if statements = [] then None
+  else
+    let statement = statements |> List.hd in
+    (* create template program for block_proc *)
+    (* repair with each statement here, shorten later *)
+    (* create block_proc template *)
+    let replace_pos = C.pos_of_exp statement in
+    let var_decls = get_var_decls replace_pos block_exp in
+    let fcode_prog = create_fcode_proc var_decls Void in
+    let fcode_prog = {n_iprog with
+                    I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
+                    I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
+    let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
+    let fcode_cprocs = C.list_of_procs fcode_cprog |>
+                       List.filter (fun x -> is_substr fcode_str x.C.proc_name) in
+    let () = x_tinfo_hp (add_str "focde_procs" (pr_list pr_cproc)) fcode_cprocs no_pos in
+    let n_block_body = create_tmpl_body_stmt block_exp var_decls replace_pos in
+
+    (* add block_proc to the list of proc_proc *)
+    let block_proc = mk_block_proc proc n_block_body args specs in
+    let all_procs = C.list_of_procs n_prog in
+    let all_procs = all_procs @ fcode_cprocs in
+    let all_procs = block_proc::all_procs in
+    let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
+    let n_prog = {n_prog with new_proc_decls = n_hashtbl} in
+
+    (* check_exp to generate constraints *)
+    let () = Synthesis.entailments := [] in
+    let () = x_binfo_hp (add_str "block proc" pr_cproc) block_proc no_pos in
+    let _ = Typechecker.check_proc n_iprog n_prog block_proc None [] in
+    (* let _ = check_exp_repair n_prog block_proc init_ctx n_block_body in *)
+    let () = x_binfo_pp "START SYNTHESIS REPAIR-BLOCK SOLUTION" no_pos in
+    let () = Syn.repair_pos := Some replace_pos in
+    let _ = Synthesizer.synthesize_entailments n_iprog n_prog block_proc in
+
+    None
 
 let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =

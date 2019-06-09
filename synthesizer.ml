@@ -704,7 +704,8 @@ let aux_func_call goal rule fname params subst res_var =
                               gl_trace = rule::goal.gl_trace;
                               gl_pre_cond = post_state} in
     mk_derivation_subgoals goal rule [sub_goal]
-  | _ -> let () = x_tinfo_pp "marking" no_pos in
+  | _ ->
+    let () = x_tinfo_pp "marking" no_pos in
     mk_derivation_fail goal rule
 
 let process_rule_func_call goal rcore : derivation =
@@ -845,7 +846,7 @@ let synthesize_program goal =
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
@@ -884,6 +885,7 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   match hps with
   | None -> ()
   | Some hps_list ->
+    let () = x_binfo_pp "marking" no_pos in
     let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
         iprog.IA.prog_proc_decls in
     let decl_vars = match iproc.IA.proc_body with
@@ -896,6 +898,7 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
     let helper hps =
       if !stop then ()
       else
+        let () = x_binfo_pp "marking" no_pos in
         let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula |> unprime_formula in

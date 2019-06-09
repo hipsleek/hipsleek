@@ -2224,7 +2224,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       res
     | EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
-    | SCall ({
+    | SCall {
         exp_scall_type = ret_t;
         exp_scall_method_name = mn; (* mn is mingled name of the method *)
         exp_scall_lock = lock;
@@ -2232,7 +2232,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_scall_ho_arg = ha;
         exp_scall_is_rec = is_rec_flag;
         exp_scall_path_id = pid;
-        exp_scall_pos = pos}) ->
+        exp_scall_pos = pos} ->
       begin
         Gen.Profiling.push_time "[check_exp] SCall";
         let () = if Cast.unmingle_name mn = "fcode" then
