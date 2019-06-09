@@ -1261,10 +1261,15 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
       let ante = es.CF.es_formula in
       let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv |> List.filter
-                         (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
+                        (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
+      let var_decls = !Syn.block_var_decls
+                      |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
+                      |> List.map CP.to_primed in
+      let ante_vars = ante_vars @ var_decls in
       let pure_ante = CF.mkEmp_formula ante in
       let residue = Syn.create_pred ante_vars in
       let residue = Syn.add_formula_to_formula residue pure_ante in
+      let () = x_binfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
       let n_conseq = Syn.create_spec_pred ante_vars "PP" in
       let n_conseq = Syn.add_formula_to_formula residue n_conseq in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in

@@ -729,8 +729,9 @@ let process_source_full source =
               let () = print_endline "!!!! REPAIR: starting repair process" in
               let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
               match repaired_iprog with
-              | None -> raise e
-              | Some n_prog -> let () = repaired := true in
+              | false -> raise e
+              | true ->
+                let () = repaired := true in
                 let () = Globals.verified_procs := [] in ()
             else
               let () = if !disproof then
@@ -963,7 +964,6 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only)
   then print_string (Cprinter.string_of_program cprog)
   else (try
-          (* let () = x_binfo_pp "marking \n" no_pos in *)
           ignore (Typechecker.check_prog intermediate_prog cprog);
         with _ as e -> begin
             print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");

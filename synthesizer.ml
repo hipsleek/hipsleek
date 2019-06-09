@@ -874,13 +874,15 @@ let synthesize_block_wrapper prog proc pre_cond post_cond vars =
   let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-  let _ = synthesize_cast_stmts goal in
-  None
-  (* let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
-   * let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
-   * let n_proc, res = match iast_exp with
-   *   | None -> (i_proc, false)
-   *   | Some exp0 -> (replace_exp_proc exp0 i_proc, true) in *)
+  let c_exp = synthesize_cast_stmts goal in
+  match c_exp with
+  | None -> None
+  | Some exp ->
+    let body = proc.C.proc_body |> Gen.unsome in
+    let n_body = replace_cexp_aux exp body in
+    Some n_body
+    (* let n_proc = {proc with C.proc_body = Some n_body} in
+     * Some n_proc *)
 
 let synthesize_cast iprog prog proc pre_cond post_cond vars =
   let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
@@ -940,40 +942,39 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
         else () in
     List.iter helper hps_list
 
-let synthesize_block_statements prog proc decl_vars =
+let synthesize_block_statements iprog prog orig_proc proc decl_vars =
   let entailments = !Synthesis.entailments |> List.rev in
   let hps = SB.solve_entailments prog entailments in
   match hps with
-  | None -> ()
+  | None -> None
   | Some hps_list ->
-    let () = x_binfo_pp "marking" no_pos in
-    (* let decl_vars = match iproc.IA.proc_body with
-     *   | None -> []
-     *   | Some exp -> get_var_decls (Gen.unsome !repair_pos) exp in *)
     let syn_vars = proc.Cast.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     let stop = ref false in
-    let helper hps =
-      if !stop then ()
+    let helper cur_res hps =
+      if cur_res != None then cur_res
       else
-        let () = x_binfo_pp "marking" no_pos in
         let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula |> unprime_formula in
         let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
-        let _ = synthesize_block_wrapper prog proc
+        let n_block = synthesize_block_wrapper prog proc
             pre post syn_vars in
-        () in
-        (* if res then
-         *   try
-         *     let cprog, _ = Astsimp.trans_prog n_iprog in
-         *     let () = Typechecker.check_prog_wrapper n_iprog cprog in
-         *     let () = stop := true in
-         *     repair_res := Some n_iprog
-         *   with _ -> ()
-         * else () in *)
-    List.iter helper hps_list
+        match n_block with
+          | None -> None
+          | Some block ->
+            let orig_body = orig_proc.C.proc_body |> Gen.unsome in
+            let n_body = replace_cexp_aux block orig_body in
+            (* let () = x_binfo_hp (add_str "n_body" pr_cast_exp) n_body no_pos in *)
+            let n_proc = {orig_proc with C.proc_body = Some n_body} in
+            try
+              let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
+              let () = stop := true in
+              Some n_proc
+              (* repair_c_res := Some n_proc *)
+            with _ -> None in
+    List.fold_left helper None hps_list
 
 let infer_block_specs (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in

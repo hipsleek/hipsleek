@@ -38,6 +38,7 @@ let repair_c_res = ref (None : Cast.proc_decl option)
 let is_return_cand = ref false
 let check_post_list = ref ([]: bool list)
 let unk_hps = ref ([] : Cast.hp_decl list)
+let block_var_decls = ref ([]: CP.spec_var list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let syn_iprog = ref (None: I.prog_decl option)
 let syn_cprog = ref (None: C.prog_decl option)
@@ -853,7 +854,6 @@ let create_residue vars prog conseq =
     let residue = CF.mkBase_simp (CF.HEmp) (Mcpure.mkMTrue no_pos) in
     residue, conseq
   else
-    let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
     let name = "T" ^ (string_of_int !rel_num) in
     let hl_name = CP.mk_spec_var name in
     let () = rel_num := !rel_num + 1 in
@@ -875,7 +875,6 @@ let create_residue vars prog conseq =
     hrel_f, n_conseq
 
 let create_pred vars =
-  let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
   let name = "T" ^ (string_of_int !rel_num) in
   let () = rel_num := !rel_num + 1 in
   let hl_name = CP.mk_spec_var name in
@@ -895,7 +894,6 @@ let create_pred vars =
   hrel_f
 
 let create_spec_pred vars pred_name =
-  let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
   let name = pred_name in
   let hl_name = CP.mk_spec_var name in
   let () = rel_num := !rel_num + 1 in
@@ -1228,6 +1226,16 @@ let mkSeq exp1 exp2 = I.mkSeq exp1 exp2 no_pos
 
 let st_core2cast st : Cast.exp option = match st.stc_rule with
   | RlSkip -> None
+  | RlAssign rule ->
+    let var = rule.ra_lhs in
+    let rhs = rule.ra_rhs in
+    let c_rhs = exp2cast rhs in
+    let assign = C.Assign {
+      C.exp_assign_lhs = CP.name_of_sv var;
+      C.exp_assign_rhs = c_rhs;
+      C.exp_assign_pos = no_pos
+    } in
+    Some assign
   | RlReturn rule ->
     let typ = CP.get_exp_type rule.r_exp in
     let name = fresh_name() in
@@ -1378,6 +1386,39 @@ let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
   | Label (a, body) -> Label (a, replace_exp_aux nexp body)
   | Seq e -> let n_e1 = replace_exp_aux nexp e.I.exp_seq_exp1 in
     let n_e2 = replace_exp_aux nexp e.I.exp_seq_exp2 in
+    Seq {e with exp_seq_exp1 = n_e1;
+                exp_seq_exp2 = n_e2}
+  | _ -> exp
+
+let rec replace_cexp_aux nexp exp : C.exp =
+  match (exp:C.exp) with
+  | C.Assign e ->
+    let n_e2 = replace_cexp_aux nexp e.C.exp_assign_rhs in
+    C.Assign {e with exp_assign_rhs = n_e2}
+  | Bind e ->
+    let n_body = replace_cexp_aux nexp e.C.exp_bind_body in
+    C.Bind {e with exp_bind_body = n_body}
+  | C.Block e ->
+    let n_body = replace_cexp_aux nexp e.C.exp_block_body in
+    C.Block {e with exp_block_body = n_body}
+  | C.Cast e ->
+    let n_body = replace_cexp_aux nexp e.C.exp_cast_body in
+    C.Cast {e with exp_cast_body = n_body;}
+  | C.SCall e ->
+    let name = e.C.exp_scall_method_name in
+    if is_substr fcode_str name then nexp
+    else exp
+  | C.Cond e ->
+    let r1 = replace_cexp_aux nexp e.C.exp_cond_then_arm in
+    let r2 = replace_cexp_aux nexp e.C.exp_cond_else_arm in
+    C.Cond {e with exp_cond_then_arm = r1;
+                   exp_cond_else_arm = r2}
+  | C.Label e ->
+    let n_e = replace_cexp_aux nexp e.C.exp_label_exp in
+    C.Label {e with C.exp_label_exp = n_e}
+  | C.Seq e ->
+    let n_e1 = replace_cexp_aux nexp e.C.exp_seq_exp1 in
+    let n_e2 = replace_cexp_aux nexp e.C.exp_seq_exp2 in
     Seq {e with exp_seq_exp1 = n_e1;
                 exp_seq_exp2 = n_e2}
   | _ -> exp
