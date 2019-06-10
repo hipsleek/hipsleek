@@ -297,11 +297,7 @@ let is_synthesis_tree_success stree : bool =
 (*********************************************************************
  * Printing
  *********************************************************************)
-let pr_cast_exp exp = Cprinter.string_of_exp exp
-
-let pr_cast_exp_opt exp = match exp with
-  | None -> "None"
-  | Some e -> Cprinter.string_of_exp e
+let pr_c_exp exp = Cprinter.string_of_exp exp
 
 let pr_iast_exp = Iprinter.string_of_exp_repair
 let pr_iast_exp_opt = Iprinter.string_of_exp_repair
@@ -1121,32 +1117,47 @@ let rec exp2cast (exp: CP.exp) = match exp with
   | CP.IConst (num, loc) ->
     let num = num_to_cast num loc in
     num
-    (* let name = fresh_name() in
-     * let var = C.VarDecl {
-     *     C.exp_var_decl_type = Int;
-     *     C.exp_var_decl_name = name;
-     *     C.exp_var_decl_pos = no_pos;
-     *   } in
-     * let assign = C.Assign {
-     *     exp_assign_lhs = name;
-     *     exp_assign_rhs = num;
-     *     exp_assign_pos = no_pos
-     *   } in
-     * let seq = mkCSeq var assign in
-     * seq *)
   | CP.Add (e1, e2, loc) ->
-    let n_e1, n_e2 = exp2cast e1, exp2cast e2 in
+    let helper e1 =
+      let n_e1 = exp2cast e1 in
+      match n_e1 with
+      | C.Var var -> (n_e1, var.C.exp_var_name)
+      | _ ->
+        let n_var = fresh_name() in
+        let var = C.VarDecl {
+            C.exp_var_decl_type = CP.get_exp_type e1;
+            C.exp_var_decl_name = n_var;
+            C.exp_var_decl_pos = no_pos;
+          } in
+        let assign = C.Assign {
+            C.exp_assign_lhs = n_var;
+            C.exp_assign_rhs = n_e1;
+            C.exp_assign_pos = no_pos;
+          } in
+        let seq = mkCSeq var assign in
+        (seq, n_var) in
+    let n_e1, name1 = helper e1 in
+    let n_e2, name2 = helper e2 in
     let name = C.mingle_name "add" [Int; Int] in
-    C.SCall {
-      C.exp_scall_type = Int;
-      C.exp_scall_method_name = name;
-      C.exp_scall_lock = None;
-      C.exp_scall_arguments = [];
-      C.exp_scall_ho_arg = None;
-      C.exp_scall_is_rec = false;
-      C.exp_scall_path_id = None;
-      C.exp_scall_pos = no_pos
-    }
+    let call = C.SCall {
+        C.exp_scall_type = Int;
+        C.exp_scall_method_name = name;
+        C.exp_scall_lock = None;
+        C.exp_scall_arguments = [name1; name2];
+        C.exp_scall_ho_arg = None;
+        C.exp_scall_is_rec = false;
+        C.exp_scall_path_id = None;
+        C.exp_scall_pos = no_pos
+      } in
+    begin
+      match n_e1, n_e2 with
+      | C.Var _, C.Var _ -> call
+      | C.Var _, _ -> mkCSeq n_e2 call
+      | _, C.Var _ -> mkCSeq n_e1 call
+      | _ ->
+        let seq = mkCSeq n_e1 n_e2 in
+        mkCSeq seq call
+    end
   | _ -> report_error no_pos ("exp2cast:" ^ (pr_exp exp) ^"not handled")
 
 let pf_to_iast (pf: CP.p_formula) = match pf with
@@ -1270,7 +1281,20 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
         C.exp_scall_path_id = None;
         C.exp_scall_pos = no_pos
       } in
-    aux_c_subtrees st f_call
+    let r_name = CP.name_of_sv r_var in
+    let res_var = C.VarDecl {
+        C.exp_var_decl_type = CP.type_of_sv r_var;
+        C.exp_var_decl_name = r_name;
+        C.exp_var_decl_pos = no_pos
+      } in
+    let assign = C.Assign {
+        C.exp_assign_lhs = r_name;
+        C.exp_assign_rhs = f_call;
+        C.exp_assign_pos = no_pos;
+      } in
+    (* let seq1 = mkCSeq res_var f_call in *)
+    let seq2 = mkCSeq res_var assign in
+    aux_c_subtrees st seq2
   | RlReturn rule ->
     let typ = CP.get_exp_type rule.r_exp in
     let name = fresh_name() in

@@ -207,7 +207,7 @@ let repair_straight_line n_iprog n_prog orig_proc proc block specs =
                     |> List.filter (fun x ->
                         Syn.is_int_var x || Syn.is_node_var x) in
     let () = x_binfo_hp (add_str "var_decls" pr_vars) var_decls no_pos in
-    Synthesizer.synthesize_block_statements n_iprog n_prog orig_proc
+    Synthesizer.synthesize_block_statements n_iprog n_prog proc
       block_proc var_decls in
   let repair_block_stmt cur_res statement =
     if cur_res != None then cur_res
@@ -268,13 +268,3 @@ let rec start_repair_wrapper (iprog: I.prog_decl) =
   (* let tmp = repair_iprog iprog in *)
   let tmp = repair_cproc iprog in
   tmp
-
-  (* if is_one then
-   *   let (pre, post) = specs in
-   *   let pos = block |> List.map C.pos_of_exp |> List.hd in
-   *   let var_decls = orig_proc.C.proc_body |> Gen.unsome
-   *                   |> get_var_decls pos
-   *                   |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-   *   Synthesizer.synthesize_block_short n_iprog n_prog orig_proc pre post
-   *     var_decls
-   * else *)

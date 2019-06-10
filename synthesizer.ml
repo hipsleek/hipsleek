@@ -855,7 +855,7 @@ let synthesize_cast_stmts goal =
   | StValid st_core ->
     let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let c_exp = st_core2cast st_core in
-    let () = x_binfo_hp (add_str "c_exp" pr_c_exp_opt) c_exp no_pos in
+    let () = x_tinfo_hp (add_str "c_exp" pr_c_exp_opt) c_exp no_pos in
     c_exp
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     None
@@ -874,16 +874,18 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
                             then n_proc else x) i_procs in
   ({iprog with I.prog_proc_decls = n_iprocs}, res)
 
-let synthesize_block_wrapper prog proc pre_cond post_cond vars =
+let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
   let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
-  let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
+  let goal = mk_goal_w_procs prog [orig_proc] pre_cond post_cond vars in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let c_exp = synthesize_cast_stmts goal in
   match c_exp with
   | None -> None
   | Some exp ->
     let body = proc.C.proc_body |> Gen.unsome in
+    let () = x_tinfo_hp (add_str "body" pr_c_exp) body no_pos in
     let n_body = replace_cexp_aux exp body in
+    let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
     Some n_body
 
 let synthesize_cast iprog prog proc pre_cond post_cond vars =
@@ -897,7 +899,7 @@ let synthesize_cast iprog prog proc pre_cond post_cond vars =
       let c_exp = st_core2cast st_core in
       if c_exp = None then c_exp
       else
-        let () = x_binfo_hp (add_str "exp" pr_cast_exp_opt) c_exp no_pos in
+        let () = x_binfo_hp (add_str "exp" pr_c_exp_opt) c_exp no_pos in
         c_exp
     | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
       None in
@@ -961,13 +963,15 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula |> unprime_formula in
         let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
-        let n_block = synthesize_block_wrapper prog orig_proc
+        let n_block = synthesize_block_wrapper prog orig_proc proc
             pre post syn_vars in
         match n_block with
           | None -> None
           | Some block ->
             let orig_body = orig_proc.C.proc_body |> Gen.unsome in
+            let () = x_tinfo_hp (add_str "o_body" pr_c_exp) orig_body no_pos in
             let n_body = replace_cexp_aux block orig_body in
+            let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
             let n_proc = {orig_proc with C.proc_body = Some n_body} in
             try
               let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
