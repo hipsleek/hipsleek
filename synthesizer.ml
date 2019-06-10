@@ -844,7 +844,7 @@ let synthesize_program goal =
     None
 
 let synthesize_cast_stmts goal =
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
   match st_status with
@@ -881,8 +881,6 @@ let synthesize_block_wrapper prog proc pre_cond post_cond vars =
     let body = proc.C.proc_body |> Gen.unsome in
     let n_body = replace_cexp_aux exp body in
     Some n_body
-    (* let n_proc = {proc with C.proc_body = Some n_body} in
-     * Some n_proc *)
 
 let synthesize_cast iprog prog proc pre_cond post_cond vars =
   let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
@@ -959,20 +957,18 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula |> unprime_formula in
         let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
-        let n_block = synthesize_block_wrapper prog proc
+        let n_block = synthesize_block_wrapper prog orig_proc
             pre post syn_vars in
         match n_block with
           | None -> None
           | Some block ->
             let orig_body = orig_proc.C.proc_body |> Gen.unsome in
             let n_body = replace_cexp_aux block orig_body in
-            (* let () = x_binfo_hp (add_str "n_body" pr_cast_exp) n_body no_pos in *)
             let n_proc = {orig_proc with C.proc_body = Some n_body} in
             try
               let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
               let () = stop := true in
               Some n_proc
-              (* repair_c_res := Some n_proc *)
             with _ -> None in
     List.fold_left helper None hps_list
 

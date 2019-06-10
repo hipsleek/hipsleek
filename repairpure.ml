@@ -24,6 +24,8 @@ let pr_hps = pr_list Iprinter.string_of_hp_decl
 let pr_exps = pr_list Iprinter.string_of_exp
 let pr_c_exps = pr_list Cprinter.string_of_exp
 let pr_c_exp =  Cprinter.string_of_exp
+let pr_vars = Cprinter.string_of_typed_spec_var_list
+let pr_pos = string_of_loc
 
 let next_proc = ref false
 let stop = ref false
@@ -83,7 +85,7 @@ let read_file filename =
   with End_of_file -> close_in chan;
     List.rev !lines
 
-let create_blocks (proc : C.proc_decl) =
+let get_proc_blocks (proc : C.proc_decl) =
   let is_seq_exp exp = match exp with
     | C.Block _
     | C.Seq _ -> true
@@ -105,7 +107,8 @@ let create_blocks (proc : C.proc_decl) =
       {block_tree with bt_statements = stmts}
     | C.Assign a_exp ->
       (* if is_seq_exp a_exp.C.exp_assign_rhs then
-       *   aux a_exp.C.exp_assign_rhs block_tree
+       *   let r_tree = aux a_exp.C.exp_assign_rhs input_tree in
+       *   {block_tree with bt_block_right = BtNode r_tree}
        * else *)
       let stmts = (block_tree.bt_statements) @ [exp] in
       {block_tree with bt_statements = stmts}
@@ -137,11 +140,14 @@ let get_stmt_candidates (exp: I.exp) =
 let rec get_var_decls pos (exp: C.exp) = match exp with
   | C.VarDecl var ->
     let v_pos = var.C.exp_var_decl_pos in
+    let () = x_tinfo_hp (add_str "exps" pr_c_exp) exp no_pos in
+    let () = x_tinfo_hp (add_str "v_pos" pr_pos) v_pos no_pos in
     if get_start_lnum v_pos <= get_start_lnum pos then
       let v_name = var.C.exp_var_decl_name in
       let v_typ = var.C.exp_var_decl_type in
       [(v_typ, v_name)]
     else []
+  (* | C.Assign e -> get_var_decls pos e.C.exp_assign_rhs *)
   | C.Seq seq -> (get_var_decls pos seq.C.exp_seq_exp1) @
                  (get_var_decls pos seq.C.exp_seq_exp2)
   | C.Cond cond -> (get_var_decls pos cond.C.exp_cond_then_arm) @
@@ -741,7 +747,6 @@ let mk_block_proc (proc: C.proc_decl) block_exp args specs =
 let create_tmpl_body_block (body : C.exp) pos_list var_decls =
   let replace_pos = List.hd pos_list in
   let pos_list = List.tl pos_list in
-  let pr_pos = string_of_loc in
   let fcode = create_cast_fcode var_decls replace_pos in
   let rec aux exp = match exp with
     | C.Block e ->
@@ -797,7 +802,9 @@ let is_assign_exp (exp: C.exp) = match exp with
 
 let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =
-  let pos_list = block |> List.map C.pos_of_exp |> List.rev in
+  let pos_list = block |> List.map C.pos_of_exp
+               |> Gen.BList.remove_dups_eq eq_loc
+               |> List.rev in
   let replace_pos = List.hd pos_list in
   let exp = proc.C.proc_body |> Gen.unsome in
   let proc_args = proc.C.proc_args in
@@ -820,7 +827,7 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
   let n_body = create_tmpl_body_block exp pos_list var_decls in
   let n_proc = {proc with C.proc_body = Some n_body} in
-  let () = x_tinfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
+  let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
   let fcode_cprocs = C.list_of_procs fcode_cprog in
   let n_prog = C.replace_proc prog n_proc in
   let all_procs = C.list_of_procs n_prog in
@@ -840,8 +847,8 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
                  |> CP.remove_dups_svl in
   let () = Syn.syn_res_vars := res_vars in
+  let () = x_binfo_hp (add_str "pos_list" (string_of_int)) (List.length pos_list) no_pos in
   (n_iprog, n_prog, n_proc)
-
 
 (* create a simple check_proc for repair *)
 let rec check_exp_repair (prog: C.prog_decl) (proc: C.proc_decl)

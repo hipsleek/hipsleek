@@ -2955,7 +2955,7 @@ and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)
     pos (pid:formula_label):  CF.list_partial_context  =
-  let _ = x_binfo_pp ">>>>>>>>> begin prove post-cond >>>>>>>" no_pos in
+  let _ = x_tinfo_pp ">>>>>>>>> begin prove post-cond >>>>>>>" no_pos in
   let _ = SB.enable_export_entailments () in
   let ctx = CF.fresh_view_list_partial_context ctx0 in
   let () = if !print_proof then
@@ -2988,7 +2988,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let all_traces = ctx |> List.map snd |> List.concat
                     |> List.map (fun (x, _, _) -> x) in
   let pr_paths = pr_list Cprinter.string_of_path_trace in
-  let () = x_binfo_hp (add_str "paths" pr_paths) all_traces no_pos in
+  let () = x_tinfo_hp (add_str "paths" pr_paths) all_traces no_pos in
   let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
   let rs, prf =
     if f1 then
@@ -3038,7 +3038,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     let aux fail_traces trace =
       let eq_trace t1 = t1 = trace in
       List.exists eq_trace fail_traces in
-    let () = x_binfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
+    let () = x_tinfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
     let check_post = List.map (aux fail_traces) all_traces in
     let () = Synt.check_post_list := check_post in
     let _ =

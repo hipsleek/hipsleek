@@ -9,18 +9,22 @@ int length(node x)
   requires x::ll<n>
   ensures x::ll<n> & res = n;.
 
-synthesize [node x]
- x::ll<n>&x!=null & n >= 1
-~>
- (exists f_r_7356,r_3: x::node<r_3> * r_3::ll<f_r_7356>
- & (1-n)<=0
- & n=res & f_r_7356=n-1).
-
-
-// synthesize [node q_59,node x,int rs0]
-//  x::node<q_59> * q_59::ll<flted_6_58>&
-// flted_6_58+1=n & x!=null & rs0=flted_6_58 & n >= 1
+// synthesize [node x]
+//  x::ll<n>&x!=null & n >= 1
 // ~>
-//  (exists f_r_44,r_45: x::node<r_45> * r_45::ll<f_r_44>&
-// 1<=n &
-// n=res & f_r_44+1=n).
+//  (exists f_r_7356,r_3: x::node<r_3> * r_3::ll<f_r_7356>
+//  & (1-n)<=0
+//  & n=res & f_r_7356=n-1).
+
+synthesize [int v_int_12_1881,int v_int_13_1888,node x]
+ x::ll<n>&x!=null
+~>
+ (exists f_r_14835,r_7: x::node<r_7> * r_7::ll<f_r_14835>&
+n=v_int_13_1888 & f_r_14835=n-1).
+
+// [RlFRead(x.next, q_57)
+// [RlFuncRes length$node([q_57])
+// [RlAssign (int v_int_13_1888 =  (rs0*1)+0+1)
+// [RlSkip
+// []]]]]
+
