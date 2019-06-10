@@ -1292,7 +1292,6 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
         C.exp_assign_rhs = f_call;
         C.exp_assign_pos = no_pos;
       } in
-    (* let seq1 = mkCSeq res_var f_call in *)
     let seq2 = mkCSeq res_var assign in
     aux_c_subtrees st seq2
   | RlReturn rule ->

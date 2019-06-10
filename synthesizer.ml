@@ -973,7 +973,9 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
             let n_body = replace_cexp_aux block orig_body in
             let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
             let n_proc = {orig_proc with C.proc_body = Some n_body} in
+            let () = verified_procs := [] in
             try
+              (* need to check later*)
               let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
               let () = stop := true in
               Some n_proc

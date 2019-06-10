@@ -3032,7 +3032,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let () = x_tinfo_hp (add_str "rs" pr) rs no_pos in
   if (is_reachable_succ) then
     rs
-  else begin
+  else
     let fail_traces = rs |> List.map fst |> List.concat |> List.map fst in
     let pr_paths = pr_list Cprinter.string_of_path_trace in
     let aux fail_traces trace =
@@ -3052,19 +3052,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")
         }
-      else if not (!Globals.enable_repair) then
-        begin
-          Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
-            ("Postcondition cannot be derived from context\n")
-            pos;
-          Debug.print_info ("(Cause of PostCond Failure)")
-            (Cprinter.string_of_failure_list_partial_context rs) pos;
-          Err.report_error {
-            Err.error_loc = pos;
-            Err.error_text = Printf.sprintf
-                "Post condition cannot be derived by the system."
-          }
-        end
       else
         Err.report_error {
           Err.error_loc = pos;
@@ -3072,7 +3059,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
               "Post condition cannot be derived by the system."
         } in
     rs
-  end
 
 (* process each scc set of mutual-rec procedures *)
 (* to be used for inferring phase constraints *)
@@ -3574,9 +3560,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
           if pr_flag then
             begin
               if pp then
-                let () = if (!Globals.enable_repair) then
-                    let () = verified_procs := [proc0.proc_name] @(!verified_procs) in
-                    () else () in
+                (* let () = if (!Globals.enable_repair) then
+                 *     let () = verified_procs := [proc0.proc_name] @(!verified_procs) in
+                 *     () else () in *)
                 if !Globals.web_compile_flag then
                   print_string_quiet ("\nProcedure <b>"^proc.proc_name
                                       ^"</b> <font
@@ -3703,10 +3689,6 @@ let check_phase_only iprog prog proc =
 (* check entire program *)
 let check_proc_wrapper iprog prog proc cout_option mutual_grp =
   try
-    let () = Debug.ninfo_hprint
-        (add_str "check_proc_wrapper"
-           (Cprinter.string_of_struc_formula_for_spec_inst prog))
-        proc.Cast.proc_stk_of_static_specs # top  no_pos in
     let res = check_proc iprog prog proc cout_option mutual_grp in
     res
   with _ as e ->
