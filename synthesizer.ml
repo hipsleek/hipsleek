@@ -121,7 +121,9 @@ let choose_rule_assign_x goal : rule list =
   else
     let mk_rule (var, exp) =
       if CP.is_res_sv var then RlReturn {r_exp = exp}
-      else RlAssign {
+      else
+        (* let exp = CP.simp_mult exp; *)
+        RlAssign {
           ra_lhs = var;
           ra_rhs = exp
         } in
@@ -394,7 +396,9 @@ let choose_rule_numeric_x goal =
         | Some def ->
           let rule = if CP.is_res_sv cur_var then
               RlReturn { r_exp = def}
-            else RlAssign {
+            else
+              let def = CP.norm_exp def in
+              RlAssign {
                 ra_lhs = cur_var;
                 ra_rhs = def;
               } in [rule]

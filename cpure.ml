@@ -4184,9 +4184,9 @@ and collect_nondet_vars f =
    	                                                                                                           Utilities for equality testing
  ******************************************************************************************************************)
 
-and normalize_add e  =  
-  let rec lin e = match e with 
-    | Add(e1,e2,_) -> 
+and normalize_add e =
+  let rec lin e = match e with
+    | Add(e1,e2,_) ->
       let l1,l2 = lin e1 in
       let r1,r2 = lin e2 in
       r1@l1, r2@l2
@@ -4197,9 +4197,9 @@ and normalize_add e  =
     | _ ->  [],[e] in
   let c,rest = lin e in
   if c=[] then e
-  else 
-    try		
-      let r = List.fold_left (fun a c-> 
+  else
+    try
+      let r = List.fold_left (fun a c->
           if Tree_shares.Ts.can_join a c then Tree_shares.Ts.join a c else raise Not_found) (List.hd c) (List.tl c) in
       List.fold_left (fun a c-> Add (a,c,no_pos)) (Tsconst (r,no_pos)) rest 
     with | Not_found -> e

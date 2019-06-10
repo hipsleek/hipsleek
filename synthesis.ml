@@ -1137,7 +1137,6 @@ let rec exp2cast (exp: CP.exp) = match exp with
   | CP.Add (e1, e2, loc) ->
     let n_e1, n_e2 = exp2cast e1, exp2cast e2 in
     let name = C.mingle_name "add" [Int; Int] in
-    (* let args = [n_e1; n_e2] in *)
     C.SCall {
       C.exp_scall_type = Int;
       C.exp_scall_method_name = name;
@@ -1148,27 +1147,6 @@ let rec exp2cast (exp: CP.exp) = match exp with
       C.exp_scall_path_id = None;
       C.exp_scall_pos = no_pos
     }
-  (* | CP.Subtract (e1, e2, loc) ->
-   *   let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
-   *   I.Binary { I.exp_binary_op = I.OpMinus;
-   *              I.exp_binary_oper1 = n_e1;
-   *              I.exp_binary_oper2 = n_e2;
-   *              I.exp_binary_path_id = None;
-   *              I.exp_binary_pos = loc}
-   * | CP.Mult (e1, e2, loc) ->
-   *   let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
-   *   I.Binary { I.exp_binary_op = I.OpMult;
-   *              I.exp_binary_oper1 = n_e1;
-   *              I.exp_binary_oper2 = n_e2;
-   *              I.exp_binary_path_id = None;
-   *              I.exp_binary_pos = loc}
-   * | CP.Div (e1, e2, loc) ->
-   *   let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
-   *   I.Binary { I.exp_binary_op = I.OpDiv;
-   *              I.exp_binary_oper1 = n_e1;
-   *              I.exp_binary_oper2 = n_e2;
-   *              I.exp_binary_path_id = None;
-   *              I.exp_binary_pos = loc} *)
   | _ -> report_error no_pos ("exp2cast:" ^ (pr_exp exp) ^"not handled")
 
 let pf_to_iast (pf: CP.p_formula) = match pf with
@@ -1223,8 +1201,17 @@ let mkAssign exp1 exp2 = I.mkAssign I.OpAssign exp1 exp2 None no_pos
 
 let mkSeq exp1 exp2 = I.mkSeq exp1 exp2 no_pos
 
-let st_core2cast st : Cast.exp option = match st.stc_rule with
+let rec st_core2cast st : Cast.exp option = match st.stc_rule with
   | RlSkip -> None
+  | RlExistsLeft _ | RlExistsRight _ | RlFramePred _ | RlFrameData _
+  | RlUnfoldPost _ | RlUnfoldPre _ ->
+    begin
+      let sts = List.map st_core2cast st.stc_subtrees in
+      match sts with
+      | [] -> None
+      | [h] -> h
+      | _ -> report_error no_pos "st_core2cast: no more than one st"
+    end
   | RlAssign rule ->
     let var = rule.ra_lhs in
     let rhs = rule.ra_rhs in
@@ -1234,7 +1221,56 @@ let st_core2cast st : Cast.exp option = match st.stc_rule with
       C.exp_assign_rhs = c_rhs;
       C.exp_assign_pos = no_pos
     } in
-    Some assign
+    aux_c_subtrees st assign
+  | RlFRead rcore ->
+    let lhs = rcore.rfr_value in
+    let bvar = rcore.rfr_bound_var in
+    let (typ, f_name) = rcore.rfr_field in
+    let n_name = f_name ^ (string_of_int (fresh_int())) in
+    let exp_decl = C.VarDecl {
+        C.exp_var_decl_type = CP.type_of_sv lhs;
+        C.exp_var_decl_name = CP.name_of_sv lhs;
+        exp_var_decl_pos = no_pos;
+      } in
+    let body = C.Var {
+        exp_var_type = typ;
+        exp_var_name = n_name;
+        exp_var_pos = no_pos;
+      } in
+    let bind = C.Bind {
+        exp_bind_type = Void;
+        exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
+        exp_bind_fields = [(typ, n_name)];
+        exp_bind_body = body;
+        exp_bind_imm = CP.NoAnn;
+        exp_bind_param_imm = [];
+        exp_bind_read_only = true;
+        exp_bind_path_id = (3, "bind");
+        exp_bind_pos = no_pos
+      } in
+    let assign = C.Assign {
+        C.exp_assign_lhs = CP.name_of_sv lhs;
+        C.exp_assign_rhs = bind;
+        C.exp_assign_pos = no_pos;
+      } in
+    let bind = mkCSeq exp_decl assign in
+    aux_c_subtrees st bind
+
+  | RlFuncRes rule ->
+    let fname = rule.rfr_fname in
+    let params = rule.rfr_params |> List.map CP.name_of_sv in
+    let r_var = rule.rfr_return in
+    let f_call = C.SCall {
+        C.exp_scall_type = CP.type_of_sv r_var;
+        C.exp_scall_method_name = fname;
+        C.exp_scall_lock = None;
+        C.exp_scall_arguments = params;
+        C.exp_scall_ho_arg = None;
+        C.exp_scall_is_rec = true;
+        C.exp_scall_path_id = None;
+        C.exp_scall_pos = no_pos
+      } in
+    aux_c_subtrees st f_call
   | RlReturn rule ->
     let typ = CP.get_exp_type rule.r_exp in
     let name = fresh_name() in
@@ -1262,7 +1298,18 @@ let st_core2cast st : Cast.exp option = match st.stc_rule with
     let seq = mkCSeq var assign in
     let seq = mkCSeq seq return in
     Some seq
-  | _ -> report_error no_pos "st_core2cast unhandled"
+  | _ -> report_error no_pos ("st_core2cast unhandled" ^ (pr_rule st.stc_rule))
+
+and aux_c_subtrees st cur_codes =
+  let st_code = List.map st_core2cast st.stc_subtrees in
+  match st_code with
+  | [] -> Some cur_codes
+  | [h] ->
+    if h = None then Some cur_codes
+    else
+      let st_code = Gen.unsome h in
+      let seq = mkCSeq cur_codes st_code in Some seq
+  | _ -> report_error no_pos "aux_c_subtrees: not consider more than one subtree"
 
 let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
@@ -1296,7 +1343,8 @@ let rec synthesize_st_core st : Iast.exp option=
         exp_member_path_id = None;
         exp_member_pos = no_pos
       } in
-    let bind = mkAssign exp_mem rhs_var in aux_subtrees st bind
+    let bind = mkAssign exp_mem rhs_var in
+    aux_subtrees st bind
   | RlFRead rcore -> let lhs = rcore.rfr_value in
     let bvar, (typ, f_name) = rcore.rfr_bound_var, rcore.rfr_field in
     let exp_decl = I.VarDecl {
