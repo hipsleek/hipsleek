@@ -853,7 +853,7 @@ let synthesize_cast_stmts goal =
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
-    let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
+    let () = x_tinfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let c_exp = st_core2cast st_core in
     let () = x_tinfo_hp (add_str "c_exp" pr_c_exp_opt) c_exp no_pos in
     c_exp
@@ -885,7 +885,7 @@ let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
     let body = proc.C.proc_body |> Gen.unsome in
     let () = x_tinfo_hp (add_str "body" pr_c_exp) body no_pos in
     let n_body = replace_cexp_aux exp body in
-    let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
+    let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
     Some n_body
 
 let synthesize_cast iprog prog proc pre_cond post_cond vars =

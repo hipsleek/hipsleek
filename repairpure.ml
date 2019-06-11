@@ -700,7 +700,8 @@ let mk_specs (pre_cond, post_cond) =
   let specs = CF.mkEBase pre_cond (Some base) no_pos in
   specs
 
-let mk_block_proc (proc: C.proc_decl) block_exp args specs =
+let mk_block_proc (proc: C.proc_decl) block_exp specs =
+  let args = proc.C.proc_args in
   let pf = MCP.mix_of_pure (CP.mkFalse no_pos) in
   let dynamic_f = CF.mkBase_simp CF.HFalse pf in
   let dynamic_specs = CF.mkEBase dynamic_f None no_pos in
@@ -741,12 +742,24 @@ let mk_block_proc (proc: C.proc_decl) block_exp args specs =
              (x_loc ^ "init of proc_stk_of_static_specs") specs in
   proc
 
+let mk_fcode_cprocs iprog var_decls =
+  let fcode_prog = create_fcode_proc var_decls Void in
+  let fcode_prog = {iprog with
+                    I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
+                    I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
+  let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
+  let fcode_cprocs =
+    C.list_of_procs fcode_cprog
+    |> List.filter (fun x -> is_substr fcode_str x.C.proc_name) in
+  fcode_cprocs
+
+
 (* check_exp for straight-line code fragment only *)
 (* let check_exp_repair *)
 
 let create_tmpl_body_block (body : C.exp) pos_list var_decls =
   let replace_pos = List.hd pos_list in
-  let pos_list = List.tl pos_list in
+  (* let pos_list = List.tl pos_list in *)
   let fcode = create_cast_fcode var_decls replace_pos in
   let rec aux exp = match exp with
     | C.Block e ->
@@ -755,7 +768,8 @@ let create_tmpl_body_block (body : C.exp) pos_list var_decls =
     | C.Seq e ->
       let e1 = e.C.exp_seq_exp1 in
       let e1_pos = e1 |> C.pos_of_exp in
-      if List.mem e1_pos pos_list then aux e.C.exp_seq_exp2
+      if List.exists (VarGen.eq_loc e1_pos) pos_list
+      then aux e.C.exp_seq_exp2
       else
         let e2 = e.C.exp_seq_exp2 in
         let e2_pos = e2 |> C.pos_of_exp in
@@ -776,6 +790,14 @@ let create_tmpl_body_block (body : C.exp) pos_list var_decls =
       if VarGen.eq_loc loc replace_pos then fcode
       else exp in
   aux body
+
+let reset_repair_block var_decls replace_pos =
+  let () = Syn.is_return_cand := false in
+  let () = Syn.block_var_decls := var_decls in
+  let () = Synthesis.entailments := [] in
+  let () = Syn.repair_pos := Some replace_pos in
+  let () = verified_procs := [] in
+  ()
 
 let create_tmpl_body_stmt (body: C.exp) var_decls replace_pos =
   let fcode = create_cast_fcode var_decls replace_pos in
@@ -806,9 +828,9 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
                |> Gen.BList.remove_dups_eq eq_loc
                |> List.rev in
   let replace_pos = List.hd pos_list in
-  let exp = proc.C.proc_body |> Gen.unsome in
   let proc_args = proc.C.proc_args in
-  let var_decls = get_var_decls replace_pos exp in
+  let body = proc.C.proc_body |> Gen.unsome in
+  let var_decls = get_var_decls replace_pos body in
   let var_decls = proc_args @ var_decls in
   let fcode_prog = create_fcode_proc var_decls Void in
   let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
@@ -825,9 +847,10 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
                     I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
   let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
   let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
-  let n_body = create_tmpl_body_block exp pos_list var_decls in
+  let n_body = create_tmpl_body_block body pos_list var_decls in
   let n_proc = {proc with C.proc_body = Some n_body} in
   let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
+  (* report_error no_pos "to debug template proc" *)
   let fcode_cprocs = C.list_of_procs fcode_cprog in
   let n_prog = C.replace_proc prog n_proc in
   let all_procs = C.list_of_procs n_prog in
@@ -1112,3 +1135,4 @@ let create_tmpl_block (proc: C.proc_decl) (candidate: C.exp) args =
   let fcode_prog = create_fcode_proc all_args Void in
 
   None
+

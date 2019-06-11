@@ -937,6 +937,8 @@ let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Int -> true
   | _ -> false
 
+let is_node_or_int_var x = is_node_var x || is_int_var x
+
 let equal_type (var1:CP.spec_var) (var2:CP.spec_var) =
   (CP.type_of_sv var1) = (CP.type_of_sv var2)
 

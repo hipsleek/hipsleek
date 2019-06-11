@@ -158,56 +158,38 @@ let repair_sl_candidate proc args candidate =
   let tmpl_proc = create_tmpl_block proc candidate args in
   None
 
-let repair_straight_line n_iprog n_prog orig_proc proc block specs =
-  let args = proc.C.proc_args in
-  let loc = proc.C.proc_loc in
+let repair_straight_line iprog n_prog orig_proc proc block specs =
   let block_specs = mk_specs specs in
   let block_exp = create_block_exp block in
   let statements = block |> List.filter is_assign_exp in
+  let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
   let aux statement =
-    let () = x_binfo_hp (add_str "stmt" pr_c_exp) statement no_pos in
+    let () = x_binfo_hp (add_str "block body" pr_c_exp) statement no_pos in
     let replace_pos = C.pos_of_exp statement in
-    let () = x_binfo_hp (add_str "stmt pos" pr_pos) replace_pos no_pos in
     let body = proc.C.proc_body |> Gen.unsome in
     let var_decls = get_var_decls replace_pos block_exp in
-    let fcode_prog = create_fcode_proc var_decls Void in
-    let fcode_prog = {n_iprog with
-                      I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
-                      I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
-    let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
-    let fcode_cprocs =
-      C.list_of_procs fcode_cprog
-      |> List.filter (fun x -> is_substr fcode_str x.C.proc_name) in
-    let pr = (pr_list pr_cproc) in
+    let fcode_cprocs = mk_fcode_cprocs iprog var_decls in
     let n_block_body = create_tmpl_body_stmt block_exp var_decls replace_pos in
+    let () = x_binfo_hp (add_str "block body" pr_c_exp) n_block_body no_pos in
 
-    (* add block_proc to the list of proc_proc *)
-    let block_proc = mk_block_proc proc n_block_body args block_specs in
+    let block_proc = mk_block_proc proc n_block_body block_specs in
     let all_procs = C.list_of_procs n_prog in
     let all_procs = all_procs @ fcode_cprocs in
     let all_procs = block_proc::all_procs in
     let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
     let n_prog = {n_prog with new_proc_decls = n_hashtbl} in
 
-    (* check_exp to generate constraints *)
-    let () = x_tinfo_hp (add_str "block proc" pr_cproc) block_proc no_pos in
-    let () = Syn.is_return_cand := false in
     let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls in
-    let () = Syn.block_var_decls := var_decls in
-    let () = Synthesis.entailments := [] in
-    let () = verified_procs := [] in
-    let _ = Typechecker.check_proc n_iprog n_prog block_proc None [] in
+    let () = reset_repair_block var_decls replace_pos in
+    let _ = Typechecker.check_proc iprog n_prog block_proc None [] in
     let () = x_binfo_pp "START SYNTHESIS REPAIR-BLOCK SOLUTION" no_pos in
-    let () = Syn.repair_pos := Some replace_pos in
     let body = orig_proc.C.proc_body |> Gen.unsome in
     let var_decls = get_var_decls replace_pos body in
     let () = x_tinfo_hp (add_str "body" pr_c_exp) body no_pos in
     let var_decls = var_decls @ (orig_proc.C.proc_args) in
     let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls
-                    |> List.filter (fun x ->
-                        Syn.is_int_var x || Syn.is_node_var x) in
-    let () = x_binfo_hp (add_str "var_decls" pr_vars) var_decls no_pos in
-    Synthesizer.synthesize_block_statements n_iprog n_prog proc
+                    |> List.filter Syn.is_node_or_int_var in
+    Synthesizer.synthesize_block_statements iprog n_prog proc
       block_proc var_decls in
   let repair_block_stmt cur_res statement =
     if cur_res != None then cur_res
@@ -243,14 +225,22 @@ let repair_cproc iprog : bool =
     let leaf_nodes = get_leaf_nodes blocks in
     let pr_leaves = pr_list pr_c_exps in
     let () = x_tinfo_hp (add_str "leaves" pr_leaves) leaf_nodes no_pos in
-    let pr_cp = pr_list string_of_bool in
-    let () = x_tinfo_hp (add_str "check_post" pr_cp) check_post no_pos in
-    let pairs = List.combine leaf_nodes check_post in
-    let blocks = pairs |> List.filter (fun (_, x) -> x) |> List.map fst in
-    let blocks = List.filter (fun x -> x != []) blocks in
-    let () = x_binfo_hp (add_str "blocks" pr_leaves) blocks no_pos in
-    (* to generate all traces leading to the error *)
-    (* BUT, first try all leave blocks first *)
+    let blocks =
+      if List.length check_post = List.length leaf_nodes then
+        let pairs = List.combine leaf_nodes check_post in
+        let blocks = pairs |> List.filter (fun (_, x) -> x) |> List.map fst in
+        let blocks = List.filter (fun x -> x != []) blocks in
+        blocks
+      else if !repair_loc != None then
+        let repair_pos = !repair_loc |> Gen.unsome in
+        let helper pos exp_list =
+          let pos_list = exp_list |> List.map C.pos_of_exp in
+          let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
+                                = p2.start_pos.Lexing.pos_lnum in
+          List.exists (eq_loc_ln pos) pos_list in
+        let blocks = leaf_nodes |> List.filter (helper repair_pos) in
+        blocks
+      else [] in
     let helper cur_res block =
       if not(cur_res) then
         let n_proc = repair_block iprog cprog cproc block in
