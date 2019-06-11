@@ -140,14 +140,11 @@ let get_stmt_candidates (exp: I.exp) =
 let rec get_var_decls pos (exp: C.exp) = match exp with
   | C.VarDecl var ->
     let v_pos = var.C.exp_var_decl_pos in
-    let () = x_tinfo_hp (add_str "exps" pr_c_exp) exp no_pos in
-    let () = x_tinfo_hp (add_str "v_pos" pr_pos) v_pos no_pos in
-    if get_start_lnum v_pos <= get_start_lnum pos then
+    if get_start_lnum v_pos < get_start_lnum pos then
       let v_name = var.C.exp_var_decl_name in
       let v_typ = var.C.exp_var_decl_type in
       [(v_typ, v_name)]
     else []
-  (* | C.Assign e -> get_var_decls pos e.C.exp_assign_rhs *)
   | C.Seq seq -> (get_var_decls pos seq.C.exp_seq_exp1) @
                  (get_var_decls pos seq.C.exp_seq_exp2)
   | C.Cond cond -> (get_var_decls pos cond.C.exp_cond_then_arm) @
@@ -156,6 +153,21 @@ let rec get_var_decls pos (exp: C.exp) = match exp with
   | C.Label e -> get_var_decls pos e.C.exp_label_exp
   | _ -> []
 
+let rec get_block_var_decls pos (exp: C.exp) = match exp with
+  | C.VarDecl var ->
+    let v_pos = var.C.exp_var_decl_pos in
+    if get_start_lnum v_pos <= get_start_lnum pos then
+      let v_name = var.C.exp_var_decl_name in
+      let v_typ = var.C.exp_var_decl_type in
+      [(v_typ, v_name)]
+    else []
+  | C.Seq seq -> (get_block_var_decls pos seq.C.exp_seq_exp1) @
+                 (get_block_var_decls pos seq.C.exp_seq_exp2)
+  | C.Cond cond -> (get_block_var_decls pos cond.C.exp_cond_then_arm) @
+                   (get_block_var_decls pos cond.C.exp_cond_else_arm)
+  | C.Block b -> get_block_var_decls pos b.C.exp_block_body
+  | C.Label e -> get_block_var_decls pos e.C.exp_label_exp
+  | _ -> []
 
 let type_of_exp (exp:I.exp) : typ = match exp with
   | IntLit _ -> Int
@@ -799,27 +811,35 @@ let reset_repair_block var_decls replace_pos =
   let () = verified_procs := [] in
   ()
 
-let create_tmpl_body_stmt (body: C.exp) var_decls replace_pos =
+let create_tmpl_body_stmt (block: C.exp list) var_decls statement =
+  let replace_pos = C.pos_of_exp statement in
   let fcode = create_cast_fcode var_decls replace_pos in
-  let rec aux (exp:C.exp) = match exp with
-    | C.Seq e ->
-      let n_e1 = aux e.C.exp_seq_exp1 in
-      let n_e2 = aux e.C.exp_seq_exp2 in
-      C.Seq {e with exp_seq_exp1 = n_e1;
-                    exp_seq_exp2 = n_e2;}
-    | C.VarDecl _ -> exp
-    | C.Sharp _ -> exp
-    | _ -> let pos = C.pos_of_exp exp in
-      if eq_loc pos replace_pos then fcode
-      else exp in
-  aux body
+  let helper stmt =
+    (* let loc = C.pos_of_exp stmt in *)
+    if stmt = statement then fcode
+    else stmt in
+  let block = List.map helper block in
+  create_block_exp block
+
+  (* let rec aux (exp:C.exp) = match exp with
+   *   | C.Seq e ->
+   *     let n_e1 = aux e.C.exp_seq_exp1 in
+   *     let n_e2 = aux e.C.exp_seq_exp2 in
+   *     C.Seq {e with exp_seq_exp1 = n_e1;
+   *                   exp_seq_exp2 = n_e2;}
+   *   | C.VarDecl _ -> exp
+   *   | C.Sharp _ -> exp
+   *   | _ -> let pos = C.pos_of_exp exp in
+   *     if eq_loc pos replace_pos then fcode
+   *     else exp in
+   * aux body *)
 
 let is_var_decl (exp: C.exp) = match exp with
   | C.VarDecl _ -> true
   | _ -> false
 
-let is_assign_exp (exp: C.exp) = match exp with
-  | C.Assign _ -> true
+let is_suspect_exp (exp: C.exp) = match exp with
+  | C.Assign _ | C.Bind _ -> true
   | _ -> false
 
 let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
@@ -830,7 +850,11 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let replace_pos = List.hd pos_list in
   let proc_args = proc.C.proc_args in
   let body = proc.C.proc_body |> Gen.unsome in
-  let var_decls = get_var_decls replace_pos body in
+  let helper t = match t with
+    | Named _ | Int -> true
+    | _ -> false in
+  let var_decls = get_var_decls replace_pos body
+                |> List.filter (fun (x, _) -> helper x) in
   let var_decls = proc_args @ var_decls in
   let fcode_prog = create_fcode_proc var_decls Void in
   let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
@@ -870,269 +894,4 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
                  |> CP.remove_dups_svl in
   let () = Syn.syn_res_vars := res_vars in
-  let () = x_binfo_hp (add_str "pos_list" (string_of_int)) (List.length pos_list) no_pos in
   (n_iprog, n_prog, n_proc)
-
-(* create a simple check_proc for repair *)
-let rec check_exp_repair (prog: C.prog_decl) (proc: C.proc_decl)
-    (ctx:CF.list_failesc_context) (exp: C.exp) =
-  let rec aux ctx exp = match exp with
-    | C.Label e -> aux ctx e.C.exp_label_exp
-    | C.Seq e ->
-      let e1 = e.C.exp_seq_exp1 in
-      let e2 = e.C.exp_seq_exp2 in
-      let ctx1 = aux ctx e1 in
-      aux ctx1 e2
-    | C.Var {
-        C.exp_var_type = t;
-        C.exp_var_name = v;
-        C.exp_var_pos = pos
-      } ->
-      ctx
-    | C.IConst {
-        C.exp_iconst_val = i;
-        C.exp_iconst_pos = pos
-      } ->
-      let num = CP.IConst (i, pos) in
-      let res_var = CP.Var (CP.mkRes C.int_type, pos) in
-      let eq = CP.mkEqExp res_var num pos in
-      let f = CF.formula_of_mix_formula (MCP.mix_of_pure eq) pos in
-      CF.normalize_max_renaming_list_failesc_context f pos true ctx
-    | C.Assign {
-        C.exp_assign_lhs = v;
-        C.exp_assign_rhs = rhs;
-        C.exp_assign_pos = pos;
-      } ->
-      let ctx1 = aux ctx rhs in
-      let fct c1 =
-        let t0 = Gen.unsome (C.type_of_exp rhs) in
-        let t = if is_null_type t0 then
-            let svl = CF.fv c1.CF.es_formula in
-            try
-              let orig_sv = List.find (fun sv ->
-                  String.compare (CP.name_of_spec_var sv) v = 0) svl in
-              CP.type_of_spec_var orig_sv
-            with _ -> t0
-          else t0 in
-        let vsv = CP.SpecVar (t, v, Primed) in
-        let tmp_vsv = CP.fresh_spec_var vsv in
-        let compose_es =
-          CF.subst [(vsv, tmp_vsv); ((CP.mkRes t), vsv)] c1.CF.es_formula in
-        (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
-      CF.transform_list_failesc_context (idf,idf,fct) ctx1
-    | C.VarDecl _ -> ctx
-    | C.Sharp {
-        C.exp_sharp_type =t;
-        C.exp_sharp_flow_type = ft;
-        C.exp_sharp_val = v;
-        C.exp_sharp_unpack = un;
-        C.exp_sharp_path_id = pid;
-        C.exp_sharp_pos = pos }	->
-      let look_up_typ_first_fld obj_name =
-        let dclr = C.look_up_data_def_raw prog.C.prog_data_decls obj_name in
-        let (t,_),_ = (List.hd dclr.Cast.data_fields) in
-        t in
-      let nctx = match v with
-        | Sharp_var (t,v) ->
-          let t1 = (C.get_sharp_flow ft) in
-          let ctx, vr,vf =
-            let sharp_val = CP.SpecVar (t, v, Primed) in
-            let eres_var = CP.mkeRes t in
-            let res_var = CP.mkRes t in
-            if is_subset_flow t1 !raisable_flow_int ||
-               is_subset_flow t1 !loop_ret_flow_int
-            then
-              match t with
-              | Named objn -> (
-                  let ft = (look_up_typ_first_fld objn) in
-                  let res_inside_exc = (CP.mkRes ft) in
-                  try
-                    let dnode =Cfutil.look_up_first_field prog ctx objn in
-                    let v_exc = (List.find (fun sv ->
-                        (Cpure.type_of_spec_var sv)== ft)
-                        dnode.Cformula.h_formula_data_arguments) in
-                    let fr_v_exc = CP.fresh_spec_var v_exc in
-                    let p = CP.mkEqVar v_exc res_inside_exc pos in
-                    let ctx_w_pure = CF.combine_pure_list_failesc_context
-                        (MCP.mix_of_pure p) pos true ctx in
-                    (ctx_w_pure,eres_var,sharp_val)
-                  with _ -> (ctx,eres_var,sharp_val))
-              | _ -> ctx,eres_var, sharp_val
-            else ctx, res_var, sharp_val in
-          let pf = MCP.mix_of_pure (CP.mkEqVar vr vf pos) in
-          let tmp = CF.formula_of_mix_formula pf pos in
-          CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
-        | _ -> report_error no_pos "Sharp: not handled" in
-      let r = match ft with
-        | Sharp_ct nf ->
-          if not un then
-            let helper es = CF.Ctx {
-                es with CF.es_formula =
-                          CF.set_flow_in_formula nf es.CF.es_formula} in
-            CF.transform_list_failesc_context (idf,idf, helper) nctx
-          else
-            let helper es = CF.Ctx {
-                es with CF.es_formula = CF.set_flow_to_link_f []
-                            es.CF.es_formula no_pos} in
-            CF.transform_list_failesc_context (idf,idf, helper) nctx
-        | Sharp_id v ->
-          CF.transform_list_failesc_context
-            (idf,idf,
-             (fun es -> CF.Ctx
-                 {es with
-                  CF.es_formula =
-                    CF.set_flow_in_formula (CF.get_flow_from_stack v [] pos)
-                      es.CF.es_formula})) nctx in
-      let res = CF.add_path_id_ctx_failesc_list r (pid,0) (-1) in
-      res
-    | C.SCall {
-        C.exp_scall_type = ret_t;
-        C.exp_scall_method_name = mn;
-        C.exp_scall_lock = lock;
-        C.exp_scall_arguments = vs;
-        C.exp_scall_ho_arg = ha;
-        C.exp_scall_is_rec = is_rec_flag;
-        C.exp_scall_path_id = pid;
-        C.exp_scall_pos = pos} ->
-      let mn_str = Cast.unmingle_name mn in
-      let proc0 = proc in
-
-      (*clear history*)
-      let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
-      let proc = C.look_up_proc_def pos prog.new_proc_decls mn in
-      let farg_types, farg_names = List.split proc.proc_args in
-      let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)
-                                     ) farg_names farg_types in
-      let actual_spec_vars =
-        List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
-      let check_pre_post_orig org_spec (sctx:CF.list_failesc_context)
-          should_output_html : CF.list_failesc_context =
-        let org_spec = if !Globals.change_flow
-          then CF.change_spec_flow org_spec else org_spec in
-        let org_spec2 = org_spec in
-        let stripped_spec = org_spec2 in
-        let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
-            (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec)
-               (CF.struc_post_fv stripped_spec))
-            (farg_spec_vars@prog.Cast.prog_logical_vars) in
-        let pre_free_vars =
-          List.filter (fun v -> let t = CP.type_of_spec_var v
-                        in not(is_RelT t) && t != HpT) pre_free_vars in
-        (*LOCKSET: ls is not free var*)
-        let ls_var = [(CP.mkLsVar Unprimed)] in
-        let lsmu_var = [(CP.mkLsmuVar Unprimed)] in
-        let waitlevel_var = [(CP.mkWaitlevelVar Unprimed)] in
-        let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v
-                                                  <> Globals.ls_name
-                                                  && CP.name_of_spec_var v
-                                                     <> Globals.lsmu_name
-                                                  && CP.name_of_spec_var v
-                                                     <>
-                                                     Globals.waitlevel_name)
-            pre_free_vars in
-        let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
-        let renamed_spec =
-          if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec)
-          else (CF.rename_struc_clash_bound_vars stripped_spec
-                  (CF.formula_of_list_failesc_context sctx)) in
-        let st1 = List.combine pre_free_vars pre_free_vars_fresh in
-        let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
-        let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
-        let renamed_spec = CF.subst_struc st1 renamed_spec in
-        let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
-        let renamed_spec =
-          match proc.proc_ho_arg, ha with
-          | Some hv, Some ha ->
-            let ht, hn = hv in
-            let hsv = CP.SpecVar (ht, hn, Unprimed) in
-            CF.subst_hvar_struc renamed_spec [(hsv, ha)]
-          | _ -> renamed_spec in
-
-        let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
-        (*ALSO rename ls to ls',lsmu to lsmu'*)
-        let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_var in
-        let st_lsmu = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) lsmu_var in
-        let st_waitlevel =
-          waitlevel_var |> List.map (fun v -> (CP.to_unprimed v,
-                                               CP.to_primed v)) in
-        let st3= st2@st_ls@st_lsmu@st_waitlevel in
-        let pre2 = CF.subst_struc_pre st3 renamed_spec in
-        let new_spec = (Cprinter.string_of_struc_formula pre2) in
-
-
-        let rs, prf = Solver.heap_entail_struc_list_failesc_context_init 6
-            prog false true sctx pre2 None None None pos pid in
-        rs in
-      let check_pre_post ir org_spec (sctx:CF.list_failesc_context)
-          should_output_html : CF.list_failesc_context =
-        let pr2 = Cprinter.string_of_list_failesc_context in
-        let pr3 = Cprinter.string_of_struc_formula in
-        let wrap_fnc = if CF.is_infer_pre_must org_spec
-          then Wrapper.wrap_err_must
-          else Wrapper.wrap_err_pre in
-        let pre_post_op_wrapper a b c = wrap_fnc (check_pre_post_orig a b) c in
-        let pk = if ir then Others.PK_PRE_REC else Others.PK_PRE in
-        let f = Others.wrap_proving_kind pk (pre_post_op_wrapper org_spec sctx) in
-        let is_post_false = CF.is_struc_false_post org_spec in
-        let f x =
-          if is_post_false then
-            if !Globals.new_trace_classic then
-              Wrapper.wrap_msg "check pre/post classic"
-                (Wrapper.wrap_classic x_loc (Some true) f) x
-            else (Wrapper.wrap_classic x_loc (Some true) f) x
-          else f x in
-        Debug.no_2 "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->
-            f should_output_html) org_spec sctx in
-      let scall_pre_cond_pushed = false in
-      let res =
-        if (CF.isFailListFailescCtx_new ctx) then
-          ctx
-        else
-          let pre_with_new_pos = CF.subst_pos_struc_formula pos
-              (proc.proc_stk_of_static_specs#top) in
-          check_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed in
-
-      if (CF.isSuccessListFailescCtx_new res) then
-        let res =
-          let () = C.update_callee_hpdefs_proc
-              prog.C.new_proc_decls proc0.proc_name mn in
-          let idf = (fun c -> c) in
-          let err_kind_msg = if CF.is_infer_pre_must
-              (proc.proc_stk_of_static_specs#top) then "must" else "may" in
-          let to_print = "Proving precondition in method "
-                               ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^
-                               ") Failed (" ^  err_kind_msg ^ ")" in
-          CF.transform_list_failesc_context (
-            idf,idf,
-            (fun es -> CF.Ctx{es with
-                              CF.es_formula
-                              = Norm.imm_norm_formula prog
-                                  es.CF.es_formula
-                                  Solver.unfold_for_abs_merge pos;
-                              CF.es_final_error
-                              = CF.acc_error_msg es.CF.es_final_error to_print})) res in
-        res
-      else
-        Err.report_error {
-          Err.error_loc = pos;
-          Err.error_text = Printf.sprintf
-              "Proving precondition in method failed."
-        }
-
-| _ -> report_error no_pos
-    ("check_exp_repair: not handled" ^ (pr_c_exp exp)) in
-aux ctx exp
-
-(* create template block: when specs of block is inferred *)
-(* list of statements *)
-(* just work for the example first *)
-
-let create_tmpl_block (proc: C.proc_decl) (candidate: C.exp) args =
-  let replace_pos = C.pos_of_exp candidate in
-  let body = proc.C.proc_body |> Gen.unsome in
-  let n_args = get_var_decls replace_pos body in
-  let all_args = args @ n_args in
-  let fcode_prog = create_fcode_proc all_args Void in
-
-  None
-

@@ -154,43 +154,43 @@ let repair_iprog (iprog:I.prog_decl) : bool =
       true
   | _ -> false
 
-let repair_sl_candidate proc args candidate =
-  let tmpl_proc = create_tmpl_block proc candidate args in
-  None
-
 let repair_straight_line iprog n_prog orig_proc proc block specs =
   let block_specs = mk_specs specs in
-  let block_exp = create_block_exp block in
-  let statements = block |> List.filter is_assign_exp in
+  let helper t = match t with
+    | Named _ | Int -> true
+    | _ -> false in
+  let statements = block |> List.filter is_suspect_exp in
   let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
+  let () = x_binfo_hp (add_str "stats" pr_c_exps) statements no_pos in
   let aux statement =
-    let () = x_binfo_hp (add_str "block body" pr_c_exp) statement no_pos in
+    let block_exp = create_block_exp block in
     let replace_pos = C.pos_of_exp statement in
     let body = proc.C.proc_body |> Gen.unsome in
-    let var_decls = get_var_decls replace_pos block_exp in
+    let orig_body = orig_proc.C.proc_body |> Gen.unsome in
+    let var_decls = get_block_var_decls replace_pos orig_body in
+    let var_decls = var_decls @ (orig_proc.C.proc_args)
+                    |> List.filter (fun (x, _) -> helper x) in
     let fcode_cprocs = mk_fcode_cprocs iprog var_decls in
-    let n_block_body = create_tmpl_body_stmt block_exp var_decls replace_pos in
+    let n_block_body = create_tmpl_body_stmt block var_decls statement in
     let () = x_binfo_hp (add_str "block body" pr_c_exp) n_block_body no_pos in
-
+    (* report_error no_pos "to debug" in *)
     let block_proc = mk_block_proc proc n_block_body block_specs in
     let all_procs = C.list_of_procs n_prog in
     let all_procs = all_procs @ fcode_cprocs in
     let all_procs = block_proc::all_procs in
     let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
     let n_prog = {n_prog with new_proc_decls = n_hashtbl} in
-
     let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls in
+    let var_decls = var_decls |> List.filter Syn.is_node_or_int_var in
     let () = reset_repair_block var_decls replace_pos in
-    let _ = Typechecker.check_proc iprog n_prog block_proc None [] in
-    let () = x_binfo_pp "START SYNTHESIS REPAIR-BLOCK SOLUTION" no_pos in
-    let body = orig_proc.C.proc_body |> Gen.unsome in
-    let var_decls = get_var_decls replace_pos body in
-    let () = x_tinfo_hp (add_str "body" pr_c_exp) body no_pos in
-    let var_decls = var_decls @ (orig_proc.C.proc_args) in
-    let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls
-                    |> List.filter Syn.is_node_or_int_var in
-    Synthesizer.synthesize_block_statements iprog n_prog proc
-      block_proc var_decls in
+    begin
+      try
+        let _ = Typechecker.check_proc iprog n_prog block_proc None [] in
+        let () = x_binfo_pp "START SYNTHESIS REPAIR-BLOCK SOLUTION" no_pos in
+        Synthesizer.synthesize_block_statements iprog n_prog proc
+          block_proc var_decls
+      with _ -> None
+    end in
   let repair_block_stmt cur_res statement =
     if cur_res != None then cur_res
     else aux statement in
@@ -200,6 +200,7 @@ let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =
   let orig_proc = proc in
   let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc block in
+  let () = x_tinfo_hp (add_str "templ_proc" pr_cproc) n_proc no_pos in
   try
     let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
     let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
