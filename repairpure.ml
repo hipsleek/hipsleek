@@ -775,19 +775,26 @@ let create_tmpl_body_block_x (body : C.exp) (block : C.exp list) var_decls =
   let replace_exp = block |> List.rev |> List.hd in
   let removed_exps = block |> List.rev |> List.tl in
   let fcode = create_cast_fcode var_decls replace_pos in
+  let rec helper exp = match exp with
+    | C.Block e ->
+      helper e.C.exp_block_body
+    | C.Seq e ->
+      (helper e.C.exp_seq_exp1) @ (helper e.C.exp_seq_exp2)
+    | C.Label e -> helper e.C.exp_label_exp
+    | _ -> [exp] in
   let rec aux exp = match exp with
     | C.Block e ->
       let n_e = aux e.C.exp_block_body in
       C.Block {e with exp_block_body = n_e}
     | C.Seq e ->
       let e1 = e.C.exp_seq_exp1 in
-      if List.mem e1 removed_exps
+      let e1_list = helper e1 in
+      let subset l1 l2 = List.for_all (fun e -> List.mem e l2) l1 in
+      if subset e1_list removed_exps
       then aux e.C.exp_seq_exp2
       else
         let e2 = e.C.exp_seq_exp2 in
-        if List.mem e2 removed_exps
-        then aux e1
-        else C.Seq {e with exp_seq_exp1 = aux e1;
+        C.Seq {e with exp_seq_exp1 = aux e1;
                            exp_seq_exp2 = aux e2}
     | C.Label e ->
       let n_e = aux e.C.exp_label_exp in
@@ -877,27 +884,27 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let n_body = create_tmpl_body_block body block var_decls in
   let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
   let n_proc = {proc with C.proc_body = Some n_body} in
-  report_error no_pos "to debug template proc"
-  (* let fcode_cprocs = C.list_of_procs fcode_cprog in
-   * let n_prog = C.replace_proc prog n_proc in
-   * let all_procs = C.list_of_procs n_prog in
-   * let all_procs = all_procs @ fcode_cprocs in
-   * let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
-   * let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
-   * let n_prog = {prog with new_proc_decls = n_hashtbl;
-   *                         C.prog_hp_decls = c_hp_decls} in
-   * let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
-   *                           I.prog_hp_decls = n_hp_decls} in
-   * let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
-   * let () = if is_return_block block then
-   *     Syn.is_return_cand := true
-   *   else Syn.is_return_cand := false in
-   * let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
-   * let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
-   * let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
-   *                |> CP.remove_dups_svl in
-   * let () = Syn.syn_res_vars := res_vars in
-   * (n_iprog, n_prog, n_proc) *)
+  (* report_error no_pos "to debug template proc" *)
+  let fcode_cprocs = C.list_of_procs fcode_cprog in
+  let n_prog = C.replace_proc prog n_proc in
+  let all_procs = C.list_of_procs n_prog in
+  let all_procs = all_procs @ fcode_cprocs in
+  let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
+  let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
+  let n_prog = {prog with new_proc_decls = n_hashtbl;
+                          C.prog_hp_decls = c_hp_decls} in
+  let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
+                            I.prog_hp_decls = n_hp_decls} in
+  let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
+  let () = if is_return_block block then
+      Syn.is_return_cand := true
+    else Syn.is_return_cand := false in
+  let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
+  let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+  let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
+                 |> CP.remove_dups_svl in
+  let () = Syn.syn_res_vars := res_vars in
+  (n_iprog, n_prog, n_proc)
 
 
 let buggy_num_strategy body =
