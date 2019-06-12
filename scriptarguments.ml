@@ -808,6 +808,7 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant,
    "enable strong predicate invariant");
   ("--en-repair", Arg.Set Globals.enable_repair,"enable repair process");
+  ("--infestor", Arg.Set Globals.infestor, "enable creating buggy programs");
   ("--en-i", Arg.Set Globals.enable_i,"enable interactive mode");
   ("--en-repair-templ", Arg.Set Globals.enable_repair_template,"enable repair process");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");

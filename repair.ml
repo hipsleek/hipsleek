@@ -255,6 +255,40 @@ let repair_cproc iprog : bool =
     List.fold_left helper false blocks
   | _ -> false
 
+let buggy_num_strategy body =
+  let rec aux exp = match exp with
+    | I.Block block ->
+      let n_block, res = aux block.I.exp_block_body in
+      (I.Block {block with exp_block_body = n_block}, res)
+    | I.Seq seq ->
+      let (n_e1, r1) = aux seq.I.exp_seq_exp1 in
+      let (n_e2, r2) = aux seq.I.exp_seq_exp2 in
+      (I.Seq {seq with exp_seq_exp1 = n_e1;
+                       exp_seq_exp2 = n_e2}, r1 || r1)
+    | I.Cond cond ->
+      let (n_e1, r1) = aux cond.I.exp_cond_condition in
+      let (n_e2, r2) = aux cond.I.exp_cond_then_arm in
+      let (n_e3, r3) = aux cond.I.exp_cond_else_arm in
+      let n_e = I.Cond {cond with exp_cond_condition = n_e1;
+                                  exp_cond_then_arm = n_e2;
+                                  exp_cond_else_arm = n_e3} in
+      let res = r1 || r2 || r3 in
+      (n_e, res)
+    | I.IntLit num ->
+      let n_num = num.I.exp_int_lit_val + 3 in
+      (I.IntLit {num with exp_int_lit_val = n_num}, true)
+    | _ -> (exp, false) in
+  aux body
+
+let create_buggy_proc (proc : I.proc_decl) =
+  let body = proc.I.proc_body |> Gen.unsome in
+  let n_body = buggy_num_strategy body in
+  {proc with proc_body = Some n_body}
+
+let create_buggy_progs (iprog : I.prog_decl) =
+  let procs = iprog.I.prog_proc_decls in
+  let n_procs = procs |> List.map create_buggy_proc in
+  ()
 let rec start_repair_wrapper (iprog: I.prog_decl) =
   (* let tmp = repair_iprog iprog in *)
   let tmp = repair_cproc iprog in

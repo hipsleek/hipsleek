@@ -758,6 +758,10 @@ let process_source_full source =
     reverify_with_hp_rel cprog intermediate_prog
   else ();
 
+  (* Infester *)
+  let () = if !infestor then
+      Repair.create_buggy_progs intermediate_prog in
+
   (* Stopping the prover *)
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
   (* Get the total verification time *)
