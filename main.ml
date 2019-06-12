@@ -208,8 +208,8 @@ let process_lib_file prog =
         lib_prog.Iast.prog_data_decls in
     let horm_views = Sa3.generate_horm_view tmpl_data_decls
         lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
-    (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls@horm_views)
-  in
+    (ddecls@lib_prog.Iast.prog_data_decls),
+    (vdecls@lib_prog.Iast.prog_view_decls@horm_views) in
   let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
   {prog with Iast.prog_data_decls = prog.Iast.prog_data_decls @ ddecls;
              Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
@@ -366,8 +366,7 @@ let process_source_full source =
 
   let () = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.validate || !Globals.cp_prefile) then
-      process_validate repair_input_prog else repair_input_prog
-  in
+      process_validate repair_input_prog else repair_input_prog in
   let prog = process_lib_file prog in
   let () = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
@@ -418,8 +417,7 @@ let process_source_full source =
   let prim_names =
     (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
     (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
-    ["__Exc"; "__Fail"; "__Error"; "__MayError";"__RET"]
-  in
+    ["__Exc"; "__Fail"; "__Error"; "__MayError";"__RET"] in
   let () = saved_prim_names := Some prim_names in
   let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
 
@@ -429,8 +427,7 @@ let process_source_full source =
          else
            let prog = Parser.add_tnt_prim_proc prog id in
            (prog, acc @ [id]))
-      Iast.tnt_prim_proc_tbl (prog, [])
-  in
+      Iast.tnt_prim_proc_tbl (prog, []) in
 
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
   let tnl = Iast.find_all_num_trailer prog in

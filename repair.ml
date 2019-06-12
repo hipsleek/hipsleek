@@ -255,38 +255,25 @@ let repair_cproc iprog : bool =
     List.fold_left helper false blocks
   | _ -> false
 
-let buggy_num_strategy body =
-  let rec aux exp = match exp with
-    | I.Block block ->
-      let n_block, res = aux block.I.exp_block_body in
-      (I.Block {block with exp_block_body = n_block}, res)
-    | I.Seq seq ->
-      let (n_e1, r1) = aux seq.I.exp_seq_exp1 in
-      let (n_e2, r2) = aux seq.I.exp_seq_exp2 in
-      (I.Seq {seq with exp_seq_exp1 = n_e1;
-                       exp_seq_exp2 = n_e2}, r1 || r1)
-    | I.Cond cond ->
-      let (n_e1, r1) = aux cond.I.exp_cond_condition in
-      let (n_e2, r2) = aux cond.I.exp_cond_then_arm in
-      let (n_e3, r3) = aux cond.I.exp_cond_else_arm in
-      let n_e = I.Cond {cond with exp_cond_condition = n_e1;
-                                  exp_cond_then_arm = n_e2;
-                                  exp_cond_else_arm = n_e3} in
-      let res = r1 || r2 || r3 in
-      (n_e, res)
-    | I.IntLit num ->
-      let n_num = num.I.exp_int_lit_val + 3 in
-      (I.IntLit {num with exp_int_lit_val = n_num}, true)
-    | _ -> (exp, false) in
-  aux body
+let create_buggy_proc_wrapper (body : I.exp) =
+  let n_body1 = buggy_num_dif_pos body 1 in
+  let n_body2 = buggy_num_dif_pos body 2 in
+  let n_body3, _ = buggy_mem_dif_pos body 1 in
+  let () = x_binfo_hp (add_str "n_body3" pr_exp) n_body3 no_pos in
+  let list = [n_body1; n_body2] in
+  let list = list |> List.filter (fun (_, y) -> y = 0) in
+  list |> List.map fst
 
 let create_buggy_proc (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in
-  let n_body = buggy_num_strategy body in
-  {proc with proc_body = Some n_body}
+  let n_body_list = create_buggy_proc_wrapper body in
+  let () = x_binfo_hp (add_str "proc" (pr_list pr_exp)) n_body_list no_pos in
+  proc
+  (* {proc with proc_body = Some n_body} *)
 
 let create_buggy_progs (iprog : I.prog_decl) =
   let procs = iprog.I.prog_proc_decls in
+  let procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
   let n_procs = procs |> List.map create_buggy_proc in
   ()
 let rec start_repair_wrapper (iprog: I.prog_decl) =

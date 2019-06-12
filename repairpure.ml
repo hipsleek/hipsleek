@@ -21,6 +21,7 @@ let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_hps = pr_list Iprinter.string_of_hp_decl
+let pr_exp = Iprinter.string_of_exp_repair
 let pr_exps = pr_list Iprinter.string_of_exp
 let pr_c_exps = pr_list Cprinter.string_of_exp
 let pr_c_exp =  Cprinter.string_of_exp
@@ -897,3 +898,149 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
    *                |> CP.remove_dups_svl in
    * let () = Syn.syn_res_vars := res_vars in
    * (n_iprog, n_prog, n_proc) *)
+
+
+let buggy_num_strategy body =
+  let rec aux exp changed =
+    if changed then exp, true
+    else
+      match exp with
+      | I.Block block ->
+        let n_block, res = aux block.I.exp_block_body changed in
+        (I.Block {block with exp_block_body = n_block}, res)
+      | I.Label (a, l) ->
+        let n_l, res = aux l changed in
+        (I.Label (a, n_l), res)
+      | I.Seq seq ->
+        let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
+        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+        (I.Seq {seq with exp_seq_exp1 = n_e1;
+                         exp_seq_exp2 = n_e2}, r2)
+      | I.Cond cond ->
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
+        let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
+        let n_e = I.Cond {cond with exp_cond_condition = n_e1;
+                                    exp_cond_then_arm = n_e2;
+                                    exp_cond_else_arm = n_e3} in
+        (n_e, r3)
+      | I.Assign e ->
+        let n_e1, r1 = aux e.I.exp_assign_lhs changed in
+        let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
+        (I.Assign {e with exp_assign_lhs = n_e1;
+                          exp_assign_rhs = n_e2}, r2)
+      | I.IntLit num ->
+        let n_num = num.I.exp_int_lit_val + 3 in
+        (I.IntLit {num with exp_int_lit_val = n_num}, true)
+      | I.Return e ->
+        let n_e, res = match e.I.exp_return_val with
+          | None -> None, false
+          | Some r_e ->
+            let n_r, res = aux r_e changed in
+            (Some n_r, res) in
+        (I.Return {e with exp_return_val = n_e}, res)
+      | I.Binary bin ->
+        let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
+        let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
+        (I.Binary {bin with exp_binary_oper1 = n_e1;
+                            exp_binary_oper2 = n_e2}, r2)
+      | _ -> (exp, false) in
+  aux body false
+
+let buggy_num_dif_pos body dif_num =
+  let rec aux exp changed =
+    if changed = 0 then exp, 0
+    else
+      match exp with
+      | I.Block block ->
+        let n_block, res = aux block.I.exp_block_body changed in
+        (I.Block {block with exp_block_body = n_block}, res)
+      | I.Label (a, l) ->
+        let n_l, res = aux l changed in
+        (I.Label (a, n_l), res)
+      | I.Seq seq ->
+        let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
+        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+        (I.Seq {seq with exp_seq_exp1 = n_e1;
+                         exp_seq_exp2 = n_e2}, r2)
+      | I.Cond cond ->
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
+        let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
+        let n_e = I.Cond {cond with exp_cond_condition = n_e1;
+                                    exp_cond_then_arm = n_e2;
+                                    exp_cond_else_arm = n_e3} in
+        (n_e, r3)
+      | I.Assign e ->
+        let n_e1, r1 = aux e.I.exp_assign_lhs changed in
+        let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
+        (I.Assign {e with exp_assign_lhs = n_e1;
+                          exp_assign_rhs = n_e2}, r2)
+      | I.IntLit num ->
+        if changed = 1 then
+          let n_num = num.I.exp_int_lit_val + 3 in
+          (I.IntLit {num with exp_int_lit_val = n_num}, changed - 1)
+        else (exp, changed - 1)
+      | I.Return e ->
+        let n_e, res = match e.I.exp_return_val with
+          | None -> None, changed
+          | Some r_e ->
+            let n_r, res = aux r_e changed in
+            (Some n_r, res) in
+        (I.Return {e with exp_return_val = n_e}, res)
+      | I.Binary bin ->
+        let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
+        let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
+        (I.Binary {bin with exp_binary_oper1 = n_e1;
+                            exp_binary_oper2 = n_e2}, r2)
+      | _ -> (exp, changed) in
+  aux body dif_num
+
+let buggy_mem_dif_pos body dif_num =
+  let rec aux exp changed =
+    if changed = 0 then exp, 0
+    else
+      match exp with
+      | I.Block block ->
+        let n_block, res = aux block.I.exp_block_body changed in
+        (I.Block {block with exp_block_body = n_block}, res)
+      | I.Label (a, l) ->
+        let n_l, res = aux l changed in
+        (I.Label (a, n_l), res)
+      | I.Seq seq ->
+        let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
+        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+        (I.Seq {seq with exp_seq_exp1 = n_e1;
+                         exp_seq_exp2 = n_e2}, r2)
+      | I.Cond cond ->
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
+        let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
+        let n_e = I.Cond {cond with exp_cond_condition = n_e1;
+                                    exp_cond_then_arm = n_e2;
+                                    exp_cond_else_arm = n_e3} in
+        (n_e, r3)
+      | I.Assign e ->
+        let n_e1, r1 = aux e.I.exp_assign_lhs changed in
+        let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
+        (I.Assign {e with exp_assign_lhs = n_e1;
+                          exp_assign_rhs = n_e2}, r2)
+      (* | I.CallRecv e ->
+       *   List.fold_left () changed e.I.exp_call_recv_arguments *)
+      | I.Member e ->
+        if changed = 1 then (e.I.exp_member_base, 0)
+        else (exp, changed - 1)
+      | I.Return e ->
+        let n_e, res = match e.I.exp_return_val with
+          | None -> None, changed
+          | Some r_e ->
+            let n_r, res = aux r_e changed in
+            (Some n_r, res) in
+        (I.Return {e with exp_return_val = n_e}, res)
+      | I.Binary bin ->
+        let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
+        let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
+        (I.Binary {bin with exp_binary_oper1 = n_e1;
+                            exp_binary_oper2 = n_e2}, r2)
+      | _ -> (exp, changed) in
+  aux body dif_num
