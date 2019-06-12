@@ -10,3 +10,18 @@ ensures x::node<b> * y::node<a>;
   x.val = y.val + 3; 
   y.val = t;
 }
+
+// {(((int t;
+// t = bind x to (val_9_1873) [read] in 
+// val_9_1873);
+// {(int v_int_10_1880;
+// (v_int_10_1880 = {((int v_int_10_1879;
+// (v_int_10_1879 = bind y to (val_10_1874) [read] in 
+// val_10_1874;
+// (int v_int_10_1878;
+// v_int_10_1878 = 3)));
+// add___$int~int(v_int_10_1879,v_int_10_1878))};
+// bind x to (val_10_1881) [write] in 
+// val_10_1881 = v_int_10_1880))});
+// bind y to (val_11_1882) [write] in 
+// val_11_1882 = t)}

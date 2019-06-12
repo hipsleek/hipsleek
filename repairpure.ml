@@ -86,10 +86,10 @@ let read_file filename =
     List.rev !lines
 
 let get_proc_blocks (proc : C.proc_decl) =
-  let is_seq_exp exp = match exp with
-    | C.Block _
-    | C.Seq _ -> true
-    | _ -> false in
+  (* let is_seq_exp exp = match exp with
+   *   | C.Block _
+   *   | C.Seq _ -> true
+   *   | _ -> false in *)
   let input_tree = {
       bt_statements = [];
       bt_block_left = BtEmp;
@@ -769,9 +769,10 @@ let mk_fcode_cprocs iprog var_decls =
 (* check_exp for straight-line code fragment only *)
 (* let check_exp_repair *)
 
-let create_tmpl_body_block (body : C.exp) pos_list var_decls =
-  let replace_pos = List.hd pos_list in
-  (* let pos_list = List.tl pos_list in *)
+let create_tmpl_body_block_x (body : C.exp) (block : C.exp list) var_decls =
+  let replace_pos = block |> List.map C.pos_of_exp |> List.tl |> List.hd in
+  let replace_exp = block |> List.rev |> List.hd in
+  let removed_exps = block |> List.rev |> List.tl in
   let fcode = create_cast_fcode var_decls replace_pos in
   let rec aux exp = match exp with
     | C.Block e ->
@@ -779,13 +780,12 @@ let create_tmpl_body_block (body : C.exp) pos_list var_decls =
       C.Block {e with exp_block_body = n_e}
     | C.Seq e ->
       let e1 = e.C.exp_seq_exp1 in
-      let e1_pos = e1 |> C.pos_of_exp in
-      if List.exists (VarGen.eq_loc e1_pos) pos_list
+      if List.mem e1 removed_exps
       then aux e.C.exp_seq_exp2
       else
         let e2 = e.C.exp_seq_exp2 in
-        let e2_pos = e2 |> C.pos_of_exp in
-        if List.mem e2_pos pos_list then aux e1
+        if List.mem e2 removed_exps
+        then aux e1
         else C.Seq {e with exp_seq_exp1 = aux e1;
                            exp_seq_exp2 = aux e2}
     | C.Label e ->
@@ -797,11 +797,13 @@ let create_tmpl_body_block (body : C.exp) pos_list var_decls =
       C.Cond {e with exp_cond_then_arm = e1;
                      exp_cond_else_arm = e2}
     | _ ->
-      let loc = C.pos_of_exp exp in
-      let () = x_tinfo_hp (add_str "pos" string_of_loc) loc no_pos in
-      if VarGen.eq_loc loc replace_pos then fcode
+      if exp = replace_exp then fcode
       else exp in
   aux body
+
+let create_tmpl_body_block (body: C.exp) block var_decls =
+  Debug.no_1 "create_tmpl_body_block" pr_c_exp pr_c_exp
+    (fun _ -> create_tmpl_body_block_x body block var_decls) body
 
 let reset_repair_block var_decls replace_pos =
   let () = Syn.is_return_cand := false in
@@ -871,9 +873,9 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
                     I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
   let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
   let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
-  let n_body = create_tmpl_body_block body pos_list var_decls in
+  let n_body = create_tmpl_body_block body block var_decls in
+  let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
   let n_proc = {proc with C.proc_body = Some n_body} in
-  let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
   (* report_error no_pos "to debug template proc" *)
   let fcode_cprocs = C.list_of_procs fcode_cprog in
   let n_prog = C.replace_proc prog n_proc in
