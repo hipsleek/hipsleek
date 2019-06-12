@@ -1,0 +1,17 @@
+# Omega Calculator v2.1 (based on Omega Library 2.1, July, 2008):
+# {[i] : 1 <= i <=  10
+# 	&& ! i = 3
+# 	&& ! i = 2
+# 	&& ! i = 4
+# 	&& ! i = 7
+# 	&& ! i = 6
+# 	&& ! i = 8
+# };
+
+{[1]} union
+ {[5]} union
+ {[i]: 9 <= i <= 10}
+
+# 
+# 
+# 

@@ -1,0 +1,10 @@
+cd omega_calc/obj; make oc
+make[1]: Entering directory `/home/anhoa/workspace/sleekex/omega_modified/omega_calc/obj'
+make[2]: Entering directory `/home/anhoa/workspace/sleekex/omega_modified/code_gen/obj'
+make[2]: Nothing to be done for `libcode_gen.a'.
+make[2]: Leaving directory `/home/anhoa/workspace/sleekex/omega_modified/code_gen/obj'
+make[2]: Entering directory `/home/anhoa/workspace/sleekex/omega_modified/omega_lib/obj'
+make[2]: Nothing to be done for `libomega.a'.
+make[2]: Leaving directory `/home/anhoa/workspace/sleekex/omega_modified/omega_lib/obj'
+g++ -DOMIT_QUANTIFY_CALLS -g -O0 -Wall -fPIC -DSIG_HANDLER_HAS_ONE_ARG=1 -DSHUT_UP_ABOUT_STATEMENT_WITH_NO_EFFECT_IN_DYNAMIC_ARRAY_CREATION -DBATCH_ONLY_PETIT -DDAVEW_THESIS_REDUCTIONS -DSTUDY_KILL_USE -DPETIT_KILL_OBVIOUS   -I../../basic/include -I../include -I../../code_gen/include -I../../omega_lib/include -I.    lex.yy.o y.tab.o  Exit.o  -g -O0   -L../../code_gen/obj -L../../omega_lib/obj     -lcode_gen -lomega -lm    -o oc
+make[1]: Leaving directory `/home/anhoa/workspace/sleekex/omega_modified/omega_calc/obj'

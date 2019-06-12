@@ -1,0 +1,25 @@
+# Omega Calculator v2.1 (based on Omega Library 2.1, July, 2008):
+# symbolic n,m;
+# 
+# incomingKnown := { [i1,i2] : Exists ( alpha : i1+3alpha = 1+i2 ) && 
+#                    i1 = n && i2 = m};
+# 
+# 
+# 
+# codegen incomingKnown;
+if (intMod(-n+m+1,3) == 0) {
+  s1(n,m);
+}
+
+# 
+# incomingKnown := { [i1,i2] : Exists ( alpha : i1+2alpha = 1+i2 ) &&
+#                    i1 = n && i2 = m};
+# 
+# 
+# 
+# codegen incomingKnown;
+if (intMod(n+m+1,2) == 0) {
+  s1(n,m);
+}
+
+# 

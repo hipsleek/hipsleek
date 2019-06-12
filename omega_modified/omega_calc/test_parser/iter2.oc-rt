@@ -1,0 +1,11 @@
+# Omega Calculator v2.1 (based on Omega Library 2.1, July, 2008):
+# R := { [i,j] : i <= 10 && i >= 1 && j <=100 && j >= 10};
+# 
+# codegen R;
+for(t1 = 1; t1 <= 10; t1++) {
+  for(t2 = 10; t2 <= 100; t2++) {
+    s1(t1,t2);
+  }
+}
+
+# 
