@@ -15,8 +15,6 @@ baga/.*/logs/*
 /\.mona_temp*
 /*hip$
 /*sleek$
-/\#.*
-\#.*
 xml/xml_parser.ml
 xml/xml_parser.mli
 xml/xml_lexer.ml
@@ -26,7 +24,6 @@ fixcalc.*.inf$
 fixcalc.td$
 /fixcalc.*.inp$
 fixcalc.*.inp$
-/[abcde]$
 /tmp/
 /*.log$
 /*.mli$
