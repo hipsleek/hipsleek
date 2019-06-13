@@ -524,8 +524,9 @@ let rec extract_hf_var_x hf var =
       | Some _, None -> vf1
       | None, Some _ -> vf2
       | Some _, Some _ ->
-        report_error no_pos
-          "extract_hf_var: one var cannot appear in two heap fragments"
+        let hf_str = pr_hf hf in
+        let str = "extract_hf_var error: " ^ hf_str in
+        report_error no_pos str
     end
   | _ -> None
 
@@ -1160,6 +1161,49 @@ let rec exp2cast (exp: CP.exp) = match exp with
         let seq = mkCSeq n_e1 n_e2 in
         mkCSeq seq call
     end
+  | CP.Subtract (e1, e2, loc) ->
+    let e1 = CP.norm_exp e1 in
+    let e2 = CP.norm_exp e2 in
+    let helper e1 =
+      let n_e1 = exp2cast e1 in
+      match n_e1 with
+      | C.Var var -> (n_e1, var.C.exp_var_name)
+      | _ ->
+        let n_var = fresh_name() in
+        let var = C.VarDecl {
+            C.exp_var_decl_type = CP.get_exp_type e1;
+            C.exp_var_decl_name = n_var;
+            C.exp_var_decl_pos = no_pos;
+          } in
+        let assign = C.Assign {
+            C.exp_assign_lhs = n_var;
+            C.exp_assign_rhs = n_e1;
+            C.exp_assign_pos = no_pos;
+          } in
+        let seq = mkCSeq var assign in
+        (seq, n_var) in
+    let n_e1, name1 = helper e1 in
+    let n_e2, name2 = helper e2 in
+    let name = C.mingle_name "minus" [Int; Int] in
+    let call = C.SCall {
+        C.exp_scall_type = Int;
+        C.exp_scall_method_name = name;
+        C.exp_scall_lock = None;
+        C.exp_scall_arguments = [name1; name2];
+        C.exp_scall_ho_arg = None;
+        C.exp_scall_is_rec = false;
+        C.exp_scall_path_id = None;
+        C.exp_scall_pos = no_pos
+      } in
+    begin
+      match n_e1, n_e2 with
+      | C.Var _, C.Var _ -> call
+      | C.Var _, _ -> mkCSeq n_e2 call
+      | _, C.Var _ -> mkCSeq n_e1 call
+      | _ ->
+        let seq = mkCSeq n_e1 n_e2 in
+        mkCSeq seq call
+    end
   | _ -> report_error no_pos ("exp2cast:" ^ (pr_exp exp) ^"not handled")
 
 let pf_to_iast (pf: CP.p_formula) = match pf with
@@ -1728,12 +1772,12 @@ let eliminate_useless_rules goal rules =
   let is_rule_unfold_post_usable rules =
     not (List.exists contain_sym_rules rules) in
   let n_rules = rules in
-  (* let n_rules = List.filter (fun rule -> match rule with
-   *     | RlFRead r -> is_rule_fread_usable goal r
-   *     | _ -> true) rules in *)
-  (* let n_rules = List.filter (fun rule -> match rule with
-   *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
-   *     | _ -> true) n_rules in *)
+  let n_rules = List.filter (fun rule -> match rule with
+      | RlFRead r -> is_rule_fread_usable goal r
+      | _ -> true) rules in
+  let n_rules = List.filter (fun rule -> match rule with
+      | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
+      | _ -> true) n_rules in
   n_rules
 
 let compare_rule_assign_vs_assign goal r1 r2 =

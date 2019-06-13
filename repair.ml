@@ -228,7 +228,7 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
        * List.fold_left helper None specs_list *)
   with _ -> None
 
-let repair_cproc iprog : bool =
+let repair_cproc iprog =
   match !Typechecker.repair_proc with
   | Some r_proc_name ->
     let () = Globals.start_repair := true in
@@ -257,16 +257,11 @@ let repair_cproc iprog : bool =
         blocks
       else [] in
     let helper cur_res block =
-      if not(cur_res) then
-        let n_proc = repair_one_block iprog cprog cproc block in
-        match n_proc with
-        | None -> false
-        | Some new_proc ->
-          (* output the repair result HERE*)
-          true
-      else true in
-    List.fold_left helper false blocks
-  | _ -> false
+      if cur_res = None then
+        repair_one_block iprog cprog cproc block
+      else cur_res in
+    List.fold_left helper None blocks
+  | _ -> None
 
 let create_buggy_proc_wrapper (body : I.exp) =
   let n_body1 = buggy_num_dif_pos body 1 in
@@ -292,8 +287,9 @@ let create_buggy_progs (iprog : I.prog_decl) =
 let rec start_repair_wrapper (iprog: I.prog_decl) =
   (* let tmp = repair_iprog iprog in *)
   let tmp = repair_cproc iprog in
-  let () = if tmp then
-      x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos
-    else
-      x_binfo_pp "REPAIRING FAILED\n" no_pos in
-  tmp
+  if tmp != None then
+    let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
+    true
+  else
+    let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
+    false

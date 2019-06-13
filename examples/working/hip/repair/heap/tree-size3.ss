@@ -21,3 +21,6 @@ int count(node2 z)
 	}
 }
 
+
+// ERROR: at _0:0_0:0
+// Message: exp2cast: (rs3*1)-2not handled

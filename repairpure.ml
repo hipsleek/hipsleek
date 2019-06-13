@@ -157,7 +157,7 @@ let rec get_var_decls pos (exp: C.exp) = match exp with
 let rec get_block_var_decls pos (exp: C.exp) = match exp with
   | C.VarDecl var ->
     let v_pos = var.C.exp_var_decl_pos in
-    if get_start_lnum v_pos <= get_start_lnum pos then
+    if get_start_lnum v_pos < get_start_lnum pos then
       let v_name = var.C.exp_var_decl_name in
       let v_typ = var.C.exp_var_decl_type in
       [(v_typ, v_name)]
@@ -868,7 +868,6 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
                |> Gen.BList.remove_dups_eq eq_loc
                |> List.rev in
   let replace_pos = List.hd pos_list in
-  let () = x_binfo_pp "marking \n" no_pos in
   let proc_args = proc.C.proc_args in
   let body = proc.C.proc_body |> Gen.unsome in
   let helper t = match t with
@@ -887,7 +886,6 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let eq_proc x y = eq_str x.I.proc_name y.I.proc_name in
   let procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
               |> Gen.BList.remove_dups_eq eq_proc in
-  let () = x_binfo_pp "marking \n" no_pos in
   let fcode_prog = {iprog with
                     I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
                     I.prog_proc_decls = fcode_prog.I.prog_proc_decls} in
@@ -898,7 +896,6 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let n_proc = {proc with C.proc_body = Some n_body} in
   (* report_error no_pos "to debug template proc" *)
   let fcode_cprocs = C.list_of_procs fcode_cprog in
-  let () = x_binfo_pp "marking \n" no_pos in
   let n_prog = C.replace_proc prog n_proc in
   let all_procs = C.list_of_procs n_prog in
   let all_procs = all_procs @ fcode_cprocs in
@@ -912,7 +909,6 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let () = if is_return_block block then
       Syn.is_return_cand := true
     else Syn.is_return_cand := false in
-  let () = x_binfo_pp "marking \n" no_pos in
   let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
   let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
   let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv

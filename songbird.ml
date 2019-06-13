@@ -841,7 +841,7 @@ let solve_entailments prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -1265,7 +1265,7 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
       let var_decls = !Syn.block_var_decls
                       |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
                       |> List.map CP.to_primed in
-      let ante_vars = ante_vars @ var_decls in
+      let ante_vars = ante_vars @ var_decls |> CP.remove_dups_svl in
       let pure_ante = CF.mkEmp_formula ante in
       let residue = Syn.create_pred ante_vars in
       let residue = Syn.add_formula_to_formula residue pure_ante in
