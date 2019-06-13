@@ -160,18 +160,19 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
     | Named _ | Int -> true
     | _ -> false in
   let statements = block |> List.filter is_suspect_exp in
-  let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
-  let () = x_binfo_hp (add_str "stats" pr_c_exps) statements no_pos in
-  let aux statement =
+  let sub_blocks = create_sub_blocks block in
+  (* let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
+   * let () = x_binfo_hp (add_str "stats" pr_c_exps) statements no_pos in *)
+  let aux sub_block =
     let block_exp = create_block_exp block in
-    let replace_pos = C.pos_of_exp statement in
+    let replace_pos = List.map C.pos_of_exp sub_block |> List.hd in
     let body = proc.C.proc_body |> Gen.unsome in
     let orig_body = orig_proc.C.proc_body |> Gen.unsome in
     let var_decls = get_block_var_decls replace_pos orig_body in
     let var_decls = var_decls @ (orig_proc.C.proc_args)
                     |> List.filter (fun (x, _) -> helper x) in
     let fcode_cprocs = mk_fcode_cprocs iprog var_decls in
-    let n_block_body = create_tmpl_body_stmt block var_decls statement in
+    let n_block_body = create_tmpl_body_stmt block var_decls sub_block in
     let () = x_binfo_hp (add_str "block body" pr_c_exp) n_block_body no_pos in
     (* report_error no_pos "to debug" in *)
     let block_proc = mk_block_proc proc n_block_body block_specs in
@@ -194,7 +195,7 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
   let repair_block_stmt cur_res statement =
     if cur_res != None then cur_res
     else aux statement in
-  List.fold_left repair_block_stmt None statements
+  List.fold_left repair_block_stmt None sub_blocks
 
 let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =
@@ -207,11 +208,17 @@ let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     if specs = None then None
     else
       let specs_list = specs |> Gen.unsome in
-      let helper cur_res specs =
-        if cur_res = None then
-          repair_straight_line n_iprog n_prog orig_proc n_proc block specs
-        else cur_res in
-      List.fold_left helper None specs_list
+      (* let () = x_binfo_hp (add_str "specs" (pr_list (pr_pair pr_formula pr_formula))) specs_list no_pos in *)
+      (* None *)
+      if specs_list = [] then None
+      else
+        let specs = specs_list |> List.rev |> List.hd in
+        repair_straight_line n_iprog n_prog orig_proc n_proc block specs
+      (* let helper cur_res specs =
+       *   if cur_res = None then
+       *     repair_straight_line n_iprog n_prog orig_proc n_proc block specs
+       *   else cur_res in
+       * List.fold_left helper None specs_list *)
   with _ -> None
 
 let repair_cproc iprog : bool =
@@ -221,7 +228,7 @@ let repair_cproc iprog : bool =
     let cprog, _ = Astsimp.trans_prog iprog in
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = get_proc_blocks cproc in
-    let () = x_binfo_hp (add_str "blocks" pr_bt) blocks no_pos in
+    let () = x_tinfo_hp (add_str "blocks" pr_bt) blocks no_pos in
     let check_post = !Syn.check_post_list in
     let leaf_nodes = get_leaf_nodes blocks in
     let pr_leaves = pr_list pr_c_exps in

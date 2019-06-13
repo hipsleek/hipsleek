@@ -1787,8 +1787,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos)
                                        write_f) CVP.empty_vperm_sets CF.TypeTrue
                   (CF.mkTrueFlow ()) [] pos
-            else
-              vheap in
+            else vheap in
           let () = x_tinfo_hp (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
           let vheap = x_add_1 Immutable.normalize_field_ann_formula vheap in
           let vheap = x_add Cvutil.prune_preds prog false vheap in
@@ -2487,8 +2486,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                         es.CF.es_formula
                                         Solver.unfold_for_abs_merge pos;
                                     CF.es_final_error
-                                    = CF.acc_error_msg es.CF.es_final_error to_print})) res
-              in
+                                    = CF.acc_error_msg es.CF.es_final_error
+                                        to_print})) res in
               let () = x_tinfo_hp (add_str "res: " Cprinter.string_of_list_failesc_context)
                 res no_pos in
 

@@ -821,11 +821,14 @@ let reset_repair_block var_decls replace_pos =
   let () = verified_procs := [] in
   ()
 
-let create_tmpl_body_stmt (block: C.exp list) var_decls statement =
-  let replace_pos = C.pos_of_exp statement in
+let create_tmpl_body_stmt (block: C.exp list) var_decls sub_block =
+  let replace_pos = sub_block |> List.map C.pos_of_exp |> List.hd in
   let fcode = create_cast_fcode var_decls replace_pos in
+  let statement = sub_block |> List.rev |> List.hd in
+  let to_delete = sub_block |> List.rev |> List.tl in
+  let filter x = not(List.mem x to_delete) in
+  let block = List.filter filter block in
   let helper stmt =
-    (* let loc = C.pos_of_exp stmt in *)
     if stmt = statement then fcode
     else stmt in
   let block = List.map helper block in
@@ -851,6 +854,16 @@ let is_var_decl (exp: C.exp) = match exp with
 let is_suspect_exp (exp: C.exp) = match exp with
   | C.Assign _ | C.Bind _ -> true
   | _ -> false
+
+let create_sub_blocks (block : C.exp list) =
+  let pos_list = block |> List.map C.pos_of_exp in
+  let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
+                                = p2.start_pos.Lexing.pos_lnum in
+  let pos_list = pos_list |> Gen.BList.remove_dups_eq eq_loc_ln in
+  let sub_blocks = pos_list |> List.map
+                     (fun x -> List.filter
+                         (fun y -> VarGen.eq_loc (C.pos_of_exp y) x) block) in
+  sub_blocks
 
 let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =

@@ -1,10 +1,9 @@
 data node {
-  int val;
 	node next;
 }.
 
 pred ll<n> == self = null & n = 0
-	or self::node<_, q> * q::ll<n-1>
+	or self::node<q> * q::ll<n-1>
   inv n >= 0.
 
 void append(node x, node y)
@@ -22,9 +21,16 @@ void append(node x, node y)
 // ~>
 //  (exists n_60: x::ll<n_60>@M&n_60=n1+n2).
 
-synthesize [node q_62,node x,node y]
- q_62::node<Anon_76,q_77>@M * q_77::ll<flted_7_75>@M * 
- x::node<Anon_61,q_62>@M * y::ll<n2>@M&
-x!=null & flted_7_60+1=n1 & flted_7_75+1=flted_7_60
+// synthesize [node q_62,node x,node y]
+//  q_62::node<Anon_76,q_77>@M * q_77::ll<flted_7_75>@M * 
+//  x::node<Anon_61,q_62>@M * y::ll<n2>@M&
+// x!=null & flted_7_60+1=n1 & flted_7_75+1=flted_7_60
+// ~>
+//  (exists n_56: x::ll<n_56>@M&n_56=n2+n1).
+
+synthesize [node v_node_14_1891,node x,node y]
+x::node<f_r_7364> * y::ll<n2> &
+f_r_7364=null & q_7329=null & flted_6_7328=0 & n1-1=0
 ~>
- (exists n_56: x::ll<n_56>@M&n_56=n2+n1).
+ (exists q_6: x::node<q_6> * q_6::ll<n2>&
+(-1-n2)<=0 & q_7329=null & flted_6_7328=0 & n1-1=0).

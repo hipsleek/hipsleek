@@ -1711,12 +1711,13 @@ let eliminate_useless_rules goal rules =
     | _ -> false in
   let is_rule_unfold_post_usable rules =
     not (List.exists contain_sym_rules rules) in
-  let n_rules = List.filter (fun rule -> match rule with
-      | RlFRead r -> is_rule_fread_usable goal r
-      | _ -> true) rules in
-  let n_rules = List.filter (fun rule -> match rule with
-      | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
-      | _ -> true) n_rules in
+  let n_rules = rules in
+  (* let n_rules = List.filter (fun rule -> match rule with
+   *     | RlFRead r -> is_rule_fread_usable goal r
+   *     | _ -> true) rules in *)
+  (* let n_rules = List.filter (fun rule -> match rule with
+   *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
+   *     | _ -> true) n_rules in *)
   n_rules
 
 let compare_rule_assign_vs_assign goal r1 r2 =

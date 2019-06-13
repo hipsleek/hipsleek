@@ -586,7 +586,7 @@ let choose_main_rules goal =
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ choose_rule_frame_data goal in
-  let rs = eliminate_useless_rules goal rs in
+  (* let rs = eliminate_useless_rules goal rs in *)
   let rs = reorder_rules goal rs in
   rs
 
@@ -733,9 +733,18 @@ let process_rule_unfold_pre goal rcore =
   mk_derivation_subgoals goal (RlUnfoldPre rcore) [n_goal]
 
 let process_rule_frame_pred goal rcore =
-  let eq_pairs = List.map (fun (x, y) -> CP.mkEqVar x y no_pos) rcore.rfp_pairs in
-  let eq_pf = mkAndList eq_pairs in
-  let n_post = CF.add_pure_formula_to_formula eq_pf rcore.rfp_post in
+  let eq_pairs = rcore.rfp_pairs in
+  (* let eq_pairs = (rcore.rfp_lhs, rcore.rfp_rhs)::eq_pairs in *)
+  let eq_pairs = List.map (fun (x,y) -> (y,x)) eq_pairs in
+  let () = x_binfo_hp (add_str "substs" pr_substs) eq_pairs no_pos in
+  (* let eq_pairs = List.map (fun (x, y) -> CP.mkEqVar x y no_pos) substs in
+   * let eq_pf = mkAndList eq_pairs in *)
+  let post = rcore.rfp_post in
+  let e_var = rcore.rfp_lhs in
+  (* let n_post = post in *)
+  let n_post = remove_exists_vars post [e_var] in
+  let n_post = CF.subst eq_pairs n_post in
+  (* let n_post = CF.add_pure_formula_to_formula eq_pf n_post in *)
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlFramePred rcore)::goal.gl_trace;
                            gl_pre_cond = rcore.rfp_pre} in
@@ -980,7 +989,9 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
               let () = stop := true in
               Some n_proc
             with _ -> None in
-    List.fold_left helper None hps_list
+    let hp = hps_list |> List.rev |> List.hd in
+    helper None hp
+    (* List.fold_left helper None hps_list *)
 
 let infer_block_specs (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
