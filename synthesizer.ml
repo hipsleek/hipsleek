@@ -394,10 +394,10 @@ let choose_rule_numeric_x goal =
       begin
         match defn with
         | Some def ->
+          let def = CP.norm_exp def in
           let rule = if CP.is_res_sv cur_var then
               RlReturn { r_exp = def}
             else
-              let def = CP.norm_exp def in
               RlAssign {
                 ra_lhs = cur_var;
                 ra_rhs = def;
@@ -736,7 +736,7 @@ let process_rule_frame_pred goal rcore =
   let eq_pairs = rcore.rfp_pairs in
   (* let eq_pairs = (rcore.rfp_lhs, rcore.rfp_rhs)::eq_pairs in *)
   let eq_pairs = List.map (fun (x,y) -> (y,x)) eq_pairs in
-  let () = x_binfo_hp (add_str "substs" pr_substs) eq_pairs no_pos in
+  let () = x_tinfo_hp (add_str "substs" pr_substs) eq_pairs no_pos in
   (* let eq_pairs = List.map (fun (x, y) -> CP.mkEqVar x y no_pos) substs in
    * let eq_pf = mkAndList eq_pairs in *)
   let post = rcore.rfp_post in
@@ -862,7 +862,7 @@ let synthesize_cast_stmts goal =
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
-    let () = x_tinfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
+    let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let c_exp = st_core2cast st_core in
     let () = x_tinfo_hp (add_str "c_exp" pr_c_exp_opt) c_exp no_pos in
     c_exp
@@ -897,26 +897,6 @@ let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
     let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
     Some n_body
 
-let synthesize_cast iprog prog proc pre_cond post_cond vars =
-  let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
-  let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
-  let st = synthesize_one_goal goal in
-  let st_status = get_synthesis_tree_status st in
-  let c_exp = match st_status with
-    | StValid st_core ->
-      let c_exp = st_core2cast st_core in
-      if c_exp = None then c_exp
-      else
-        let () = x_binfo_hp (add_str "exp" pr_c_exp_opt) c_exp no_pos in
-        c_exp
-    | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
-      None in
-  let n_proc = match c_exp with
-    | None -> None
-    | Some c_exp -> Some (replace_exp_cproc c_exp proc) in
-  n_proc
-
 let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
   let start_time = get_time () in
@@ -941,8 +921,8 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
         let () = x_binfo_pp "marking" no_pos in
         let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
-        let post = post_hp.Cast.hp_formula |> unprime_formula in
-        let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
+        let post = post_hp.Cast.hp_formula in
+        let pre = pre_hp.Cast.hp_formula |> remove_exists in
         let (n_iprog, res) = synthesize_wrapper iprog prog proc
             pre post syn_vars in
         if res then
@@ -1011,8 +991,8 @@ let infer_block_specs (iprog:IA.prog_decl) prog proc =
     let helper hps =
       let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
       let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
-      let post = post_hp.Cast.hp_formula |> unprime_formula in
-      let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
+      let post = post_hp.Cast.hp_formula in
+      let pre = pre_hp.Cast.hp_formula |> remove_exists in
       (pre, post) in
     let specs = hps_list |> List.map helper in
     Some specs

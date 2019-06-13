@@ -159,11 +159,10 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
   let helper t = match t with
     | Named _ | Int -> true
     | _ -> false in
-  let statements = block |> List.filter is_suspect_exp in
+  let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
   let sub_blocks = create_sub_blocks block in
-  (* let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
-   * let () = x_binfo_hp (add_str "stats" pr_c_exps) statements no_pos in *)
   let aux sub_block =
+    let () = x_binfo_hp (add_str "sub_block" pr_c_exps) sub_block no_pos in
     let block_exp = create_block_exp block in
     let replace_pos = List.map C.pos_of_exp sub_block |> List.hd in
     let body = proc.C.proc_body |> Gen.unsome in
@@ -184,6 +183,14 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
     let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls in
     let var_decls = var_decls |> List.filter Syn.is_node_or_int_var in
     let () = reset_repair_block var_decls replace_pos in
+    let () = if is_return_block sub_block then
+        let res_vars = specs |> snd |> CF.fv |> List.filter CP.is_res_sv
+                       |> CP.remove_dups_svl in
+        let () = Syn.syn_res_vars := res_vars in
+        Syn.is_return_cand := true
+      else
+        let () = Syn.syn_res_vars := [] in
+        Syn.is_return_cand := false in
     begin
       try
         let _ = Typechecker.check_proc iprog n_prog block_proc None [] in
@@ -197,22 +204,22 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
     else aux statement in
   List.fold_left repair_block_stmt None sub_blocks
 
-let repair_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
+let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =
   let orig_proc = proc in
+  let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
+  (* report_error no_pos "to debug" *)
   let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc block in
-  let () = x_tinfo_hp (add_str "templ_proc" pr_cproc) n_proc no_pos in
   try
     let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
     let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
     if specs = None then None
     else
       let specs_list = specs |> Gen.unsome in
-      (* let () = x_binfo_hp (add_str "specs" (pr_list (pr_pair pr_formula pr_formula))) specs_list no_pos in *)
-      (* None *)
       if specs_list = [] then None
       else
         let specs = specs_list |> List.rev |> List.hd in
+        let () = x_binfo_hp (add_str "specs" (pr_pair pr_formula pr_formula)) specs no_pos in
         repair_straight_line n_iprog n_prog orig_proc n_proc block specs
       (* let helper cur_res specs =
        *   if cur_res = None then
@@ -251,11 +258,10 @@ let repair_cproc iprog : bool =
       else [] in
     let helper cur_res block =
       if not(cur_res) then
-        let n_proc = repair_block iprog cprog cproc block in
+        let n_proc = repair_one_block iprog cprog cproc block in
         match n_proc with
         | None -> false
         | Some new_proc ->
-          let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
           (* output the repair result HERE*)
           true
       else true in
@@ -286,4 +292,8 @@ let create_buggy_progs (iprog : I.prog_decl) =
 let rec start_repair_wrapper (iprog: I.prog_decl) =
   (* let tmp = repair_iprog iprog in *)
   let tmp = repair_cproc iprog in
+  let () = if tmp then
+      x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos
+    else
+      x_binfo_pp "REPAIRING FAILED\n" no_pos in
   tmp

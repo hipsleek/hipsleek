@@ -1296,6 +1296,22 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
       } in
     let seq2 = mkCSeq res_var assign in
     aux_c_subtrees st seq2
+
+  | RlFuncCall rule ->
+    let fname = rule.rfc_fname in
+    let params = rule.rfc_params |> List.map CP.name_of_sv in
+    let f_call = C.SCall {
+        C.exp_scall_type = Void;
+        C.exp_scall_method_name = fname;
+        C.exp_scall_lock = None;
+        C.exp_scall_arguments = params;
+        C.exp_scall_ho_arg = None;
+        C.exp_scall_is_rec = true;
+        C.exp_scall_path_id = None;
+        C.exp_scall_pos = no_pos
+      } in
+    aux_c_subtrees st f_call
+
   | RlReturn rule ->
     let typ = CP.get_exp_type rule.r_exp in
     let name = fresh_name() in
