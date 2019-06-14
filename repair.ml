@@ -267,14 +267,17 @@ let create_buggy_proc_wrapper (body : I.exp) =
   let n_body1 = buggy_num_dif_pos body 1 in
   let n_body2 = buggy_num_dif_pos body 2 in
   let n_body3 = buggy_mem_dif_pos body 1 in
-  let list = [n_body1; n_body2; n_body3] in
+  let n_body4 = buggy_mem_dif_pos body 2 in
+  let n_body5 = buggy_mem_dif_pos body 3 in
+  let n_body6 = buggy_boolean_exp body 1 in
+  let list = [n_body1; n_body2; n_body3; n_body4; n_body5; n_body6] in
   let list = list |> List.filter (fun (_, y) -> y = 0) in
   list |> List.map fst
 
 let create_buggy_proc (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in
   let n_body_list = create_buggy_proc_wrapper body in
-  let () = x_binfo_hp (add_str "proc" (pr_list pr_exp)) n_body_list no_pos in
+  let () = x_binfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
   proc
   (* {proc with proc_body = Some n_body} *)
 

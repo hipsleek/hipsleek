@@ -525,7 +525,9 @@ let add_to_z3_proof_log_list (f: string) =
 let pr_lst s f xs = String.concat s (List.map f xs)
 
 let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
+let pr_list_bnl open_b close_b f xs  = open_b ^(pr_lst ";\n" f xs)^close_b
 let pr_list f xs = pr_list_brk "[" "]" f xs
+let pr_list_nl f xs = pr_list_bnl "[" "]" f xs
 let pr_list_angle f xs = pr_list_brk "<" ">" f xs
 let pr_list_round f xs = pr_list_brk "(" ")" f xs
 

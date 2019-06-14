@@ -1015,6 +1015,54 @@ let buggy_num_dif_pos body dif_num =
       | _ -> (exp, changed) in
   aux body dif_num
 
+let buggy_boolean_exp body dif_num =
+  let rec aux exp changed =
+    if changed = 0 then exp, 0
+    else
+      match exp with
+      | I.Block block ->
+        let n_block, res = aux block.I.exp_block_body changed in
+        (I.Block {block with exp_block_body = n_block}, res)
+      | I.Label (a, l) ->
+        let n_l, res = aux l changed in
+        (I.Label (a, n_l), res)
+      | I.Seq seq ->
+        let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
+        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+        (I.Seq {seq with exp_seq_exp1 = n_e1;
+                         exp_seq_exp2 = n_e2}, r2)
+      | I.Cond cond ->
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
+        let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
+        let n_e = I.Cond {cond with exp_cond_condition = n_e1;
+                                    exp_cond_then_arm = n_e2;
+                                    exp_cond_else_arm = n_e3} in
+        (n_e, r3)
+      | I.Assign e ->
+        let n_e1, r1 = aux e.I.exp_assign_lhs changed in
+        let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
+        (I.Assign {e with exp_assign_lhs = n_e1;
+                          exp_assign_rhs = n_e2}, r2)
+      | I.Return e ->
+        let n_e, res = match e.I.exp_return_val with
+          | None -> None, changed
+          | Some r_e ->
+            let n_r, res = aux r_e changed in
+            (Some n_r, res) in
+        (I.Return {e with exp_return_val = n_e}, res)
+      | I.Binary bin ->
+        let changed, n_op = match bin.I.exp_binary_op with
+          | I.OpEq -> (changed - 1, I.OpNeq)
+          | _ -> (changed, bin.I.exp_binary_op) in
+        let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
+        let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
+        (I.Binary {bin with exp_binary_oper1 = n_e1;
+                            exp_binary_op = n_op;
+                            exp_binary_oper2 = n_e2}, r2)
+      | _ -> (exp, changed) in
+  aux body dif_num
+
 let buggy_mem_dif_pos body dif_num =
   let rec aux exp changed =
     let rec helper args changed = match args with
