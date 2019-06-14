@@ -266,9 +266,8 @@ let repair_cproc iprog =
 let create_buggy_proc_wrapper (body : I.exp) =
   let n_body1 = buggy_num_dif_pos body 1 in
   let n_body2 = buggy_num_dif_pos body 2 in
-  let n_body3, _ = buggy_mem_dif_pos body 1 in
-  let () = x_binfo_hp (add_str "n_body3" pr_exp) n_body3 no_pos in
-  let list = [n_body1; n_body2] in
+  let n_body3 = buggy_mem_dif_pos body 1 in
+  let list = [n_body1; n_body2; n_body3] in
   let list = list |> List.filter (fun (_, y) -> y = 0) in
   list |> List.map fst
 

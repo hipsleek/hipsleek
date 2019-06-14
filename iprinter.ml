@@ -1261,13 +1261,9 @@ let rec string_of_exp = function
             if (need_parenthesis2 e) then ("(" ^ (string_of_exp e) ^ ")")
             else (string_of_exp e)
         ) in
-        let newexp = (
-          match idl with
-          | _ ->
-            if (!Globals.enable_repair) then
+        let newexp = if (!Globals.enable_repair) then
               base_str ^ "." ^ (concatenate_string_list idl "~~>")
-            else "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
-        ) in
+            else "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>") in
         newexp
   | Assign ({exp_assign_op = op;
     exp_assign_lhs = e1;

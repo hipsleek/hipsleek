@@ -25,6 +25,8 @@ let pr_exp = Iprinter.string_of_exp_repair
 let pr_exps = pr_list Iprinter.string_of_exp
 let pr_c_exps = pr_list Cprinter.string_of_exp
 let pr_c_exp =  Cprinter.string_of_exp
+let pr_int = string_of_int
+let pr_bool = string_of_bool
 let pr_vars = Cprinter.string_of_typed_spec_var_list
 let pr_pos = string_of_loc
 
@@ -1015,6 +1017,12 @@ let buggy_num_dif_pos body dif_num =
 
 let buggy_mem_dif_pos body dif_num =
   let rec aux exp changed =
+    let rec helper args changed = match args with
+      | [] -> [], changed
+      | head::tail ->
+        let n_h, n_changed = aux head changed in
+        let n_tail, n_changed = helper tail n_changed in
+        (n_h::n_tail, n_changed) in
     if changed = 0 then exp, 0
     else
       match exp with
@@ -1042,8 +1050,16 @@ let buggy_mem_dif_pos body dif_num =
         let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
         (I.Assign {e with exp_assign_lhs = n_e1;
                           exp_assign_rhs = n_e2}, r2)
-      (* | I.CallRecv e ->
-       *   List.fold_left () changed e.I.exp_call_recv_arguments *)
+      | I.CallRecv e ->
+        let args = e.I.exp_call_recv_arguments in
+        let n_args, n_changed = helper args changed in
+        let n_exp = I.CallRecv {e with exp_call_recv_arguments = n_args;} in
+        (n_exp, n_changed)
+      | I.CallNRecv e ->
+        let args = e.I.exp_call_nrecv_arguments in
+        let n_args, n_changed = helper args changed in
+        let n_exp = I.CallNRecv {e with exp_call_nrecv_arguments = n_args;} in
+        (n_exp, n_changed)
       | I.Member e ->
         if changed = 1 then (e.I.exp_member_base, 0)
         else (exp, changed - 1)
