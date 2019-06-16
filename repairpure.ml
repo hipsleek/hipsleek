@@ -58,14 +58,24 @@ and pr_btn (btn: block_tree_node) = match btn with
 
 let rec get_leaf_nodes (bt:block_tree) =
   match bt.bt_block_left, bt.bt_block_right with
-  | BtEmp, BtEmp -> [bt.bt_statements]
+  | BtEmp, BtEmp -> [[bt.bt_statements]]
   | BtEmp, BtNode right ->
-    let right_leaves = get_leaf_nodes right in
-    (* bt.bt_statements:: *)right_leaves
+    let r_traces = get_leaf_nodes right in
+    List.map (fun x -> bt.bt_statements::x) r_traces
   | BtNode left, BtEmp ->
-    get_leaf_nodes left
+    let l_trace = get_leaf_nodes left in
+    List.map (fun x -> bt.bt_statements::x) l_trace
   | BtNode left, BtNode right ->
-    (get_leaf_nodes left) @ (get_leaf_nodes right)
+    let stmts = bt.bt_statements in
+    let left = get_leaf_nodes left in
+    let right = get_leaf_nodes right in
+    let l_traces = List.map (fun x -> stmts::x) left in
+    let r_traces = List.map (fun x -> stmts::x) right in
+    l_traces @ r_traces
+    (* let l_branch = bt.bt_statements::left in
+     * let r_branch = bt.bt_statements::right in *)
+    (* [l_branch; r_branch] *)
+    (* (get_leaf_nodes left) @ (get_leaf_nodes right) *)
 
 let is_return_exp (exp:I.exp) =
   match exp with

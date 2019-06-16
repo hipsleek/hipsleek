@@ -206,6 +206,7 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
 
 let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =
+  (* None *)
   let orig_proc = proc in
   let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
   (* report_error no_pos "to debug" *)
@@ -236,29 +237,35 @@ let repair_cproc iprog =
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = get_proc_blocks cproc in
     let () = x_tinfo_hp (add_str "blocks" pr_bt) blocks no_pos in
+    (* failwith "to debug" *)
     let check_post = !Syn.check_post_list in
     let leaf_nodes = get_leaf_nodes blocks in
-    let pr_leaves = pr_list pr_c_exps in
-    let () = x_tinfo_hp (add_str "leaves" pr_leaves) leaf_nodes no_pos in
+    let pr_traces = pr_list (pr_list pr_c_exps) in
     let blocks =
       if List.length check_post = List.length leaf_nodes then
         let pairs = List.combine leaf_nodes check_post in
         let blocks = pairs |> List.filter (fun (_, x) -> x) |> List.map fst in
         let blocks = List.filter (fun x -> x != []) blocks in
         blocks
-      else if !repair_loc != None then
-        let repair_pos = !repair_loc |> Gen.unsome in
-        let helper pos exp_list =
-          let pos_list = exp_list |> List.map C.pos_of_exp in
-          let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
-                                = p2.start_pos.Lexing.pos_lnum in
-          List.exists (eq_loc_ln pos) pos_list in
-        let blocks = leaf_nodes |> List.filter (helper repair_pos) in
-        blocks
+      (* else if !repair_loc != None then
+       *   let repair_pos = !repair_loc |> Gen.unsome in
+       *   let helper pos exp_list =
+       *     let pos_list = exp_list |> List.map C.pos_of_exp in
+       *     let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
+       *                           = p2.start_pos.Lexing.pos_lnum in
+       *     List.exists (eq_loc_ln pos) pos_list in
+       *   let blocks = leaf_nodes |> List.filter (helper repair_pos) in
+       *   blocks *)
       else [] in
-    let helper cur_res block =
+    let () = x_binfo_hp (add_str "traces" pr_traces) blocks no_pos in
+    let helper cur_res block_list =
       if cur_res = None then
-        repair_one_block iprog cprog cproc block
+        let block_list = List.rev block_list in
+        let aux cur_res block =
+          if cur_res = None then
+            repair_one_block iprog cprog cproc block
+          else cur_res in
+        List.fold_left aux None block_list
       else cur_res in
     List.fold_left helper None blocks
   | _ -> None

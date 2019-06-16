@@ -838,6 +838,7 @@ let solve_entailments prog entails =
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let ptree = SBPH.solve_entailments ~timeout:(Some 5) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
+  let () = x_binfo_pp "marking" no_pos in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
