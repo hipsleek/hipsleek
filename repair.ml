@@ -260,7 +260,7 @@ let repair_cproc iprog =
     let () = x_binfo_hp (add_str "traces" pr_traces) blocks no_pos in
     let helper cur_res block_list =
       if cur_res = None then
-        let block_list = List.rev block_list in
+        (* let block_list = List.rev block_list in *)
         let aux cur_res block =
           if cur_res = None then
             repair_one_block iprog cprog cproc block
