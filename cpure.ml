@@ -16851,6 +16851,15 @@ let mk_sec_vars num root_name primed =
     )
     (Array.to_list @@ Array.init num succ)
 
+let mk_sec_vars num root_name primed =
+  Debug.no_3
+    "mk_sec_vars"
+    string_of_int
+    idf
+    VarGen.string_of_primed
+    !print_svl
+    mk_sec_vars num root_name primed
+
 let rec translate_sec_label lattice = function
   | SecLabel l ->
       let consts =
@@ -16928,11 +16937,11 @@ let rec translate_security_formula_for_infer lattice = function
             new_free_vars = nfv;
             translated_p_formula = npf } = translate_security_p_formula lattice pf in
       let extra_forms = List.map mk_bform epf in
-      let all_sv = nexv @ nfv in
-      let bound_forms = List.map (fun sv -> mkSecBnd sv no_pos) all_sv in
       let b_forms = List.map mk_bform npf in
       let combined_b_forms = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) (List.hd b_forms) (List.tl b_forms) in
       let full_f = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) combined_b_forms extra_forms in
+      let all_sv = fv full_f in
+      let bound_forms = List.map (fun sv -> mkSecBnd sv no_pos) all_sv in
       mkExists nexv full_f None no_pos, bound_forms
   | And (f1, f2, loc) ->
       let new_f1, bound_f1 = translate_security_formula_for_infer lattice f1 in
@@ -16974,10 +16983,10 @@ let rec translate_security_formula_only lattice = function
             new_free_vars = nfv;
             translated_p_formula = npf } = translate_security_p_formula lattice pf in
       let extra_forms = List.map mk_bform epf in
-      let all_sv = nexv @ nfv in
-      let bound_forms = List.map (fun sv -> mkSecBnd sv no_pos) all_sv in
       let b_forms = List.map mk_bform npf in
       let combined_b_forms = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) (List.hd b_forms) (List.tl b_forms) in
+      let all_sv = remove_dups_svl (nexv @ nfv @ fv combined_b_forms)in
+      let bound_forms = List.map (fun sv -> mkSecBnd sv no_pos) all_sv in
       let full_f = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) combined_b_forms (extra_forms @ bound_forms) in
       mkExists nexv full_f None no_pos
   | And (f1, f2, loc) ->
