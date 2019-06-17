@@ -14,6 +14,7 @@ int length(node x)
   else {
     int k;
     k = 1 + length(x.next);
+    dprint;
     return k;
   }
 }

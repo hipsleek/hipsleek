@@ -25,3 +25,10 @@ ensures x::node<b> * y::node<a>;
 // val_10_1881 = v_int_10_1880))});
 // bind y to (val_11_1882) [write] in 
 // val_11_1882 = t)}
+// RlFRead(x.val, a)
+// [RlFRead(y.val, b)
+// [RlFrameData(y, y)
+// [RlFrameData(x, x)
+// [RlAssign (int b =  (-1*a)+(2*t))
+// [RlSkip
+// []]]]]]

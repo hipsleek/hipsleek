@@ -920,7 +920,7 @@ let eq_spec_var_rec (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
-    ((String.compare v1 v2 = 0) || (String.compare ("REC" ^ v1) v2 = 0)) && (p1 = p2)
+    (eq_str v1 v2 || eq_str ("REC" ^ v1) v2) && (p1 = p2)
 
 let eq_spec_var1 (sv1: spec_var) (sv2: spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
@@ -931,7 +931,7 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
-    (String.compare v1 v2 = 0) && (p1 = p2)
+    (eq_str v1 v2) && (p1 = p2)
 
 let eq_sv = eq_spec_var
 
@@ -939,25 +939,21 @@ let eq_ident_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
-    (String.compare v1 v2 = 0) 
+    eq_str v1 v2
 
 let overlap_svl = Gen.BList.overlap_eq eq_spec_var
-
-(* let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) =  *)
-(*   let pr = !print_sv in *)
-(*   Debug.no_2 "eq_spec_var" pr pr string_of_bool eq_spec_var (sv1 : spec_var) (sv2 : spec_var) *)
 
 let eq_spec_var_unp (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
-    (String.compare v1 v2 = 0) 
+    eq_str v1 v2
 
 let eq_typed_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
-    (t1 = t2) && (String.compare v1 v2 = 0) && (p1 = p2)
+    (t1 = t2) && (eq_str v1 v2) && (p1 = p2)
 
-let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = 
+let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) =
   match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> String.compare v1 v2
 
@@ -6740,7 +6736,7 @@ and add_null f self : formula =
 
 and rel_compute e1 e2:constraint_rel = match (e1,e2) with
   | Null _, Null _ -> Equal
-  | Null _, Var (v1,_)  -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
+  | Null _, Var (v1,_)  -> if (eq_str (name_of_spec_var v1) "null") then Equal else Unknown
   | Null _, IConst (i,_) -> if i=0 then Equal else Contradicting
   | Var (v1,_), Null _ -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
   | Var (v1,_), Var (v2,_) -> if (String.compare (name_of_spec_var v1)(name_of_spec_var v2))=0 then Equal else Unknown

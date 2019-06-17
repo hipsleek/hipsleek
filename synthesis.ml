@@ -210,76 +210,6 @@ exception ERules of rule list
 let raise_rules rs = if rs != [] then raise (ERules rs) else ()
 
 (*********************************************************************
- * Constructors
- *********************************************************************)
-
-let negate_priority prio = match prio with
-  | PriLow -> PriHigh
-  | PriEqual -> PriEqual
-  | PriHigh -> PriLow
-
-let mk_goal cprog pre post vars =
-  { gl_prog = cprog;
-    gl_proc_decls = [];
-    gl_pre_cond = pre;
-    gl_post_cond = post;
-    gl_trace = [];
-    gl_vars = vars;  }
-
-let mk_goal_w_procs cprog proc_decls pre post vars =
-  { gl_prog = cprog;
-    gl_proc_decls = proc_decls;
-    gl_pre_cond = pre;
-    gl_post_cond = post;
-    gl_trace = [];
-    gl_vars = vars;  }
-
-let mk_derivation_subgoals goal rule subgoals =
-  { drv_kind = DrvSubgoals subgoals;
-    drv_rule = rule;
-    drv_goal = goal; }
-
-let mk_derivation_success goal rule =
-  { drv_kind = DrvStatus true;
-    drv_rule = rule;
-    drv_goal = goal; }
-
-let mk_derivation_fail goal rule =
-  { drv_kind = DrvStatus false;
-    drv_rule = rule;
-    drv_goal = goal; }
-
-let mk_synthesis_tree_search goal sub_trees status : synthesis_tree =
-  StSearch {
-    sts_goal = goal;
-    sts_sub_trees = sub_trees;
-    sts_status = status; }
-
-let mk_synthesis_tree_derive goal rule sub_trees status : synthesis_tree =
-  StDerive {
-    std_goal = goal;
-    std_rule = rule;
-    std_sub_trees = sub_trees;
-    std_status = status; }
-
-let mk_synthesis_tree_core goal rule sub_trees : synthesis_tree_core =
-  { stc_goal = goal;
-    stc_rule = rule;
-    stc_subtrees = sub_trees; }
-
-let mk_synthesis_tree_success goal rule : synthesis_tree =
-  let stcore = mk_synthesis_tree_core goal rule [] in
-  StDerive { std_goal = goal;
-             std_rule = rule;
-             std_sub_trees = [];
-             std_status = StValid stcore; }
-
-let mk_synthesis_tree_fail goal sub_trees msg : synthesis_tree =
-  StSearch { sts_goal = goal;
-             sts_sub_trees = sub_trees;
-             sts_status = StUnkn msg; }
-
-(*********************************************************************
  * Queries
  *********************************************************************)
 
@@ -1015,6 +945,15 @@ let get_unfold_view vars (f1:CF.formula) = match f1 with
   | CF.Exists bf -> get_unfold_view_hf vars bf.formula_exists_heap
   | _ -> []
 
+let unprime_formula_x (formula:CF.formula) =
+  let vars = CF.fv formula |> List.filter CP.is_primed in
+  let substs = vars |> List.map (fun x -> (x, CP.to_unprimed x)) in
+  CF.subst substs formula
+
+let unprime_formula (formula:CF.formula) : CF.formula =
+  Debug.no_1 "unprime_formula" pr_formula pr_formula
+    (fun _ -> unprime_formula_x formula) formula
+
 let rec has_unfold_pre trace = match trace with
   | [] -> false
   | h::t -> begin
@@ -1195,6 +1134,49 @@ let rec exp2cast (exp: CP.exp) = match exp with
         let seq = mkCSeq n_e1 n_e2 in
         mkCSeq seq call
     end
+  | CP.Mult (e1, e2, loc) ->
+    let e1 = CP.norm_exp e1 in
+    let e2 = CP.norm_exp e2 in
+    let helper e1 =
+      let n_e1 = exp2cast e1 in
+      match n_e1 with
+      | C.Var var -> (n_e1, var.C.exp_var_name)
+      | _ ->
+        let n_var = fresh_name() in
+        let var = C.VarDecl {
+            C.exp_var_decl_type = CP.get_exp_type e1;
+            C.exp_var_decl_name = n_var;
+            C.exp_var_decl_pos = no_pos;
+          } in
+        let assign = C.Assign {
+            C.exp_assign_lhs = n_var;
+            C.exp_assign_rhs = n_e1;
+            C.exp_assign_pos = no_pos;
+          } in
+        let seq = mkCSeq var assign in
+        (seq, n_var) in
+    let n_e1, name1 = helper e1 in
+    let n_e2, name2 = helper e2 in
+    let name = C.mingle_name "mult" [Int; Int] in
+    let call = C.SCall {
+        C.exp_scall_type = Int;
+        C.exp_scall_method_name = name;
+        C.exp_scall_lock = None;
+        C.exp_scall_arguments = [name1; name2];
+        C.exp_scall_ho_arg = None;
+        C.exp_scall_is_rec = false;
+        C.exp_scall_path_id = None;
+        C.exp_scall_pos = no_pos
+      } in
+    begin
+      match n_e1, n_e2 with
+      | C.Var _, C.Var _ -> call
+      | C.Var _, _ -> mkCSeq n_e2 call
+      | _, C.Var _ -> mkCSeq n_e1 call
+      | _ ->
+        let seq = mkCSeq n_e1 n_e2 in
+        mkCSeq seq call
+    end
   | _ -> report_error no_pos ("exp2cast:" ^ (pr_exp exp) ^"not handled")
 
 let pf_to_iast (pf: CP.p_formula) = match pf with
@@ -1302,6 +1284,34 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
         C.exp_assign_pos = no_pos;
       } in
     let bind = mkCSeq exp_decl assign in
+    aux_c_subtrees st bind
+
+  | RlFWrite rcore ->
+    let lhs = rcore.rfw_bound_var in
+    let (typ, f_name) = rcore.rfw_field in
+    let n_name = f_name ^ (string_of_int (fresh_int())) in
+    let rhs = rcore.rfw_value in
+    let rhs_exp = C.Var {
+        exp_var_type = typ;
+        exp_var_name = CP.name_of_sv rhs;
+        exp_var_pos = no_pos
+      } in
+    let body = C.Assign {
+        exp_assign_lhs = n_name;
+        exp_assign_rhs = rhs_exp;
+        exp_assign_pos = no_pos
+      } in
+    let bind = C.Bind {
+        exp_bind_type = Void;
+        exp_bind_bound_var = (CP.type_of_sv lhs, CP.name_of_sv lhs);
+        exp_bind_fields = [(typ, n_name)];
+        exp_bind_body = body;
+        exp_bind_imm = CP.NoAnn;
+        exp_bind_param_imm = [];
+        exp_bind_read_only = false;
+        exp_bind_path_id = (3, "bind");
+        exp_bind_pos = no_pos
+      } in
     aux_c_subtrees st bind
 
   | RlFuncRes rule ->
@@ -1758,16 +1768,17 @@ let is_rule_fread_usable goal r =
 let eliminate_useless_rules goal rules =
   let contain_sym_rules rule = match rule with
     | RlFRead _ -> true
+    (* | RlUnfoldPre _ -> true *)
     | _ -> false in
   let is_rule_unfold_post_usable rules =
     not (List.exists contain_sym_rules rules) in
   let n_rules = rules in
-  (* let n_rules = List.filter (fun rule -> match rule with
-   *     | RlFRead r -> is_rule_fread_usable goal r
-   *     | _ -> true) rules in *)
   let n_rules = List.filter (fun rule -> match rule with
-      | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
-      | _ -> true) n_rules in
+      | RlFRead r -> is_rule_fread_usable goal r
+      | _ -> true) rules in
+  (* let n_rules = List.filter (fun rule -> match rule with
+   *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
+   *     | _ -> true) n_rules in *)
   n_rules
 
 let compare_rule_assign_vs_assign goal r1 r2 =
@@ -1839,6 +1850,78 @@ let reorder_rules goal rules =
     | PriHigh -> -1 in
   List.sort cmp_rule rules
 (* List.sort sorts list increasing order *)
+
+(*********************************************************************
+ * Constructors
+ *********************************************************************)
+
+let negate_priority prio = match prio with
+  | PriLow -> PriHigh
+  | PriEqual -> PriEqual
+  | PriHigh -> PriLow
+
+let mk_goal cprog pre post vars =
+  { gl_prog = cprog;
+    gl_proc_decls = [];
+    gl_pre_cond = pre;
+    gl_post_cond = post;
+    gl_trace = [];
+    gl_vars = vars;  }
+
+let mk_goal_w_procs cprog proc_decls pre post vars =
+  let pre = unprime_formula pre in
+  let post = unprime_formula post in
+  { gl_prog = cprog;
+    gl_proc_decls = proc_decls;
+    gl_pre_cond = pre;
+    gl_post_cond = post;
+    gl_trace = [];
+    gl_vars = vars;  }
+
+let mk_derivation_subgoals goal rule subgoals =
+  { drv_kind = DrvSubgoals subgoals;
+    drv_rule = rule;
+    drv_goal = goal; }
+
+let mk_derivation_success goal rule =
+  { drv_kind = DrvStatus true;
+    drv_rule = rule;
+    drv_goal = goal; }
+
+let mk_derivation_fail goal rule =
+  { drv_kind = DrvStatus false;
+    drv_rule = rule;
+    drv_goal = goal; }
+
+let mk_synthesis_tree_search goal sub_trees status : synthesis_tree =
+  StSearch {
+    sts_goal = goal;
+    sts_sub_trees = sub_trees;
+    sts_status = status; }
+
+let mk_synthesis_tree_derive goal rule sub_trees status : synthesis_tree =
+  StDerive {
+    std_goal = goal;
+    std_rule = rule;
+    std_sub_trees = sub_trees;
+    std_status = status; }
+
+let mk_synthesis_tree_core goal rule sub_trees : synthesis_tree_core =
+  { stc_goal = goal;
+    stc_rule = rule;
+    stc_subtrees = sub_trees; }
+
+let mk_synthesis_tree_success goal rule : synthesis_tree =
+  let stcore = mk_synthesis_tree_core goal rule [] in
+  StDerive { std_goal = goal;
+             std_rule = rule;
+             std_sub_trees = [];
+             std_status = StValid stcore; }
+
+let mk_synthesis_tree_fail goal sub_trees msg : synthesis_tree =
+  StSearch { sts_goal = goal;
+             sts_sub_trees = sub_trees;
+             sts_status = StUnkn msg; }
 
 (*********************************************************************
  * Normalization rules

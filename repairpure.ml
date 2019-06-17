@@ -176,6 +176,20 @@ let rec get_block_var_decls pos (exp: C.exp) = match exp with
   | C.Label e -> get_block_var_decls pos e.C.exp_label_exp
   | _ -> []
 
+let get_trace_var_decls pos trace =
+  let aux (e : C.exp) = match e with
+    | C.VarDecl var ->
+      let v_pos = var.C.exp_var_decl_pos in
+      if get_start_lnum v_pos < get_start_lnum pos then
+        let v_name = var.C.exp_var_decl_name in
+        let v_typ = var.C.exp_var_decl_type in
+        [(v_typ, v_name)]
+      else []
+    | _ -> [] in
+  let aux_block block =
+    block |> List.map aux |> List.concat in
+  trace |> List.map aux_block |> List.concat
+
 let type_of_exp (exp:I.exp) : typ = match exp with
   | IntLit _ -> Int
   | Binary bexp ->

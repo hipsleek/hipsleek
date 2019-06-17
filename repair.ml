@@ -154,7 +154,8 @@ let repair_iprog (iprog:I.prog_decl) : bool =
       true
   | _ -> false
 
-let repair_straight_line iprog n_prog orig_proc proc block specs =
+let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)
+    trace orig_proc proc block (specs:CF.formula * CF.formula) =
   let block_specs = mk_specs specs in
   let helper t = match t with
     | Named _ | Int -> true
@@ -167,7 +168,8 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
     let replace_pos = List.map C.pos_of_exp sub_block |> List.hd in
     let body = proc.C.proc_body |> Gen.unsome in
     let orig_body = orig_proc.C.proc_body |> Gen.unsome in
-    let var_decls = get_block_var_decls replace_pos orig_body in
+    (* let var_decls = get_block_var_decls replace_pos orig_body in *)
+    let var_decls = get_trace_var_decls replace_pos trace in
     let var_decls = var_decls @ (orig_proc.C.proc_args)
                     |> List.filter (fun (x, _) -> helper x) in
     let fcode_cprocs = mk_fcode_cprocs iprog var_decls in
@@ -204,8 +206,8 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
     else aux statement in
   List.fold_left repair_block_stmt None sub_blocks
 
-let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
-    (block: C.exp list) =
+let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
+    (proc : C.proc_decl) (block: C.exp list) =
   (* None *)
   let orig_proc = proc in
   let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
@@ -222,7 +224,7 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
       else
         let specs = specs_list |> List.rev |> List.hd in
         let () = x_binfo_hp (add_str "specs" (pr_pair pr_formula pr_formula)) specs no_pos in
-        repair_straight_line n_iprog n_prog orig_proc n_proc block specs
+        repair_straight_line n_iprog n_prog trace orig_proc n_proc block specs
       (* let helper cur_res specs =
        *   if cur_res = None then
        *     repair_straight_line n_iprog n_prog orig_proc n_proc block specs
@@ -261,14 +263,14 @@ let repair_cproc iprog =
         traces
       else [] in
     let () = x_binfo_hp (add_str "traces" pr_traces) traces no_pos in
-    let helper cur_res block_list =
+    let helper cur_res trace =
       if cur_res = None then
-        let block_list = List.rev block_list in
+        let trace = List.rev trace in
         let aux cur_res block =
           if cur_res = None then
-            repair_one_block iprog cprog cproc block
+            repair_one_block iprog cprog trace cproc block
           else cur_res in
-        List.fold_left aux None block_list
+        List.fold_left aux None trace
       else cur_res in
     List.fold_left helper None traces
   | _ -> None

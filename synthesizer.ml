@@ -135,9 +135,11 @@ let choose_rule_assign goal =
 
 let choose_rule_fwrite goal =
   let pre = goal.gl_pre_cond in
-  let post = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
   let prog = goal.gl_prog in
   let pre_nodes = pre |> get_heap |> get_heap_nodes in
+  let pr_nodes = pr_list (pr_triple pr_var pr_id pr_vars) in
+  let () = x_tinfo_hp (add_str "pre_nodes" pr_nodes) pre_nodes no_pos in
   let post_nodes = post |> get_heap |> get_heap_nodes in
   let aux post_nodes (var, data_name, args) =
     try
@@ -478,15 +480,23 @@ let choose_rule_frame_pred goal =
   exists_vars |> List.map helper |> List.concat |> List.map filter
   |> List.concat
 
-let find_frame_node_var goal var =
+let find_frame_node_var goal post_var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let pre_vars = pre |> CF.fv |> List.filter is_node_var in
+  let pre_vars = pre |> CF.fv |> List.filter is_node_var
+                 |> List.filter (CP.eq_sv post_var) in
+  let pre_pf = CF.get_pure pre in
+  let helper_arg pf arg1 arg2 =
+    let conseq = CP.mkEqVar arg1 arg2 no_pos in
+    SB.check_pure_entail pf conseq in
   let helper_hf hf1 hf2 = match hf1, hf2 with
-    | CF.DataNode _, CF.DataNode _ -> true
+    | CF.DataNode dn1, CF.DataNode dn2 ->
+      let args1 = dn1.CF.h_formula_data_arguments in
+      let args2 = dn2.CF.h_formula_data_arguments in
+      List.for_all2 (helper_arg pre_pf) args1 args2
     | _ -> false in
   let helper pre_var =
     let pre_f = extract_var_f pre pre_var in
-    let post_f = extract_var_f post var in
+    let post_f = extract_var_f post post_var in
     match pre_f, post_f with
     | Some f1, Some f2 ->
       begin
@@ -501,7 +511,7 @@ let find_frame_node_var goal var =
       end
     | _ -> false in
   let frame_vars = pre_vars |> List.filter helper in
-  frame_vars |> List.map (fun x -> (var, x))
+  frame_vars |> List.map (fun x -> (post_var, x))
 
 let choose_rule_frame_data goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -774,7 +784,7 @@ let process_rule_skip goal =
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
   if List.length goal.gl_trace > 6 then
-    let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
+    let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
     let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in

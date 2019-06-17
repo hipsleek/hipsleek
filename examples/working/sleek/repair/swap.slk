@@ -11,4 +11,4 @@ data node {
 synthesize [node x, node y]
 x::node<a> * y::node<b> & true
 ~>
-(exists k: x::node<b> * y::node<k>).
+(exists k: x::node<b> * y::node<k> & k = b).
