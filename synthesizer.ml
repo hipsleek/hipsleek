@@ -946,8 +946,8 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
     else
       let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
       let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
-      let post = post_hp.Cast.hp_formula |> unprime_formula in
-      let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
+      let post = post_hp.Cast.hp_formula in
+      let pre = pre_hp.Cast.hp_formula |> remove_exists in
       let n_block = synthesize_block_wrapper prog orig_proc proc
           pre post syn_vars in
       match n_block with

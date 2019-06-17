@@ -56,26 +56,24 @@ and pr_btn (btn: block_tree_node) = match btn with
   | BtEmp -> "BtEmp"
   | BtNode bt -> "BtNode (" ^ (pr_bt bt) ^ ")"
 
-let rec get_leaf_nodes (bt:block_tree) =
-  match bt.bt_block_left, bt.bt_block_right with
-  | BtEmp, BtEmp -> [[bt.bt_statements]]
-  | BtEmp, BtNode right ->
-    let r_traces = get_leaf_nodes right in
-    List.map (fun x -> bt.bt_statements::x) r_traces
-  | BtNode left, BtEmp ->
-    let l_trace = get_leaf_nodes left in
-    List.map (fun x -> bt.bt_statements::x) l_trace
-  | BtNode left, BtNode right ->
-    let stmts = bt.bt_statements in
-    let left = get_leaf_nodes left in
-    let right = get_leaf_nodes right in
-    let l_traces = List.map (fun x -> stmts::x) left in
-    let r_traces = List.map (fun x -> stmts::x) right in
-    l_traces @ r_traces
-    (* let l_branch = bt.bt_statements::left in
-     * let r_branch = bt.bt_statements::right in *)
-    (* [l_branch; r_branch] *)
-    (* (get_leaf_nodes left) @ (get_leaf_nodes right) *)
+let get_statement_traces (bt:block_tree) =
+  let rec aux (bt:block_tree) =
+    match bt.bt_block_left, bt.bt_block_right with
+    | BtEmp, BtEmp -> [[bt.bt_statements]]
+    | BtEmp, BtNode right ->
+      let r_traces = aux right in
+      List.map (fun x -> bt.bt_statements::x) r_traces
+    | BtNode left, BtEmp ->
+      let l_trace = aux left in
+      List.map (fun x -> bt.bt_statements::x) l_trace
+    | BtNode left, BtNode right ->
+      let stmts = bt.bt_statements in
+      let left = aux left in
+      let right = aux right in
+      let l_traces = List.map (fun x -> stmts::x) left in
+      let r_traces = List.map (fun x -> stmts::x) right in
+      l_traces @ r_traces in
+  aux bt
 
 let is_return_exp (exp:I.exp) =
   match exp with
@@ -98,11 +96,7 @@ let read_file filename =
   with End_of_file -> close_in chan;
     List.rev !lines
 
-let get_proc_blocks (proc : C.proc_decl) =
-  (* let is_seq_exp exp = match exp with
-   *   | C.Block _
-   *   | C.Seq _ -> true
-   *   | _ -> false in *)
+let get_block_traces (proc : C.proc_decl) =
   let input_tree = {
       bt_statements = [];
       bt_block_left = BtEmp;
@@ -822,12 +816,16 @@ let create_tmpl_body_block (body: C.exp) block var_decls =
   Debug.no_2 "create_tmpl_body_block" pr_c_exp pr_c_exps pr_c_exp
     (fun _ _ -> create_tmpl_body_block_x body block var_decls) body block
 
-let reset_repair_block var_decls replace_pos =
+let reset_repair_straight_line var_decls replace_pos =
   let () = Syn.is_return_cand := false in
   let () = Syn.block_var_decls := var_decls in
   let () = Synthesis.entailments := [] in
   let () = Syn.repair_pos := Some replace_pos in
   let () = verified_procs := [] in
+  ()
+
+let reset_repair_block () =
+  let () = Synthesis.entailments := [] in
   ()
 
 let create_tmpl_body_stmt (block: C.exp list) var_decls sub_block =

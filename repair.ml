@@ -182,7 +182,7 @@ let repair_straight_line iprog n_prog orig_proc proc block specs =
     let n_prog = {n_prog with new_proc_decls = n_hashtbl} in
     let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls in
     let var_decls = var_decls |> List.filter Syn.is_node_or_int_var in
-    let () = reset_repair_block var_decls replace_pos in
+    let () = reset_repair_straight_line var_decls replace_pos in
     let () = if is_return_block sub_block then
         let res_vars = specs |> snd |> CF.fv |> List.filter CP.is_res_sv
                        |> CP.remove_dups_svl in
@@ -211,6 +211,7 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
   (* report_error no_pos "to debug" *)
   let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc block in
+  let () = reset_repair_block() in
   try
     let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
     let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
@@ -235,39 +236,41 @@ let repair_cproc iprog =
     let () = Globals.start_repair := true in
     let cprog, _ = Astsimp.trans_prog iprog in
     let cproc = !Syn.repair_proc |> Gen.unsome in
-    let blocks = get_proc_blocks cproc in
+    let blocks = get_block_traces cproc in
     let () = x_tinfo_hp (add_str "blocks" pr_bt) blocks no_pos in
     (* failwith "to debug" *)
     let check_post = !Syn.check_post_list in
-    let leaf_nodes = get_leaf_nodes blocks in
+    let traces = get_statement_traces blocks in
     let pr_traces = pr_list (pr_list pr_c_exps) in
-    let blocks =
-      if List.length check_post = List.length leaf_nodes then
-        let pairs = List.combine leaf_nodes check_post in
+    let traces =
+      if List.length check_post = List.length traces then
+        let pairs = List.combine traces check_post in
         let blocks = pairs |> List.filter (fun (_, x) -> x) |> List.map fst in
         let blocks = List.filter (fun x -> x != []) blocks in
         blocks
-      (* else if !repair_loc != None then
-       *   let repair_pos = !repair_loc |> Gen.unsome in
-       *   let helper pos exp_list =
-       *     let pos_list = exp_list |> List.map C.pos_of_exp in
-       *     let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
-       *                           = p2.start_pos.Lexing.pos_lnum in
-       *     List.exists (eq_loc_ln pos) pos_list in
-       *   let blocks = leaf_nodes |> List.filter (helper repair_pos) in
-       *   blocks *)
+      else if !repair_loc != None then
+        let repair_pos = !repair_loc |> Gen.unsome in
+        let helper pos exp_list =
+          let pos_list = exp_list |> List.map C.pos_of_exp in
+          let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
+                                = p2.start_pos.Lexing.pos_lnum in
+          List.exists (eq_loc_ln pos) pos_list in
+        let helper2 trace = trace |> List.filter (helper repair_pos) in
+        let traces = traces |> List.map helper2
+                     |> List.filter (fun x -> x != []) in
+        traces
       else [] in
-    let () = x_binfo_hp (add_str "traces" pr_traces) blocks no_pos in
+    let () = x_binfo_hp (add_str "traces" pr_traces) traces no_pos in
     let helper cur_res block_list =
       if cur_res = None then
-        (* let block_list = List.rev block_list in *)
+        let block_list = List.rev block_list in
         let aux cur_res block =
           if cur_res = None then
             repair_one_block iprog cprog cproc block
           else cur_res in
         List.fold_left aux None block_list
       else cur_res in
-    List.fold_left helper None blocks
+    List.fold_left helper None traces
   | _ -> None
 
 let create_buggy_proc_wrapper (body : I.exp) =
@@ -295,9 +298,13 @@ let create_buggy_progs (iprog : I.prog_decl) =
   ()
 let rec start_repair_wrapper (iprog: I.prog_decl) =
   (* let tmp = repair_iprog iprog in *)
+  let start_time = get_time () in
   let tmp = repair_cproc iprog in
   if tmp != None then
+    let r_time = get_time() -. start_time in
     let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
+    let () = x_binfo_hp (add_str "repair time" string_of_float)
+        r_time no_pos in
     true
   else
     let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
