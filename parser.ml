@@ -2178,8 +2178,7 @@ sec_expr: [
   [ l = sec_label -> P.SecLabel (Security.Label.make l)
   | lc=SELF; `LUB_SEC; cl=SELF -> P.Lub (lc, cl)
   | lc=SELF; `GLB_SEC; cl=SELF -> P.Glb (lc, cl)
-  | `RES _ -> P.SecVar (res_name, Unprimed)
-  | `IDENTIFIER id -> P.SecVar (id, Unprimed)
+  | c = cid -> P.SecVar c
 ]];
 
 cexp_w:
