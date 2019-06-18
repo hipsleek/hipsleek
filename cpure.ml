@@ -16832,6 +16832,7 @@ type sec_label_trans_res =
   {
     extra_p_formulas : p_formula list;
     new_existential_vars : spec_var list;
+    sec_vars : spec_var list;
     translated_expr : exp list
   }
 
@@ -16840,6 +16841,7 @@ type sec_p_formula_trans_res =
     extra_p_formulas : p_formula list;
     new_existential_vars : spec_var list;
     new_free_vars : spec_var list;
+    sec_vars : spec_var list;
     translated_p_formula : p_formula list
   }
 
@@ -16866,18 +16868,19 @@ let rec translate_sec_label lattice = function
         List.map
           (fun i -> mkIConst i no_pos)
           (Security.get_representation lattice l) in
-      { extra_p_formulas = []; new_existential_vars = []; translated_expr = consts }
+      { extra_p_formulas = []; new_existential_vars = []; sec_vars = []; translated_expr = consts }
   | SecVar (SpecVar(typ, var_name, primed)) ->
-      let vars =
-        mk_sec_vars (Security.representation_tuple_length lattice) var_name primed
-        |> List.map (fun v -> mkVar v no_pos) in
-      { extra_p_formulas = []; new_existential_vars = []; translated_expr = vars }
+      let sec_vars = mk_sec_vars (Security.representation_tuple_length lattice) var_name primed in
+      let vars = List.map (fun v -> mkVar v no_pos) sec_vars in
+      { extra_p_formulas = []; new_existential_vars = []; sec_vars = sec_vars; translated_expr = vars }
   | Lub (l1, l2) ->
       let { extra_p_formulas = epf1;
             new_existential_vars = nexv1;
+            sec_vars = s_vars1;
             translated_expr = exps1 } = translate_sec_label lattice l1 in
       let { extra_p_formulas = epf2;
             new_existential_vars = nexv2;
+            sec_vars = s_vars2;
             translated_expr = exps2 } = translate_sec_label lattice l2 in
       let max_var_root = fresh_name () in
       let max_vars = mk_sec_vars (Security.representation_tuple_length lattice) max_var_root Unprimed in
@@ -16890,13 +16893,16 @@ let rec translate_sec_label lattice = function
           exps2 in
       { extra_p_formulas = epf1 @ epf2 @ max_p_forms;
         new_existential_vars = nexv1 @ nexv2 @ max_vars;
+        sec_vars = s_vars1 @ s_vars2;
         translated_expr = max_var_exps }
   | Glb (l1, l2) ->
       let { extra_p_formulas = epf1;
             new_existential_vars = nexv1;
+            sec_vars = s_vars1;
             translated_expr = exps1 } = translate_sec_label lattice l1 in
       let { extra_p_formulas = epf2;
             new_existential_vars = nexv2;
+            sec_vars = s_vars2;
             translated_expr = exps2 } = translate_sec_label lattice l2 in
       let min_var_root = fresh_name () in
       let min_vars = mk_sec_vars (Security.representation_tuple_length lattice) min_var_root Unprimed in
@@ -16909,12 +16915,14 @@ let rec translate_sec_label lattice = function
           exps2 in
       { extra_p_formulas = epf1 @ epf2 @ min_p_forms;
         new_existential_vars = nexv1 @ nexv2 @ min_vars;
+        sec_vars = s_vars1 @ s_vars2;
         translated_expr = min_var_exps }
 
 let translate_security_p_formula lattice = function
   | Security (SpecVar (typ, var_name, primed), lbl, pos) ->
       let { extra_p_formulas = epf;
             new_existential_vars = nexv;
+            sec_vars = s_vars;
             translated_expr = exps } = translate_sec_label lattice lbl in
       let lte_vars = mk_sec_vars (Security.representation_tuple_length lattice) var_name primed in
       let lte_p_forms =
@@ -16927,20 +16935,22 @@ let translate_security_p_formula lattice = function
       { extra_p_formulas = epf;
         new_existential_vars = nexv;
         new_free_vars = lte_vars;
+        sec_vars = s_vars;
         translated_p_formula = lte_p_forms }
-    | pf -> { extra_p_formulas = []; new_existential_vars = []; new_free_vars = []; translated_p_formula = [pf] }
+    | pf -> { extra_p_formulas = []; new_existential_vars = []; new_free_vars = []; sec_vars = []; translated_p_formula = [pf] }
 
 let rec translate_security_formula_for_infer lattice = function
   | BForm ((pf, bf_ann), flbl) ->
       let { extra_p_formulas = epf;
             new_existential_vars = nexv;
             new_free_vars = nfv;
+            sec_vars = s_vars;
             translated_p_formula = npf } = translate_security_p_formula lattice pf in
       let extra_forms = List.map mk_bform epf in
       let b_forms = List.map mk_bform npf in
       let combined_b_forms = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) (List.hd b_forms) (List.tl b_forms) in
       let full_f = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) combined_b_forms extra_forms in
-      let all_sv = fv full_f in
+      let all_sv = nexv @ nfv @ s_vars in
       let bound_forms = List.map (fun sv -> mkSecBnd sv no_pos) all_sv in
       mkExists nexv full_f None no_pos, bound_forms
   | And (f1, f2, loc) ->
@@ -16981,11 +16991,12 @@ let rec translate_security_formula_only lattice = function
       let { extra_p_formulas = epf;
             new_existential_vars = nexv;
             new_free_vars = nfv;
+            sec_vars = s_vars;
             translated_p_formula = npf } = translate_security_p_formula lattice pf in
       let extra_forms = List.map mk_bform epf in
       let b_forms = List.map mk_bform npf in
       let combined_b_forms = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) (List.hd b_forms) (List.tl b_forms) in
-      let all_sv = remove_dups_svl (nexv @ nfv @ fv combined_b_forms)in
+      let all_sv = nexv @ nfv @ s_vars in
       let bound_forms = List.map (fun sv -> mkSecBnd sv no_pos) all_sv in
       let full_f = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) combined_b_forms (extra_forms @ bound_forms) in
       mkExists nexv full_f None no_pos
