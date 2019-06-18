@@ -136,6 +136,7 @@ let choose_rule_assign goal =
 let choose_rule_fwrite goal =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
   let prog = goal.gl_prog in
   let pre_nodes = pre |> get_heap |> get_heap_nodes in
   let pr_nodes = pr_list (pr_triple pr_var pr_id pr_vars) in
@@ -156,6 +157,8 @@ let choose_rule_fwrite goal =
       dif_fields |> List.map (fun (x, y, z) -> (var, y, z))
     with _ -> [] in
   let tuples = pre_nodes |> List.map (aux post_nodes) |> List.concat in
+  let filter (_,n_val, _) = CP.mem n_val all_vars in
+  let tuples = tuples |> List.filter filter in
   let mk_fwrite_rule (var, n_val, field) =
     RlFWrite {
       rfw_bound_var = var;

@@ -222,8 +222,9 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
       let specs_list = specs |> Gen.unsome in
       if specs_list = [] then None
       else
+        let pr_specs = (pr_list (pr_pair pr_formula pr_formula)) in
+        let () = x_binfo_hp (add_str "specs" pr_specs) specs_list no_pos in
         let specs = specs_list |> List.rev |> List.hd in
-        let () = x_binfo_hp (add_str "specs" (pr_pair pr_formula pr_formula)) specs no_pos in
         repair_straight_line n_iprog n_prog trace orig_proc n_proc block specs
       (* let helper cur_res specs =
        *   if cur_res = None then
@@ -282,7 +283,8 @@ let create_buggy_proc_wrapper (body : I.exp) =
   let n_body4 = buggy_mem_dif_pos body 2 in
   let n_body5 = buggy_mem_dif_pos body 3 in
   let n_body6 = buggy_boolean_exp body 1 in
-  let list = [n_body1; n_body2; n_body3; n_body4; n_body5; n_body6] in
+  let n_body7 = delete_one_branch body 1 in
+  let list = [n_body1; n_body2; n_body3; n_body4; n_body5; n_body6; n_body7] in
   let list = list |> List.filter (fun (_, y) -> y = 0) in
   list |> List.map fst
 

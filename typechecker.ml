@@ -1695,42 +1695,38 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let ctx =
             if !ann_vp then
               let vperm_fields =
-                CVP.vperm_sets_of_anns [(VP_Full,
-                  List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)] in
+                let lvars = List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars in
+                CVP.vperm_sets_of_anns [(VP_Full, lvars)] in
               VP.add_vperm_sets_list_failesc_ctx vperm_fields ctx
             else ctx in
           let () = proving_loc#set pos in
           let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
           let field_types, vs = List.split lvars in
           let v_prim = CP.SpecVar (v_t, v, Primed) in
-          let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
+          let vs_prim = List.map2 (fun v t -> CP.SpecVar (t, v, Primed)) vs field_types in
           let p = CP.fresh_spec_var v_prim in
+          let eq_v = CP.mkEqVar v_prim p pos in
+          let neg_v = CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos in
           let link_pv = CF.formula_of_pure_N
-              (CP.mkAnd (CP.mkEqVar v_prim p pos)
-                 (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None)
-                           , None)) pos) pos in
+              (CP.mkAnd eq_v (CP.BForm ((neg_v, None), None)) pos) pos in
           let tmp_ctx =
             if !Globals.large_bind then
               CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
             else ctx in
           let () = CF.must_consistent_list_failesc_context "bind 1" ctx  in
           let unfolded = SV.unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
-          let unfolded =  CF.transform_list_failesc_context
+          let unfolded = CF.transform_list_failesc_context
               (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es)))
               unfolded in
           let () = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
-          let () = x_dinfo_zp (lazy ("bind: unfolded context:\n"
-                                     ^ (Cprinter.string_of_list_failesc_context
-                                          unfolded)
-                                     ^ "\n")) pos in
+          let () = x_tinfo_hp (add_str "bind: unfolded ctx" pr_failesc_ctx) unfolded pos in
           let unfolded =
             let idf = (fun c -> c) in
-            CF.transform_list_failesc_context
-              (idf,idf,
-               (fun es -> CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula
-                                             prog es.CF.es_formula
-                                             Solver.unfold_for_abs_merge pos;}))
-              unfolded in
+            let aux_f es =
+              let n_es = Norm.imm_norm_formula prog es.CF.es_formula
+                  Solver.unfold_for_abs_merge pos in
+              CF.Ctx{es with CF.es_formula = n_es} in
+            CF.transform_list_failesc_context (idf,idf,aux_f) unfolded in
           let c = string_of_typ v_t in
           let fresh_perm_exp,perm_vars =
             (match !Globals.perm with
@@ -1772,7 +1768,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             then CF.mk_bind_ptr_f bind_ptr else vheap in
           let () = x_tinfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
           let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
-          let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
+          let () = x_tinfo_hp (add_str "vheap(0)" pr_formula) vheap pos in
           let vheap =
             if (Perm.allow_perm ()) then
               (*there exists fresh_perm_exp statisfy ... *)
