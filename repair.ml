@@ -224,7 +224,7 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
       else
         let pr_specs = (pr_list (pr_pair pr_formula pr_formula)) in
         let () = x_binfo_hp (add_str "specs" pr_specs) specs_list no_pos in
-        let specs = specs_list |> List.rev |> List.hd in
+        let specs = specs_list |> List.hd in
         repair_straight_line n_iprog n_prog trace orig_proc n_proc block specs
       (* let helper cur_res specs =
        *   if cur_res = None then
@@ -258,9 +258,9 @@ let repair_cproc iprog =
           let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
                                 = p2.start_pos.Lexing.pos_lnum in
           List.exists (eq_loc_ln pos) pos_list in
-        let helper2 trace = trace |> List.filter (helper repair_pos) in
-        let traces = traces |> List.map helper2
-                     |> List.filter (fun x -> x != []) in
+        let helper2 trace = trace |> List.exists (helper repair_pos) in
+        let traces = traces |> List.filter helper2 in
+                     (* |> List.filter (fun x -> x != []) in *)
         traces
       else [] in
     let () = x_binfo_hp (add_str "traces" pr_traces) traces no_pos in

@@ -918,7 +918,7 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   match hps with
   | None -> ()
   | Some hps_list ->
-    let () = x_binfo_pp "marking" no_pos in
+    let () = x_tinfo_pp "marking" no_pos in
     let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
         iprog.IA.prog_proc_decls in
     let decl_vars = match iproc.IA.proc_body with
@@ -931,7 +931,7 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
     let helper hps =
       if !stop then ()
       else
-        let () = x_binfo_pp "marking" no_pos in
+        let () = x_tinfo_pp "marking" no_pos in
         let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula in
@@ -980,7 +980,7 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
   match hps with
   | None -> None
   | Some hps_list ->
-    let hp = hps_list |> List.rev |> List.hd in
+    let hp = hps_list |> List.hd in
     helper None hp
 (* List.fold_left helper None hps_list *)
 

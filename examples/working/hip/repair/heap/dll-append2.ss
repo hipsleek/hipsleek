@@ -14,9 +14,9 @@ void append2(node2 x, node2 y)
 	if (x.next == null) {
     x.next = y;
     // fcode()
-    if (y != null) y.prev = x;
+    if (y != null) x.next = y;
 	}
 	else {
-		append2(x.next, y.next);
+		append2(x.next, y);
 	}
 }

@@ -8,6 +8,7 @@ module SBG = Libsongbird.Globals
 module SBPP = Libsongbird.Prover_pure
 module SBPH = Libsongbird.Prover_hip
 module SBPA = Libsongbird.Prover_all
+module SBPU = Libsongbird.Prover_unkentail
 module SBPFE = Libsongbird.Proof_entail
 module SBPFU = Libsongbird.Proof_unkentail
 module SBE = Libsongbird.Exportc
@@ -35,6 +36,7 @@ let pr_entail = SBC.pr_entailment
 let pre_list = ref ([] : CF.formula list)
 let sb_program = ref (None: SBC.program option)
 let pr_ents = pr_list (pr_pair pr_pf pr_pf)
+let pr_pos = string_of_loc
 
 (*********************************************************************
  * Global variables
@@ -537,12 +539,12 @@ let translate_back_hf sb_hf holes =
       let vf_pf = vf_triples |> List.map (fun (_,x,_) -> x) |> List.concat in
       let vf_evars = vf_triples |> List.map (fun (_,_,x) -> x) |> List.concat in
       let h_formulas = h_dfs @ h_vfs in
-      (mkStarHList h_formulas, df_pf @ vf_pf, df_evars@vf_evars)
-    | SBC.HStar (hf1, hf2, pos) ->
-      let h_hf1, pf1, evars1 = helper hf1 in
-      let h_hf2, pf2, evars2 = helper hf2 in
-      let loc = translate_back_pos pos in
-      (CF.mkStarH h_hf1 h_hf2 loc, pf1@pf2, evars1@evars2) in
+      (mkStarHList h_formulas, df_pf @ vf_pf, df_evars@vf_evars) in
+    (* | SBC.HStar (hf1, hf2, pos) ->
+     *   let h_hf1, pf1, evars1 = helper hf1 in
+     *   let h_hf2, pf2, evars2 = helper hf2 in
+     *   let loc = translate_back_pos pos in
+     *   (CF.mkStarH h_hf1 h_hf2 loc, pf1@pf2, evars1@evars2) in *)
   let h_hf, pf, evars = helper sb_hf in
   (mkStarHList ([h_hf]@holes), pf, evars)
 
@@ -718,7 +720,7 @@ let translate_lemma lemma =
   SBC.mk_lemma name sb_lhs sb_rhs status origin
 
 let translate_prog (prog:CA.prog_decl) =
-  if !sb_program = None || !enable_repair then
+  if !sb_program = None || !enable_repair || !enable_repair_template then
     let lemmas = (Lem_store.all_lemma # get_left_coercion) @
                  (Lem_store.all_lemma # get_right_coercion) in
     let sb_lemmas = List.map translate_lemma lemmas in
@@ -836,7 +838,7 @@ let solve_entailments prog entails =
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
-  let ptree = SBPH.solve_entailments ~timeout:(Some 5) sb_prog sb_ents in
+  let ptree = SBPU.solve_entailments ~pre:"PP" ~post:"QQ" ~timeout:(Some 3) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
