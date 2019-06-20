@@ -106,7 +106,9 @@ let choose_rule_pre_assign goal : rule list =
   let pre_conjuncts = CP.split_conjunctions pre_pf in
   let eq_pairs = List.map (find_exists_substs pre_vars) pre_conjuncts
                  |> List.concat in
-  let filter_fun (x,y) = CP.subset (CP.afv y) all_vars in
+  let filter_fun (x,y) =
+    let vars = CP.afv y in
+    not(CP.mem x all_vars) && vars != [] && CP.subset vars all_vars in
   let eq_pairs = eq_pairs |> List.filter filter_fun in
   if eq_pairs = [] then []
   else

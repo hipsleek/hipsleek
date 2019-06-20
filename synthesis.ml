@@ -1425,6 +1425,18 @@ let rec synthesize_st_core st : Iast.exp option=
     let c_exp = exp_to_iast rhs in
     let assgn = mkAssign (mkVar lhs) c_exp in
     aux_subtrees st assgn
+  | RlPreAssign rcore ->
+    let lhs = rcore.rpa_lhs in
+    let rhs = rcore.rpa_rhs in
+    let v_decl = I.VarDecl {
+        exp_var_decl_type = CP.type_of_sv lhs;
+        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+        exp_var_decl_pos = no_pos;
+      } in
+    let rhs_exp = exp_to_iast rhs in
+    let seq = mkSeq v_decl rhs_exp in
+    aux_subtrees st seq
+
   | RlReturn rcore -> let c_exp = exp_to_iast rcore.r_exp in
     Some (I.Return {
       exp_return_val = Some c_exp;
@@ -1491,7 +1503,7 @@ let rec synthesize_st_core st : Iast.exp option=
     let sts = List.map synthesize_st_core st.stc_subtrees in
     let if_b = sts |> List.hd |> Gen.unsome in
     let else_b = sts |> List.tl |> List.hd |> Gen.unsome in
-   Some (I.mkCond cond_e if_b else_b None no_pos)
+    Some (I.mkCond cond_e if_b else_b None no_pos)
   | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
 
 and aux_subtrees st cur_codes =
