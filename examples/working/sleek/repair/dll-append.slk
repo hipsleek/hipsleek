@@ -10,11 +10,17 @@ void append2(node2 a, node2 b)
 	requires a::dll<q, m> * b::dll<p, n> & m>0 & n > 0
 	ensures (exists k2: a::dll<q, k2> & k2 = m + n);.
 
-synthesize [node2 x,node2 y]
-x::node2<a,f42> * y::dll<b,n>&
-f42=null & 0<n & x=s93 & p92=a & q95=null & fl94=0 & m=1
-~>
+// synthesize [node2 x,node2 y]
+// x::node2<a,f42> * y::dll<b,n>&
+// f42=null & 0<n & x=s93 & p92=a & q95=null & fl94=0 & m=1
+// ~>
 
-(exists fr92,p93,n94,
-q_95: x::node2<a,q_95> * y::node2<p93,n94> * 
-n94::dll<q_95,fr92>& x=s93 & p92=a & q95=null & fl94=0 & m=1 & fr92+1=n).
+// (exists fr92,p93,n94,
+// q_95: x::node2<a,q_95> * y::node2<p93,n94> * 
+// n94::dll<q_95,fr92>& x=s93 & p92=a & q95=null & fl94=0 & m=1 & fr92+1=n).
+
+synthesize [node2 x,node2 y]
+x::node2<a,null> * y::dll<b,n> & 0<n
+~>
+(exists f92, p93, n94, q95:
+   x::node2<a,q95> * y::node2<p93,n94> * n94::dll<q95,f92> & f92+1=n).

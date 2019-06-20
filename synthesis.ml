@@ -67,12 +67,18 @@ type rule =
   | RlUnfoldPost of rule_unfold_post
   | RlSkip
   | RlAssign of rule_assign
+  | RlPreAssign of rule_pre_assign
   | RlReturn of rule_return
   | RlBranch of rule_branch
   | RlFRead of rule_field_read
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
   | RlFuncRes of rule_func_res
+
+and rule_pre_assign = {
+  rpa_lhs : CP.spec_var;
+  rpa_rhs : CP.exp
+}
 
 and rule_branch = {
   rb_cond: CP.formula;
@@ -251,6 +257,10 @@ let pr_rule_assign rule =
   let lhs, rhs = rule.ra_lhs, rule.ra_rhs in
   (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (pr_exp rhs)
 
+let pr_rule_pre_assign rule =
+  let lhs, rhs = rule.rpa_lhs, rule.rpa_rhs in
+  (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (pr_exp rhs)
+
 let pr_func_call rule =
   let fc_name = rule.rfc_fname in
   let args = rule.rfc_params |> (pr_list Cprinter.string_of_sv) in
@@ -285,6 +295,7 @@ let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
+  | RlPreAssign rule -> "RlPreAssign" ^ "(" ^ (pr_rule_pre_assign rule) ^ ")"
   | RlReturn rule -> "RlReturn " ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
   | RlFWrite rule -> "RlFWrite " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)

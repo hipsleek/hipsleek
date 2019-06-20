@@ -97,6 +97,26 @@ let rec find_sub_var sv cur_vars pre_pf =
         else res1
   | _ -> None
 
+let choose_rule_pre_assign goal : rule list =
+  let all_vars = goal.gl_vars in
+  let post = goal.gl_post_cond in
+  let pre = goal.gl_pre_cond in
+  let pre_vars = CF.fv pre in
+  let pre_pf = CF.get_pure pre in
+  let pre_conjuncts = CP.split_conjunctions pre_pf in
+  let eq_pairs = List.map (find_exists_substs pre_vars) pre_conjuncts
+                 |> List.concat in
+  let filter_fun (x,y) = CP.subset (CP.afv y) all_vars in
+  let eq_pairs = eq_pairs |> List.filter filter_fun in
+  if eq_pairs = [] then []
+  else
+    let mk_rule (var, exp) =
+      RlPreAssign {
+        rpa_lhs = var;
+        rpa_rhs = exp
+      } in
+    List.map mk_rule eq_pairs
+
 let choose_rule_assign_x goal : rule list =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let all_vars = goal.gl_vars @ res_vars in
@@ -122,7 +142,6 @@ let choose_rule_assign_x goal : rule list =
     let mk_rule (var, exp) =
       if CP.is_res_sv var then RlReturn {r_exp = exp}
       else
-        (* let exp = CP.simp_mult exp; *)
         RlAssign {
           ra_lhs = var;
           ra_rhs = exp
@@ -596,6 +615,7 @@ let choose_main_rules goal =
   let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ choose_rule_frame_pred goal in
   let rs = rs @ (choose_rule_assign goal) in
+  let rs = rs @ (choose_rule_pre_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_fwrite goal) in
   let rs = rs @ (choose_rule_numeric goal) in
@@ -643,6 +663,12 @@ let process_rule_assign goal rcore =
   let sub_goal = {goal with gl_pre_cond = n_pre;
                             gl_trace = (RlAssign rcore)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlAssign rcore) [sub_goal]
+
+let process_rule_pre_assign goal rcore =
+  let lhs = rcore.rpa_lhs in
+  let n_vars = lhs::goal.gl_vars in
+  let sub_goal = {goal with gl_vars = n_vars} in
+  mk_derivation_subgoals goal (RlPreAssign rcore) [sub_goal]
 
 let process_rule_return goal rcore =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -819,6 +845,7 @@ and process_one_rule goal rule : derivation =
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlFoldLeft rcore -> process_rule_fold_left goal rcore
   | RlFuncRes rcore -> process_rule_func_res goal rcore
+  | RlPreAssign rcore -> process_rule_pre_assign goal rcore
   | RlAssign rcore -> process_rule_assign goal rcore
   | RlReturn rcore -> process_rule_return goal rcore
   | RlFWrite rcore -> process_rule_fwrite goal rcore
