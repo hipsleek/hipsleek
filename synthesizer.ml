@@ -355,7 +355,6 @@ let choose_rule_unfold_pre goal =
      *     [rule] *)
     else if List.length pre_list = 1 then
       let n_pre = pre_list |> List.hd |> remove_exists in
-      let n_pre = CF.simplify_formula n_pre vars in
       let rule = RlUnfoldPre {n_pre = n_pre} in
       [rule]
     else [] in
@@ -520,18 +519,22 @@ let choose_rule_frame_data goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let post_vars = post |> CF.fv |> List.filter is_node_var in
   let pairs = post_vars |> List.map (find_frame_node_var goal) |> List.concat in
+  let pr_pairs = pr_list (pr_pair pr_var pr_var) in
+  let () = x_tinfo_hp (add_str "pairs" pr_pairs) pairs no_pos in
   let filter (lhs, rhs) =
     let n_pre, pre_vars = frame_var_formula pre rhs in
     let n_post, post_vars = frame_var_formula post lhs in
-    let check_field f field =
-      match extract_var_f f field with
-      | Some var_f -> if CF.is_emp_formula var_f then true
-        else false
-      | _ -> true in
-    let check_pre = List.for_all (check_field pre) pre_vars in
-    let check_post = List.for_all (check_field post) post_vars in
-    if (List.length pre_vars = List.length post_vars) &&
-       check_pre && check_post then
+    let () = x_tinfo_hp (add_str "pre_vars" pr_vars) pre_vars no_pos in
+    let () = x_tinfo_hp (add_str "post_vars" pr_vars) post_vars no_pos in
+    (* let check_field f field =
+     *   match extract_var_f f field with
+     *   | Some var_f -> if CF.is_emp_formula var_f then true
+     *     else false
+     *   | _ -> true in
+     * let check_pre = List.for_all (check_field pre) pre_vars in
+     * let check_post = List.for_all (check_field post) post_vars in *)
+    let check_eq = List.for_all2 CP.eq_sv pre_vars post_vars in
+    if (List.length pre_vars = List.length post_vars) && check_eq then
       let pre_vars = rhs::pre_vars in
       let post_vars = lhs::post_vars in
       let rule = RlFrameData {
@@ -612,9 +615,10 @@ let choose_rule_skip goal =
   else []
 
 let choose_synthesis_rules_x goal : rule list =
+  let goal = simplify_goal goal in
   let rules =
     try
-      let goal = simplify_goal goal in
+      (* let goal = simplify_goal goal in *)
       let _ = choose_rule_exists_right goal |> raise_rules in
       let _ = choose_rule_skip goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
@@ -747,17 +751,16 @@ let process_rule_unfold_pre goal rcore =
 
 let process_rule_frame_pred goal rcore =
   let eq_pairs = rcore.rfp_pairs in
-  (* let eq_pairs = (rcore.rfp_lhs, rcore.rfp_rhs)::eq_pairs in *)
   let eq_pairs = List.map (fun (x,y) -> (y,x)) eq_pairs in
   let () = x_tinfo_hp (add_str "substs" pr_substs) eq_pairs no_pos in
-  (* let eq_pairs = List.map (fun (x, y) -> CP.mkEqVar x y no_pos) substs in
-   * let eq_pf = mkAndList eq_pairs in *)
   let post = rcore.rfp_post in
-  let e_var = rcore.rfp_lhs in
-  (* let n_post = post in *)
-  let n_post = remove_exists_vars post [e_var] in
+  let e_vars = eq_pairs |> List.map fst in
+  let exists_vars = CF.get_exists post in
+  let n_post = remove_exists_vars post exists_vars in
   let n_post = CF.subst eq_pairs n_post in
-  (* let n_post = CF.add_pure_formula_to_formula eq_pf n_post in *)
+  let n_exists_vars = CP.diff_svl exists_vars e_vars in
+  let n_post = add_exists_vars n_post n_exists_vars in
+  let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlFramePred rcore)::goal.gl_trace;
                            gl_pre_cond = rcore.rfp_pre} in

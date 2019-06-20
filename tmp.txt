@@ -1,4 +1,12 @@
 
+synthesize [node2 x,node2 y]
+x::node2<a,f42> * y::dll<b,n>&
+f42=null & 0<n & x=s93 & p92=a & q95=null & fl94=0 & m=1
+~>
+
+(exists fr92,p93,n94,
+q_95: x::node2<a,q_95> * y::node2<p93,n94> * 
+n94::dll<q_95,fr92>& x=s93 & p92=a & q95=null & fl94=0 & m=1 & fr92+1=n).
 
 
 
@@ -14,25 +22,8 @@
 
 
 
-x->node{f_r_7373} & y=y & x=x & q_7335=nil & flted_6_7334=0 & n1-1=0 &
-f_r_7373=nil |- PP(y,x,q_7335,flted_6_7334,n1,f_r_7373,v_node_14_1891') *
-T14(y,x,q_7335,flted_6_7334,n1,f_r_7373,v_node_14_1891') & y=y & x=x &
-q_7335=nil & flted_6_7334=0 & n1-1=0 & f_r_7373=nil,
+synthesize [node2 x,node2 y]
+ x::node2<a,f42> & k = y
+~>
+x::node2<a,.
 
-T14(y,x,q_7335,flted_6_7334,n1,f_r_7373,v_node_14_1891') & y=y & x=x &
-q_7335=nil & flted_6_7334=0 & n1-1=0 & f_r_7373=nil |-
-T16(v_node_14_1891',y,x,q_7335,flted_6_7334,n1,f_r_7373) & y=y & x=x &
-q_7335=nil & flted_6_7334=0 & n1-1=0 & f_r_7373=nil & true,
-
-QQ(v_node_14_1891',y,x,q_7335,flted_6_7334,n1,f_r_7373) *
-T16(v_node_14_1891',y,x,q_7335,flted_6_7334,n1,f_r_7373) & y=y & x=x &
-q_7335=nil & flted_6_7334=0 & n1-1=0 & f_r_7373=nil |- (exists next_14_1892'.
-x'->node{next_14_1892'} *
-T18(v_node_14_1891',y,x,q_7335,flted_6_7334,n1,f_r_7373,next_14_1892') & y=y &
-x=x & q_7335=nil & flted_6_7334=0 & n1-1=0 & f_r_7373=nil),
-
-x'->node{v_node_14_1891'} *
-T18(v_node_14_1891',y,x,q_7335,flted_6_7334,n1,f_r_7373,next_14_19542) & y=y &
-x=x & q_7335=nil & flted_6_7334=0 & n1-1=0 & f_r_7373=nil |- x->node{y} & y=y &
-x=x & q_7335=nil & flted_6_7334=0 & n1-1=0 & f_r_7373=nil & y=y & x=x &
-q_7335=nil & flted_6_7334=0 & n1-1=0;

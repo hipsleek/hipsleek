@@ -3,25 +3,18 @@ data node2 {
 	node2 next;	
 }.
 
-/* view for a doubly linked list with size */
 pred dll<p,n> == self = null & n = 0 
   or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
 
-void append(node2 a, node2 b)
-	requires a::dll<q, m> * b::dll<p, n> & m > 0 & n > 0
+void append2(node2 a, node2 b)
+	requires a::dll<q, m> * b::dll<p, n> & m>0 & n > 0
 	ensures (exists k2: a::dll<q, k2> & k2 = m + n);.
 
 synthesize [node2 x,node2 y]
-x::node2<q,q78> * q78::dll<x,fl77> * y::dll<p,n> &
-0<m & 0<n & fl77+1=m & q78=null
+x::node2<a,f42> * y::dll<b,n>&
+f42=null & 0<n & x=s93 & p92=a & q95=null & fl94=0 & m=1
 ~>
-(exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
--n-fl77 < 0 & fr6=fl77+ n-1).
 
-
-// synthesize [node2 q_4460,node2 x,node2 y]
-//  x::node2<q,q_4460> * q_4460::dll<x,flted_8_4459> * y::dll<p,n>&
-// v_bool_14_4439 & p_4457=q & self_4458=x & x=x & y=y & 0<m & 
-// flted_8_4459+1=m & q_4460=null
-// ~>
-//  (exists f_r_4491: x::dll<q,f_r_4491>&y=null & f_r_4491=flted_8_4459+n+1).
+(exists fr92,p93,n94,
+q_95: x::node2<a,q_95> * y::node2<p93,n94> * 
+n94::dll<q_95,fr92>& x=s93 & p92=a & q95=null & fl94=0 & m=1 & fr92+1=n).
