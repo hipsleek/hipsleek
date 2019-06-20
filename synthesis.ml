@@ -1263,6 +1263,23 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
       C.exp_assign_pos = no_pos
     } in
     aux_c_subtrees st assign
+  | RlPreAssign rule ->
+    let var = rule.rpa_lhs in
+    let rhs = rule.rpa_rhs in
+    let c_rhs = exp2cast rhs in
+    let var_exp = C.VarDecl {
+        C.exp_var_decl_type = CP.type_of_sv var;
+        C.exp_var_decl_name = CP.name_of_sv var;
+        C.exp_var_decl_pos = no_pos;
+      } in
+    let seq = mkCSeq var_exp c_rhs in
+    let assign = C.Assign {
+      C.exp_assign_lhs = CP.name_of_sv var;
+      C.exp_assign_rhs = c_rhs;
+      C.exp_assign_pos = no_pos
+    } in
+    let seq = mkCSeq seq assign in
+    aux_c_subtrees st seq
   | RlFRead rcore ->
     let lhs = rcore.rfr_value in
     let bvar = rcore.rfr_bound_var in
