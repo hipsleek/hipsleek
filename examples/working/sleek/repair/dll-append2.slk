@@ -3,50 +3,25 @@ data node2 {
 	node2 next;	
 }.
 
-/* view for a doubly linked list with size */
 pred dll<p,n> == self = null & n = 0 
-  or self::node2<p , q> * q::dll<self, n-1> & n > 0.
+  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
 
-void append(node2 x, node2 y)
-	requires x::dll<q, m> * y::dll<p, n> & m > 0 & n > 0
-	ensures x::dll<q, k> & k = m + n;.
+void append2(node2 x, node2 y)
+	requires x::dll<q, m> * y::dll<p, n> & m>0
+	ensures (exists k2: x::dll<q, k2> & k2 = m + n);.
 
-// synthesize [node2 x, node2 y, node2 q_98]
-// y::node2<p,q_98> * q_98::dll<y,f7> * x::node2<q,q4>&
-// 0<m & 0<n & 1+f3=m & q4=null & f3=0 & f7+1=n & 0<n
-// ~>
-// (exists f0,prev6,n7, q7:
-// x::node2<q,q7>@M * y::node2<prev6,n7>@M * n7::dll<q7,f0> &
-// f0=n-1 ).
+synthesize [node2 x,node2 y]
+s52::node2<q,q22> * q22::dll<s52,fl21> *  y::dll<p,n>&
+(-1-fl21)<0 & q22!=null & x=s52 & p_7519=q & (m-1)-fl21=0
 
-synthesize [node2 x, node2 y, node2 q_98]
-y::node2<p,q_98> * x::node2<q,q4>&
-0<m & 0<n & 1+f3=m & q4=null & f3=0 & f7+1=n & 0<n
 ~>
-(exists f0,prev6, q7: x::node2<q,q7> * y::node2<prev6,n7> &
-f7=f0 & y=q7 & f0+1=n).
 
-// append(x.next, y) 
+(exists fr78: s52::dll<q,fr78>& y=y & x=s52 & x=s52 & p_7519=q & (m-1)-fl21=0 & 
+fr78=fl21+n+1).
 
-// simplify exists
-
-// synthesize [node2 x, node2 y, node2 q_98]
-// y::node2<p,q_98> * x::node2<q,q4> &
-// 0<m & 0<n & 1+f3=m & q4=null & f3=0 & f7+1=n & 0<n 
+// synthesize [node2 q22,node2 s52,node2 x,node2 y]
+// (exists k2: s52::node2<q,q22> * a::dll<s52,k2>&
+// m=0+fl21+1 & p_7519=q & x=s52 & q22!=null & 0<(0+fl21+1) & k2=n+fl21)
 // ~>
-// (exists f0,prev6,next7:
-// x::node2<q,y>@M * y::node2<prev6,n7>@M & f0=n-1 & q_98=next7 & f7=f0 ).
-
-//          F1 ~> F2 & \vec{x}=\vec{z}
-// ---------------------------------------------
-//        F1 * x->\vec{y}  ~>  F2 * x->\vec{z}
-
-//          F1 ~> F2 & \vec{y}=\vec{z}
-// ---------------------------------------------
-//        F1 * P(\vec{y})  ~>  F2 * P(\vec{z})
-
-// goal (vars:[x:node2,y:node2,q_98:node2]
-// pre:  y::node2<p,q_98>@M * x::node2<q,q4>@M&
-// 0<m & 0<n & f3+1=m & q4=null & f3=0 & 1+f7=n & 0<n
-// post:  (exists f0_84,prev6_85,next7_86,
-// q7_87: x::node2<q,q7_87>@M * y::node2<prev6_85,n7>@M&
+// (exists fr78_88: s52::dll<q,fr78_88>&
+// x=s52 & x=s52 & p_7519=q & m=0+fl21+1 & fr78_88=1+fl21+n).

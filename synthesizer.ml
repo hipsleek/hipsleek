@@ -106,10 +106,14 @@ let choose_rule_pre_assign goal : rule list =
   let pre_conjuncts = CP.split_conjunctions pre_pf in
   let eq_pairs = List.map (find_exists_substs pre_vars) pre_conjuncts
                  |> List.concat in
+  let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
   let filter_fun (x,y) =
     let vars = CP.afv y in
     not(CP.mem x all_vars) && vars != [] && CP.subset vars all_vars in
-  let eq_pairs = eq_pairs |> List.filter filter_fun in
+  let filter_eq = Gen.BList.remove_dups_eq
+      (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
+  let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
+  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
   if eq_pairs = [] then []
   else
     let mk_rule (var, exp) =
@@ -209,27 +213,31 @@ let is_same_shape (f1:CF.formula) (f2:CF.formula) =
   check_hf hf1 hf2
 
 let unify_pair goal proc_decl arg pre_var =
-  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+  let pre_cond = goal.gl_pre_cond in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
   let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
-  let post_proc = specs |> get_post_cond |> rm_emp_formula in
   let a_pre = arg |> extract_var_f pre_proc in
   let l_pre = pre_var |> extract_var_f pre_cond in
   match a_pre, l_pre with
   | Some apre_f, Some lpre_f ->
+    let () = x_tinfo_hp (add_str "pre_f" pr_formula) apre_f no_pos in
+    let () = x_tinfo_hp (add_str "cand_f" pr_formula) lpre_f no_pos in
     is_same_shape apre_f lpre_f
   | _ -> false, []
 
 let unify_arg_x goal proc_decl arg =
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "all vars" pr_vars) (CF.fv pre_cond) no_pos in
-  let pre_vars = CF.fv pre_cond |> List.filter (equal_type arg)
+  let () = x_tinfo_hp (add_str "arg" pr_var) arg no_pos in
+  let candidate_vars = goal.gl_vars |> List.filter (equal_type arg)
                |> List.filter (fun x -> CP.mem x goal.gl_vars) in
-  let ss_vars = List.map (fun pre_var ->
-      let (x,y) = unify_pair goal proc_decl arg pre_var in
-      (pre_var, x, y)) pre_vars in
+  let () = x_tinfo_hp (add_str "cand vars" pr_vars) candidate_vars no_pos in
+  let ss_vars = List.map (fun candidate_var ->
+      let (x,y) = unify_pair goal proc_decl arg candidate_var in
+      (candidate_var, x, y)) candidate_vars in
   let ss_vars = List.filter (fun (_,x,_) -> x) ss_vars in
   let ss_vars = List.map (fun (x,_,y) -> (x,y)) ss_vars in
+  let candidate_vars = ss_vars |> List.map fst in
+  let () = x_tinfo_hp (add_str "cand vars" pr_vars) candidate_vars no_pos in
   ss_vars
 
 let unify_arg goal proc_decl arg =
@@ -261,10 +269,12 @@ let unify_fcall proc_decl pre_proc post_proc goal =
     let is_cur_vars = List.for_all (fun x ->
         List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args in
     let has_res_arg = List.exists is_res_sv_syn args in
-    let called = is_fcall_called goal.gl_trace args ||
+    let args_called = is_fcall_called goal.gl_trace args ||
                  is_fres_called goal.gl_trace args in
+    let called = is_fcall_ever_called goal.gl_trace in
     let eq_args = List.for_all2 CP.eq_sv args proc_args in
-    if is_cur_vars && (not has_res_arg) && (not called) && not eq_args then
+    if is_cur_vars && (not has_res_arg) && (not args_called) && not eq_args
+       && not (called) then
       let fc_rule = if contain_res then
           let res = List.find (fun x -> eq_str (CP.name_of_sv x) res_name)
               (CF.fv post_proc) in
@@ -640,7 +650,6 @@ let choose_synthesis_rules_x goal : rule list =
   let goal = simplify_goal goal in
   let rules =
     try
-      (* let goal = simplify_goal goal in *)
       let _ = choose_rule_exists_right goal |> raise_rules in
       let _ = choose_rule_skip goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
@@ -669,7 +678,8 @@ let process_rule_assign goal rcore =
 let process_rule_pre_assign goal rcore =
   let lhs = rcore.rpa_lhs in
   let n_vars = lhs::goal.gl_vars in
-  let sub_goal = {goal with gl_vars = n_vars} in
+  let sub_goal = {goal with gl_vars = n_vars;
+                            gl_trace = (RlPreAssign rcore)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlPreAssign rcore) [sub_goal]
 
 let process_rule_return goal rcore =
@@ -817,7 +827,7 @@ let process_rule_skip goal =
  * The search procedure
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
-  if List.length goal.gl_trace > 6 then
+  if List.length goal.gl_trace > 5 then
     let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
@@ -837,7 +847,7 @@ and process_all_rules goal rules : synthesis_tree =
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
     | [] -> let () = fail_branch_num := !fail_branch_num + 1 in
-      let () = x_tinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+      let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
       mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 

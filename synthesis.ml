@@ -389,8 +389,8 @@ let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
     Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
 
 let simplify_goal goal =
-  let n_pre = elim_idents goal.gl_pre_cond in
-  let n_pre = CF.elim_exists n_pre in
+  let n_pre = CF.elim_exists goal.gl_pre_cond in
+  let n_pre = elim_idents n_pre in
   (* let exists_vars = CF.get_exists n_pre in
    * let n_pre = remove_exists_vars n_pre exists_vars in *)
   let n_post = elim_idents goal.gl_post_cond in
@@ -887,17 +887,16 @@ let equal_type (var1:CP.spec_var) (var2:CP.spec_var) =
 let find_exists_substs sv_list conjunct =
   let aux pf = match pf with
     | CP.Eq (e1, e2, _) ->
-      begin
+      let l1 =
         match e1 with
         | CP.Var (sv, _) ->
           if CP.mem sv sv_list then [(sv, e2)] else  []
-        | _ ->
-          begin
-            match e2 with
-            | CP.Var (sv, _) ->
-              if CP.mem sv sv_list then [(sv, e1)] else []
-            | _ -> []
-          end
+        | _ -> [] in
+      begin
+        match e2 with
+        | CP.Var (sv, _) ->
+          if CP.mem sv sv_list then (sv, e1)::l1 else l1
+        | _ -> l1
       end
     | _ -> [] in
   match conjunct with
@@ -1763,6 +1762,16 @@ let rec is_fcall_called trace args : bool =
       | _ -> is_fcall_called tail args
     end
 
+let rec is_fcall_ever_called trace : bool =
+  match trace with
+  | [] -> false
+  | head::tail ->
+    begin
+      match head with
+      | RlFuncRes _ | RlFuncCall _ -> true
+      | _ -> is_fcall_ever_called tail
+    end
+
 let rec is_fres_called trace args : bool =
   match trace with
   | [] -> false
@@ -1860,10 +1869,11 @@ let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
   | RlUnfoldPost r2 -> if CP.is_res_sv r1.rp_var then PriHigh
     else if CP.is_res_sv r2.rp_var then PriLow
     else PriEqual
-  | _ -> PriEqual
+  | _ -> PriLow
 
 let compare_rule goal r1 r2 =
   match r1 with
+  | RlUnfoldPre _ -> PriHigh
   | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2
   | RlFramePred r -> compare_rule_frame_pred_vs_other r r2
@@ -1871,6 +1881,7 @@ let compare_rule goal r1 r2 =
   | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
+  | RlPreAssign _ -> PriLow
   | _ -> PriEqual
 
 let is_code_rule trace = match trace with
