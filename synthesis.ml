@@ -1762,15 +1762,19 @@ let rec is_fcall_called trace args : bool =
       | _ -> is_fcall_called tail args
     end
 
-let rec is_fcall_ever_called trace : bool =
-  match trace with
-  | [] -> false
-  | head::tail ->
-    begin
-      match head with
-      | RlFuncRes _ | RlFuncCall _ -> true
-      | _ -> is_fcall_ever_called tail
-    end
+let is_fcall_ever_called trace : bool =
+  let rec aux trace num =
+    match trace with
+    | [] -> false
+    | head::tail ->
+      begin
+        match head with
+        | RlFuncRes _ | RlFuncCall _ ->
+          if num - 1 = 0 then true
+          else aux tail (num-1)
+        | _ -> aux tail num
+      end in
+  aux trace 2
 
 let rec is_fres_called trace args : bool =
   match trace with
