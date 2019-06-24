@@ -514,18 +514,19 @@ let choose_rule_frame_pred goal =
   |> List.concat
 
 let find_frame_node_var goal post_var =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
   let pre_vars = pre |> CF.fv |> List.filter is_node_var
                  |> List.filter (CP.eq_sv post_var) in
-  let pre_pf = CF.get_pure pre in
-  let helper_arg pf arg1 arg2 =
+  let post_pf = CF.get_pure post in
+  let helper_arg arg1 arg2 =
     let conseq = CP.mkEqVar arg1 arg2 no_pos in
-    SB.check_pure_entail pf conseq in
+    SB.check_pure_entail post_pf conseq in
   let helper_hf hf1 hf2 = match hf1, hf2 with
     | CF.DataNode dn1, CF.DataNode dn2 ->
       let args1 = dn1.CF.h_formula_data_arguments in
       let args2 = dn2.CF.h_formula_data_arguments in
-      List.for_all2 (helper_arg pre_pf) args1 args2
+      List.exists2 helper_arg args1 args2
     | _ -> false in
   let helper pre_var =
     let pre_f = extract_var_f pre pre_var in
@@ -549,9 +550,14 @@ let find_frame_node_var goal post_var =
 let choose_rule_frame_data goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let post_vars = post |> CF.fv |> List.filter is_node_var in
+  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let pairs = post_vars |> List.map (find_frame_node_var goal) |> List.concat in
   let pr_pairs = pr_list (pr_pair pr_var pr_var) in
   let () = x_tinfo_hp (add_str "pairs" pr_pairs) pairs no_pos in
+  let ante = CF.get_pure post in
+  let helper v1 v2 =
+    let conseq = CP.mkEqVar v1 v2 no_pos in
+    SB.check_pure_entail ante conseq in
   let filter (lhs, rhs) =
     let n_pre, pre_vars = frame_var_formula pre rhs in
     let n_post, post_vars = frame_var_formula post lhs in
@@ -564,7 +570,8 @@ let choose_rule_frame_data goal =
      *   | _ -> true in
      * let check_pre = List.for_all (check_field pre) pre_vars in
      * let check_post = List.for_all (check_field post) post_vars in *)
-    let check_eq = List.for_all2 CP.eq_sv pre_vars post_vars in
+    (* let check_eq = List.exists2 helper pre_vars post_vars in *)
+    let check_eq = true in
     if (List.length pre_vars = List.length post_vars) && check_eq then
       let pre_vars = rhs::pre_vars in
       let post_vars = lhs::post_vars in
@@ -647,7 +654,6 @@ let choose_rule_skip goal =
   else []
 
 let choose_synthesis_rules_x goal : rule list =
-  let goal = simplify_goal goal in
   let rules =
     try
       let _ = choose_rule_exists_right goal |> raise_rules in
@@ -827,6 +833,7 @@ let process_rule_skip goal =
  * The search procedure
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
+  let goal = simplify_goal goal in
   if List.length goal.gl_trace > 5 then
     let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
@@ -925,7 +932,7 @@ let synthesize_cast_stmts goal =
     None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
-  let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
+  (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
@@ -939,7 +946,7 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   ({iprog with I.prog_proc_decls = n_iprocs}, res)
 
 let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
-  let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
+  (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
   let goal = mk_goal_w_procs prog [orig_proc] pre_cond post_cond vars in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let c_exp = synthesize_cast_stmts goal in
@@ -954,9 +961,7 @@ let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
 
 let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
-  let start_time = get_time () in
   let hps = SB.solve_entailments prog entailments in
-  let solve_time = get_time() -. start_time in
   match hps with
   | None -> ()
   | Some hps_list ->

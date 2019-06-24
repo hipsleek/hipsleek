@@ -336,6 +336,34 @@ and pr_st_core st =
 let pr_rules = pr_list_ln pr_rule
 
 (* Basic functions  *)
+
+let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
+  match formula with
+  | Base {
+      formula_base_heap = heap;
+      formula_base_vperm = vp;
+      formula_base_pure = pure;
+      formula_base_type = t;
+      formula_base_and = a;
+      formula_base_flow = fl;
+      formula_base_label = lbl;
+      formula_base_pos = pos } ->
+    CF.mkExists_w_lbl vars heap pure vp t fl a pos lbl
+  | Exists ({formula_exists_qvars = qvars;
+             formula_exists_heap =  h;
+             formula_exists_vperm = vp;
+             formula_exists_pure = p;
+             formula_exists_type = t;
+             formula_exists_and = a;
+             formula_exists_flow = fl;
+             formula_exists_label = lbl;
+             formula_exists_pos = pos } as bf) ->
+    let n_qvars = CP.remove_dups_svl (qvars @ vars) in
+    CF.mkExists_w_lbl n_qvars h p vp t fl a pos lbl
+  | Or bf -> let n_f1 = add_exists_vars bf.formula_or_f1 vars in
+    let n_f2 = add_exists_vars bf.formula_or_f2 vars in
+    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+
 let elim_bool_constraint_pf (pf:CP.p_formula) = match pf with
   | CP.BVar (_, loc) -> (true, CP.BConst (true, loc))
   | _ -> (false, pf)
@@ -388,24 +416,91 @@ let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
     let n_f2 = remove_exists_vars bf.formula_or_f2 vars in
     Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
 
+let is_equality_pair (formula: CP.formula) =
+  let aux_pf (pf:CP.p_formula) = match pf with
+    | CP.Eq (e1, e2, _) ->
+      begin
+        match e1, e2 with
+        | CP.Var (v1, _) , CP.Var (v2, _) -> Some (v1, v2)
+        | _ -> None
+      end
+    | _ -> None in
+  let rec aux f = match f with
+    | CP.BForm (bf, _) ->
+      let (pf, _) = bf in
+      aux_pf pf
+    | CP.Exists (_, exists_f, _, _) -> aux exists_f
+    | _ -> None in
+  aux formula
+
+let get_equality_pairs (formula: CP.formula) =
+  let rec remove_exists pf = match pf with
+    | CP.Exists (_, exists_f, _ , _) -> remove_exists exists_f
+    | _ -> pf in
+  let conjuncts = formula |> remove_exists |> CP.split_conjunctions in
+  let check_eq = List.map is_equality_pair conjuncts in
+  check_eq |> List.filter (fun x -> x != None)
+  |> List.map Gen.unsome
+
+let simplify_equality gl_vars pre_cond post_cond =
+  let pre_pf = CF.get_pure pre_cond in
+  let post_pf = CF.get_pure post_cond in
+  let pre_eq = get_equality_pairs pre_pf in
+  let post_eq = get_equality_pairs post_pf in
+  let pr_pairs = pr_list (pr_pair pr_var pr_var) in
+  let () = x_tinfo_hp (add_str "pre_eq" pr_pairs) pre_eq no_pos in
+  let () = x_tinfo_hp (add_str "post_eq" pr_pairs) post_eq no_pos in
+  let eq_pair (x1, y1) (x2, y2)= CP.eq_sv x1 x2 && CP.eq_sv y1 y2 in
+  let common_eq = Gen.BList.intersect_eq eq_pair pre_eq post_eq in
+  let helper (v1, v2) =
+    if CP.mem v1 gl_vars then
+      if CP.mem v2 gl_vars then (v1, v2)
+      else (v2, v1)
+    else (v1, v2) in
+  if common_eq != [] then
+    let () = x_tinfo_hp (add_str "common_eq" pr_pairs) common_eq no_pos in
+    let common_eq = List.map helper common_eq in
+    let () = x_tinfo_hp (add_str "common_eq" pr_pairs) common_eq no_pos in
+    let n_pre = CF.subst common_eq pre_cond |> elim_idents in
+    let n_post = CF.subst common_eq post_cond |> elim_idents in
+    (n_pre, n_post)
+  else
+    (pre_cond, post_cond)
+
+let simplify_post_x post_cond =
+  let exists_vars = CF.get_exists post_cond in
+  let pf = CF.get_pure post_cond in
+  let filter_fun (x,y) = CP.mem x exists_vars || CP.mem y exists_vars in
+  let pr_pairs = pr_list (pr_pair pr_var pr_var) in
+  let () = x_tinfo_hp (add_str "pf" pr_pf) pf no_pos in
+  let eq_pairs = get_equality_pairs pf in
+  let () = x_binfo_hp (add_str "eq_pairs" pr_pairs) eq_pairs no_pos in
+  let eq_pairs = eq_pairs |> List.filter filter_fun in
+  if eq_pairs = [] then post_cond
+  else
+    let post_cond = remove_exists_vars post_cond exists_vars in
+    let () = x_binfo_hp (add_str "post" pr_formula) post_cond no_pos in
+    let helper_fun (x, y) = if CP.mem x exists_vars then (x,y) else (y,x) in
+    let eq_pairs = eq_pairs |> List.map helper_fun in
+    let n_post = CF.subst eq_pairs post_cond |> elim_idents in
+    let () = x_binfo_hp (add_str "post" pr_formula) n_post no_pos in
+    let rm_exists_vars = eq_pairs |> List.map (fun (x,y) -> [x;y]) |> List.concat
+                         |> CP.remove_dups_svl in
+    let exists_vars = CP.diff_svl exists_vars rm_exists_vars in
+    add_exists_vars n_post exists_vars
+
+let simplify_post post_cond =
+  Debug.no_1 "simplify_post" pr_formula pr_formula
+    (fun _ -> simplify_post_x post_cond) post_cond
+
 let simplify_goal goal =
   let n_pre = CF.elim_exists goal.gl_pre_cond in
   let n_pre = elim_idents n_pre in
-  (* let exists_vars = CF.get_exists n_pre in
-   * let n_pre = remove_exists_vars n_pre exists_vars in *)
   let n_post = elim_idents goal.gl_post_cond in
+  let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
+  let n_post = simplify_post n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
-
-let simplify_equality pre_cond post_cond =
-  let pre_pf = CF.get_pure pre_cond in
-  let post_pf = CF.get_pure post_cond in
-  let pre_conjuncts = CP.split_conjunctions pre_pf in
-  let post_conjuncts = CP.split_conjunctions post_pf in
-  (* to check common equaility *)
-  
-  (pre_cond, post_cond)
-
 
 let mkAndList pf_list =
   let rec aux pf_list = match pf_list with
@@ -914,33 +1009,6 @@ let find_exists_substs sv_list conjunct =
     let pf, _ = bf in
     aux pf
   | _ -> []
-
-let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
-  match formula with
-  | Base {
-      formula_base_heap = heap;
-      formula_base_vperm = vp;
-      formula_base_pure = pure;
-      formula_base_type = t;
-      formula_base_and = a;
-      formula_base_flow = fl;
-      formula_base_label = lbl;
-      formula_base_pos = pos } ->
-    CF.mkExists_w_lbl vars heap pure vp t fl a pos lbl
-  | Exists ({formula_exists_qvars = qvars;
-             formula_exists_heap =  h;
-             formula_exists_vperm = vp;
-             formula_exists_pure = p;
-             formula_exists_type = t;
-             formula_exists_and = a;
-             formula_exists_flow = fl;
-             formula_exists_label = lbl;
-             formula_exists_pos = pos } as bf) ->
-    let n_qvars = CP.remove_dups_svl (qvars @ vars) in
-    CF.mkExists_w_lbl n_qvars h p vp t fl a pos lbl
-  | Or bf -> let n_f1 = add_exists_vars bf.formula_or_f1 vars in
-    let n_f2 = add_exists_vars bf.formula_or_f2 vars in
-    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
 
 let add_formula_to_formula f1 f2 =
   let bf = CF.mkStar f1 f2 CF.Flow_combine no_pos in

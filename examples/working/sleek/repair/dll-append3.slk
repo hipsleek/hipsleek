@@ -11,13 +11,26 @@ void append(node2 a, node2 b)
 	requires a::dll<q, m> * b::dll<p, n> & m > 0
 	ensures (exists k2: a::dll<q, k2> & k2 = m + n);.
 
+// synthesize [node2 x,node2 y]
+// s61::node2<q,y> * y::dll<p,n> &
+// y!=null & x=s61 & x=s61 & p_7560=q & next_15_7573=null & 
+// q_7563=null & y=y & flted_8_7562=0 & m-1=0
+// ~>
+// (exists f_r_11196: s61::dll<q,f_r_11196>&
+// x=s61 & x=s61 & p_7560=q & next_15_7573=null & q_7563=null & 
+// y=y & flted_8_7562=0 & m-1=0 & f_r_11196=n+1).
+
+// synthesize [node2 x,node2 y]
+// x::node2<q,y> * y::dll<p,n> &
+// y!=null & flted_8_7562=0 & m=1
+// ~>
+// (exists p_117,self_118,flted_8_119,q_120,
+// f_r_89: x::node2<p_117,q_120> * q_120::dll<self_118,flted_8_119> &
+// flted_8_7562=0 & m=1 & f_r_89=1+n & 
+// flted_8_119+1=f_r_89 & 0<f_r_89 & p_117=q & self_118=x).
+
 synthesize [node2 x,node2 y]
-s61::node2<q,y> * y::dll<p,n> &
-y!=null & x=s61 & x=s61 & p_7560=q & next_15_7573=null & 
-q_7563=null & y=y & flted_8_7562=0 & m-1=0
-
+y::dll<p,n>&y!=null & flted_8_7562=0 & m=1
 ~>
-
-(exists f_r_11196: s61::dll<q,f_r_11196>&
-x=s61 & x=s61 & p_7560=q & next_15_7573=null & q_7563=null & 
-y=y & flted_8_7562=0 & m-1=0 & f_r_11196=n+1).
+(exists flted_8_74,f_r_76: y::dll<x,flted_8_74>&
+flted_8_7562=0 & m=1 & f_r_76=n+1 & 1+flted_8_74=f_r_76 & 0<f_r_76).
