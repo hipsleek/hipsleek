@@ -2955,13 +2955,13 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =
   let pr = !print_formula in
-  (* Debug.no_1 "split_conjunctions" pr (pr_list pr) *) split_conjunctions_x f 
+  (* Debug.no_1 "split_conjunctions" pr (pr_list pr) *) split_conjunctions_x f
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
 
 (******************)
-(* 
+(*
    Make a formula from a list of conjuncts, namely
    [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
 *)
@@ -5140,46 +5140,53 @@ and get_subst_equation_formula_x (f0 : formula) (v : spec_var) only_vars: ((spec
         ) ([],[]) b in
       (r1, AndList r2)
     | BForm (bf,lbl) -> get_subst_equation_b_formula bf v lbl only_vars
-    | _ -> ([], f0)
-  in 
+    | _ -> ([], f0) in
   let nondet_vars = collect_nondet_vars f0 in
   if Gen.BList.mem_eq eq_spec_var v nondet_vars then ([], f0)
   else helper f0 v only_vars
 
-and get_subst_equation_b_formula_x (f : b_formula) (v : spec_var) lbl only_vars: ((spec_var * exp) list * formula) =
+and get_subst_equation_b_formula_x (f : b_formula) (v : spec_var) lbl only_vars:
+  ((spec_var * exp) list * formula) =
   let (pf,il) = f in
   match pf with
   | Eq (e1, e2, pos) -> begin
       match e1, e2 with
-      | Var (sv1, _), Var (sv2, _) -> 
-        if (eq_spec_var sv1 v) && (not (eq_spec_var sv2 v)) then ([(v, e2)], mkTrue no_pos )
-        else if (eq_spec_var sv2 v) && (not (eq_spec_var sv1 v))  then ([(v, e1)], mkTrue no_pos )
+      | Var (sv1, _), Var (sv2, _) ->
+        if (eq_spec_var sv1 v) && (not (eq_spec_var sv2 v))
+        then ([(v, e2)], mkTrue no_pos)
+        else if (eq_spec_var sv2 v) && (not (eq_spec_var sv1 v))
+        then ([(v, e1)], mkTrue no_pos )
         else ([], BForm (f,lbl))
       | Var (sv1, _), _  ->
         if only_vars then ([], BForm (f,lbl))
-        else if (eq_spec_var sv1 v) &&(not (List.exists (fun sv -> eq_spec_var sv v) (afv e2))) then ([(v, e2)], mkTrue no_pos )
+        else if (eq_spec_var sv1 v) &&
+                (not (List.exists (fun sv -> eq_spec_var sv v) (afv e2)))
+        then ([(v, e2)], mkTrue no_pos )
         else ([], BForm (f,lbl))
       | _ , Var (sv2, _) ->
         if only_vars then ([], BForm (f,lbl))
-        else if (eq_spec_var sv2 v) && (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then ([(v, e1)], mkTrue no_pos )
+        else if (eq_spec_var sv2 v) &&
+                (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then
+          ([(v, e1)], mkTrue no_pos )
         else ([], BForm (f,lbl))
-      | Tsconst (t,_), Add (Var (sv,_),Tsconst (t1,_),_) 
-      | Tsconst (t,_), Add (Tsconst (t1,_), Var (sv,_),_) -> 
+      | Tsconst (t,_), Add (Var (sv,_),Tsconst (t1,_),_)
+      | Tsconst (t,_), Add (Tsconst (t1,_), Var (sv,_),_) ->
         if only_vars then ([],BForm(f,lbl))
-        else if (eq_spec_var sv v) then 
-          if (Tree_shares.Ts.contains t t1) then ([(v,Tsconst (Tree_shares.Ts.subtract t t1, no_pos))],mkTrue no_pos)
+        else if (eq_spec_var sv v) then
+          if (Tree_shares.Ts.contains t t1)
+          then ([(v,Tsconst (Tree_shares.Ts.subtract t t1, no_pos))],mkTrue no_pos)
           else ([],mkFalse no_pos)
         else ([],BForm (f,lbl))
       | _ ->([], BForm (f,lbl))
     end
   | _ -> ([], BForm (f,lbl))
 
-and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: ((spec_var * exp) list * formula) =
+and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars:
+  ((spec_var * exp) list * formula) =
   let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_formula in
   Debug.no_3 "get_subst_equation_b_formula "
     !print_b_formula !print_sv string_of_bool pr_out
     (fun _ _ _ -> get_subst_equation_b_formula_x f v lbl only_vars) f v only_vars
-
 
 and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let pr = !print_formula in
@@ -5187,7 +5194,7 @@ and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let prr = pr_pair (pr_list (pr_pair pr_sv pr_sv)) pr in
   Debug.no_1 "get_all_vv_eqs" pr prr get_all_vv_eqs_x f0
 
-and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =  
+and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let rec helper f0 =  match f0 with
     | And (f1, f2, pos) ->
       let st1, rf1 = helper f1  in
@@ -5197,15 +5204,16 @@ and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
     (*   (st1, mkAnd rf1 f2 pos) *)
     (* else *)
     (*   (st2, mkAnd f1 rf2 pos) *)
-    | AndList b -> 
-      let r1,r2 = List.fold_left (fun (a1,b1) c-> 
-          if Gen.is_empty a1 then 
+    | AndList b ->
+      let r1,r2 = List.fold_left (fun (a1,b1) c->
+          if Gen.is_empty a1 then
             let a, b = helper (snd c) in
             (a,b1@[(fst c, b)])
-          else (a1, b1@[c]) 
+          else (a1, b1@[c])
         ) ([],[]) b in
       (r1, AndList r2)
-    | BForm (((Eq (Var (sv1, _), Var (sv2, _), pos)),_),_) -> ([(sv1, sv2)], mkTrue no_pos )	  
+    | BForm (((Eq (Var (sv1, _), Var (sv2, _), pos)),_),_) ->
+      ([(sv1, sv2)], mkTrue no_pos )
     | _ -> ([], f0)
   in helper f0
 
@@ -5215,21 +5223,21 @@ and get_all_vv_eqs_bform b = match b with
 
 and perm_bounds (e:exp) : bool = match e with
   | Add (e1,e2,_) -> 
-    (match e1 with 
-     | Tsconst(f,_)-> Tree_shares.Ts.full f 
+    (match e1 with
+     | Tsconst(f,_)-> Tree_shares.Ts.full f
      | Var(v,_)-> full_perm_var_name = name_of_spec_var v
      |_-> false)||
     (match e2 with 
-     | Tsconst(f,_)-> Tree_shares.Ts.full f 
+     | Tsconst(f,_)-> Tree_shares.Ts.full f
      | Var(v,_)-> full_perm_var_name = name_of_spec_var v
      |_-> false)
   | _ -> false
 
-and prune_perm_bounds f = 
-  let helper (f,p) = match f with 
-    | Eq (e1,e2,l) -> if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l),p else (f,p)
+and prune_perm_bounds f =
+  let helper (f,p) = match f with
+    | Eq (e1,e2,l) -> if !perm=Dperm && (perm_bounds e1 || perm_bounds e2)
+      then  BConst (false, l),p else (f,p)
     | _ -> (f,p) in
-
   let rec helper_f f = match f with
     | BForm (b,l)-> BForm (helper b, l)
     | And (f1,f2,l) -> mkAnd (helper_f f1) (helper_f f2) l
@@ -5237,8 +5245,7 @@ and prune_perm_bounds f =
     | Or (f1,f2,l,pos) -> mkOr (helper_f f1) (helper_f f2) l pos
     | Not (f,l,pos) -> mkNot (helper_f f) l pos
     | Forall (v,f,l,pos) -> mkForall [v] (helper_f f) l pos
-    | Exists (v,f,l,pos) -> mkExists [v] (helper_f f) l pos
-  in
+    | Exists (v,f,l,pos) -> mkExists [v] (helper_f f) l pos in
   helper_f f
 
 (******************)
@@ -5260,15 +5267,13 @@ and  check_dependent f ls_working: bool=
     | [] -> false
     | v::vs ->
       begin
-        if List.mem v ls_var then
-          true
-        else
-          helper_check vs
-      end
-  in
+        if List.mem v ls_var then true
+        else helper_check vs
+      end in
   helper_check ls_varset
 
-and list_of_irr_bformula (ls_lhs:formula list) ls_working: ((formula list)*(formula list))=
+and list_of_irr_bformula (ls_lhs:formula list) ls_working:
+  ((formula list)*(formula list))=
   let rec helper_loop ls_llhs ls_lworking ls_lhs_rem =
     match ls_llhs with
     | [] ->  [], ls_lworking, ls_lhs_rem
@@ -5276,27 +5281,24 @@ and list_of_irr_bformula (ls_lhs:formula list) ls_working: ((formula list)*(form
       begin
               (*
                 for each f2 in ls_lhs do
-                if  depent(f2,f) then 
+                if  depent(f2,f) then
                 - remove f2 out of ls_lhs;
                 - add f2 into ls_working
               *)
         match (check_dependent f ls_working) with
         | true -> helper_loop fs (ls_lworking @ [f]) ls_lhs_rem
         | false -> helper_loop fs ls_lworking (ls_lhs_rem @ [f])
-      end
-  in
+      end in
   let new_ls_lhs,new_ls_working, new_ls_lhs_rem = helper_loop ls_lhs [] [] in
   if ((List.length new_ls_lhs_rem) = (List.length ls_lhs)) then
     (*fixpoint*)
     ls_lhs,ls_working
-  else
-    list_of_irr_bformula new_ls_lhs_rem new_ls_working
-
+  else list_of_irr_bformula new_ls_lhs_rem new_ls_working
 
 (* ls denotes list of true predicate to be eliminated from f0*)
 and elim_of_bformula (f0:formula) ls: formula  =  match f0 with
   | BForm f -> if List.mem f0 ls then BForm ((BConst (true,no_pos), None), snd f) else f0
-  | And (f1,f2,p) -> mkAnd (elim_of_bformula f1 ls ) (elim_of_bformula f2 ls) p 
+  | And (f1,f2,p) -> mkAnd (elim_of_bformula f1 ls ) (elim_of_bformula f2 ls) p
   | Or (f1,f2,l,p) -> mkOr (elim_of_bformula f1 ls ) (elim_of_bformula f2 ls) l p
   | Not (f1,l,p) -> mkNot (elim_of_bformula f1 ls) l p
   | Forall _ -> f0 (*should be improved*)
@@ -5331,8 +5333,7 @@ and no_of_disjs (f0 : formula) : int =
       let tmp1 = helper f2 no in
       let tmp2 = helper f1 tmp1 in
       tmp2
-    | _ -> 1+no
-  in
+    | _ -> 1+no in
   helper f0 0
 
 and find_bound v f0 =
@@ -5341,29 +5342,22 @@ and find_bound v f0 =
     begin
       let min1, max1 = find_bound v f1 in
       let min2, max2 = find_bound v f2 in
-      let min = 
+      let min =
         match min1, min2 with
         | None, None -> None
-        | Some m1, Some m2 -> if m1 < m2 then min1 else min2 
+        | Some m1, Some m2 -> if m1 < m2 then min1 else min2
         | Some m, None -> min1
-        | None, Some m -> min2
-      in
+        | None, Some m -> min2 in
       let max =
         match max1, max2 with
         | None, None -> None
-        | Some m1, Some m2 -> if m1 > m2 then max1 else max2 
-        | Some m, None -> max1 
-        | None, Some m -> max2
-      in
+        | Some m1, Some m2 -> if m1 > m2 then max1 else max2
+        | Some m, None -> max1
+        | None, Some m -> max2 in
       (min, max)
     end
   | BForm (bf,_) -> find_bound_b_formula v bf
   | _ -> None, None
-
-(* and find_bound_b_formula_redlog v f0 = *)
-(* let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in *)
-(* let res = Redlog.send_and_receive cmd in *)
-(* print_endline res *)
 
 and find_bound_b_formula v f0 =
   let val_for_max e included =
@@ -5372,16 +5366,14 @@ and find_bound_b_formula v f0 =
       to_int_const e Floor
     else
       (* x < e --> max(x) = ceil(e) - 1 *)
-      (to_int_const e Ceil) - 1
-  in
-  let val_for_min e included = 
+      (to_int_const e Ceil) - 1 in
+  let val_for_min e included =
     if included then
       (* x >= e --> min(x) = ceil(e) *)
       to_int_const e Ceil
     else
       (* x > e --> min(x) = floor(e) + 1 *)
-      (to_int_const e Floor) + 1
-  in
+      (to_int_const e Floor) + 1 in
   let helper e1 e2 is_lt is_eq =
     if (is_var e1) && (is_num e2) then
       let v1 = to_var e1 in

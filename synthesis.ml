@@ -397,6 +397,16 @@ let simplify_goal goal =
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
+let simplify_equality pre_cond post_cond =
+  let pre_pf = CF.get_pure pre_cond in
+  let post_pf = CF.get_pure post_cond in
+  let pre_conjuncts = CP.split_conjunctions pre_pf in
+  let post_conjuncts = CP.split_conjunctions post_pf in
+  (* to check common equaility *)
+  
+  (pre_cond, post_cond)
+
+
 let mkAndList pf_list =
   let rec aux pf_list = match pf_list with
   | [] -> CP.mkTrue no_pos
@@ -972,13 +982,17 @@ let rec has_unfold_pre trace = match trace with
       | _ -> has_unfold_pre t
     end
 
-let rec has_unfold_post trace = match trace with
+let has_unfold_post trace =
+  let rec aux trace num = match trace with
   | [] -> false
-  | h::t -> begin
+  | h::t ->
+    begin
       match h with
-      | RlUnfoldPost _ -> true
-      | _ -> has_unfold_post t
-    end
+      | RlUnfoldPost _ -> if num = 1 then true
+            else aux trace (num - 1)
+      | _ -> aux t num
+    end in
+  aux trace 1
 
 let rec remove_exists_vars_pf (formula:CP.formula) = match formula with
   | Exists (_, x,_,_) -> remove_exists_vars_pf x
