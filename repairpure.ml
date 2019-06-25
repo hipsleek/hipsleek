@@ -888,8 +888,8 @@ let create_sub_blocks (block : C.exp list) =
                      (fun x -> List.filter (fun y -> (get_ln y) = x) block) in
   sub_blocks
 
-let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
-    (block: C.exp list) =
+let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl)
+    (proc : C.proc_decl) trace (block: C.exp list) =
   let pos_list = block |> List.map C.pos_of_exp
                |> Gen.BList.remove_dups_eq eq_loc |> List.rev in
   let replace_pos = List.hd pos_list in
@@ -898,8 +898,9 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let helper t = match t with
     | Named _ | Int -> true
     | _ -> false in
-  let var_decls = get_var_decls replace_pos body
-                |> List.filter (fun (x, _) -> helper x) in
+  let var_decls = trace |> List.map (List.map (get_block_var_decls replace_pos))
+                  |> List.concat |> List.concat
+                  |> List.filter (fun (x,_) -> helper x) in
   let var_decls = proc_args @ var_decls in
   let fcode_prog = create_fcode_proc var_decls Void in
   let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
@@ -917,7 +918,7 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
   let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
   let n_body = create_tmpl_body_block body block var_decls in
-  let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
+  let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
   let n_proc = {proc with C.proc_body = Some n_body} in
   (* report_error no_pos "to debug template proc" *)
   let fcode_cprocs = C.list_of_procs fcode_cprog in

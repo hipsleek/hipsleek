@@ -208,13 +208,13 @@ let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)
 
 let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
     (proc : C.proc_decl) (block: C.exp list) =
-  (* None *)
   let orig_proc = proc in
   let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
   (* report_error no_pos "to debug" *)
-  let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc block in
+  let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc trace block in
   let () = reset_repair_block() in
   try
+    let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
     let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
     let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
     if specs = None then None
@@ -236,6 +236,7 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
 let repair_cproc iprog =
   match !Typechecker.repair_proc with
   | Some r_proc_name ->
+    let () = x_binfo_pp "marking" no_pos in
     let () = Globals.start_repair := true in
     let cprog, _ = Astsimp.trans_prog iprog in
     let cproc = !Syn.repair_proc |> Gen.unsome in
@@ -280,12 +281,12 @@ let create_buggy_proc_wrapper (body : I.exp) =
   let list = [] in
   let () = x_binfo_hp (add_str "body" pr_exp) body no_pos in
   let list = (buggy_num_dif_pos body 1)::list in
-  (* let list = (buggy_num_dif_pos body 2)::list in
-   * let list = (buggy_mem_dif_pos body 1)::list in
-   * let list = (buggy_mem_dif_pos body 2)::list in
-   * let list = (buggy_mem_dif_pos body 3)::list in
-   * let list = (buggy_boolean_exp body 1)::list in
-   * let list = (delete_one_branch body 1)::list in *)
+  let list = (buggy_num_dif_pos body 2)::list in
+  let list = (buggy_mem_dif_pos body 1)::list in
+  let list = (buggy_mem_dif_pos body 2)::list in
+  let list = (buggy_mem_dif_pos body 3)::list in
+  let list = (buggy_boolean_exp body 1)::list in
+  let list = (delete_one_branch body 1)::list in
   list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev
 
 let create_buggy_proc (proc : I.proc_decl) =
@@ -320,7 +321,14 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) =
 let create_buggy_progs source (iprog : I.prog_decl) =
   let procs = iprog.I.prog_proc_decls in
   let procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
-  let n_procs_list = procs |> List.map create_buggy_proc in
+  (* let n_procs_list = procs |> List.map create_buggy_proc in *)
+  let helper_buggy buggy_proc =
+    List.map (fun x -> if eq_str x.I.proc_name buggy_proc.I.proc_name
+               then buggy_proc else x) procs in
+  let n_procs_list = List.fold_left (fun res_list cur_proc ->
+      let buggy_procs = create_buggy_proc cur_proc in
+      let n_procs = buggy_procs |> List.map helper_buggy in
+      n_procs @ res_list) [] procs in
   let helper n_procs =
     let n_prog = {iprog with I.prog_proc_decls = n_procs} in
     n_prog in

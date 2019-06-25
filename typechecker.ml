@@ -1802,7 +1802,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let to_print = "Proving binding in method " ^ proc.proc_name
                          ^ " for spec " ^ !log_spec ^ "\n" in
           x_tinfo_pp to_print pos;
-          let () = repair_proc := Some (proc.Cast.proc_name) in
+          (* let () = repair_proc := Some (proc.Cast.proc_name) in *)
           if (Gen.is_empty unfolded) then
             let () = y_tinfo_pp "unfolded body is empty" in
             unfolded
@@ -3348,6 +3348,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
                                   (Cprinter.string_of_struc_formula_for_spec_inst prog))
       (proc0.Cast.proc_stk_of_static_specs # top) no_pos in
   let proc = find_proc prog proc0.proc_name in
+  let () = repair_proc := Some (proc.Cast.proc_name) in
   let () = Synt.syn_iprog := Some iprog in
   let () = Synt.syn_cprog := Some prog in
   let () = x_tinfo_hp (add_str "in check_proc proc"
@@ -3684,10 +3685,8 @@ let check_phase_only iprog prog proc =
 (* check entire program *)
 let check_proc_wrapper iprog prog proc cout_option mutual_grp =
   try
-    let res = check_proc iprog prog proc cout_option mutual_grp in
-    res
-  with _ as e ->
-    raise e
+    check_proc iprog prog proc cout_option mutual_grp
+  with _ as e -> raise e
 
 let check_data iprog (prog : prog_decl) (cdef : data_decl) =
   try
@@ -4115,8 +4114,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
           proc
         ) scc ) n_verified_sccs in
       prog, no_verified_sccs
-    ) (prog,[]) proc_scc
-  in
+    ) (prog,[]) proc_scc in
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) (proc_prim));
   let () =  match cout_option with
     | Some cout -> close_out cout
