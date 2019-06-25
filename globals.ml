@@ -563,7 +563,6 @@ let rec string_of_typ (x:typ) : string = match x with
     (string_of_typ et) ^ (repeat r)
 
 let rec string_of_typ_repair (x:typ) : string = match x with
-  (* may be based on types used !! *)
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "bool"
@@ -584,7 +583,8 @@ let rec string_of_typ_repair (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type"
+    else "struct " ^ ot ^ "*"
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)

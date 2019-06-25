@@ -15,7 +15,7 @@ module Err = Error
 
 let pr_proc = Iprinter.string_of_proc_decl_repair
 let pr_cproc = Cprinter.string_of_proc_decl 1
-let pr_iprog = Iprinter.string_of_program
+let pr_iprog = Iprinter.string_of_program_repair
 let pr_cprog = Cprinter.string_of_program
 let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
@@ -32,6 +32,7 @@ let pr_pos = string_of_loc
 
 let next_proc = ref false
 let stop = ref false
+let infestor_num = ref 0
 
 type block_tree = {
   bt_statements: C.exp list;

@@ -462,13 +462,10 @@ let process_source_full source =
     if (not !Globals.allow_locklevel) then
       let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
       let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
-      if b then
-        Globals.allow_locklevel := true
-  in
+      if b then Globals.allow_locklevel := true in
   let () = if !Globals.web_compile_flag then
       let todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
-      ()
-  in
+      () in
 
   (**************************************)
   (*to improve: annotate field*)
@@ -757,7 +754,7 @@ let process_source_full source =
 
   (* Infester *)
   let () = if !infestor then
-      Repair.create_buggy_progs intermediate_prog in
+      Repair.create_buggy_progs source intermediate_prog in
 
   (* Stopping the prover *)
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();

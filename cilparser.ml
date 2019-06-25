@@ -1169,7 +1169,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
             in
             Hashtbl.add tbl_pointer_typ core_type dtype;
             let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-            let  _ = print_endline ("Data: " ^ dname) in
+            (* let  _ = print_endline ("Data: " ^ dname) in *)
             Hashtbl.add tbl_data_decl dtype ddecl;
             (* return new type*)
             dtype in
@@ -1275,7 +1275,7 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
   let name = comp.Cil.cname in
-  let  _ = print_endline ("COMP INFOR: " ^ name) in
+  (* let  _ = print_endline ("COMP INFOR: " ^ name) in *)
   let _ = Debug.ninfo_hprint (add_str "name" pr_id) name no_pos in
   let fields = List.map (fun x ->
       translate_fieldinfo x lopt) comp.Cil.cfields in
@@ -1438,8 +1438,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
     let newexp = Iast.mkCast target_typ qexp pos in
     newexp
   | Cil.CastE (ty, exp, l) ->
-    let _ = print_endline ("CAST exp: " ^ (string_of_cil_exp exp) ^
-                           " to type: " ^ (string_of_cil_typ ty)) in
+    (* let _ = print_endline ("CAST exp: " ^ (string_of_cil_exp exp) ^
+     *                        " to type: " ^ (string_of_cil_typ ty)) in *)
     let pos =
       if (l != Cil.locUnknown) then translate_location l
       else translate_location (loc_of_cil_exp exp) in

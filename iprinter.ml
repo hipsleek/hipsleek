@@ -1043,7 +1043,7 @@ let rec string_of_exp_repair = function
     let newexp = (
       match idl with
       | _ ->
-          base_str ^ "." ^ (concatenate_string_list idl "~~>")
+          base_str ^ "->" ^ (concatenate_string_list idl "~~>")
     ) in newexp
 
   | Assign {exp_assign_op = op;
@@ -1090,7 +1090,7 @@ let rec string_of_exp_repair = function
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
   | FloatLit ({exp_float_lit_val = f})
       -> string_of_float f
-  | Null l                         -> "null"
+  | Null l                         -> "NULL"
   | Assert l                       ->
         snd(l.exp_assert_path_id) ^
             (match l.exp_assert_type with
@@ -1389,8 +1389,7 @@ let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add in
   | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i ^ (string_of_field_ann ann)
 
 let string_of_decl_repair (d, pos, il,ann) = match d with
-  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " "
-                          ^ i ^ ";"
+  | (t, i)             -> (string_of_typ_repair t) ^ " " ^ i ^ ";"
 
 (* function to print a list of typed _ident *)
 let rec string_of_decl_list l c = match l with
@@ -1400,8 +1399,8 @@ let rec string_of_decl_list l c = match l with
 
 let string_of_data_pure_inv inv =
   match inv with
-  | None -> "\n"
-  | Some pf -> "pure inv "^((string_of_pure_formula) pf)^"\n"
+  | None -> ""
+  | Some pf -> "pure inv "^((string_of_pure_formula) pf)^""
 
 (* pretty printing for a data declaration *)
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"^(string_of_data_pure_inv d.data_pure_inv)
@@ -1479,17 +1478,17 @@ let string_of_coerc_decl c =
 let string_of_coercion c = string_of_coerc_decl c
 
 (* pretty printing for one parameter *) 
-let string_of_param par = match par.param_mod with 
-  | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name
-  | RefMod         -> (* "ref " ^  *)(string_of_typ par.param_type) ^ "@R " ^ par.param_name
+let string_of_param par = match par.param_mod with
+  | NoMod          -> (string_of_typ_repair par.param_type) ^ " " ^ par.param_name
+  | RefMod         -> (string_of_typ par.param_type) ^ "@R " ^ par.param_name
   | CopyMod         -> (string_of_typ par.param_type) ^ "@C " ^ par.param_name
 
 ;;
 
 (* pretty printing for a list of parameters *)
-let rec string_of_param_list l = match l with 
+let rec string_of_param_list l = match l with
   | []        -> ""
-  | h::[]     -> (string_of_param h) 
+  | h::[]     -> (string_of_param h)
   | h::t      -> (string_of_param h) ^ ", " ^ (string_of_param_list t)
 ;;
 
@@ -1516,7 +1515,6 @@ let string_of_proc_decl_repair p =
   let specs = "/*@\n" ^ specs ^ "\n*/" in
   (if p.proc_constructor then "" else (string_of_typ_repair p.proc_return) ^ " ")
   ^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
-  ^ (match p.proc_ho_arg with | None -> "" | Some ha -> " with " ^ (string_of_param ha))
   ^ "\n" ^ specs  ^ "\n" ^ body
 
 let string_of_rel_decl p =
@@ -1553,7 +1551,6 @@ let rec string_of_proc_decls_repair l = match l with
   | []        -> ""
   | h::[]     -> (string_of_proc_decl_repair h)
   | h::t      -> (string_of_proc_decl_repair h) ^ "\n" ^ (string_of_proc_decls_repair t)
-;;
 
 (* pretty printing for a list of view_decl *)
 let rec string_of_view_decl_list l = match l with 
@@ -1691,17 +1688,22 @@ let string_of_data_repair cdef =
     let dd=cdef.data_methods in
     if dd==[] then ""
     else "\n"^(String.concat "\n" (List.map string_of_proc_decl dd)) in
+  let data_name = cdef.data_name in
+  let helper f =
+    let tmp = string_of_decl_repair f in tmp in
+    (* if is_substr data_name tmp then "struct " ^ tmp
+     * else tmp in *)
   let field_str = String.concat "\n"
-      (List.map (fun f -> string_of_decl_repair f) cdef.data_fields) in
+      (List.map helper cdef.data_fields) in
   let inv_str =
     let dd=cdef.data_invs in
     if dd==[] then ""
     else "\n"^(String.concat ";\n"
                  (List.map (fun i -> "inv " ^ (string_of_formula i))
                     cdef.data_invs)) in
-  "data " ^ cdef.data_name ^ " {\n"
+  "struct " ^ cdef.data_name ^ " {\n"
   ^ field_str ^ inv_str ^ meth_str ^ "\n}"
-  ^(string_of_data_pure_inv cdef.data_pure_inv)
+  ^(string_of_data_pure_inv cdef.data_pure_inv) ^ ";"
 
 (* pretty printing for program in repair case*)
 let string_of_program_repair p =
@@ -1715,16 +1717,11 @@ let string_of_program_repair p =
   let filter_y x = String.compare x.proc_name "free" != 0 in
   let procs = List.filter filter_y procs in
   let contains s1 s2 =
-    let re = Str.regexp_string s2
-    in
+    let re = Str.regexp_string s2 in
         try ignore (Str.search_forward re s1 0); true
-        with Not_found -> false
-  in
-  (* let filter_x x = String.compare x "__bool_of_int___" != 0 in *)
-  (* let procs = List.filter (fun x -> filter_x x.proc_name) procs in *)
+        with Not_found -> false in
   let filter_z x = let name = x.proc_name in
-    List.exists (fun y -> contains y name) !Globals.verified_procs
-  in
+    List.exists (fun y -> contains y name) !Globals.verified_procs in
   let procs = if (!Globals.repaired) then
       List.filter filter_z procs
     else procs in
@@ -1732,8 +1729,7 @@ let string_of_program_repair p =
   let global_str = string_of_global_var_decls_repair p.prog_global_var_decls in
   let procs_str = string_of_proc_decls_repair (List.rev procs) in
   let views = string_of_view_decl_list_repair p.prog_view_decls in
-  let views = if (!Globals.repaired) then "/*@\n" ^ views ^ "\n*/"
-    else views in
+  let views = "/*@\n" ^ views ^ "\n*/" in
   data_str ^ "\n\n"  ^ global_str ^ "\n" ^ views  ^"\n" ^  procs_str ^ "\n"
 
 (* pretty printing for program *)

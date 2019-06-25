@@ -277,29 +277,57 @@ let repair_cproc iprog =
   | _ -> None
 
 let create_buggy_proc_wrapper (body : I.exp) =
-  let n_body1 = buggy_num_dif_pos body 1 in
-  let n_body2 = buggy_num_dif_pos body 2 in
-  let n_body3 = buggy_mem_dif_pos body 1 in
-  let n_body4 = buggy_mem_dif_pos body 2 in
-  let n_body5 = buggy_mem_dif_pos body 3 in
-  let n_body6 = buggy_boolean_exp body 1 in
-  let n_body7 = delete_one_branch body 1 in
-  let list = [n_body1; n_body2; n_body3; n_body4; n_body5; n_body6; n_body7] in
-  let list = list |> List.filter (fun (_, y) -> y = 0) in
-  list |> List.map fst
+  let list = [] in
+  let list = (buggy_num_dif_pos body 1)::list in
+  (* let list = (buggy_num_dif_pos body 2)::list in
+   * let list = (buggy_mem_dif_pos body 1)::list in
+   * let list = (buggy_mem_dif_pos body 2)::list in
+   * let list = (buggy_mem_dif_pos body 3)::list in
+   * let list = (buggy_boolean_exp body 1)::list in
+   * let list = (delete_one_branch body 1)::list in *)
+  list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev
 
 let create_buggy_proc (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in
   let n_body_list = create_buggy_proc_wrapper body in
-  let () = x_binfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
-  proc
-  (* {proc with proc_body = Some n_body} *)
+  let () = x_tinfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
+  n_body_list |> List.map (fun x -> {proc with I.proc_body = Some x})
 
-let create_buggy_progs (iprog : I.prog_decl) =
+let output_infestor_prog (src: string) (iprog : I.prog_decl) =
+  let file_name, dir = Filename.basename src, Filename.dirname src in
+  let r_file = "buggy_" ^ (string_of_int !infestor_num)^ "_" ^ file_name in
+  let to_saved_file = dir ^ Filename.dir_sep ^ r_file in
+  let () = infestor_num := !infestor_num + 1 in
+
+  let view_decls = iprog.I.prog_view_decls in
+  let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"; "size"] in
+  let pre_datas = ["barrier"; "phase"; "thrd"; "__RET"; "__ArrBoundErr"; "lock";
+                  "__DivByZeroErr"; "char_star"; "int_ptr_ptr"; "int_ptr"] in
+  let negate x = not x in
+  let view_decls = view_decls |> List.filter
+                     (fun x -> List.mem x.I.view_name pre_views |> negate) in
+  let data_decls = iprog.I.prog_data_decls |> List.filter
+                     (fun x -> List.mem x.I.data_name pre_datas |> negate) in
+  let n_prog = {iprog with I.prog_view_decls = view_decls;
+                           I.prog_data_decls = data_decls} in
+  let output = pr_iprog n_prog in
+  let oc = open_out to_saved_file in
+  fprintf oc "%s\n" output; close_out oc;
+  let () = x_binfo_hp (add_str "prog" pr_iprog) n_prog no_pos in
+  ()
+
+let create_buggy_progs source (iprog : I.prog_decl) =
   let procs = iprog.I.prog_proc_decls in
   let procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
-  let n_procs = procs |> List.map create_buggy_proc in
+  let n_procs_list = procs |> List.map create_buggy_proc in
+  let helper n_procs =
+    let n_prog = {iprog with I.prog_proc_decls = n_procs} in
+    n_prog in
+  let () = infestor_num := 0 in
+  let _ = n_procs_list |> List.map helper
+          |> List.map (output_infestor_prog source)  in
   ()
+
 let rec start_repair_wrapper (iprog: I.prog_decl) =
   (* let tmp = repair_iprog iprog in *)
   let start_time = get_time () in
