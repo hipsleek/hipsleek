@@ -703,7 +703,8 @@ let subs_fwrite formula var field new_val data_decls =
   | Base bf -> let hf = bf.CF.formula_base_heap in
     let () = x_tinfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf no_pos in
     let rec helper (hf:CF.h_formula) = match hf with
-      | DataNode dnode -> let data_var = dnode.h_formula_data_node in
+      | DataNode dnode ->
+        let data_var = dnode.h_formula_data_node in
         if CP.eq_spec_var data_var var then
           let n_dnode = set_field dnode field new_val data_decls in
           (CF.DataNode n_dnode)
@@ -804,7 +805,7 @@ let process_rule_frame_pred goal rcore =
   let n_post = CF.subst eq_pairs n_post in
   let n_exists_vars = CP.diff_svl exists_vars e_vars in
   let n_post = add_exists_vars n_post n_exists_vars in
-  let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+  let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlFramePred rcore)::goal.gl_trace;
                            gl_pre_cond = rcore.rfp_pre} in
@@ -835,7 +836,7 @@ let process_rule_skip goal =
 let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
   if List.length goal.gl_trace > 5 then
-    let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
+    let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
     let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in

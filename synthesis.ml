@@ -474,16 +474,16 @@ let simplify_post_x post_cond =
   let pr_pairs = pr_list (pr_pair pr_var pr_var) in
   let () = x_tinfo_hp (add_str "pf" pr_pf) pf no_pos in
   let eq_pairs = get_equality_pairs pf in
-  let () = x_binfo_hp (add_str "eq_pairs" pr_pairs) eq_pairs no_pos in
+  let () = x_tinfo_hp (add_str "eq_pairs" pr_pairs) eq_pairs no_pos in
   let eq_pairs = eq_pairs |> List.filter filter_fun in
   if eq_pairs = [] then post_cond
   else
     let post_cond = remove_exists_vars post_cond exists_vars in
-    let () = x_binfo_hp (add_str "post" pr_formula) post_cond no_pos in
+    let () = x_tinfo_hp (add_str "post" pr_formula) post_cond no_pos in
     let helper_fun (x, y) = if CP.mem x exists_vars then (x,y) else (y,x) in
     let eq_pairs = eq_pairs |> List.map helper_fun in
     let n_post = CF.subst eq_pairs post_cond |> elim_idents in
-    let () = x_binfo_hp (add_str "post" pr_formula) n_post no_pos in
+    let () = x_tinfo_hp (add_str "post" pr_formula) n_post no_pos in
     let rm_exists_vars = eq_pairs |> List.map (fun (x,y) -> [x;y]) |> List.concat
                          |> CP.remove_dups_svl in
     let exists_vars = CP.diff_svl exists_vars rm_exists_vars in
@@ -1057,10 +1057,10 @@ let has_unfold_post trace =
     begin
       match h with
       | RlUnfoldPost _ -> if num = 1 then true
-            else aux trace (num - 1)
+        else aux t (num - 1)
       | _ -> aux t num
     end in
-  aux trace 1
+  aux trace 2
 
 let rec remove_exists_vars_pf (formula:CP.formula) = match formula with
   | Exists (_, x,_,_) -> remove_exists_vars_pf x

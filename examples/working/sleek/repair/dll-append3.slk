@@ -29,8 +29,32 @@ void append(node2 a, node2 b)
 // flted_8_7562=0 & m=1 & f_r_89=1+n & 
 // flted_8_119+1=f_r_89 & 0<f_r_89 & p_117=q & self_118=x).
 
+// synthesize [node2 x,node2 y]
+// y::dll<p,n>&y!=null & flted_8_7562=0 & m=1
+// ~>
+// (exists flted_8_74,f_r_76: y::dll<x,flted_8_74>&
+// flted_8_7562=0 & m=1 & f_r_76=n+1 & 1+flted_8_74=f_r_76 & 0<f_r_76).
+
 synthesize [node2 x,node2 y]
-y::dll<p,n>&y!=null & flted_8_7562=0 & m=1
+self_7561::node2<q,y> * y::dll<p,n> &
+y!=null & x=self_7561 & x=self_7561 & p_7560=q & next_15_7573=null & 
+q_7563=null & y=y & flted_8_7562=0 & m-1=0
 ~>
-(exists flted_8_74,f_r_76: y::dll<x,flted_8_74>&
-flted_8_7562=0 & m=1 & f_r_76=n+1 & 1+flted_8_74=f_r_76 & 0<f_r_76).
+(exists f_r_11196: self_7561::dll<q,f_r_11196>&
+x=self_7561 & x=self_7561 & p_7560=q & next_15_7573=null & q_7563=null & 
+y=y & flted_8_7562=0 & m-1=0 & f_r_11196=n+1).
+
+// synthesize [node2 x,node2 y]
+//  x::node2<q,y> * y::dll<p,n>&
+// y!=null & next_15_7573=null & q_7563=null & flted_8_7562=0 & m=0+1
+// ~>
+//  (exists f_r_89: x::dll<q,f_r_89>&
+// next_15_7573=null & q_7563=null & flted_8_7562=0 & m=0+1 & f_r_89=1+n).
+
+// synthesize [node2 x,node2 y]
+//  y::dll<p,n>&
+// y!=null & next_15_7573=null & q_7563=null & flted_8_7562=0 & m=0+1
+// ~>
+//  (exists flted_8_119,f_r_89: y::dll<x,flted_8_119>&
+// next_15_7573=null & q_7563=null & flted_8_7562=0 & m=0+1 & f_r_89=1+n & 
+// flted_8_119+1=f_r_89 & 0<f_r_89).
