@@ -278,6 +278,7 @@ let repair_cproc iprog =
 
 let create_buggy_proc_wrapper (body : I.exp) =
   let list = [] in
+  let () = x_binfo_hp (add_str "body" pr_exp) body no_pos in
   let list = (buggy_num_dif_pos body 1)::list in
   (* let list = (buggy_num_dif_pos body 2)::list in
    * let list = (buggy_mem_dif_pos body 1)::list in

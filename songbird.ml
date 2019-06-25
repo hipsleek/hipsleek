@@ -207,6 +207,7 @@ let rec translate_exp (exp: CP.exp) =
   | CP.Null loc -> SBC.Null (translate_loc loc)
   | CP.Var (var, loc) -> SBC.Var (translate_var var, translate_loc loc)
   | CP.IConst (num, loc) -> SBC.IConst (num, translate_loc loc)
+  | CP.TypeCast (_, e, _) -> translate_exp e
   | CP.Add (exp1, exp2, loc) ->
         let t_exp1 = translate_exp exp1 in
         let t_exp2 = translate_exp exp2 in

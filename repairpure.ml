@@ -216,16 +216,17 @@ let create_fcode_exp (vars: typed_ident list) : I.exp =
 let create_fcode_proc (args : typed_ident list) typ =
   let rec helper args = match args with
     | [] -> ""
-    | [(typ, name)] -> (string_of_typ_repair typ) ^ " " ^ name
-    | h::t -> let tail = helper t in
-      let head = string_of_typ_repair (fst h) ^ " " ^ (snd h) in
+    | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
+    | h::t ->
+      let tail = helper t in
+      let head = string_of_typ (fst h) ^ " " ^ (snd h) in
       head ^ "," ^ tail in
   let names = args |> List.map snd in
   let arg_str = helper args in
   let arg_names = pr_idents_wo_brackets names "," in
   let fcode = hp_str ^ " P(" ^ arg_str ^ ").\n" ^
               hp_str ^ " Q(" ^ arg_str ^ ").\n" ^
-              (string_of_typ_repair typ) ^  " " ^ fcode_str ^ "(" ^ arg_str ^ ")\n" ^
+              (string_of_typ typ) ^  " " ^ fcode_str ^ "(" ^ arg_str ^ ")\n" ^
               "requires P(" ^ arg_names ^ ")\n" ^
               "ensures Q(" ^ arg_names ^ ");" in
   let lines = read_file "prelude.ss" in
@@ -890,8 +891,7 @@ let create_sub_blocks (block : C.exp list) =
 let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_decl)
     (block: C.exp list) =
   let pos_list = block |> List.map C.pos_of_exp
-               |> Gen.BList.remove_dups_eq eq_loc
-               |> List.rev in
+               |> Gen.BList.remove_dups_eq eq_loc |> List.rev in
   let replace_pos = List.hd pos_list in
   let proc_args = proc.C.proc_args in
   let body = proc.C.proc_body |> Gen.unsome in
@@ -917,7 +917,7 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl) (proc : C.proc_de
   let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
   let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
   let n_body = create_tmpl_body_block body block var_decls in
-  let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
+  let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
   let n_proc = {proc with C.proc_body = Some n_body} in
   (* report_error no_pos "to debug template proc" *)
   let fcode_cprocs = C.list_of_procs fcode_cprog in
