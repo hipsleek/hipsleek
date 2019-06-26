@@ -285,8 +285,8 @@ let create_buggy_proc_wrapper (body : I.exp) =
   let list = (buggy_mem_dif_pos body 1)::list in
   let list = (buggy_mem_dif_pos body 2)::list in
   let list = (buggy_mem_dif_pos body 3)::list in
-  let list = (buggy_boolean_exp body 1)::list in
-  let list = (delete_one_branch body 1)::list in
+  (* let list = (buggy_boolean_exp body 1)::list in *)
+  (* let list = (delete_one_branch body 1)::list in *)
   list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev
 
 let create_buggy_proc (proc : I.proc_decl) =
@@ -297,8 +297,11 @@ let create_buggy_proc (proc : I.proc_decl) =
 
 let output_infestor_prog (src: string) (iprog : I.prog_decl) =
   let file_name, dir = Filename.basename src, Filename.dirname src in
-  let r_file = "buggy_" ^ (string_of_int !infestor_num)^ "_" ^ file_name in
-  let to_saved_file = dir ^ Filename.dir_sep ^ r_file in
+  let suffix = Filename.extension file_name in
+  let f_name = Filename.chop_suffix file_name suffix in
+  (* let r_file = "buggy_" ^ (string_of_int !infestor_num)^ "_" ^ file_name in *)
+  let b_file = f_name ^ "_buggy_" ^ (string_of_int !infestor_num) ^ suffix in
+  let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
   let () = infestor_num := !infestor_num + 1 in
 
   let view_decls = iprog.I.prog_view_decls in
