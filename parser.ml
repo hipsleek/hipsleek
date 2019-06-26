@@ -3547,7 +3547,8 @@ infer_coercion_decl:
 (*         } *)
 (*     ]]; *)
 
-coerc_prio: [[ `AT; `INT_LITER (n,_) -> n ]];
+coerc_prio:   [[ `AT; `INT_LITER (n,_) -> n  ]];
+formula_kind: [[ `AT; `IDENTIFIER id   -> id ]];
 
 coerc_decl_aux:
     [[
@@ -3561,8 +3562,9 @@ coerc_decl_aux:
           coercion_list_kind  = LEM_INFER_PRED }
       (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
       (*     { t with coercion_list_kind = LEM_INFER } *)
-        | `LEMMA kind; prio = OPT coerc_prio ; t = coercion_decl ->
-          let () = print_endline "LEMMA" in
+        | `LEMMA kind; prio = OPT coerc_prio ;
+                      fkind = OPT formula_kind ; t = coercion_decl ->
+            let () = print_endline "LEMMA" in
             let k = convert_lem_kind kind in
             let t = {t with coercion_kind = k;
                             coercion_prio = un_option prio def_coerc_prio;

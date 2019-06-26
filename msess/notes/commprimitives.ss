@@ -7,11 +7,11 @@ do so by using an exclusive channel
 */
 
 /** generic */
-void send [aaa] (Channel ccc, `aaa xxx)
+void send [`aaa] (Channel ccc, `aaa xxx)
   requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
   ensures  ccc::Chan{@S %R}<>;
 
-`bbb receive [bbb] (Channel ccc)
+`bbb receive [`bbb] (Channel ccc)
   requires ccc::Chan{@S ?v#%L(v);;%R}<>
   ensures  ccc::Chan{@S %R}<> * %L(res) ;
 

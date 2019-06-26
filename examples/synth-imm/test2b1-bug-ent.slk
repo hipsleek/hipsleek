@@ -1,0 +1,42 @@
+data node{
+     int key;
+     node down;
+     node fwd;
+}.
+
+
+pred skl0<p> ==
+    /* only the down ptr can be null */
+    self = null or  //not necessarily true
+    /* empty skl cannot have a 0 lvl */
+    self = p    or
+    self::node<val,down,fwd> * down::skl0<fwd> * fwd::skl0<p>
+    & self!=p
+    inv true.
+
+pred skl1<p,n> ==
+    self = null & n=0 or
+    self = p    & n=0 or
+    self::node<val,down,fwd> * down::skl1<fwd,m1> * fwd::skl1<p,m2>
+    & self!=p & n = m1 + m2 + 1
+    inv n>=0.
+
+//Entail 1
+checkentail (exists v_node_71_2035:
+                          down_2149::skl0<fwd_2146> *
+                          a::node<Anon_11,flted_52_2117,y_2116>@L *
+                          v_node_71_2035::skl0<a> *
+                          x::node<val_2148,down_2149,v_node_71_2035> &
+                          x!=y_2115 & fwd_2146=fwd_2150 & p_2147=y_2115 &
+                          x!=null & y_2116=y & y_2115=y &
+                          a!=y & flted_52_2117=null & x!=y & fwd_2150!=y &
+                          Anon_2200=Anon_11 & fwd_71_2218=fwd_2150 & res=x)
+ |- res::skl0<a>.
+
+
+checkentail x::skl0<y>
+          * a::node<Anon_11,flted_49_2123,y>@L
+          & x'!=null
+          & a!=y & flted_49_2123=null & a'=a & y'=y & x'=x & x'=y' & res=a'
+ |-  (exists a_129: res::skl0<a_129> & x=res & a_129=a ).
+print residue.

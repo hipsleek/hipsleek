@@ -1,0 +1,39 @@
+data node{
+   int val;
+   node next;
+}.
+
+data nodell{
+   node   val;
+   nodell next;
+}.
+
+
+pred list<n> ==  self = null & n = 0  or
+    self::node<_,q> * q::list<n-1>
+    inv n>=0.
+
+pred llist<n,m> ==  self = null & n = 0  or
+    self::nodell<lst,q> * lst::list<nn> * q::llist<n-1,mm> & m = nn + mm
+    inv n>=0.
+
+
+checkentail x::list<n> & n>0 |- x::node<_,n0>.
+expect Valid.
+print residue.
+
+checkentail x::llist<n,m> & n>0 |- x::nodell<y,nxt>.
+expect Valid.
+print residue.
+
+// =====================================================================
+
+relation R(int n, int m, int z) == n = m + z.
+
+pred llistR<n,m,R> ==  self = null & n = 0  or
+    self::nodell<lst,q> * lst::list<nn> * q::llistR<n-1,mm,R> & R(m,nn,mm)
+    inv n>=0.
+
+checkentail x::llistR<n,m,R> & n>0 |- x::nodell<y,nxt>.
+expect Valid.
+print residue.

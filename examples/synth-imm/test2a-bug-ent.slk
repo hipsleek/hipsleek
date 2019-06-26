@@ -1,0 +1,38 @@
+data node{
+     int key;
+     int lvl;
+     node down;
+     node fwd;
+}.
+
+
+pred skl0<lvl,p> ==
+    /* only the down ptr can be null */
+    self = null & lvl >= 0 or  //not necessarily true
+    /* empty skl cannot have a 0 lvl */
+    self = p    & lvl >= 0 or
+    self::node<val,lvl,down,fwd> * down::skl0<lvl-1,fwd> * fwd::skl0<lvl,p>
+    & self!=p
+    inv lvl>=0.
+
+
+// lvl>1 below is necessary to make the entailment go through
+checkentail x::skl0<lvl,y> * a::node<Anon_16,lvl,null,y>
+            & x!=null & a!=y
+            & x=y & res=a & lvl>0
+            |-  (exists lvl_177,y_178: res::skl0<lvl_177,y_178>
+                                       & lvl_177=lvl & y_178=y).
+expect Valid.
+print residue.
+
+
+checkentail (exists v_boolean_85_2265',
+v_boolean_85_2264': x::skl0<lvl,y> *
+                    a::node<Anon_13,Anon_14,null,y>
+                    & lvl!=0
+                    & x!=null  & a!=y
+                    & 0<lvl &
+                    res=a)
+ |-  (exists lvl_174,y_175: res::skl0<lvl_174,y_175> &lvl_174=lvl & y_175=y).
+expect Valid.
+print residue.

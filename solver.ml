@@ -7771,8 +7771,8 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
   (*                                  (Cprinter.prtt_string_of_formula conseq))) pos in *)
   (* disable unfolding during normalization using lemmas *)
   (* disable nested lemma normalization *)
-  let ctx0   = x_add_1 (fun _ -> norm_w_coerc_context prog ctx0) () in
-  let _, conseq = x_add_1 (fun _ -> norm_w_coerc_formula prog ~left:false (CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos) conseq) () in
+  let ctx0   = x_add_1 (fun _ -> norm_context prog ctx0) () in
+  let _, conseq = x_add_1 (fun _ -> norm_formula prog ~left:false (CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos) conseq) () in
   let () = y_tinfo_hp (add_str "temp_res" Cprinter.string_of_context) ctx0 in
   let ls, prf = x_add (heap_entail_conjunct_helper ~caller:x_loc) 3 prog is_folding  ctx0 conseq rhs_matched_set pos in
   let ls, prf = post_process_result ls prf in
@@ -15604,6 +15604,26 @@ and norm_w_coerc_formula prog ?left:(left = true) es formula =
   let new_ctx = x_add_1 (fun _ ->  norm_w_coerc_context prog ~left:left (Ctx es)) () in
   let () = y_ninfo_pp "HERE1-finish" in
   new_ctx, (CF.formula_of_context new_ctx)
+
+and norm_formula_x prog ?left:(left = true) es formula =
+  let ctx, nform = norm_w_coerc_formula prog ~left:left es formula in
+  ctx, Session.norm_slk_cformula nform
+
+and norm_formula prog ?left:(left = true) es formula =
+  let pr = Cprinter.string_of_formula in
+  let pr_out pair = pr (snd pair) in
+  Debug.no_1 "norm_formula" pr pr_out (fun _ -> norm_formula_x prog ~left:left es formula) formula
+
+and norm_context_x prog ?left:(left = true) ctx =
+  let nctx = norm_w_coerc_context prog ~left:left ctx in
+  Session.norm_slk_ctx nctx
+
+and norm_context prog ?left:(left = true) ctx =
+  let pr = Cprinter.string_of_context in 
+  Debug.no_1 "norm_context" pr pr (fun _ -> norm_context_x prog ~left:left ctx) ctx
+
+and norm_entail_state prog ?left:(left = true) es =
+  norm_w_coerc_entail_state prog ~left:left es
 
 (* -------------------- end norm lemma app -------------------- *)
 (* ------------------------------------------------------------ *)

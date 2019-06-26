@@ -1,0 +1,26 @@
+pred_prim event<type,card:int>. //event
+
+
+
+
+mapf(form)@S@H ==
+  match form with
+    | emp        -> emp ;
+    | ?v#%H      -> self::R{+ mapf(%H)}<v@IP>   ;
+    | !v#%H      -> self::S{- mapf(%H)}<v@IP>   ;
+    | Pred{%H}<> -> %H
+    | %H ;; %T   -> self::Seq{mapf(%H)  , mapf(%T)}<> ;
+    | %H or %T   -> self::Sor{mapf(%H) or mapf(%T)}<> ;
+
+lemma_map[@S@H
+    emp      -> emp;
+    ?v#%H    -> self::R{+ %H}<v@IP>   ;
+    !v#%H    -> self::S{- %H}<v@IP>   ;
+    %H ;; %T -> self::Seq{%H, %T}<>   ;
+    %H or %T -> self::Sor{%H or %T}<> ; 
+    ].
+
+lemma_norm[@S@S
+     emp ;; %R -> %R;
+
+    ].

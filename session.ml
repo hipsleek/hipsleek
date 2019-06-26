@@ -2124,6 +2124,12 @@ struct
     let bases = extract_bases session in
     mk_norm_session bases
 
+  let norm_sequence hform =
+    let sessf = x_add_1 trans_h_formula_to_session hform in
+    let sessf = norm3_sequence sessf in
+    let hform = trans_from_session sessf in
+    Some hform
+
   let rec sor_disj_list head =
     match head with
       | SOr s -> (sor_disj_list s.session_sor_formula_or1) @
@@ -2371,16 +2377,16 @@ struct
     let pr_out = pr_pair (pr_opt (pr_list pr1)) (pr_opt pr2) in
     Debug.no_1 "Session.rebuild_node_x" pr_in pr_out (fun _ -> rebuild_node def node unfold_fun is_prime_fun) node
 
-  let remove_emps sess =
+  let remove_emps ?head:(head=true) ?tail:(tail=true) sess =
     let fixpt = ref true in
     let fnc sess =
       match sess with
       | SSeq s ->
-          if is_emp s.session_seq_formula_head then
+          if head && (is_emp s.session_seq_formula_head) then
             let () = fixpt := false in
             Some s.session_seq_formula_tail
           else
-            if is_emp s.session_seq_formula_tail then
+            if tail && (is_emp s.session_seq_formula_tail) then
               let () = fixpt := false in
               Some s.session_seq_formula_head
             else None
@@ -2389,6 +2395,13 @@ struct
       let sess =  trans_session_formula (fnc, (somef,somef)) sess in
       if not (!fixpt) then let () = fixpt := true in helper sess else sess
     in helper sess
+
+  let remove_emps_hform hform =
+    let sessf = x_add_1 trans_h_formula_to_session hform in
+    let sessf = remove_emps ~tail:false sessf in
+    let hform = trans_from_session sessf in
+    Some hform
+
 
   (* Removes Bot assrt from session predicate orders *)
   (* Examples:
@@ -2771,6 +2784,64 @@ let wrap_last_seq_node_struc formula =
   let pr = !F.print_struc_formula in
   Debug.no_1 "Session.wrap_last_seq_node_struc" pr pr wrap_last_seq_node_struc formula
 
+(* ---------------------------------------------- *)
+(***                norm seq                    ***)
+(***    eg: (A ;; B) ;; C  => A ;; (B ;; C)     ***)
+let norm_sequence_heap hform =
+    let fnc si hform =
+    match si.session_kind with
+    | Some Projection   -> (CProjection.norm_sequence hform)
+    | Some TPProjection -> (CTPProjection.norm_sequence hform)
+    | Some Protocol     -> (CProtocol.norm_sequence hform)
+    | None -> None
+  in
+  CMessage.heap_transformer fnc hform
+
+let norm_sequence formula =
+  let updated_formula = CMessage.transform_formula norm_sequence_heap formula in
+  updated_formula
+
+let norm_sequence formula =
+  let pr = !CF.print_formula in
+  Debug.no_1 "Session.norm_sequence" pr pr norm_sequence formula
+
+let norm_sequence_struc sformula =
+  let norm_struct = CMessage.transform_struc_formula norm_sequence_heap sformula in
+  norm_struct
+
+let norm_sequence_struc formula =
+  let pr = !CF.print_struc_formula in
+  Debug.no_1 "Session.norm_sequence_struc" pr pr norm_sequence_struc formula
+
+(* ---------------------------------------------- *)
+(***                norm emp seq                ***)
+(***         eg: emp ;; B ;; C  => B ;; C       ***)
+let norm_emp_sequence_heap hform =
+    let fnc si hform =
+    match si.session_kind with
+    | Some Projection   -> (CProjection.remove_emps_hform hform)
+    | Some TPProjection -> (CTPProjection.remove_emps_hform hform)
+    | Some Protocol     -> (CProtocol.remove_emps_hform hform)
+    | None -> None
+  in
+  CMessage.heap_transformer fnc hform
+
+let norm_emp_sequence formula =
+  let updated_formula = CMessage.transform_formula norm_emp_sequence_heap formula in
+  updated_formula
+
+let norm_emp_sequence formula =
+  let pr = !CF.print_formula in
+  Debug.no_1 "Session.norm_emp_sequence" pr pr norm_emp_sequence formula
+
+let norm_emp_sequence_struc sformula =
+  let norm_struct = CMessage.transform_struc_formula norm_emp_sequence_heap sformula in
+  norm_struct
+
+let norm_emp_sequence_struc formula =
+  let pr = !CF.print_struc_formula in
+  Debug.no_1 "Session.norm_emp_sequence_struc" pr pr norm_emp_sequence_struc formula
+
 
 (* --------------------------------------------------------------- *)
 (***               update the temporary view name                ***)
@@ -3075,7 +3146,31 @@ let norm_slk_formula form =
   let pr = !F.print_formula in
   Debug.no_1 "Session.norm_slk_formula" pr pr norm_slk_formula form
 
+(*
+   norm3_seq
+   remove_emps
+ *)
+let norm_slk_cformula form =
+  let form = norm_sequence form in
+  let form = norm_emp_sequence form in 
+  form
 
+let norm_slk_cformula form =
+  let pr = !CF.print_formula in
+  Debug.no_1 "Session.norm_slk_cformula" pr pr norm_slk_cformula form
+
+let norm_slk_ctx ctx =
+  let f_ctx es =
+    let form  = es.CF.es_formula in
+    let fnc f = Some (norm_slk_cformula f) in
+    let nform = CF.transform_formula (nonef, fnc, somef, (somef, somef, somef, somef, somef)) form in
+    CF.Ctx { es with CF.es_formula = nform; } in
+  let nctx = CF.transform_context f_ctx ctx in
+  nctx
+
+let norm_slk_ctx ctx =
+  let pr = !CF.print_context in
+  Debug.no_1 "Session.norm_slk_ctx" pr pr norm_slk_ctx ctx
 
 module EVert_elem  = Ords.EVertex(Ords.Var(IForm)) ;;
 module IVert_elem  = Ords.VVertex(Ords.Var(IForm)) ;;
