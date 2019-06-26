@@ -476,16 +476,13 @@ let process_source_full source =
   let () = saved_cprog := cprog in
 
   (* ========= lemma process (normalize, translate, verify) ========= *)
-  let () = y_tinfo_hp
-      (add_str "lemma list" (pr_list
-                               (fun l -> pr_list (fun lem ->
-                                    lem.Iast.coercion_name)
+  let fun_lem lem = lem.Iast.coercion_name in
+  let () = y_tinfo_hp (add_str "lemma list" (pr_list (fun l -> pr_list fun_lem
                                     l.Iast.coercion_list_elems)))
       tiprog.Iast.prog_coercion_decls in
   let () = Lemma.sort_list_lemma tiprog in
   let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog
-                         cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls
-  in
+                         cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
   (* ========= end - lemma process (normalize, translate, verify) ========= *)
   let c = cprog in
   let () = if !Globals.gen_coq_file
@@ -611,10 +608,8 @@ let process_source_full source =
           if List.length (CP.fv a.C.axiom_hypothesis) > 0 then
             if ExtString.String.starts_with (CP.name_of_spec_var
                                                (List.hd (CP.fv a.C.axiom_hypothesis))) "dom"
-            then false
-            else true
-          else true)
-          c.C.prog_axiom_decls) in
+            then false else true
+          else true) c.C.prog_axiom_decls) in
       let parameter_axioms = String.concat "" axioms_list in
       let rec convert_h_formula f = match f with
         | CF.Star({h_formula_star_h1 = h1;
@@ -674,8 +669,7 @@ let process_source_full source =
   let () = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
     else if(!Globals.print_core) then
       print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
-    else ()
-  in
+    else () in
   let () =
     if !Globals.verify_callees then begin
       let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -694,20 +688,17 @@ let process_source_full source =
           print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
           output_string jfile java_str;
           close_out jfile
-        else
-          ()
-      in
+        else () in
       ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
       print_string ("\nDone-3.\n"); flush stdout;
       exit 0
-    end
-  in
+    end in
   let _ =
-    if !Scriptarguments.rtc then begin
-      Rtc.compile_prog cprog source;
-      exit 0
-    end
-  in
+    if !Scriptarguments.rtc then
+      begin
+        Rtc.compile_prog cprog source;
+        exit 0
+      end in
   let () = Gen.Profiling.pop_time "Preprocessing" in
   (* An Hoa : initialize html *)
   let () = Prooftracer.initialize_html source in

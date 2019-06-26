@@ -720,7 +720,7 @@ let translate_lemma lemma =
   let sb_rhs = translate_single_formula rhs in
   SBC.mk_lemma name sb_lhs sb_rhs status origin
 
-let translate_prog (prog:CA.prog_decl) =
+let translate_prog ?(no_unk_views = false) (prog:CA.prog_decl) =
   if !sb_program = None || !enable_repair || !enable_repair_template then
     let lemmas = (Lem_store.all_lemma # get_left_coercion) @
                  (Lem_store.all_lemma # get_right_coercion) in
@@ -740,7 +740,8 @@ let translate_prog (prog:CA.prog_decl) =
         not(Gen.BList.mem_eq eq_str x.CA.view_name pre_views)) in
     let pr2 = CPR.string_of_view_decl_list in
     let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
-    let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
+    let hps = if no_unk_views then prog.CA.prog_hp_decls
+          else prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
     let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
     let () = x_tinfo_hp (add_str "hp decls" pr_hps) hps no_pos in
     let sb_hp_views = List.map translate_hp hps in
@@ -838,13 +839,13 @@ let solve_entailments prog entails =
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let ptree = SBPU.solve_entailments ~pre:"PP" ~post:"QQ" ~timeout:(Some 3) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+    let () = x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -1070,7 +1071,7 @@ let eq_h_formula prog (f1:CF.formula) (f2:CF.formula) =
   res1 && res2
 
 let check_sat_x prog (f:CF.formula) =
-  let sb_prog = translate_prog prog in
+  let sb_prog = translate_prog ~no_unk_views:true prog in
   let sb_f,_ = translate_formula f in
   if List.length sb_f != 1 then report_error no_pos "SB.check_sat invalid input"
   else
@@ -1084,12 +1085,16 @@ let check_sat prog (formula:CF.formula) =
   Debug.no_1 "SB.check_sat" pr_formula string_of_bool
     (fun _ -> check_sat_x prog formula) formula
 
+(* let check_sat_pf prog (pf : CP.formula) = *)
+
 let check_unsat_x prog (f:CF.formula) =
-  let sb_prog = translate_prog prog in
+  let sb_prog = translate_prog ~no_unk_views:true prog in
   let sb_f,_ = translate_formula f in
   if List.length sb_f != 1 then report_error no_pos "SB.check_sat invalid input"
   else
     let sb_formula = List.hd sb_f in
+    x_tinfo_hp (add_str "prog" SBC.pr_program) sb_prog no_pos;
+    x_tinfo_hp (add_str "ent" SBC.pr_formula) sb_formula no_pos;
     let sb_res = SBPH.check_sat sb_prog sb_formula in
     match sb_res with
     | SBG.MvlFalse -> true

@@ -27,17 +27,12 @@ let raise_stree st = raise (EStree st)
 let check_entail_sleek_x prog ante (conseq:CF.formula) =
   let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
   let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
-  (* let conseq = CF.trans_flow_formula conseq in *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let ctx = Solver.elim_exists_ctx ctx in
   let conseq = CF.struc_formula_of_formula conseq no_pos in
-  (* let list_ctx, _ = Solver.heap_entail_after_sat_struc 1 prog false false ctx conseq None None
-   *     None no_pos None [] in *)
   let list_ctx, _ = Solver.heap_entail_struc_init prog false true
       (CF.SuccCtx[ctx]) conseq no_pos None in
-  (* let conseq = CF.struc_formula_of_formula conseq no_pos in
-   * let _,list_ctx,_ = sleekcore.sleek_entail_check 1 [] [] prog [] ante conseq in *)
   if CF.isFailCtx list_ctx then false, None
   else
     let residue = CF.formula_of_list_context list_ctx in
@@ -51,7 +46,6 @@ let check_entail_sleek prog ante conseq =
 let check_entail_exact_sleek_x prog ante (conseq:CF.formula) =
   let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
   let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
-  (* let conseq = CF.trans_flow_formula conseq in *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let ctx = Solver.elim_exists_ctx ctx in
@@ -130,10 +124,13 @@ let choose_rule_assign_x goal : rule list =
   let exists_vars = CF.get_exists post in
   let post_vars = CF.fv post in
   let post_vars = CP.diff_svl post_vars exists_vars in
-  let post_pf = CF.get_pure goal.gl_post_cond in
+  let () = x_binfo_hp (add_str "vars" pr_vars) post_vars no_pos in
+  let post_pf = CF.get_pure goal.gl_post_cond |> remove_exists_pf in
+  let () = x_tinfo_hp (add_str "pf" pr_pf) post_pf no_pos in
   let post_conjuncts = CP.split_conjunctions post_pf in
   let eq_pairs = List.map (find_exists_substs post_vars) post_conjuncts
                  |> List.concat in
+  let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
   let filter_fun (x,y) = (List.mem x all_vars) &&
                          CP.subset (CP.afv y) all_vars in
   let eq_pairs = eq_pairs |> List.filter filter_fun in
@@ -516,8 +513,8 @@ let choose_rule_frame_pred goal =
 let find_frame_node_var goal post_var =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
-  let pre_vars = pre |> CF.fv |> List.filter is_node_var
-                 |> List.filter (CP.eq_sv post_var) in
+  let pre_vars = pre |> CF.fv |> List.filter is_node_var in
+                 (* |> List.filter (CP.eq_sv post_var) in *)
   let post_pf = CF.get_pure post in
   let helper_arg arg1 arg2 =
     let conseq = CP.mkEqVar arg1 arg2 no_pos in
@@ -526,6 +523,8 @@ let find_frame_node_var goal post_var =
     | CF.DataNode dn1, CF.DataNode dn2 ->
       let args1 = dn1.CF.h_formula_data_arguments in
       let args2 = dn2.CF.h_formula_data_arguments in
+      x_tinfo_hp (add_str "args1" pr_vars) args1 no_pos;
+      x_tinfo_hp (add_str "args2" pr_vars) args2 no_pos;
       List.exists2 helper_arg args1 args2
     | _ -> false in
   let helper pre_var =
@@ -536,7 +535,7 @@ let find_frame_node_var goal post_var =
       begin
         match f1, f2 with
         | CF.Base bf1, CF.Base bf2 ->
-          let hf1, hf2 = bf1.CF.formula_base_heap, bf2.CF.formula_base_heap in
+          let hf1, hf2 = bf1.CF.formula_base_heap, bf2.CF.formula_base_heap in 
           helper_hf hf1 hf2
         | CF.Base bf1, CF.Exists bf2 ->
           let hf1, hf2 = bf1.CF.formula_base_heap, bf2.CF.formula_exists_heap in
@@ -550,29 +549,17 @@ let find_frame_node_var goal post_var =
 let choose_rule_frame_data goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let post_vars = post |> CF.fv |> List.filter is_node_var in
-  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
-  let pairs = post_vars |> List.map (find_frame_node_var goal) |> List.concat in
+  x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos;
+  let pairs = post_vars |> List.map (find_frame_node_var goal)
+              |> List.concat in
   let pr_pairs = pr_list (pr_pair pr_var pr_var) in
-  let () = x_tinfo_hp (add_str "pairs" pr_pairs) pairs no_pos in
-  let ante = CF.get_pure post in
-  let helper v1 v2 =
-    let conseq = CP.mkEqVar v1 v2 no_pos in
-    SB.check_pure_entail ante conseq in
+  x_tinfo_hp (add_str "pairs" pr_pairs) pairs no_pos;
   let filter (lhs, rhs) =
     let n_pre, pre_vars = frame_var_formula pre rhs in
     let n_post, post_vars = frame_var_formula post lhs in
-    let () = x_tinfo_hp (add_str "pre_vars" pr_vars) pre_vars no_pos in
-    let () = x_tinfo_hp (add_str "post_vars" pr_vars) post_vars no_pos in
-    (* let check_field f field =
-     *   match extract_var_f f field with
-     *   | Some var_f -> if CF.is_emp_formula var_f then true
-     *     else false
-     *   | _ -> true in
-     * let check_pre = List.for_all (check_field pre) pre_vars in
-     * let check_post = List.for_all (check_field post) post_vars in *)
-    (* let check_eq = List.exists2 helper pre_vars post_vars in *)
-    let check_eq = true in
-    if (List.length pre_vars = List.length post_vars) && check_eq then
+    x_tinfo_hp (add_str "pre_vars" pr_vars) pre_vars no_pos;
+    x_tinfo_hp (add_str "post_vars" pr_vars) post_vars no_pos;
+    if (List.length pre_vars = List.length post_vars) then
       let pre_vars = rhs::pre_vars in
       let post_vars = lhs::post_vars in
       let rule = RlFrameData {
@@ -631,7 +618,9 @@ let rec choose_rule_interact goal rules =
 
 let choose_main_rules goal =
   let rs = [] in
+  (* x_binfo_pp "marking" no_pos; *)
   let rs = rs @ (choose_rule_unfold_pre goal) in
+  (* x_binfo_pp "marking" no_pos; *)
   let rs = rs @ choose_rule_frame_pred goal in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_pre_assign goal) in

@@ -433,11 +433,12 @@ let is_equality_pair (formula: CP.formula) =
     | _ -> None in
   aux formula
 
+let rec remove_exists_pf pf = match pf with
+  | CP.Exists (_, exists_f, _ , _) -> remove_exists_pf exists_f
+  | _ -> pf
+
 let get_equality_pairs (formula: CP.formula) =
-  let rec remove_exists pf = match pf with
-    | CP.Exists (_, exists_f, _ , _) -> remove_exists exists_f
-    | _ -> pf in
-  let conjuncts = formula |> remove_exists |> CP.split_conjunctions in
+  let conjuncts = formula |> remove_exists_pf |> CP.split_conjunctions in
   let check_eq = List.map is_equality_pair conjuncts in
   check_eq |> List.filter (fun x -> x != None)
   |> List.map Gen.unsome

@@ -3847,33 +3847,32 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
-  | Hole _ | FrmHole _ -> f    
+  | Hole _ | FrmHole _ -> f
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
-and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = match f1 with
-  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
+  match f1 with
+  | Or {formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _} ->
     let eo1 = normalize_x o11 f2 pos in
     let eo2 = normalize_x o12 f2 pos in
     mkOr eo1 eo2 pos
-  | _ -> begin
-      match f2 with
-      | Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-        let eo1 = normalize_x f1 o21 pos in
-        let eo2 = normalize_x f1 o22 pos in
-        mkOr eo1 eo2 pos
-      | _ -> begin
-          let rf1 = rename_bound_vars f1 in
-          let rf2 = rename_bound_vars f2 in
-          let qvars1, base1 = split_quantifiers rf1 in
-          let qvars2, base2 = split_quantifiers rf2 in
-          let new_base = mkStar_combine base1 base2 flow_tr pos in
-          let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
-          let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
-          resform
-        end
-    end
-
+  | _ ->
+    match f2 with
+    | Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+      let eo1 = normalize_x f1 o21 pos in
+      let eo2 = normalize_x f1 o22 pos in
+      mkOr eo1 eo2 pos
+    | _ ->
+      let rf1 = rename_bound_vars f1 in
+      let rf2 = rename_bound_vars f2 in
+      let qvars1, base1 = split_quantifiers rf1 in
+      let qvars2, base2 = split_quantifiers rf2 in
+      let new_base = mkStar_combine base1 base2 flow_tr pos in
+      let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
+      let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+      resform
+        
 and normalize i (f1 : formula) (f2 : formula) (pos : loc) =
   Debug.no_2 "normalizeB" (!print_formula) (!print_formula) (!print_formula) (fun _ _ -> normalize_x f1 f2 pos) f1 f2
 

@@ -214,7 +214,7 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
   let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc trace block in
   let () = reset_repair_block() in
   try
-    let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
+    let () = x_tinfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
     let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
     let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
     if specs = None then None
@@ -324,7 +324,6 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) =
 let create_buggy_progs src (iprog : I.prog_decl) =
   let procs = iprog.I.prog_proc_decls in
   let procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
-  (* let n_procs_list = procs |> List.map create_buggy_proc in *)
   let helper_buggy buggy_proc =
     List.map (fun x -> if eq_str x.I.proc_name buggy_proc.I.proc_name
                then buggy_proc else x) procs in
@@ -336,8 +335,14 @@ let create_buggy_progs src (iprog : I.prog_decl) =
     let n_prog = {iprog with I.prog_proc_decls = n_procs} in
     n_prog in
   let () = infestor_num := 0 in
+  let filter iprog =
+    let cprog, _ = Astsimp.trans_prog iprog in
+    try
+      let () = Typechecker.check_prog_wrapper iprog cprog in
+      false
+    with _ -> true in
   let _ = n_procs_list |> List.map helper
-          |> List.map (output_infestor_prog src)  in
+          |> List.map (output_infestor_prog src) in
   ()
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =

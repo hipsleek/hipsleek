@@ -1,5 +1,4 @@
 data node {
-   // int val;
    node next
 }.
 
@@ -11,33 +10,28 @@ requires x::ll<n>
 ensures res::ll<n> * x::ll<n>;.
 
 // synthesize [node x,node tmp,node k]
-//  q7::ll<n1> * tmp::ll<n1> * x::node<q7> * 
-//  k::node<tmp> & n1+1=n & x!=null
+//  q_7408::ll<n11> * tmp::ll<n11>@M * x::node<q_7408> * 
+//  k::node<tmp>& n11+1=n & x!=null & n11+1=n
 // ~>
 //  res::ll<n> * x::ll<n>.
 
-// synthesize [node x,node tmp,node k]
-//  q_7408::ll<n_7411>@M * tmp::ll<n_7411>@M * x::node<Anon_7407,q_7408>@M * 
-//  k::node<Anon_7407,tmp>@M&
-// n_7411+1=n & !(v_bool_14_7390) & x!=null & flted_7_7406=n_7411 & x=x & 
-// n_7414=n_7411 & n_7415=n_7411
-// ~>
-//  res::ll<n>@M * x::ll<n>@M.
 
-synthesize [node x,node tmp,node k]
- q_7408::ll<n11> * tmp::ll<n11>@M * x::node<q_7408> * 
- k::node<tmp>& n11+1=n & x!=null & n11+1=n
+// synthesize [node x]
+// emp&x=null & x=null & n=0
+// ~>
+// (exists f_r_10844: res::ll<f_r_10844>&x=null & x=null & n=0 & f_r_10844=0).
+
+// synthesize [node tmp,node k,node x]
+//  k::node<tmp> * x::node<q_19483> * q_19483::ll<n_19486> * tmp::ll<n_19486>&
+// x=x & n+(-1-n_19486)=0 & (n-1)-flted_6_19482=0
+// ~>
+//  (exists f_r_19499,q_5: x::node<q_5> * q_5::ll<n_19486> * res::ll<f_r_19499>&
+//  x=x & n+(-1-n_19486)=0 & (n-1)-flted_6_19482=0 & f_r_19499=n_19486+1).
+
+
+synthesize [node tmp,node k,node x]
+ k::node<tmp> * x::node<q_19483> * q_19483::ll<n_19486>&
+n=1+n_19486 & n=flted_6_19482+1
 ~>
- res::ll<n> * x::ll<n>.
-
-
-// synthesize [node x,node tmp,node k]
-//  q7::ll<n1>@M * x::node<q7>@M&1+n1=n & x!=null
-// ~>
-//  (exists flted_7_46: x::ll<n>& k=res & tmp=q_47 & tmp=q_47 & n1=flted_7_46 & flted_7_46+1=n).
-
-// synthesize [node q7,node x,node tmp,node k]
-//  q7::ll<n1> * x::node<q7> & n1+1=n & x!=null
-// ~>
-//  (exists flted_7_54, q_47: x::ll<n>@M&
-// k=res & tmp=q_47 & n1=flted_7_54 & 1+flted_7_54=n).
+ (exists f_r_55,q_56: res::node<tmp> * x::node<q_56> * q_56::ll<n_19486>&
+n= 1+n_19486 & n=flted_6_19482+1 & f_r_55=1+n_19486 & n_19486+1=f_r_55).

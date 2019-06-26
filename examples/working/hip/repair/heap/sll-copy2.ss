@@ -3,7 +3,7 @@ data node {
 }
 
 ll<n> == self = null & n = 0 
-	or self::node<q> * q::ll<n-1>;
+	or self::node<q> * q::ll<n-1> & n > 0;
 
 node copy(node x)
 requires x::ll<n>

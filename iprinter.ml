@@ -1014,10 +1014,10 @@ let rec string_of_exp_repair = function
                 exp_call_nrecv_ho_arg = ha }) ->
     if (id = "__bool_of_int___" || id = "__make_not_of_int__") then
       let arg = List.hd el in
-      if (is_bool_exp arg) then (string_of_exp_list el ",")
-      else  id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+      if (is_bool_exp arg) then (string_of_exp_list el ",") ^ ";"
+      else  id ^ "(" ^ (string_of_exp_list el ",") ^ ")" ^ ";"
     else
-      id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+      id ^ "(" ^ (string_of_exp_list el ",") ^ ")" ^ ";"
   | UnkExp ({
       unk_exp_name = id;
       unk_exp_arguments = el;
