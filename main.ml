@@ -721,8 +721,8 @@ let process_source_full source =
           begin
             if (!Globals.enable_repair) then
               let () = x_binfo_pp "START REPAIR" no_pos in
-              let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
-              match repaired_iprog with
+              let r_iprog = Repair.start_repair_wrapper intermediate_prog in
+              match r_iprog with
               | false -> raise e
               | true ->
                 let () = repaired := true in

@@ -321,7 +321,7 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) =
   let () = x_binfo_hp (add_str "prog" pr_iprog) n_prog no_pos in
   ()
 
-let create_buggy_progs source (iprog : I.prog_decl) =
+let create_buggy_progs src (iprog : I.prog_decl) =
   let procs = iprog.I.prog_proc_decls in
   let procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
   (* let n_procs_list = procs |> List.map create_buggy_proc in *)
@@ -337,7 +337,7 @@ let create_buggy_progs source (iprog : I.prog_decl) =
     n_prog in
   let () = infestor_num := 0 in
   let _ = n_procs_list |> List.map helper
-          |> List.map (output_infestor_prog source)  in
+          |> List.map (output_infestor_prog src)  in
   ()
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =
