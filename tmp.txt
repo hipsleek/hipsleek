@@ -28,3 +28,9 @@ synthesize [node2 x,node2 y]
 ~>
 x::node2<a,.
 
+x->node2{q,q_11041} * dll(q_11041,x',flted_8_11040) * dll(y,p,n) &
+v_bool_15_1933' & x'=x & 0<m & flted_8_11040+1=m & q_11041=nil |-
+PP(y,p,n,q,x',x,flted_8_11040,m,q_11041) *
+T0(y,p,n,q,x',x,flted_8_11040,m,q_11041) & v_bool_15_1933' & x'=x & 0<m &
+flted_8_11040+1=m & q_11041=nil
+

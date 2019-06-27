@@ -339,7 +339,7 @@ let pr_rules = pr_list_ln pr_rule
 
 let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
-  | Base {
+  | CF.Base {
       formula_base_heap = heap;
       formula_base_vperm = vp;
       formula_base_pure = pure;
@@ -349,7 +349,7 @@ let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
       formula_base_label = lbl;
       formula_base_pos = pos } ->
     CF.mkExists_w_lbl vars heap pure vp t fl a pos lbl
-  | Exists ({formula_exists_qvars = qvars;
+  | CF.Exists ({formula_exists_qvars = qvars;
              formula_exists_heap =  h;
              formula_exists_vperm = vp;
              formula_exists_pure = p;
@@ -360,9 +360,9 @@ let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
              formula_exists_pos = pos } as bf) ->
     let n_qvars = CP.remove_dups_svl (qvars @ vars) in
     CF.mkExists_w_lbl n_qvars h p vp t fl a pos lbl
-  | Or bf -> let n_f1 = add_exists_vars bf.formula_or_f1 vars in
+  | CF.Or bf -> let n_f1 = add_exists_vars bf.formula_or_f1 vars in
     let n_f2 = add_exists_vars bf.formula_or_f2 vars in
-    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+    CF.Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
 
 let elim_bool_constraint_pf (pf:CP.p_formula) = match pf with
   | CP.BVar (_, loc) -> (true, CP.BConst (true, loc))
@@ -378,7 +378,7 @@ let elim_bool_constraint (pf:CP.formula) =
     | CP.Not (f, _, _) as org ->
       let is_bool, n_f = aux f in
       if is_bool then (true, n_f) else (false, org)
-    | CP.And (f1, f2, pos) as org ->
+    | CP.And (f1, f2, pos) ->
       let is_b1, n_f1 = aux f1 in
       let is_b2, n_f2 = aux f2 in
       (is_b1 && is_b2, CP.And (n_f1, n_f2, pos))
@@ -1021,6 +1021,41 @@ let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
 
+let simplify_ante_x (ante: CF.formula) =
+  let ante = remove_exists ante in
+  let pf = ante |> CF.get_pure |> remove_exists_pf in
+  let eq_pairs = get_equality_pairs pf in
+  let n_ante = CF.subst eq_pairs ante |> elim_idents in
+  let deleted_vars = eq_pairs |> List.map fst in
+  let rec aux n_ante =
+    let vars = CF.fv n_ante in
+    if CP.intersect_svl vars deleted_vars = [] then n_ante
+    else
+      let n_ante = CF.subst eq_pairs n_ante |> elim_idents in
+      aux n_ante in
+  aux n_ante
+
+let simplify_ante ante =
+  Debug.no_1 "simplify_ante" pr_formula pr_formula
+    (fun _ -> simplify_ante_x ante) ante
+
+let is_emp_conseq conseq =
+  let is_True cp = match cp with
+    | CP.BForm (p,_) ->
+      let p_formula, _ = p in
+      begin
+        match p_formula with
+        | CP.BConst (b,_) -> b
+        | CP.LexVar _ -> true
+        | _ -> false
+      end
+    | _ -> false in
+  if CF.is_emp_formula conseq then
+    let pf = CF.get_pure conseq in
+    x_binfo_hp (add_str "conseq pf" pr_pf) pf no_pos;
+    is_True pf
+  else false
+
 let rec get_unfold_view_hf vars (hf1:CF.h_formula) = match hf1 with
   | CF.ViewNode vnode -> let var = vnode.CF.h_formula_view_node in
     if CP.mem var vars then [vnode] else []
@@ -1616,32 +1651,34 @@ and aux_subtrees st cur_codes =
   | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
 
 let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
-  | Assign e -> let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
+  | I.Assign e -> let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
     let n_e2 = replace_exp_aux nexp e.I.exp_assign_rhs in
-    Assign {e with exp_assign_lhs = n_e1;
+    I.Assign {e with exp_assign_lhs = n_e1;
                    exp_assign_rhs = n_e2}
-  | Bind e -> let n_body = replace_exp_aux nexp e.I.exp_bind_body in
-    Bind {e with exp_bind_body = n_body}
-  | Block e -> let n_body = replace_exp_aux nexp e.I.exp_block_body in
-    Block {e with exp_block_body = n_body}
-  | Cast e -> let n_body = replace_exp_aux nexp e.I.exp_cast_body in
-    Cast {e with exp_cast_body = n_body;}
-  | CallNRecv e -> let name = e.I.exp_call_nrecv_method in
+  | I.Bind e -> let n_body = replace_exp_aux nexp e.I.exp_bind_body in
+    I.Bind {e with exp_bind_body = n_body}
+  | I.Block e -> let n_body = replace_exp_aux nexp e.I.exp_block_body in
+    I.Block {e with exp_block_body = n_body}
+  | I.Cast e -> let n_body = replace_exp_aux nexp e.I.exp_cast_body in
+    I.Cast {e with exp_cast_body = n_body;}
+  | I.CallNRecv e ->
+    let name = e.I.exp_call_nrecv_method in
     let () = x_tinfo_hp (add_str "name" pr_id) name no_pos in
     if name = "fcode" then nexp
     else exp
-  | UnkExp _ -> let () = x_tinfo_pp "marking" no_pos in
+  | I.UnkExp _ -> let () = x_tinfo_pp "marking" no_pos in
     exp
-  | Cond e ->
+  | I.Cond e ->
     let () = x_tinfo_pp "marking" no_pos in
     let r1 = replace_exp_aux nexp e.exp_cond_then_arm in
     let r2 = replace_exp_aux nexp e.exp_cond_else_arm in
-    Cond {e with exp_cond_then_arm = r1;
+    I.Cond {e with exp_cond_then_arm = r1;
                  exp_cond_else_arm = r2}
-  | Label (a, body) -> Label (a, replace_exp_aux nexp body)
-  | Seq e -> let n_e1 = replace_exp_aux nexp e.I.exp_seq_exp1 in
+  | I.Label (a, body) -> Label (a, replace_exp_aux nexp body)
+  | I.Seq e ->
+    let n_e1 = replace_exp_aux nexp e.I.exp_seq_exp1 in
     let n_e2 = replace_exp_aux nexp e.I.exp_seq_exp2 in
-    Seq {e with exp_seq_exp1 = n_e1;
+    I.Seq {e with exp_seq_exp1 = n_e1;
                 exp_seq_exp2 = n_e2}
   | _ -> exp
 
@@ -1649,16 +1686,16 @@ let rec replace_cexp_aux nexp exp : C.exp =
   match (exp:C.exp) with
   | C.Assign e ->
     let n_e2 = replace_cexp_aux nexp e.C.exp_assign_rhs in
-    C.Assign {e with exp_assign_rhs = n_e2}
+    C.Assign {e with C.exp_assign_rhs = n_e2}
   | Bind e ->
     let n_body = replace_cexp_aux nexp e.C.exp_bind_body in
-    C.Bind {e with exp_bind_body = n_body}
+    C.Bind {e with C.exp_bind_body = n_body}
   | C.Block e ->
     let n_body = replace_cexp_aux nexp e.C.exp_block_body in
-    C.Block {e with exp_block_body = n_body}
+    C.Block {e with C.exp_block_body = n_body}
   | C.Cast e ->
     let n_body = replace_cexp_aux nexp e.C.exp_cast_body in
-    C.Cast {e with exp_cast_body = n_body;}
+    C.Cast {e with C.exp_cast_body = n_body;}
   | C.SCall e ->
     let name = e.C.exp_scall_method_name in
     if is_substr fcode_str name then nexp
@@ -1666,16 +1703,16 @@ let rec replace_cexp_aux nexp exp : C.exp =
   | C.Cond e ->
     let r1 = replace_cexp_aux nexp e.C.exp_cond_then_arm in
     let r2 = replace_cexp_aux nexp e.C.exp_cond_else_arm in
-    C.Cond {e with exp_cond_then_arm = r1;
-                   exp_cond_else_arm = r2}
+    C.Cond {e with C.exp_cond_then_arm = r1;
+                   C.exp_cond_else_arm = r2}
   | C.Label e ->
     let n_e = replace_cexp_aux nexp e.C.exp_label_exp in
     C.Label {e with C.exp_label_exp = n_e}
   | C.Seq e ->
     let n_e1 = replace_cexp_aux nexp e.C.exp_seq_exp1 in
     let n_e2 = replace_cexp_aux nexp e.C.exp_seq_exp2 in
-    Seq {e with exp_seq_exp1 = n_e1;
-                exp_seq_exp2 = n_e2}
+    C.Seq {e with C.exp_seq_exp1 = n_e1;
+                C.exp_seq_exp2 = n_e2}
   | _ -> exp
 
 let replace_exp_proc n_exp proc =
@@ -1758,23 +1795,25 @@ let frame_var_formula formula var =
       let n_f2 = helper sf.CF.h_formula_star_h2 in
       let n_hf = if fst n_f1 = CF.HEmp then fst n_f2
         else if fst n_f2 = CF.HEmp then fst n_f1
-        else Star {sf with h_formula_star_h1 = fst n_f1;
-                           h_formula_star_h2 = fst n_f2} in
+        else CF.Star {sf with CF.h_formula_star_h1 = fst n_f1;
+                              CF.h_formula_star_h2 = fst n_f2} in
       (n_hf, (snd n_f1)@(snd n_f2))
     | _ -> (hf,[]) in
   match formula with
-  | CF.Base bf -> let hf = bf.CF.formula_base_heap in
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
     let n_hf = helper hf in
-    (CF.Base {bf with formula_base_heap = fst n_hf}, snd n_hf)
-  | CF.Exists bf -> let hf = bf.CF.formula_exists_heap in
+    (CF.Base {bf with CF.formula_base_heap = fst n_hf}, snd n_hf)
+  | CF.Exists bf ->
+    let hf = bf.CF.formula_exists_heap in
     let n_hf, vars = helper hf in
-    (CF.Exists {bf with formula_exists_heap = n_hf}, vars)
+    (CF.Exists {bf with CF.formula_exists_heap = n_hf}, vars)
   | _ -> report_error no_pos "frame_var_formula: CF.Or unhandled"
 
 let get_hf (f:CF.formula) = match f with
-  | Base bf -> bf.formula_base_heap
-  | Exists bf -> bf.formula_exists_heap
-  | Or _ -> report_error no_pos "get_hf unhandled"
+  | CF.Base bf -> bf.CF.formula_base_heap
+  | CF.Exists bf -> bf.CF.formula_exists_heap
+  | CF.Or _ -> report_error no_pos "get_hf unhandled"
 
 let is_res_sv_syn sv = match sv with
   | CP.SpecVar (_,n,_) -> is_substr "rs" n
