@@ -1265,7 +1265,7 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf =
     let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
     let ante_hps = check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps then
-      let ante = es.CF.es_formula |> Syn.simplify_ante in
+      let ante = es.CF.es_formula (* |> Syn.simplify_ante *) in
       let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv |> List.filter
                         (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
@@ -1286,7 +1286,7 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf =
     else if Syn.is_emp_conseq bf.CF.formula_struc_base then
       aux_conti ctx
     else if ante_hps then
-      let ante = es.CF.es_formula in
+      let ante = es.CF.es_formula |> Syn.remove_exists in
       let vars = ante |> CF.fv |> CP.remove_dups_svl in
       let exists_vars = bf.CF.formula_struc_exists
                         @ bf.CF.formula_struc_explicit_inst
@@ -1295,13 +1295,12 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf =
       let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
       let vars = vars @ exists_vars |> List.filter filter_var in
       let conseq = bf.CF.formula_struc_base in
-      x_binfo_hp (add_str "conseq" pr_formula) conseq no_pos;
+      x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos;
       let conseq = Syn.add_exists_vars conseq exists_vars in
       let n_es, n_conseq = Syn.create_residue vars prog conseq in
       let pure_ante = ante |> CF.get_pure in
       let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in
       let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
-      let ante = es.CF.es_formula |> Syn.remove_exists in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
       let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let n_ctx = CF.Ctx {es with CF.es_formula = n_es;} in

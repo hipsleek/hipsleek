@@ -1021,19 +1021,30 @@ let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
 
+let remove_boolean_constraints (ante:CF.formula) =
+  let conjuncts = ante |> CF.get_pure |> remove_exists_pf
+                  |> CP.split_conjunctions
+                  |> List.filter (fun x -> not(CP.is_bool_formula x)) in
+  x_binfo_hp (add_str "conjuncts" (pr_list pr_pf)) conjuncts no_pos;
+  let n_pf = CP.join_conjunctions conjuncts in
+  let h, _, _, _, _, _ = CF.split_components ante in
+  CF.mkBase_simp h (MCP.mix_of_pure n_pf)
+
 let simplify_ante_x (ante: CF.formula) =
   let ante = remove_exists ante in
   let pf = ante |> CF.get_pure |> remove_exists_pf in
-  let eq_pairs = get_equality_pairs pf in
+  let filter_fun (x,y) = CP.is_primed x &&
+                         eq_str (CP.name_of_sv x) (CP.name_of_sv y) in
+  let eq_pairs = get_equality_pairs pf |> List.filter filter_fun in
   let n_ante = CF.subst eq_pairs ante |> elim_idents in
-  let deleted_vars = eq_pairs |> List.map fst in
-  let rec aux n_ante =
-    let vars = CF.fv n_ante in
-    if CP.intersect_svl vars deleted_vars = [] then n_ante
-    else
-      let n_ante = CF.subst eq_pairs n_ante |> elim_idents in
-      aux n_ante in
-  aux n_ante
+  (* let deleted_vars = eq_pairs |> List.map fst in
+   * let rec aux n_ante =
+   *   let vars = CF.fv n_ante in
+   *   if CP.intersect_svl vars deleted_vars = [] then n_ante
+   *   else
+   *     let n_ante = CF.subst eq_pairs n_ante |> elim_idents in
+   *     aux n_ante in *)
+  n_ante |> remove_boolean_constraints
 
 let simplify_ante ante =
   Debug.no_1 "simplify_ante" pr_formula pr_formula
@@ -1052,7 +1063,7 @@ let is_emp_conseq conseq =
     | _ -> false in
   if CF.is_emp_formula conseq then
     let pf = CF.get_pure conseq in
-    x_binfo_hp (add_str "conseq pf" pr_pf) pf no_pos;
+    x_tinfo_hp (add_str "conseq pf" pr_pf) pf no_pos;
     is_True pf
   else false
 

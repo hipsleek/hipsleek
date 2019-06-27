@@ -20,20 +20,49 @@ void append2(node2 x, node2 y)
 	}
 }
 
-// {(boolean v_bool_13_1930;
-// (v_bool_13_1930 = {((node2 v_node2_13_1917;
-// v_node2_13_1917 = bind x to (prev_13_1913,next_13_1914) [read] in 
-// next_13_1914);
-// is_null___$node2(v_node2_13_1917))};
-// if (v_bool_13_1930) [LABEL! 102,0: {({(node2 v_node2_15_1920;
-// (v_node2_15_1920 = bind y to (prev_15_1918,next_15_1919) [read] in 
-// next_15_1919;
-// bind x to (prev_15_1921,next_15_1922) [write] in 
-// next_15_1922 = v_node2_15_1920))};
-// bind y to (prev_16_1923,next_16_1924) [write] in 
-// prev_16_1923 = x)}]
-// else [LABEL! 102,1: {{((node2 v_node2_19_1929;
-// v_node2_19_1929 = bind x to (prev_19_1925,next_19_1926) [read] in 
-// next_19_1926);
-// append2$node2~node2(v_node2_19_1929,y) rec)}}]
-// ))}
+self_7493->node2{p_7492,f_r_7542} * dll(y,b,n) & 0-n<0 & x=self_7493 & a=p_7492
+& q_7495=nil & flted_7_7494=0 & m-1=0 & f_r_7542=nil |-
+PP(y,b,n,x,self_7493,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) *
+T3(y,b,n,x,self_7493,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) & 0-n<0 &
+x=self_7493 & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 & f_r_7542=nil ,
+
+QQ(y,b,n,x,self_7493,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) *
+T3(y,b,n,x,self_7493,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) & 0-n<0 &
+x=self_7493 & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 & f_r_7542=nil |-
+(exists prev_16_1923',next_16_1924'. y'->node2{prev_16_1923',next_16_1924'} *
+T6(y,b,n,x,self_7493,a,p_7492,q_7495,flted_7_7494,m,f_r_7542,prev_16_1923',next_16_1924')
+& 0-n<0 & x=self_7493 & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 &
+f_r_7542=nil),
+
+y'->node2{x',next_16_1924'} *
+T6(y,b,n,x,self_7493,a,p_7492,q_7495,flted_7_7494,m,f_r_7542,prev_16_11059,next_16_1924')
+& 0-n<0 & x=self_7493 & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 &
+f_r_7542=nil |- (exists f_r_7543,q_4,q_45. q_4->node2{self_7493,q_45} *
+self_7493->node2{p_7492,q_4} * dll(q_45,q_4,f_r_7543) & 0-n<0 & x=self_7493 &
+a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 & f_r_7542=nil & x=self_7493 &
+a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 & f_r_7543=n-1), 
+
+x->node2{p_7492,f_r_7542} * dll(y',b,n) & 0-n<0 & y=y' & self_7493=x & x'=x &
+a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 & f_r_7542=nil |-
+PP(b,n,y,y',self_7493,x',x,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) *
+T3(b,n,y,y',self_7493,x',x,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) & 0-n<0 &
+y=y' & self_7493=x & x'=x & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 &
+f_r_7542=nil,
+
+QQ(b,n,y,y',self_7493,x',x,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) *
+T3(b,n,y,y',self_7493,x',x,a,p_7492,q_7495,flted_7_7494,m,f_r_7542) & 0-n<0 &
+y=y' & self_7493=x & x'=x & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 &
+f_r_7542=nil |- (exists prev_16_1923',next_16_1924'.
+y'->node2{prev_16_1923',next_16_1924'} *
+T6(b,n,y,y',self_7493,x',x,a,p_7492,q_7495,flted_7_7494,m,f_r_7542,prev_16_1923',next_16_1924')
+& 0-n<0 & y=y' & self_7493=x & x'=x & a=p_7492 & q_7495=nil & flted_7_7494=0 &
+m-1=0 & f_r_7542=nil),
+
+y'->node2{x',next_16_1924'} *
+T6(b,n,y,y',self_7493,x',x,a,p_7492,q_7495,flted_7_7494,m,f_r_7542,prev_16_11059,next_16_1924')
+& 0-n<0 & y=y' & self_7493=x & x'=x & a=p_7492 & q_7495=nil & flted_7_7494=0 &
+m-1=0 & f_r_7542=nil |- (exists f_r_7543,q_4,q_183. q_4->node2{x,q_183} *
+x->node2{p_7492,q_4} * dll(q_183,q_4,f_r_7543) & 0-n<0 & y=y' & self_7493=x &
+x'=x & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 & f_r_7542=nil & y=y' &
+self_7493=x & x'=x & a=p_7492 & q_7495=nil & flted_7_7494=0 & m-1=0 &
+f_r_7543=n-1)

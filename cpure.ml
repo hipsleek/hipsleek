@@ -639,7 +639,7 @@ let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 (* RelT, uH_t *)
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
-let is_rel_all_var (sv : spec_var) : bool = 
+let is_rel_all_var (sv : spec_var) : bool =
   let t = (type_of_spec_var sv) in
   is_RelT(t) || is_HpT(t)
 
@@ -681,13 +681,13 @@ let ident_of_spec_var (sv: spec_var) = match sv with
   | SpecVar (t, v, _) -> v
 
 let string_of_spec_var ?(print_typ=false) (sv: spec_var) = match sv with
-  | SpecVar (t, v, p) -> 
+  | SpecVar (t, v, p) ->
     if print_typ then
-      if p==Primed then (v^"':"^(string_of_typ t)) 
+      if p==Primed then (v^"':"^(string_of_typ t))
       else (v^":"^(string_of_typ t))
     else if p==Primed then (v^"'") else v
 
-let string_of_typed_spec_var (sv: spec_var) = 
+let string_of_typed_spec_var (sv: spec_var) =
   string_of_spec_var ~print_typ:true sv
 
 (* match sv with *)
