@@ -4765,9 +4765,9 @@ argument_list : [[  t = expression -> [t]
 argument: [[t=expression -> t]];
 
 expression:
-  [[ t = conditional_expression -> let () = print_endline "conditional" in t
-   | t = bind_expression        -> let () = print_endline "bind" in t
-   | t = assignment_expression  -> let () = print_endline "assignment" in t]];
+  [[ t = conditional_expression -> (* let () = print_endline "conditional" in *) t
+   | t = bind_expression        -> (* let () = print_endline "bind" in *) t
+   | t = assignment_expression  -> (* let () = print_endline "assignment" in *) t]];
 
 constant_expression: [[t=expression -> t]];
 
