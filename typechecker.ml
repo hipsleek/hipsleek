@@ -785,27 +785,22 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         prepost_ctr # inc;
                         x_tinfo_pp ">>>>>> HIP gather infer pre <<<<<<" pos;
                         x_tinfo_zp (lazy (("Inferred Heap: " ^
-                                           (pr_list Cprinter.string_of_h_formula lh))
-                          )) pos;
+                                           (pr_list Cprinter.string_of_h_formula lh)))) pos;
                         x_tinfo_zp (lazy (("Inferred Pure: " ^(pr_list pr_pf lp)))) pos;
                         let fml = if (!Globals.pa) then
                             CF.formula_of_disjuncts
-                              (List.map (fun h ->
-                                   CF.formula_of_heap h no_pos) lh)
+                              (List.map (fun h -> CF.formula_of_heap h no_pos) lh)
                           else
                             List.fold_left CF.normalize_combine_heap
                               (CF.formula_of_heap CF.HEmp no_pos) lh in
                         let fml = x_add CF.normalize 1 fml
                             (CF.formula_of_pure_formula
-                               (CP.arith_simplify_new
-                                  (CP.conj_of_list lp no_pos)) no_pos) no_pos in
+                               (CP.arith_simplify_new (CP.conj_of_list lp no_pos)) no_pos) no_pos in
                         let check_sat = Solver.verify_pre_is_sat prog fml in
-                        if check_sat then [fml] else [])
-                      else [] in
+                        if check_sat then [fml] else []) else [] in
                     let i_post =
                       if not(infer_post_flag) then spec
-                      else
-                      if rels!=[] then let () = post_ctr # inc in spec
+                      else if rels!=[] then let () = post_ctr # inc in spec
                       else
                         begin
                           let () = post_ctr # inc in

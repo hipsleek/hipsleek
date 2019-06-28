@@ -120,7 +120,7 @@ let repair_iprog (iprog:I.prog_decl) : bool =
   | (Some repair_proc) ->
     let p_name = Cast.unmingle_name repair_proc in
     let () = x_tinfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
-    let () = Globals.start_repair := true in
+    let () = start_repair := true in
     let procs = iprog.I.prog_proc_decls in
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
     let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
@@ -237,7 +237,7 @@ let repair_cproc iprog =
   match !Typechecker.repair_proc with
   | Some r_proc_name ->
     let () = x_binfo_pp "marking" no_pos in
-    let () = Globals.start_repair := true in
+    let () = start_repair := true in
     let cprog, _ = Astsimp.trans_prog iprog in
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = get_block_traces cproc in
