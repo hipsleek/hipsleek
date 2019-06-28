@@ -1171,7 +1171,9 @@ let pairwisecheck (pe : formula) : formula =
         let vars_list = get_vars_formula pe in
         let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
         let fomega =
-          if !Globals.ifa then
+          (* if !Globals.ifa  *)
+          if !Globals.gist_pairwise
+          then
             "pairwisecheck (gist {[" ^ vstr ^ "] : (" ^ fstr ^ ")} given {[" ^ vstr ^ "] : (" ^ inv_bounds_str ^ ")});" ^ Gen.new_line_str
             (* "gist (pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")}) given {[" ^ vstr ^ "] : (" ^ inv_bounds_str ^ ")};" ^ Gen.new_line_str *)
           else

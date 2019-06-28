@@ -26,6 +26,7 @@ let ifa    = ref false
 let eximpf = ref false
 let ifa_fp = ref 0
 let ifa_only = ref false
+let gist_pairwise = ref false
 
 type formula_type =
   | Simple
