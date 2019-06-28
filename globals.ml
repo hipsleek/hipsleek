@@ -25,6 +25,7 @@ let mut_int = ref 0
 let ifa    = ref false
 let eximpf = ref false
 let ifa_fp = ref 0
+let ifa_only = ref false
 
 type formula_type =
   | Simple

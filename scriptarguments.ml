@@ -1366,6 +1366,9 @@ let common_arguments = [
    "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
   ("-ifa",Arg.Set Globals.ifa,"perform information flow analysis");
+  ("-ifa-only",
+    Arg.Set Globals.ifa_only
+  ,"perform information flow analysis only, ignoring arithmetic information");
   ("--force-print-residue", Arg.Set Globals.force_print_residue, "Always print resiude")
 ]
 
