@@ -277,21 +277,28 @@ let repair_cproc iprog =
     List.fold_left helper None traces
   | _ -> None
 
-let create_buggy_proc_wrapper (body : I.exp) =
+let create_buggy_proc_wrapper (body : I.exp) var_decls =
   let list = [] in
-  let () = x_binfo_hp (add_str "body" pr_exp) body no_pos in
+  x_binfo_hp (add_str "body" pr_exp) body no_pos;
+  (* let var_decls = *)
   let list = (buggy_num_dif_pos body 1)::list in
   let list = (buggy_num_dif_pos body 2)::list in
   let list = (buggy_mem_dif_pos body 1)::list in
   let list = (buggy_mem_dif_pos body 2)::list in
   let list = (buggy_mem_dif_pos body 3)::list in
+  let list = (modify_variable_infestor body 1 var_decls)::list in
+  let list = (modify_variable_infestor body 2 var_decls)::list in
+  let list = (modify_variable_infestor body 3 var_decls)::list in
+  let list = (modify_variable_infestor body 4 var_decls)::list in
   (* let list = (buggy_boolean_exp body 1)::list in *)
   (* let list = (delete_one_branch body 1)::list in *)
   list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev
 
 let create_buggy_proc (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in
-  let n_body_list = create_buggy_proc_wrapper body in
+  let var_decls = proc.I.proc_args |> List.map
+                    (fun x -> (x.I.param_type, x.I.param_name)) in
+  let n_body_list = create_buggy_proc_wrapper body var_decls in
   let () = x_tinfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
   n_body_list |> List.map (fun x -> {proc with I.proc_body = Some x})
 
@@ -299,11 +306,9 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) =
   let file_name, dir = Filename.basename src, Filename.dirname src in
   let suffix = Filename.extension file_name in
   let f_name = Filename.chop_suffix file_name suffix in
-  (* let r_file = "buggy_" ^ (string_of_int !infestor_num)^ "_" ^ file_name in *)
   let b_file = f_name ^ "_buggy_" ^ (string_of_int !infestor_num) ^ suffix in
   let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
   let () = infestor_num := !infestor_num + 1 in
-
   let view_decls = iprog.I.prog_view_decls in
   let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"; "size"] in
   let pre_datas = ["barrier"; "phase"; "thrd"; "__RET"; "__ArrBoundErr"; "lock";

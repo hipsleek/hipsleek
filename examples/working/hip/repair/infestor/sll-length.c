@@ -16,8 +16,6 @@ int length(struct node* x)
 {
   if (x == NULL) return 0;
   else {
-    int k;
-    k = 1 + length(x->next);
-    return k;
+    return 1 + length(x->next);
   }
 }

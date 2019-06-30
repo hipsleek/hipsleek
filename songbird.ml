@@ -1270,11 +1270,12 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf =
     let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
     let ante_hps = check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps then
-      let ante = es.CF.es_formula (* |> Syn.simplify_ante *) in
+      (* let ante = es.CF.es_formula (\* |> Syn.simplify_ante *\) in *)
+      let ante = es.CF.es_formula |> Syn.unprime_formula in
       let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv |> List.filter
-                        (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
-                    (* |> List.filter CP.is_unprimed in *)
+                        (fun x -> Syn.is_int_var x || Syn.is_node_var x)
+                      |> List.filter CP.is_unprimed in
       let var_decls = !Syn.block_var_decls
                       |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
                       |> List.map CP.to_primed in
