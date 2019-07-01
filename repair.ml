@@ -31,23 +31,22 @@ let filter_cand buggy_loc cand =
     b_lnum >= cand_lnum
 
 let mk_candidate_proc (iproc:I.proc_decl) args candidate =
-  match iproc.I.proc_body with
-    | None -> (iproc, args)
-    | Some exp ->
-      let loc = I.get_exp_pos candidate in
-      let helper sv = let CP.SpecVar (a, b, _) = sv in
-        (a,b) in
-      let decl_vars = Synthesis.get_var_decls loc exp
-                      |> List.map helper in
-      let args = args @ decl_vars in
-      let fcode = create_fcode_exp args in
-      let n_body = Some (replace_exp exp fcode candidate) in
-      ({iproc with proc_body = n_body}, args)
+  let body = Gen.unsome iproc.I.proc_body in
+  let loc = I.get_exp_pos candidate in
+  let helper sv = let CP.SpecVar (a, b, _) = sv in
+    (a,b) in
+  let decl_vars = Synthesis.get_var_decls loc body |> List.map helper in
+  let args = args @ decl_vars in
+  let fcode = create_fcode_exp args in
+  let n_body = Some (replace_exp body  fcode candidate) in
+  ({iproc with proc_body = n_body}, args)
 
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
   let n_iproc, args = mk_candidate_proc iproc args candidate in
   let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
+  let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
+  let () = Syn.block_var_decls := decl_vars in
   let rec helper args = match args with
     | [] -> ""
     | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
@@ -353,15 +352,16 @@ let create_buggy_progs src (iprog : I.prog_decl) =
   ()
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =
-  (* let tmp = repair_iprog iprog in *)
-  let start_time = get_time () in
-  let tmp = repair_cproc iprog in
-  if tmp != None then
-    let r_time = get_time() -. start_time in
-    let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
-    let () = x_binfo_hp (add_str "repair time" string_of_float)
-        r_time no_pos in
-    true
-  else
-    let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
-    false
+  let repair_proc_wrapper iprog =
+    let start_time = get_time () in
+    let tmp = repair_cproc iprog in
+    if tmp != None then
+      let r_time = get_time() -. start_time in
+      x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
+      x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
+      true
+    else
+      let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
+      false in
+  (* repair_proc_wrapper iprog *)
+  repair_iprog iprog

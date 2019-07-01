@@ -13,7 +13,8 @@ void append2(node2 x, node2 y)
 {
 	if (x.next == null) {
     x.next = y;
-    if (y != null) y.next = x;
+    if (y != null)
+      y.next = x;
 	}
 	else {
 		append2(x.next, y);

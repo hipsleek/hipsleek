@@ -337,6 +337,8 @@ let pr_rules = pr_list_ln pr_rule
 
 (* Basic functions  *)
 
+let negate b = not b
+
 let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
   | CF.Base {
@@ -1069,6 +1071,14 @@ let unprime_formula (formula:CF.formula) : CF.formula =
   Debug.no_1 "unprime_formula" pr_formula pr_formula
     (fun _ -> unprime_formula_x formula) formula
 
+let simplify_predicate_vars (vars : CP.spec_var list) =
+  let unprimed = vars |> List.filter CP.is_unprimed in
+  let unprimed_names = unprimed |> List.map CP.name_of_sv in
+  let helper_fun var =
+    let name = CP.name_of_sv var in
+    CP.is_primed var && Gen.BList.mem_eq eq_str name unprimed_names in
+  vars |> List.filter (fun x -> helper_fun x |> negate)
+
 let simplify_ante_x (ante: CF.formula) =
   let ante = remove_exists ante in
   let ante = unprime_formula ante in
@@ -1581,10 +1591,21 @@ let rec synthesize_st_core st : Iast.exp option=
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
         exp_var_decl_pos = no_pos;
       } in
+    let lhs_exp = I.Var {
+        I.exp_var_name = CP.name_of_sv lhs;
+        I.exp_var_pos = no_pos;
+      } in
     let rhs_exp = exp_to_iast rhs in
+    let assign_exp = I.Assign {
+        I.exp_assign_op = I.OpAssign;
+        I.exp_assign_lhs = lhs_exp;
+        I.exp_assign_rhs = rhs_exp;
+        I.exp_assign_path_id = None;
+        I.exp_assign_pos = no_pos;
+      } in
     let seq = mkSeq v_decl rhs_exp in
-    aux_subtrees st seq
-
+    let seq2 = mkSeq seq assign_exp in
+    aux_subtrees st seq2
   | RlReturn rcore -> let c_exp = exp_to_iast rcore.r_exp in
     Some (I.Return {
       exp_return_val = Some c_exp;
@@ -1665,15 +1686,19 @@ and aux_subtrees st cur_codes =
   | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
 
 let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
-  | I.Assign e -> let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
+  | I.Assign e ->
+    let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
     let n_e2 = replace_exp_aux nexp e.I.exp_assign_rhs in
     I.Assign {e with exp_assign_lhs = n_e1;
                    exp_assign_rhs = n_e2}
-  | I.Bind e -> let n_body = replace_exp_aux nexp e.I.exp_bind_body in
+  | I.Bind e ->
+    let n_body = replace_exp_aux nexp e.I.exp_bind_body in
     I.Bind {e with exp_bind_body = n_body}
-  | I.Block e -> let n_body = replace_exp_aux nexp e.I.exp_block_body in
+  | I.Block e ->
+    let n_body = replace_exp_aux nexp e.I.exp_block_body in
     I.Block {e with exp_block_body = n_body}
-  | I.Cast e -> let n_body = replace_exp_aux nexp e.I.exp_cast_body in
+  | I.Cast e ->
+    let n_body = replace_exp_aux nexp e.I.exp_cast_body in
     I.Cast {e with exp_cast_body = n_body;}
   | I.CallNRecv e ->
     let name = e.I.exp_call_nrecv_method in
@@ -1733,8 +1758,8 @@ let replace_exp_proc n_exp proc =
   let n_body = match proc.Iast.proc_body with
     | None -> None
     | Some exp -> Some (replace_exp_aux n_exp exp) in
-  let () = x_tinfo_hp (add_str "n_exp" pr_iast_exp) n_exp no_pos in
-  let () = x_binfo_hp (add_str "n_body" pr_iast_exp_opt) n_body no_pos in
+  x_tinfo_hp (add_str "n_exp" pr_iast_exp) n_exp no_pos;
+  x_binfo_hp (add_str "n_body" pr_iast_exp_opt) n_body no_pos;
   {proc with I.proc_body = n_body}
 
 let replace_exp_cproc n_exp proc =
@@ -1831,8 +1856,6 @@ let get_hf (f:CF.formula) = match f with
 
 let is_res_sv_syn sv = match sv with
   | CP.SpecVar (_,n,_) -> is_substr "rs" n
-
-let negate b = not b
 
 (*********************************************************************
  * Rule utilities

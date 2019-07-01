@@ -14,7 +14,8 @@ int length(struct node* x)
   ensures x::ll<n> & res = n;
 */
 {
-  if (x == NULL) return 0;
+  if (x == NULL)
+       return 0;
   else {
     return 1 + length(x->next);
   }

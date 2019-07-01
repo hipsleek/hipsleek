@@ -840,7 +840,6 @@ let solve_entailments prog entails =
   let sb_prog = translate_prog prog in
   x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
   x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos;
-  (* report_error no_pos "to debug" *)
   let ptree = SBPU.solve_entailments ~pre:"PP" ~post:"QQ" ~timeout:(Some 3) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
@@ -1270,7 +1269,6 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf =
     let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
     let ante_hps = check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps then
-      (* let ante = es.CF.es_formula (\* |> Syn.simplify_ante *\) in *)
       let ante = es.CF.es_formula in
       let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv |> List.filter

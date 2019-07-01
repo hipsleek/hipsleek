@@ -16,7 +16,8 @@ void append(struct node* x, struct node* y)
 {
 	if (x->next == NULL){
     x->next = y;
-    if (y != NULL) y->prev = x;
+    if (y != NULL)
+        y->prev = x;
   } else {
     append(x->next, y);
   }

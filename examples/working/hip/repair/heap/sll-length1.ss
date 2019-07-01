@@ -10,8 +10,7 @@ int length(node x)
   ensures x::ll<n> & res = n;
 {
   if (x == null)
-     fcode(x);
-     return 5;
+      return 5;
   else
       return 1 + length(x.next);
 }
