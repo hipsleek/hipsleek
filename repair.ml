@@ -142,13 +142,11 @@ let repair_iprog (iprog:I.prog_decl) : bool =
       false
     else
       let r_time = get_time() -. start_time in
-      let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
-      let () = x_binfo_hp (add_str "repair time" string_of_float)
-          r_time no_pos in
-      let () = x_binfo_hp (add_str "failed branches" string_of_int)
-          !Syn.fail_branch_num no_pos in
-      let () = x_binfo_hp (add_str "check_entail" string_of_int)
-          !Syn.check_entail_num no_pos in
+      x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
+      x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
+      x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
+        no_pos;
+      x_binfo_hp (add_str "check_entail" pr_int) !Syn.check_entail_num no_pos;
       let _ = List.hd res in
       true
   | _ -> false

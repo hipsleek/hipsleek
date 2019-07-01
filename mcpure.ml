@@ -979,23 +979,24 @@ and merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
 and memoise_add_failed_memo (l:memo_pure) (p:b_formula) : memo_pure = 
   merge_mems l (create_memo_group_wrapper [p] Implied_R) false
 
-and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure = 
-  if (isConstTrue p)||(isConstMFalse l) then l 
+and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure =
+  if (isConstTrue p)||(isConstMFalse l) then l
   else if (isConstFalse p) then mkMFalse no_pos
-  else 
+  else
     (Gen.Profiling.push_time "add_pure";
      let disjs, rests = List.fold_left (fun (a1,a2) c -> match c with 
-         | BForm x -> (x::a1,a2) 
+         | BForm x -> (x::a1,a2)
          | _ -> (a1,c::a2))  ([],[]) (list_of_conjs p) in
-     let m2 = create_memo_group(*_debug*) disjs rests status in
+     let m2 = create_memo_group disjs rests status in
      let r = merge_mems l m2 true in
      (*let r = List.concat (List.map split_mem_grp r) in*)
      Gen.Profiling.pop_time "add_pure"; r)
 
-and memoise_add_pure_aux l p status : memo_pure = 
+and memoise_add_pure_aux l p status : memo_pure =
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Debug.no_2 "memoise_add_pure_aux " pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
+  Debug.no_2 "memoise_add_pure_aux " pr1 pr2 pr1
+    (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
 
 and memoise_add_pure_N l p =
   let pr1 = !print_mp_f in
@@ -2231,7 +2232,7 @@ let merge_mems_m = merge_mems
 let merge_mems f1 f2 slice_dup = match (f1,f2) with
   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup)
   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos)
-  | OnePF f1_f, MemoF f2_m -> 
+  | OnePF f1_f, MemoF f2_m ->
     MemoF (memoise_add_pure_N f2_m f1_f)
   | MemoF f1_m, OnePF f2_f ->
     MemoF (memoise_add_pure_N f1_m f2_f)
@@ -2250,14 +2251,14 @@ let merge_mix_w_pure mf pf = match mf with
 (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
 
 
-let merge_mems f1 f2 slice_dup = 
-  Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (string_of_bool)
+let merge_mems f1 f2 slice_dup =
+  Debug.no_3 "merge_mems" !print_mix_f !print_mix_f (string_of_bool)
     !print_mix_f merge_mems f1 f2 slice_dup
 
-let reset_unsat_flag_mix m = 
+let reset_unsat_flag_mix m =
   match m with
   | MemoF mf -> MemoF (reset_unsat_flag_mem mf)
-  | _ -> m  
+  | _ -> m
 
 let replace_mix_formula_label lb s = match s with
   | MemoF f -> MemoF (replace_memo_pure_label lb f)

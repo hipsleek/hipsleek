@@ -434,7 +434,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           else if is_UtT typ then (vr@[v], vt, vi)
           else if is_FuncT typ then (vr, vt@[v], vi)
           else (vr, vt, vi@[v])) ([], [], []) vars in
-      let () = x_binfo_hp (add_str "vars_rel" !print_svl) vars_rel no_pos in
+      x_tinfo_hp (add_str "vars_rel" !print_svl) vars_rel no_pos;
       let _ =
         let proc_args_vars = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
         let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars
@@ -737,16 +737,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     (* detected new False from post-condition proving *)
                     (* potential unsoundness *)
                     (* to count false detected in elim_unsat_estate *)
-                    let () = x_tinfo_pp ("\n Before CheckPost : "
-                                         ^(Cprinter.string_of_list_partial_context
-                        res_ctx)) no_pos in
-                    let () = x_tinfo_pp ("\n After CheckPost : "
-                                         ^(Cprinter.string_of_list_partial_context
-                        tmp_ctx)) no_pos in
-                    let () = x_binfo_pp ("\n Before CheckPost : "
-                                         ^(string_of_int cnt_before)) no_pos in
+                    x_tinfo_hp (add_str "Before CheckPost" Cprinter.string_of_list_partial_context) res_ctx no_pos;
+                    x_tinfo_hp (add_str "After CheckPost" Cprinter.string_of_list_partial_context) tmp_ctx no_pos;
+                    x_tinfo_hp (add_str "Before CheckPost" string_of_int) cnt_before no_pos;
                     (* inside cnt_after *)
-                    let () = x_binfo_pp ("\n After CheckPost : "^(string_of_int cnt_after)) no_pos in
+                    x_tinfo_pp ("\n After CheckPost : "^(string_of_int cnt_after)) no_pos;
                     let () = add_false_ctx (post_pos # get) in
                     let () = print_endline_quiet
                         ("\n[UNSOUNDNESS] WARNING : possible new unsatisfiable
@@ -2003,7 +1998,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let then_ctx = if !Globals.delay_if_sat
             then SV.combine_list_failesc_context prog ctx then_cond_prim
             else  SV.combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
-          x_binfo_hp (add_str "then ctx: "
+          x_tinfo_hp (add_str "then ctx: "
                         Cprinter.string_of_list_failesc_context) then_ctx no_pos;
           x_dinfo_zp (lazy ("conditional: then_delta:\n" ^ (pr_failesc_ctx then_ctx))) pos;
           let else_ctx =
@@ -2231,7 +2226,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let () = x_tinfo_hp (add_str "mn: " pr_id) mn no_pos in
-        x_binfo_hp (add_str "ctx scall start: " pr_failesc_ctx) ctx no_pos;
+        x_tinfo_hp (add_str "ctx scall start: " pr_failesc_ctx) ctx no_pos;
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
         (*=========================*)
         (*======= CONCURRENCY======*)
@@ -2336,8 +2331,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 let ht, hn = hv in
                 let hsv = CP.SpecVar (ht, hn, Unprimed) in
                 CF.subst_hvar_struc renamed_spec [(hsv, ha)]
-              | _ -> renamed_spec
-            in
+              | _ -> renamed_spec in
 
             let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
             (*ALSO rename ls to ls',lsmu to lsmu'*)
@@ -2355,29 +2349,25 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let new_spec = (Cprinter.string_of_struc_formula pre2) in
             (* Termination: Store unreachable state *)
             let _ =
-              if is_rec_flag then (* Only check termination of a recursive call *)
-                let () = x_dinfo_zp
-                    (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
+              if is_rec_flag then
+                (* Only check termination of a recursive call *)
+                let () = x_tinfo_hp (add_str ">>>>>>> Termination Checking" pr_id) mn no_pos in
                 if not (CF.isNonFalseListFailescCtx sctx) then
                   let todo_unk = Term.add_unreachable_res sctx pos in ()
                 else ()
-              else ()
-            in
+              else () in
 
             (* TODO: call the entailment checking function in solver.ml *)
             let to_print = "\nProving precondition in method "
                            ^ proc.proc_name ^ " for spec:\n" ^ new_spec  in
-            let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)
-                            ^to_print) in
+            let to_print = "\nVerification Context:" ^ (post_pos#string_of_pos)^to_print in
             x_dinfo_zp (lazy (to_print^"\n")) pos;
             (* An Hoa : output the context and new spec before checking pre-condition *)
             let () = if !print_proof && should_output_html
               then Prooftracer.push_list_failesc_context_struct_entailment
                   sctx pre2 in
             (*we use new rules to judge the spec*)
-            let () = x_dinfo_hp (add_str "old rs:"
-                                   Cprinter.string_of_list_failesc_context)
-                sctx no_pos in
+            x_dinfo_hp (add_str "old rs:" pr_failesc_ctx) sctx no_pos;
             let rs, prf = x_add SV.heap_entail_struc_list_failesc_context_init 6
                 prog false true sctx pre2 None None None pos pid in
             let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
@@ -2385,8 +2375,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let () = x_tinfo_hp (add_str "new rs:"
                                    Cprinter.string_of_list_failesc_context)
                 rs no_pos in
-            rs
-          in
+            rs in
           (*****************END_CHECK_PRE_POST********************************)
           (* Call check_pre_post with debug information *)
           (*******************************************************************)
@@ -2437,7 +2426,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                      Cprinter.string_of_struc_formula)
                   (proc.proc_stk_of_static_specs#top) no_pos in
               check_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed in
-          x_binfo_hp (add_str "res " pr_failesc_ctx) res no_pos;
+          x_tinfo_hp (add_str "res " pr_failesc_ctx) res no_pos;
           let () = if !print_proof then Prooftracer.add_pre e0 in
           let () = if !print_proof && scall_pre_cond_pushed then
               begin
@@ -2756,9 +2745,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
           let n_ctx =
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
-          let () = x_binfo_hp (add_str "n_ctx:"
-                                 Cprinter.string_of_list_failesc_context) n_ctx
-              no_pos in
+          x_tinfo_hp (add_str "n_ctx:" pr_failesc_ctx) n_ctx no_pos;
           n_ctx
         with Not_found ->
           Err.report_error { Err.error_loc = pos;
@@ -2885,7 +2872,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx
   let pr = !CF.print_list_failesc_context in
   let () = Debug.ninfo_hprint (add_str "check_par_case: rem_ctx:" pr) rem_ctx pos in
   let () = Debug.ninfo_hprint (add_str "check_par_case: par_init_ctx:" pr) par_init_ctx pos in
-  let () = x_binfo_hp (add_str "check_par_case: pre_ctx:" pr) pre_ctx pos in
+  x_tinfo_hp (add_str "check_par_case: pre_ctx:" pr) pre_ctx pos;
   let post_ctx = x_add check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
   let post_ctx = TermUtils.strip_lexvar_list_failesc_ctx post_ctx in
   (* Norm post_ctx *)

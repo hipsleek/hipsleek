@@ -2532,8 +2532,7 @@ and mkAnd_x f1 f2 (*b*) pos =
 
 and mkAnd f1 f2 pos = mkAnd_x f1 f2 pos
 
-
-and mkAndList_x b = 
+and mkAndList_x b =
   if (exists_l_snd isConstFalse b) then mkFalse no_pos
   else AndList (Label_Pure.norm (List.filter (fun (_,c)-> not (isConstTrue c)) b))
 

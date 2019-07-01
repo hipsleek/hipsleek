@@ -2631,12 +2631,12 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
   else
     let () = Debug.tinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
     let result, prf = if (SB.contains_hps prog ctx conseq)
-      then SB.heap_entail_after_sat_struc prog ctx conseq ~pf:None
+      then SB.heap_entail_after_sat_struc prog ctx conseq
       else
         let (n_ctx, pf) = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx
             conseq tid delayed_f join_id pos pid [] in
         let () = if !disproof && CF.isFailCtx n_ctx then
-            let _ = Songbird.heap_entail_after_sat_struc prog ctx conseq ~pf:None in
+            let _ = Songbird.heap_entail_after_sat_struc prog ctx conseq in
             () else () in
         (n_ctx, pf) in
     let result = subs_crt_holes_list_ctx result in

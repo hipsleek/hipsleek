@@ -1013,6 +1013,28 @@ let find_exists_substs sv_list conjunct =
     aux pf
   | _ -> []
 
+let rec add_pure_formula_to_formula_x (n_pf: CP.formula) (f2:CF.formula)
+  : CF.formula =
+  match f2 with
+  | CF.Or {formula_or_f1 = f1;
+        formula_or_f2 = f2;
+        formula_or_pos = pos} ->
+    CF.Or {formula_or_f1 = add_pure_formula_to_formula_x n_pf f1;
+           formula_or_f2 = add_pure_formula_to_formula_x n_pf f2;
+           formula_or_pos = pos}
+  | CF.Base b ->
+    let pf = b.CF.formula_base_pure |> MCP.pure_of_mix in
+    let n_pf = CP.mkAnd pf n_pf no_pos in
+    CF.Base { b with CF.formula_base_pure = MCP.mix_of_pure n_pf;}
+  | CF.Exists b ->
+    let pf = b.CF.formula_exists_pure |> MCP.pure_of_mix in
+    let n_pf = CP.mkAnd pf n_pf no_pos in
+    CF.Exists {b with CF.formula_exists_pure = MCP.mix_of_pure n_pf}
+
+let add_pure_formula_to_formula (n_pf: CP.formula) (f2:CF.formula) =
+    Debug.no_2 "add_pf_to_formula" pr_pf pr_formula pr_formula
+    (fun _ _ -> add_pure_formula_to_formula_x n_pf f2) n_pf f2
+
 let add_formula_to_formula f1 f2 =
   let bf = CF.mkStar f1 f2 CF.Flow_combine no_pos in
   let evars = (CF.get_exists f1) @ (CF.get_exists f2) |> CP.remove_dups_svl in

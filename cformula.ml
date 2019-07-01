@@ -3312,7 +3312,7 @@ and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula 
 
 (*LDK : add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_formula  (f1_mix: MCP.mix_formula) (f2_f:formula) : formula =
-  Debug.no_2 "add_mix_formula_to_formula_x" !print_mix_formula !print_formula
+  Debug.no_2 "add_mix_formula_to_formula" !print_mix_formula !print_formula
     !print_formula
     add_mix_formula_to_formula_x f1_mix f2_f
 
