@@ -781,9 +781,9 @@ and string_of_formula_repair = function
                else
                  let hf_str = string_of_h_formula_repair hf in
                  if hf_str = "" then s
-                 else "(" ^ hf_str ^ ")*(" ^ s ^ ")")
-            ^ ")"
-    in rs^sa
+                 else hf_str ^ " & " ^ s)
+            ^ ")" in
+    rs^sa
 
 and string_of_struc_formula c = match c with
   | F.ECase { F.formula_case_branches  =  case_list} ->
@@ -1450,8 +1450,7 @@ let string_of_view_decl_repair v =
   let extn_str =
     match v.view_derv_from with
     | None -> ""
-    | Some regex_ids -> string_of_regex_id_star_list regex_ids
-  in
+    | Some regex_ids -> string_of_regex_id_star_list regex_ids in
   let pr_exp = string_of_formula_exp in
   let pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
   v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^

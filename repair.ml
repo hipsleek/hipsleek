@@ -57,7 +57,7 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
   let names = args |> List.map snd in
   let arg_str = helper args in
   let arg_names = pr_idents_wo_brackets names "," in
-  let typ = type_of_exp candidate in
+  let typ = type_of_exp candidate [] [] in
   let fcode = hp_str ^ " P(" ^ arg_str ^ ").\n" ^
               hp_str ^ " Q(" ^ arg_str ^ ").\n" ^
               (string_of_typ typ) ^  " " ^ fcode_str ^ "(" ^ arg_str ^ ")\n" ^
@@ -277,28 +277,30 @@ let repair_cproc iprog =
     List.fold_left helper None traces
   | _ -> None
 
-let create_buggy_proc_wrapper (body : I.exp) var_decls =
+let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
   let list = [] in
   x_binfo_hp (add_str "body" pr_exp) body no_pos;
   (* let var_decls = *)
-  let list = (buggy_num_dif_pos body 1)::list in
-  let list = (buggy_num_dif_pos body 2)::list in
-  let list = (buggy_mem_dif_pos body 1)::list in
-  let list = (buggy_mem_dif_pos body 2)::list in
-  let list = (buggy_mem_dif_pos body 3)::list in
+  let list = (modify_num_infestor body 1)::list in
+  let list = (modify_num_infestor body 2)::list in
+  let list = (remove_field_infestor body 1 var_decls data_decls)::list in
+  let list = (remove_field_infestor body 2 var_decls data_decls)::list in
+  let list = (remove_field_infestor body 3 var_decls data_decls)::list in
   let list = (modify_variable_infestor body 1 var_decls)::list in
   let list = (modify_variable_infestor body 2 var_decls)::list in
   let list = (modify_variable_infestor body 3 var_decls)::list in
   let list = (modify_variable_infestor body 4 var_decls)::list in
-  (* let list = (buggy_boolean_exp body 1)::list in *)
-  (* let list = (delete_one_branch body 1)::list in *)
+  let list = (modify_field_infestor body 1 var_decls data_decls)::list in
+  let list = (modify_field_infestor body 2 var_decls data_decls)::list in
+  let list = (modify_field_infestor body 3 var_decls data_decls)::list in
   list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev
 
-let create_buggy_proc (proc : I.proc_decl) =
+let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in
   let var_decls = proc.I.proc_args |> List.map
                     (fun x -> (x.I.param_type, x.I.param_name)) in
-  let n_body_list = create_buggy_proc_wrapper body var_decls in
+  let data_decls = iprog.I.prog_data_decls in
+  let n_body_list = create_buggy_proc_wrapper body var_decls data_decls in
   let () = x_tinfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
   n_body_list |> List.map (fun x -> {proc with I.proc_body = Some x})
 
@@ -333,7 +335,7 @@ let create_buggy_progs src (iprog : I.prog_decl) =
     List.map (fun x -> if eq_str x.I.proc_name buggy_proc.I.proc_name
                then buggy_proc else x) procs in
   let n_procs_list = List.fold_left (fun res_list cur_proc ->
-      let buggy_procs = create_buggy_proc cur_proc in
+      let buggy_procs = create_buggy_proc iprog cur_proc in
       let n_procs = buggy_procs |> List.map helper_buggy in
       n_procs @ res_list) [] procs in
   let helper n_procs =

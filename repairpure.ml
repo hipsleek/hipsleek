@@ -191,15 +191,40 @@ let get_trace_var_decls pos trace =
     block |> List.map aux |> List.concat in
   trace |> List.map aux_block |> List.concat
 
-let type_of_exp (exp:I.exp) : typ = match exp with
-  | IntLit _ -> Int
-  | Binary bexp ->
+let rec type_of_exp (exp:I.exp) var_decls data_decls : typ = match exp with
+  | I.IntLit _ -> Int
+  | I.Binary bexp ->
     begin
       match bexp.I.exp_binary_op with
       | OpPlus | OpMinus | OpMult | OpDiv | OpMod | OpEq | OpNeq | OpLt
       | OpLte | OpGt | OpGte -> Int
       | _ -> Bool
     end
+  | I.Var var ->
+    let v_name = var.I.exp_var_name in
+    begin
+      try
+        let var = List.find (fun (x,y) -> eq_str y v_name) var_decls in
+        fst var
+      with _ -> Void
+    end
+  | I.Member mem ->
+    let base = mem.I.exp_member_base in
+    let fields = mem.I.exp_member_fields in
+    let b_typ = type_of_exp base var_decls data_decls in
+    if fields = [] then b_typ
+    else
+      begin
+        match b_typ with
+        | Named id ->
+          let field = List.hd fields in
+          let eq_data x = eq_str x.I.data_name id in
+          let data = List.find eq_data data_decls in
+          let d_fields = data.I.data_fields |> List.map (fun (x,_,_,_) -> x) in
+          let typed_id = List.find (fun (_,x) -> eq_str x field) d_fields in
+          fst typed_id
+        | _ -> Void
+      end
   | _ -> Void
 
 let create_fcode_exp (vars: typed_ident list) : I.exp =
@@ -396,8 +421,7 @@ let normalize_arith_exp exp =
     | Binary e -> true
     | Unary e -> is_compose_exp e.exp_unary_exp
     | Block e -> is_compose_exp e.exp_block_body
-    | _ -> false
-  in
+    | _ -> false in
   let rec aux (exp:I.exp) = match exp with
     | Binary e ->
       begin
@@ -991,7 +1015,7 @@ let buggy_num_strategy body =
   aux body false
 
 (* different numeric constraint: n -> n + 3 *)
-let buggy_num_dif_pos body dif_num =
+let modify_num_infestor body dif_num =
   let rec aux exp changed =
     if changed = 0 then exp, 0
     else
@@ -1135,7 +1159,7 @@ let buggy_boolean_exp body dif_num =
   aux body dif_num
 
 (* x->next : x *)
-let buggy_mem_dif_pos body dif_num =
+let remove_field_infestor body dif_num var_decls data_decls =
   let rec aux exp changed =
     let rec helper args changed = match args with
       | [] -> [], changed
@@ -1181,7 +1205,96 @@ let buggy_mem_dif_pos body dif_num =
         let n_exp = I.CallNRecv {e with exp_call_nrecv_arguments = n_args;} in
         (n_exp, n_changed)
       | I.Member e ->
-        if changed = 1 then (e.I.exp_member_base, 0)
+        if changed = 1 then
+          if type_of_exp exp var_decls data_decls =
+             type_of_exp e.I.exp_member_base var_decls data_decls then
+            (e.I.exp_member_base, 0)
+          else (exp, changed)
+        else (exp, changed - 1)
+      | I.Return e ->
+        let n_e, res = match e.I.exp_return_val with
+          | None -> None, changed
+          | Some r_e ->
+            let n_r, res = aux r_e changed in
+            (Some n_r, res) in
+        (I.Return {e with exp_return_val = n_e}, res)
+      | I.Binary bin ->
+        let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
+        let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
+        (I.Binary {bin with exp_binary_oper1 = n_e1;
+                            exp_binary_oper2 = n_e2}, r2)
+      | _ -> (exp, changed) in
+  aux body dif_num
+
+(* x->next : x->prev *)
+let modify_field_infestor body dif_num var_decls data_decls =
+  let rec aux exp changed =
+    let rec helper args changed = match args with
+      | [] -> [], changed
+      | head::tail ->
+        let n_h, n_changed = aux head changed in
+        let n_tail, n_changed = helper tail n_changed in
+        (n_h::n_tail, n_changed) in
+    if changed = 0 then exp, 0
+    else
+      match exp with
+      | I.Block block ->
+        let n_block, res = aux block.I.exp_block_body changed in
+        (I.Block {block with exp_block_body = n_block}, res)
+      | I.Label (a, l) ->
+        let n_l, res = aux l changed in
+        (I.Label (a, n_l), res)
+      | I.Seq seq ->
+        let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
+        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+        (I.Seq {seq with exp_seq_exp1 = n_e1;
+                         exp_seq_exp2 = n_e2}, r2)
+      | I.Cond cond ->
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
+        let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
+        let n_e = I.Cond {cond with exp_cond_condition = n_e1;
+                                    exp_cond_then_arm = n_e2;
+                                    exp_cond_else_arm = n_e3} in
+        (n_e, r3)
+      | I.Assign e ->
+        let n_e1, r1 = aux e.I.exp_assign_lhs changed in
+        let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
+        (I.Assign {e with exp_assign_lhs = n_e1;
+                          exp_assign_rhs = n_e2}, r2)
+      | I.CallRecv e ->
+        let args = e.I.exp_call_recv_arguments in
+        let n_args, n_changed = helper args changed in
+        let n_exp = I.CallRecv {e with exp_call_recv_arguments = n_args;} in
+        (n_exp, n_changed)
+      | I.CallNRecv e ->
+        let args = e.I.exp_call_nrecv_arguments in
+        let n_args, n_changed = helper args changed in
+        let n_exp = I.CallNRecv {e with exp_call_nrecv_arguments = n_args;} in
+        (n_exp, n_changed)
+      | I.Member e ->
+        if changed = 1 then
+          let typ = type_of_exp e.I.exp_member_base var_decls data_decls in
+          begin
+            match typ with
+            | Named id ->
+              let eq_data x = eq_str x.I.data_name id in
+              let data = List.find eq_data data_decls in
+              let d_fields = data.I.data_fields |> List.map (fun (x,_,_,_) -> x) in
+              let fields = e.I.exp_member_fields in
+              let field = List.hd fields in
+              let (f_typ, f_name) = List.find (fun (_, x) -> eq_str x field) d_fields in
+              let others = List.filter (fun (x, y) -> x = f_typ && not(eq_str y f_name)) d_fields in
+              if others != [] then
+                if changed = 1 then
+                  let n_field = others |> List.hd |> snd in
+                  let n_fields = [n_field] in
+                  let n_exp = I.Member {e with I.exp_member_fields = n_fields} in
+                  (n_exp, 0)
+                else (exp, changed - 1)
+              else (exp, changed)
+            | _ -> (exp, changed)
+          end
         else (exp, changed - 1)
       | I.Return e ->
         let n_e, res = match e.I.exp_return_val with
