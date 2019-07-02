@@ -43,6 +43,7 @@ let syn_iprog = ref (None: I.prog_decl option)
 let syn_cprog = ref (None: C.prog_decl option)
 let tmpl_proc_name = ref (None: string option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
+let triples = ref ([] : (CF.formula * CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
 let syn_res_vars = ref ([] : CP.spec_var list)
 
@@ -235,10 +236,10 @@ let is_synthesis_tree_success stree : bool =
  *********************************************************************)
 let pr_c_exp exp = Cprinter.string_of_exp exp
 
-let pr_iast_exp = Iprinter.string_of_exp_repair
-let pr_iast_exp_opt = Iprinter.string_of_exp_repair
+let pr_i_exp = Iprinter.string_of_exp_repair
+let pr_i_exp_opt = Iprinter.string_of_exp_repair
 
-let pr_iast_exp_opt exp = match exp with
+let pr_i_exp_opt exp = match exp with
   | None -> "None"
   | Some e -> Iprinter.string_of_exp_repair e
 
@@ -1045,6 +1046,18 @@ let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
 
+let mkTrue_pf_formula (formula:CF.formula) =
+  match formula with
+  | CF.Base base ->
+    let pos = base.CF.formula_base_pure |> MCP.pure_of_mix
+              |> CP.pos_of_formula in
+    CF.Base {base with CF.formula_base_pure = CP.mkTrue pos |> MCP.mix_of_pure}
+  | CF.Exists base ->
+    let pos = base.CF.formula_exists_pure |> MCP.pure_of_mix
+              |> CP.pos_of_formula in
+    CF.Exists {base with CF.formula_exists_pure = CP.mkTrue pos |> MCP.mix_of_pure}
+  | CF.Or _ -> report_error no_pos "mkTrue_pf_formula: unhandled"
+
 let remove_boolean_constraints (ante:CF.formula) =
   let conjuncts = ante |> CF.get_pure |> remove_exists_pf
                   |> CP.split_conjunctions
@@ -1780,8 +1793,8 @@ let replace_exp_proc n_exp proc =
   let n_body = match proc.Iast.proc_body with
     | None -> None
     | Some exp -> Some (replace_exp_aux n_exp exp) in
-  x_tinfo_hp (add_str "n_exp" pr_iast_exp) n_exp no_pos;
-  x_binfo_hp (add_str "n_body" pr_iast_exp_opt) n_body no_pos;
+  x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos;
+  x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos;
   {proc with I.proc_body = n_body}
 
 let replace_exp_cproc n_exp proc =
@@ -1878,6 +1891,30 @@ let get_hf (f:CF.formula) = match f with
 
 let is_res_sv_syn sv = match sv with
   | CP.SpecVar (_,n,_) -> is_substr "rs" n
+
+let rec check_hp_hf_x hp_names hf = match hf with
+  | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
+  | CF.HFalse -> false
+  | CF.HRel (sv, args, _) -> let sv_name = CP.name_of_sv sv in
+    if List.exists (fun x -> eq_str x sv_name) hp_names
+    then true else false
+  | CF.Star sf -> (check_hp_hf_x hp_names sf.CF.h_formula_star_h1) ||
+               (check_hp_hf_x hp_names sf.CF.h_formula_star_h2)
+  | _ -> report_error no_pos "unhandled case of check_conseq_hp"
+
+let check_hp_hf hp_names hf =
+  Debug.no_1 "check_hp_hf" pr_hf string_of_bool
+    (fun _ -> check_hp_hf_x hp_names hf) hf
+
+let rec check_hp_formula_x hp_names formula = match (formula:CF.formula) with
+  | CF.Base bf -> check_hp_hf hp_names bf.CF.formula_base_heap
+  | CF.Exists ef -> check_hp_hf hp_names ef.CF.formula_exists_heap
+  | CF.Or f -> (check_hp_formula_x hp_names f.CF.formula_or_f1) ||
+               (check_hp_formula_x hp_names f.CF.formula_or_f2)
+
+let check_hp_formula hp_names formula =
+  Debug.no_1 "check_hp_formula" pr_formula string_of_bool
+    (fun _ -> check_hp_formula_x hp_names formula) formula
 
 (*********************************************************************
  * Rule utilities

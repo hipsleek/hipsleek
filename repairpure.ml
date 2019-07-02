@@ -6,6 +6,7 @@ open Globals
 open Exc.GTable
 
 module C = Cast
+module E = Env
 module CP = Cpure
 module CF = Cformula
 module Syn = Synthesis
@@ -1389,3 +1390,77 @@ let modify_variable_infestor body dif_num (var_decls: typed_ident list) =
                             exp_binary_oper2 = n_e2}, r2)
       | _ -> (exp, changed) in
   aux body dif_num
+
+let find_data_decls data_decls typ =
+  match typ with
+  | Named id ->
+    begin
+      try
+        let data = List.find (fun x -> eq_str x.I.data_name id) data_decls in
+        Some data
+      with _ -> None
+    end
+  | _ -> None
+
+let reverse_remove_field_infestor data_decls var_decls (i_exp : I.exp) =
+  let mkMember base_e field =
+    I.Member {
+      I.exp_member_base = base_e;
+      I.exp_member_fields = [field];
+      I.exp_member_path_id = None;
+      I.exp_member_pos = no_pos
+    } in
+  let rec aux (i_exp: I.exp) = match i_exp with
+    | I.Assign asgn ->
+      let n_lhs = aux asgn.I.exp_assign_lhs in
+      let create_lhs x = I.Assign {asgn with I.exp_assign_lhs = x} in
+      let n_rhs = aux asgn.I.exp_assign_rhs in
+      let create_rhs x = I.Assign {asgn with I.exp_assign_rhs = x} in
+      let n_exp1 = n_lhs |> List.map create_lhs in
+      let n_exp2 = n_rhs |> List.map create_rhs in
+      n_exp1 @ n_exp2
+    | I.Var v ->
+      let v_name = v.I.exp_var_name in
+      begin
+        try
+          let var = List.find (fun x -> eq_str v_name (CP.name_of_sv x)) var_decls in
+          let typ = CP.type_of_sv var in
+          let data_decl = find_data_decls data_decls typ in
+          if data_decl = None then []
+          else
+            let data = data_decl |> Gen.unsome in
+            let fields = data.I.data_fields |> List.map (fun (x,_,_,_) -> x) in
+            let fields = List.filter (fun (x,_) -> x = typ) fields in
+            fields |> List.map snd |> List.map (mkMember i_exp)
+        with _ -> []
+      end
+    | _ -> [] in
+  aux i_exp
+
+let reverse_infestor iprog (i_exp: I.exp) =
+  let var_decls = !Syn.block_var_decls in
+  let data_decls = iprog.I.prog_data_decls in
+  let list = [] in
+  let list = list @ (reverse_remove_field_infestor data_decls var_decls i_exp) in
+  list
+
+let lookup_var v_name =
+  try
+    let all_vars = !Syn.block_var_decls in
+    x_binfo_hp (add_str "all vars" Syn.pr_vars) all_vars no_pos;
+    let var = List.find (fun x -> eq_str (CP.name_of_sv x) v_name) all_vars in
+    E.VarInfo {
+      E.var_name = CP.name_of_sv var;
+      E.var_alpha = CP.name_of_sv var;
+      E.var_type = CP.type_of_sv var;
+    }
+  with e -> raise e
+
+(* let trans_exp_x prog proc ie : C.exp = *)
+
+(* let trans_exp (prog : I.prog_decl) (proc : I.proc_decl) orig_e (ie : I.exp) =
+ *   Debug.no_1 "Repair.trans_exp"
+ *     Iprinter.string_of_exp
+ *     (pr_pair Cprinter.string_of_exp string_of_typ)
+ *     (fun _ -> trans_exp_x prog proc ie original_exp) ie *)
+

@@ -43,7 +43,7 @@ let scopes : sym_tab list ref = ref []
 
 (* push/pop scopes *)
 
-let push_scope () = 
+let push_scope () =
   let new_scope = H.create 19 in
   scopes := new_scope :: !scopes
 
@@ -58,14 +58,14 @@ let pop_scope () =
 let clear () = scopes := []
 
 (*
-(* clear names in current scope *) 
-let clear_names (names : ident list) = 
+(* clear names in current scope *)
+let clear_names (names : ident list) =
 *)
 
-(* look up information associated with v, 
+(* look up information associated with v,
    raises Not_found if v is not present *)
 let rec look_up (v : ident) : ident_info =
-  let rec helper cur_scopes = 
+  let rec helper cur_scopes =
     if Gen.is_empty cur_scopes then
       raise Not_found
     else
@@ -73,8 +73,7 @@ let rec look_up (v : ident) : ident_info =
       try
         H.find top_scope v
       with
-      | Not_found -> helper (List.tl cur_scopes)
-  in
+      | Not_found -> helper (List.tl cur_scopes) in
   helper !scopes
 
 and add (v : ident) (i : ident_info) =

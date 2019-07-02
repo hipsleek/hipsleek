@@ -12110,7 +12110,7 @@ let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_con
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
 
 let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c, None) ] ) 
-let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c, None) ] ) 
+let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c, None) ] )
 
 (* WN : this seems weird *)
 (* let rec is_empty_esc_stack (e:esc_stack) : bool = match e with *)
@@ -13080,20 +13080,20 @@ and list_formula_of_list_partial_context (ls : list_partial_context) : list_form
   List.map (formula_of_partial_context) ls
 
 (* assumes that all are successes, may need to filter *)
-and list_formula_of_list_failesc_context (ls : list_failesc_context) : list_formula =  
+and list_formula_of_list_failesc_context (ls : list_failesc_context) : list_formula =
   let ls = List.filter (fun (f,es,s) -> Gen.is_empty f) ls in
   List.map (formula_of_failesc_context) ls
 
-and formula_of_list_partial_context (ls : list_partial_context) : formula =  
+and formula_of_list_partial_context (ls : list_partial_context) : formula =
   List.fold_left (fun a c-> mkOr (formula_of_partial_context c) a no_pos)
     (mkFalse (mkTrueFlow ()) no_pos) ls
 
-and formula_of_list_failesc_context (ls : list_failesc_context) : formula =  
+and formula_of_list_failesc_context (ls : list_failesc_context) : formula =
   List.fold_left (fun a c-> mkOr (formula_of_failesc_context c) a no_pos)
     (mkFalse (mkTrueFlow ()) no_pos) ls
 
 (* below ignored the escaping state! *)
-and formula_of_failesc_context ((_,_,sl) : failesc_context) : formula =  
+and formula_of_failesc_context ((_,_,sl) : failesc_context) : formula =
   List.fold_left (fun a (_,c, _)-> mkOr (formula_of_context c) a no_pos)
     (mkFalse (mkTrueFlow ()) no_pos) sl
 
@@ -19415,7 +19415,7 @@ let set_imm_ann_formula ann_list f =
   in
   transform_formula (nonef, nonef, f_h_f, (somef, somef, somef, somef, somef)) f
 
-let rec remove_heap_formula f = 
+let rec remove_heap_formula f =
   match f with
   | Base b -> Base ({ b with formula_base_heap = HEmp; })
   | Exists e -> Exists ({ e with formula_exists_heap = HEmp; })
@@ -19429,14 +19429,14 @@ let remove_heap_list_failesc_ctx ctx =
   in transform_list_failesc_context (idf, idf, remove_heap_es) ctx
 
 let remove_lend_ann_formula f =
-  let f_h_f _ hf = 
+  let f_h_f _ hf =
     match hf with
     | DataNode ({ h_formula_data_imm = imm; } as d) ->
-      if CP.isLend imm then 
+      if CP.isLend imm then
         Some (DataNode ({ d with h_formula_data_imm = ConstAnn(Mutable)}), [d.h_formula_data_node])
       else Some (hf, [])
     | ViewNode ({ h_formula_view_imm = imm; } as v) ->
-      if CP.isLend imm then 
+      if CP.isLend imm then
         Some (ViewNode ({ v with h_formula_view_imm = ConstAnn(Mutable)}), [v.h_formula_view_node])
       else Some (hf, [])
     | _ -> None

@@ -113,6 +113,39 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       !Synthesis.repair_res
     with _ -> None
 
+let repair_candidate_by_search (proc_name: string) (iprog: I.prog_decl)
+    (r_iproc: I.proc_decl) args suspicious_stmt =
+  if !Syn.repair_res != None then None
+  else
+    let iprog = mk_candidate_iprog iprog r_iproc args suspicious_stmt in
+    let () = x_tinfo_pp "marking" no_pos in
+    let () = Syn.entailments := [] in
+    let () = Syn.rel_num := 0 in
+    let () = Syn.res_num := 0 in
+    let () = Syn.repair_res := None in
+    let () = if is_return_exp suspicious_stmt then
+        Syn.is_return_cand := true
+      else Syn.is_return_cand := false in
+    let () = verified_procs := [] in
+    let () = Syn.syn_pre := None in
+    let cprog, _ = Astsimp.trans_prog iprog in
+    let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
+    let () = enable_frameless := true in
+    try
+      let () = Typechecker.check_prog_wrapper iprog cprog in
+      let () = x_binfo_pp "start synthesis process" no_pos in
+      let iprog = !Syn.syn_iprog |> Gen.unsome in
+      let prog = !Syn.syn_cprog |> Gen.unsome in
+      let proc = C.find_proc prog proc_name in
+      let () = Syn.repair_pos := Some (I.get_exp_pos suspicious_stmt) in
+      let candidates = reverse_infestor iprog suspicious_stmt in
+      let candidates = List.map (Astsimp.trans_exp iprog r_iproc) candidates
+                       |> List.map fst in
+      let _ = Synthesizer.statement_search iprog prog proc suspicious_stmt candidates in
+      !Synthesis.repair_res
+    with _ -> None
+
+
 let repair_iprog (iprog:I.prog_decl) : bool =
   let start_time = get_time () in
   match (!Typechecker.repair_proc) with
@@ -136,6 +169,7 @@ let repair_iprog (iprog:I.prog_decl) : bool =
     let () = Syn.syn_res_vars := res_vars in
     let args = cproc.C.proc_args in
     let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in
+    (* let aux cand = repair_candidate_by_search repair_proc iprog r_iproc args cand in *)
     let res = cands |> List.map aux |> List.filter (fun x -> x != None) in
     if res = [] then
       let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
@@ -277,9 +311,8 @@ let repair_cproc iprog =
 let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
   let list = [] in
   x_binfo_hp (add_str "body" pr_exp) body no_pos;
-  (* let var_decls = *)
-  let list = (modify_num_infestor body 1)::list in
-  let list = (modify_num_infestor body 2)::list in
+  (* let list = (modify_num_infestor body 1)::list in
+   * let list = (modify_num_infestor body 2)::list in *)
   let list = (remove_field_infestor body 1 var_decls data_decls)::list in
   let list = (remove_field_infestor body 2 var_decls data_decls)::list in
   let list = (remove_field_infestor body 3 var_decls data_decls)::list in

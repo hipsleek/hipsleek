@@ -903,7 +903,7 @@ let synthesize_program goal =
     (* let st_core = rm_useless_stc st_core in *)
     x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos;
     let i_exp = synthesize_st_core st_core in
-    let () = x_tinfo_hp (add_str "iast exp" pr_iast_exp_opt) i_exp no_pos in
+    let () = x_tinfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
     i_exp
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     None
@@ -968,7 +968,6 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
     let helper hps =
       if !stop then ()
       else
-        let () = x_tinfo_pp "marking" no_pos in
         let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula in
@@ -984,6 +983,23 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
           with _ -> ()
         else () in
     List.iter helper hps_list
+
+let statement_search (iprog: IA.prog_decl) prog proc (suspicious: I.exp)
+    candidates =
+  let ents = !Synthesis.entailments |> List.rev in
+  let triples = !Synthesis.triples |> List.rev in
+  let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
+  let pr_triples = pr_list (pr_triple pr_formula pr_formula pr_formula) in
+  x_tinfo_hp (add_str "entailments" pr_ents) ents no_pos;
+  x_binfo_hp (add_str "triples" pr_triples) triples no_pos;
+  x_binfo_hp (add_str "suspicious stmt" pr_i_exp) suspicious no_pos;
+  x_binfo_hp (add_str "candidates" (pr_list pr_c_exp)) candidates no_pos;
+  let hps = prog.CA.prog_hp_decls @ !unk_hps in
+  let hps = Gen.BList.remove_dups_eq eq_hp_decl hps in
+  x_binfo_hp (add_str "hp decls" pr_hps) hps no_pos;
+  let s_goal = Searcher.mk_search_goal iprog prog proc triples in
+  let _ = Searcher.solve_unknown_hp s_goal candidates in
+  None
 
 let synthesize_block_statements iprog prog orig_proc proc decl_vars =
   let entailments = !Synthesis.entailments |> List.rev in
@@ -1004,7 +1020,7 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
       | None -> None
       | Some block ->
         let orig_body = orig_proc.C.proc_body |> Gen.unsome in
-        let () = x_tinfo_hp (add_str "o_body" pr_c_exp) orig_body no_pos in
+        x_tinfo_hp (add_str "o_body" pr_c_exp) orig_body no_pos;
         let n_body = replace_cexp_aux block orig_body in
         let n_proc = {orig_proc with C.proc_body = Some n_body} in
         let () = verified_procs := [] in

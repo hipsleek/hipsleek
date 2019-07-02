@@ -10,6 +10,7 @@ void append(node x, node y)
   ensures x::ll<n1+n2>;
 {
   if (x.next == null){
-     x = x;
-  } else append(x.next, y);
+     x = y;
+  } else
+     append(x.next, y);
 }

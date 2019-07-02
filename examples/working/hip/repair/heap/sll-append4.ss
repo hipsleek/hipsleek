@@ -14,9 +14,3 @@ void append(node x, node y)
      // x.next = y;
   } else append(x.next, y);
 }
-
-
-
-// [LABEL! 101,0: {bind x to (next_13_1888) [write] in 
-// next_13_1888 = x}]
-

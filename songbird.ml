@@ -56,30 +56,6 @@ let pr_validity tvl = match tvl with
   | SBG.MvlUnkn -> "Unknown"
   | SBG.MvlInfer -> "Infer"
 
-let rec check_hp_hf_x hp_names hf = match hf with
-  | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
-  | CF.HFalse -> false
-  | CF.HRel (sv, args, _) -> let sv_name = CP.name_of_sv sv in
-    if List.exists (fun x -> eq_str x sv_name) hp_names
-    then true else false
-  | CF.Star sf -> (check_hp_hf_x hp_names sf.CF.h_formula_star_h1) ||
-               (check_hp_hf_x hp_names sf.CF.h_formula_star_h2)
-  | _ -> report_error no_pos "unhandled case of check_conseq_hp"
-
-let check_hp_hf hp_names hf =
-  Debug.no_1 "check_hp_hf" pr_hf string_of_bool
-    (fun _ -> check_hp_hf_x hp_names hf) hf
-
-let rec check_hp_formula_x hp_names formula = match (formula:CF.formula) with
-  | CF.Base bf -> check_hp_hf hp_names bf.CF.formula_base_heap
-  | CF.Exists ef -> check_hp_hf hp_names ef.CF.formula_exists_heap
-  | CF.Or f -> (check_hp_formula_x hp_names f.CF.formula_or_f1) ||
-               (check_hp_formula_x hp_names f.CF.formula_or_f2)
-
-let check_hp_formula hp_names formula =
-  Debug.no_1 "check_hp_formula" pr_formula string_of_bool
-    (fun _ -> check_hp_formula_x hp_names formula) formula
-
 let rec var_closure_hf hf vars = match (hf:CF.h_formula) with
   | CF.HTrue  | CF.HFalse | CF.HEmp -> hf
   | CF.Star shf ->
@@ -845,7 +821,7 @@ let solve_entailments prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
+    x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
   else None
@@ -976,20 +952,21 @@ let output_sb_ent sb_prog sb_ent =
   Printf.fprintf oc "%s\n" str;
   close_out oc
 
-let check_entail_prog_state prog (es:CF.entail_state) (bf:CF.struc_base_formula) =
+let check_entail_prog_state prog (es: CF.entail_state)
+    (bf:CF.struc_base_formula) =
   let ante = es.CF.es_formula in
   let n_prog = translate_prog prog in
   let evars = bf.CF.formula_struc_implicit_inst
               @ bf.CF.formula_struc_explicit_inst
               @ bf.CF.formula_struc_exists @ es.CF.es_evars in
-  let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
-  let () = x_binfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
-  let () = x_binfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos in
-  let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
-  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+  x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos;
+  x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos;
+  x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
+  let hps = prog.CA.prog_hp_decls @ !Syn.unk_hps in
+  let hps = Gen.BList.remove_dups_eq Syn.eq_hp_decl hps in
   let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-  let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
-  let ante_hps = check_hp_formula hp_names ante in
+  let conseq_hps = Syn.check_hp_formula hp_names bf.CF.formula_struc_base in
+  let ante_hps = Syn.check_hp_formula hp_names ante in
   if conseq_hps || ante_hps then false, None
   else
     let conseqs, holes = if Gen.is_empty evars
@@ -1014,7 +991,7 @@ let check_entail_prog_state prog (es:CF.entail_state) (bf:CF.struc_base_formula)
           valid_num := !valid_num + (List.length ents)
         else () in
       let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
-      let () = x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
+      x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos;
       let residue = translate_back_fs residues holes in
       let () = x_tinfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
       (true, Some residue)
@@ -1152,7 +1129,7 @@ let contains_hps_x prog ctx (conseq:CF.struc_formula) =
   let () = x_tinfo_hp (add_str "hps" (pr_list pr_id)) hp_names no_pos in
   let rec check_conseq_hps (conseq:CF.struc_formula) =
     match conseq with
-    | CF.EBase bf -> check_hp_formula hp_names bf.CF.formula_struc_base
+    | CF.EBase bf -> Syn.check_hp_formula hp_names bf.CF.formula_struc_base
     | CF.ECase cases ->
       let branches = cases.CF.formula_case_branches |> List.map snd in
       List.exists check_conseq_hps branches
@@ -1161,11 +1138,11 @@ let contains_hps_x prog ctx (conseq:CF.struc_formula) =
       List.exists check_conseq_hps struc_list
     | CF.EAssume assume ->
       let assume_f = assume.CF.formula_assume_simpl in
-      check_hp_formula hp_names assume_f
+      Syn.check_hp_formula hp_names assume_f
     | _ -> false in
   let rec check_ante_hps (ante:CF.context) =
     match ante with
-    | CF.Ctx es -> check_hp_formula hp_names es.CF.es_formula
+    | CF.Ctx es -> Syn.check_hp_formula hp_names es.CF.es_formula
     | CF.OCtx (c1, c2) ->
       (check_ante_hps c1) && (check_ante_hps c2) in
   (check_conseq_hps conseq) || (check_ante_hps ctx)
@@ -1220,7 +1197,7 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
           let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
           let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
           let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-          let has_pred = check_hp_formula hp_names assume_f in
+          let has_pred = Syn.check_hp_formula hp_names assume_f in
           if has_pred then
             let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
             let n_args = (f |> CF.fv) @ syn_pre_vars in
@@ -1265,8 +1242,8 @@ and hentail_after_sat_ebase prog ctx es bf =
     let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
     let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
     let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-    let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
-    let ante_hps = check_hp_formula hp_names es.CF.es_formula in
+    let conseq_hps = Syn.check_hp_formula hp_names bf.CF.formula_struc_base in
+    let ante_hps = Syn.check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps then
       let ante = es.CF.es_formula in
       let () = Syn.syn_pre := Some ante in
@@ -1276,18 +1253,21 @@ and hentail_after_sat_ebase prog ctx es bf =
                       |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
                       |> List.map CP.to_primed in
       let ante_vars = ante_vars @ var_decls |> CP.remove_dups_svl in
-      let n_conseq = Syn.create_spec_pred ante_vars "PP" in
+      let old_conseq = Syn.create_spec_pred ante_vars "PP" in
       let pure_ante = CF.mkEmp_formula ante in
-      (* let n_conseq, residue =
-       *   let n_conseq = Syn.add_formula_to_formula pure_ante n_conseq in
-       *   n_conseq, pure_ante in *)
       let n_conseq, residue =
-        let residue = Syn.create_pred ante_vars in
-        x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos;
-        let residue = Syn.add_formula_to_formula residue pure_ante in
-        let conseq = Syn.add_formula_to_formula residue n_conseq in
-        (conseq, residue) in
+        if !enable_frameless then
+          let n_conseq = Syn.add_formula_to_formula pure_ante old_conseq in
+          n_conseq, pure_ante
+        else
+          let residue = Syn.create_pred ante_vars in
+          x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos;
+          let residue = Syn.add_formula_to_formula residue pure_ante in
+          let conseq = Syn.add_formula_to_formula residue old_conseq in
+          (conseq, residue) in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
+      let triple_residue = CF.mkBase_simp (CF.HEmp) (CP.mkTrue no_pos |> MCP.mix_of_pure) in
+      let () = Syn.triples := [(ante, old_conseq, triple_residue)] @ !Syn.triples in
       let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
       aux_conti n_ctx
     else if Syn.is_emp_conseq bf.CF.formula_struc_base then
@@ -1308,7 +1288,9 @@ and hentail_after_sat_ebase prog ctx es bf =
       let pure_ante = ante |> CF.get_pure in
       let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in
       let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
+      let triple_residue = Syn.mkTrue_pf_formula n_es in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
+      let () = Syn.triples := [(ante, conseq, triple_residue)] @ !Syn.triples in
       let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let n_ctx = CF.Ctx {es with CF.es_formula = n_es;} in
       aux_conti n_ctx

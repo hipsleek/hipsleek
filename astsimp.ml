@@ -71,13 +71,13 @@ let view_rec : (ident list) ref = ref []
 
 let is_not_global_hp_def prog i =
       try
-        let todo_unk = I.look_up_hp_def_raw prog.I.prog_hp_decls i 
+        let todo_unk = I.look_up_hp_def_raw prog.I.prog_hp_decls i
         in false
       with _ -> true
 
 let is_not_global_rel prog i =
       try
-        let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls i 
+        let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls i
         in false
       with _ -> true
 
@@ -5020,19 +5020,18 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   Debug.no_1 "trans_exp"
     Iprinter.string_of_exp
-    (pr_pair Cprinter.string_of_exp string_of_typ) 
-    (fun _ -> trans_exp_x prog proc ie) ie 
+    (pr_pair Cprinter.string_of_exp string_of_typ)
+    (fun _ -> trans_exp_x prog proc ie) ie
 
 and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
-  (* let () = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
-  let rec helper ie = 
+  let rec helper ie =
     let pr1 = Iprinter.string_of_exp in
     let pr2 = (pr_pair Cprinter.string_of_exp string_of_typ) in
     Debug.no_1 "helper_trans_exp" pr1 pr2 helper_x ie
 
   and helper_x ie =
     match ie with
-    | I.Label (pid, e)-> 
+    | I.Label (pid, e) ->
       let e1,t1 = (helper e) in
       (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
     | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_pos = pos } ->
@@ -5041,7 +5040,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
            C.exp_unfold_pos = pos;
          }), C.void_type)
     (* An Hoa MARKED *)
-    | I.ArrayAt { I.exp_arrayat_array_base = a; 
+    | I.ArrayAt { I.exp_arrayat_array_base = a;
                   I.exp_arrayat_index = index;
                   I.exp_arrayat_pos = pos } ->
       let r = List.length index in
@@ -6260,7 +6259,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
          match vinfo_tmp with
          | E.VarInfo vi ->
            let ct = x_add trans_type prog vi.E.var_type pos in
-           (*let () = print_string ("llok bf: "^v^" after: "^vi.E.var_alpha^"\n") in*)
            ((C.Var {
                 C.exp_var_type = ct;
                 C.exp_var_name = vi.E.var_alpha;
