@@ -983,11 +983,11 @@ let check_entail_prog_state prog (es: CF.entail_state)
         SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
     let check_fun =
       let interact = false in
-      SBPH.check_entailment ~interact:interact ~disproof:!disproof n_prog in
+      SBPH.check_entailment ~interact:interact ~disproof:!songbird_disproof n_prog in
     let ptrees = List.map (fun ent -> check_fun ent) ents in
     let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
     if List.for_all is_valid ptrees then
-      let () = if !disproof then
+      let () = if !songbird_disproof then
           valid_num := !valid_num + (List.length ents)
         else () in
       let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
@@ -1017,7 +1017,7 @@ let check_entail_prog_state prog (es: CF.entail_state)
           let _ = List.map (output_sb_ent n_prog) invalid_ents in
           let _ = List.map (output_sb_ent n_prog) unkn_ents in
           () else () in
-      let () = if !disproof then
+      let () = if !songbird_disproof then
           let () = invalid_num := !invalid_num + (List.length invalid_ents) in
           let () = unkn_num := !unkn_num + (List.length unkn_ents) in
           valid_num := !valid_num + (List.length valid_ents)
@@ -1314,4 +1314,3 @@ and heap_entail_after_sat_struc prog ctx conseq =
   Cprinter.string_of_struc_formula
   (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
   (fun _ _ -> heap_entail_after_sat_struc_x prog ctx conseq) ctx conseq
-

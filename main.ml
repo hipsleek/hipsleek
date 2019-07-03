@@ -719,7 +719,7 @@ let process_source_full source =
                 let () = repaired := true in
                 let () = Globals.verified_procs := [] in ()
             else
-              let () = if !disproof then
+              let () = if !songbird_disproof then
                   let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
                   let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
                   x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos
@@ -732,7 +732,7 @@ let process_source_full source =
               let () = Log.process_proof_logging !Globals.source_files cprog prim_names in
               raise e
           end);
-  let () = if !disproof then
+  let () = if !songbird_disproof then
       let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
       let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
       x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos

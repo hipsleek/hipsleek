@@ -2013,18 +2013,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let else_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 2 else_ctx in
           let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
           let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
-          let then_ctx2 = if not(!disproof) then
+          let then_ctx2 =
+            if not !songbird_disproof then
               (x_add check_exp prog proc then_ctx1 e1) post_start_label
-            else
-              try
-                let res = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
-                res
+            else (
+              try (x_add check_exp prog proc then_ctx1 e1) post_start_label
               with _ as e ->
                 let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
                 let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
                 x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos;
                 (x_add check_exp prog proc else_ctx1 e2) post_start_label;
-                raise e in
+                raise e) in
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
           res

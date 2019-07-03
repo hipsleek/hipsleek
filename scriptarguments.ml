@@ -585,9 +585,10 @@ let common_arguments = [
   ("--unsat-consumed", Arg.Set Globals.unsat_consumed_heap,
    "Add consumed heap for unsat checking");
   ("--syn-debug", Arg.Set Globals.syn_debug,"set synthesis debugging mode");
+  ("--songbird", Arg.Set Globals.songbird,"Using Songbird as the backend prover");
   ("--songbird-export-all", Arg.Set Globals.songbird_export_all_entails,"output all songbird entailments");
   ("--songbird-export-invalid", Arg.Set Globals.songbird_export_all_entails,"output invalid/unknown songbird entailments");
-  ("--disproof", Arg.Set Globals.disproof,"set disproof mode in songbird");
+  ("--disproof", Arg.Set Globals.songbird_disproof,"set disproof mode in songbird");
   ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
    "Enable re-computation of user-supplied disj. invariant");
   ("--dis-comp-xp0", Arg.Clear Globals.compute_xpure_0,
