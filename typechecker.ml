@@ -2225,7 +2225,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let () = x_tinfo_hp (add_str "mn: " pr_id) mn no_pos in
-        x_binfo_hp (add_str "ctx scall start: " pr_failesc_ctx) ctx no_pos;
+        x_tinfo_hp (add_str "ctx scall start: " pr_failesc_ctx) ctx no_pos;
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
         (*=========================*)
         (*======= CONCURRENCY======*)
@@ -2248,7 +2248,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           (*=== NORMAL METHOD CALL ==*)
           let proc = look_up_proc_def pos prog.new_proc_decls mn in
           let () = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
-          let () = Debug.binfo_zprint
+          let () = Debug.tinfo_zprint
               (lazy (("stk spec: " ^(Cprinter.string_of_struc_formula
                                        (proc.Cast.proc_stk_of_static_specs #top)
                                     )))) no_pos in
@@ -2269,7 +2269,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
              * org_spec if the call is not a recursive call *)
             x_dinfo_hp (add_str "actual_svs:" Cprinter.string_of_list_failesc_context)
                 sctx no_pos;
-            x_binfo_hp (add_str "org_spec:" Cprinter.string_of_struc_formula)
+            x_tinfo_hp (add_str "org_spec:" Cprinter.string_of_struc_formula)
                 (org_spec) no_pos;
             let org_spec = if !Globals.change_flow
               then CF.change_spec_flow org_spec else org_spec in
@@ -2314,7 +2314,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec)
               else (CF.rename_struc_clash_bound_vars stripped_spec
                       (CF.formula_of_list_failesc_context sctx)) in
-            let () = x_binfo_hp (add_str "renamed_spec"
+            let () = x_tinfo_hp (add_str "renamed_spec"
                                    Cprinter.string_of_struc_formula)
                 renamed_spec no_pos in
             let st1 = List.combine pre_free_vars pre_free_vars_fresh in
@@ -2380,7 +2380,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               should_output_html : CF.list_failesc_context =
             let pr2 = Cprinter.string_of_list_failesc_context in
             let pr3 = Cprinter.string_of_struc_formula in
-            let () = Debug.binfo_hprint (add_str  "org_spec"
+            let () = Debug.tinfo_hprint (add_str  "org_spec"
                                            Cprinter.string_of_struc_formula)
                 org_spec no_pos in
             let wrap_fnc = if CF.is_infer_pre_must org_spec then wrap_err_must
