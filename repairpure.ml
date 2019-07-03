@@ -1015,8 +1015,41 @@ let buggy_num_strategy body =
       | _ -> (exp, false) in
   aux body false
 
+let get_infest_level (body: I.exp) f_exp =
+  let f_pos = I.get_exp_pos f_exp in
+  let rec aux (exp : I.exp) = match exp with
+      | I.Block block -> aux block.I.exp_block_body
+      | I.Label (a, l) -> aux l
+      | I.Seq seq ->
+        let l1 = aux seq.I.exp_seq_exp1 in
+        let l2 = aux seq.I.exp_seq_exp2 in
+        if l1 > l2 then l1 else l2
+      | I.Cond cond ->
+        let l1 = aux cond.I.exp_cond_then_arm in
+        let l2 = aux cond.I.exp_cond_else_arm in
+        if l1 > l2 then l1 + 1 else l2 + 1
+      | _ -> 1 in
+  let rec aux_b (exp : I.exp) = match exp with
+    | I.Block block -> aux_b block.I.exp_block_body
+    | I.Label (a, l) -> aux l
+    | I.Seq seq ->
+      let e1 = seq.I.exp_seq_exp1 in
+      if VarGen.eq_loc (I.get_exp_pos e1) f_pos then aux seq.I.exp_seq_exp2
+      else aux_b seq.I.exp_seq_exp2
+    | I.Cond cond ->
+      let l1 = aux_b cond.I.exp_cond_then_arm in
+      if l1 = -1 then
+        aux_b cond.I.exp_cond_else_arm
+      else l1
+    | _ ->
+      let pos = I.get_exp_pos exp in
+      if VarGen.eq_loc pos f_pos then aux exp
+      else -1 in
+  aux_b body
+
 (* different numeric constraint: n -> n + 3 *)
-let modify_num_infestor body dif_num =
+let modify_num_infestor body dif_num level =
+  (* let max_level = get_max_infest_level body in *)
   let rec aux exp changed =
     if changed = 0 then exp, 0
     else

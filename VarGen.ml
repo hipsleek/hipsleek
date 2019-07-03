@@ -90,7 +90,7 @@ let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^
 
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
 
-let string_of_loc_by_char_num (l : loc) = 
+let string_of_loc_by_char_num (l : loc) =
   Printf.sprintf "(%d-%d)"
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum

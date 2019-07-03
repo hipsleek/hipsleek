@@ -8,7 +8,8 @@ ll<n> == self = null & n = 0
 	inv n >= 0;
 
 sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
-	or (exists qs,ql: self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin )
+	or (exists qs,ql, qmin, q:
+  self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
 	inv n >= 0 & sm <= lg;
 
 node insert2(node x, node vn)
