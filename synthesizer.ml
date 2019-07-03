@@ -162,9 +162,9 @@ let choose_rule_fwrite goal =
   let prog = goal.gl_prog in
   let pre_nodes = pre |> get_heap |> get_heap_nodes in
   let pr_nodes = pr_list (pr_triple pr_var pr_id pr_vars) in
-  x_binfo_hp (add_str "pre_nodes" pr_nodes) pre_nodes no_pos;
+  x_tinfo_hp (add_str "pre_nodes" pr_nodes) pre_nodes no_pos;
   let post_nodes = post |> get_heap |> get_heap_nodes in
-  x_binfo_hp (add_str "post_nodes" pr_nodes) post_nodes no_pos;
+  x_tinfo_hp (add_str "post_nodes" pr_nodes) post_nodes no_pos;
   let aux post_nodes (var, data_name, args) =
     try
       let triple = List.find (fun (y, _, _) -> CP.eq_sv y var) post_nodes in
@@ -324,7 +324,7 @@ let choose_rule_fread_x goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
