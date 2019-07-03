@@ -6,38 +6,26 @@ ll<n> == self = null & n = 0
       or self::node<q> * q::ll<n-1>
       inv n >= 0;
 
-// HeapPred P(node x, node y).
-// HeapPred Q(node x, node y).
+HeapPred P(node x, node y).
+HeapPred Q(node x, node y).
 
+HeapPred P1(node x, node y).
+HeapPred Q1(node x, node y).
 
-// bool fcode(node x, node y)
-//    requires P(x,y)
-//    ensures Q(x,y);
+void fcode(node x, node y)
+   requires P(x, y)
+   ensures Q(x, y);
 
-HeapPred P(node x).
-HeapPred Q(node x).
-
-bool fcode(node x)
-   requires P(x)
-   ensures Q(x);
+void fcode2(node x, node y)
+   requires P1(x, y)
+   ensures Q1(x, y);
 
 void append(node x, node y)
   requires x::ll<n1> * y::ll<n2> & x!=null
   ensures x::ll<n1+n2>;
 {
-  // if (x.next == null){
-  if (fcode(x)){
-     // fcode(x,y);
-     x.next = y;
+  if (x.next == null){
+     fcode2(x,y);
   }
+  else fcode(x,y);
 }
-
-
-// void append(node x, node y)
-//   requires x::ll<n1> * y::ll<n2> & x!=null
-//   ensures x::ll<n1+n2>;
-// {
-//   if (fcode(x)){
-//      x.next = y;
-//   } else append(x.next, y);
-// }

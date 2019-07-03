@@ -814,14 +814,14 @@ let solve_entailments prog entails =
   x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos;
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
   x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos;
   let ptree = SBPU.solve_entailments ~pre:"PP" ~post:"QQ" ~timeout:(Some 3) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
+    x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
+    x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
   else None
@@ -1211,6 +1211,8 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
                       |> List.filter (fun x -> not(CP.mem_svl x n_args))
                       |> List.map CP.to_primed in
             let n_args = n_args @ var_decls |> CP.remove_dups_svl in
+            let pred_name = "QQ" ^ (string_of_int !Syn.r_pre) in
+            (* let n_pred_f = Syn.create_spec_pred n_args pred_name in *)
             let n_pred_f = Syn.create_spec_pred n_args "QQ" in
             n_pred_f
           else assume_f in
@@ -1253,6 +1255,9 @@ and hentail_after_sat_ebase prog ctx es bf =
                       |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
                       |> List.map CP.to_primed in
       let ante_vars = ante_vars @ var_decls |> CP.remove_dups_svl in
+      let pred_name = "PP" ^ (string_of_int !Syn.r_pre) in
+      let () = Syn.r_pre := !Syn.r_pre + 1 in
+      (* let old_conseq = Syn.create_spec_pred ante_vars pred_name in *)
       let old_conseq = Syn.create_spec_pred ante_vars "PP" in
       let pure_ante = CF.mkEmp_formula ante in
       let n_conseq, residue =

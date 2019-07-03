@@ -162,8 +162,9 @@ let choose_rule_fwrite goal =
   let prog = goal.gl_prog in
   let pre_nodes = pre |> get_heap |> get_heap_nodes in
   let pr_nodes = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_tinfo_hp (add_str "pre_nodes" pr_nodes) pre_nodes no_pos in
+  x_binfo_hp (add_str "pre_nodes" pr_nodes) pre_nodes no_pos;
   let post_nodes = post |> get_heap |> get_heap_nodes in
+  x_binfo_hp (add_str "post_nodes" pr_nodes) post_nodes no_pos;
   let aux post_nodes (var, data_name, args) =
     try
       let triple = List.find (fun (y, _, _) -> CP.eq_sv y var) post_nodes in
@@ -394,16 +395,37 @@ let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let vars = goal.gl_vars @ res_vars |> CP.remove_dups_svl in
+  let e_vars = CF.get_exists post |> List.filter is_node_var in
+  x_tinfo_hp (add_str "vars" pr_vars) vars no_pos;
   let vnodes = get_unfold_view vars post in
+  let e_vnodes = get_unfold_view e_vars post in
+  let helper_exists vnode =
+    let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
+    let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
+    let prog = goal.gl_prog in
+    let nf = nf |> List.filter
+               (fun x -> Solver.unsat_base_nth 7 prog (ref 0) x |> negate) in
+    if List.length nf = 1 then
+      let case_f = List.hd nf in
+      let rule =  RlUnfoldPost {
+          rp_var = vnode.CF.h_formula_view_node;
+          rp_case_formula = case_f} in
+      [rule]
+    else [] in
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
+    let prog = goal.gl_prog in
+    let nf = nf |> List.filter (fun x -> Solver.unsat_base_nth 7 prog (ref 0) x |> negate) in
     let rules = nf |> List.map (fun f -> RlUnfoldPost {
         rp_var = vnode.CF.h_formula_view_node;
         rp_case_formula = f}) in
     rules in
   if has_unfold_post goal.gl_trace then []
-  else vnodes |> List.map helper |> List.concat
+  else
+    let rules1 = vnodes |> List.map helper |> List.concat in
+    let rules2 = e_vnodes |> List.map helper_exists |> List.concat in
+    rules1@rules2
 
 let choose_rule_numeric_x goal =
   let vars = goal.gl_vars |> List.filter is_int_var in

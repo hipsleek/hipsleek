@@ -31,6 +31,7 @@ let res_num = ref 0
 let sb_num = ref 0
 let fail_branch_num = ref 0
 let check_entail_num = ref 0
+let r_pre = ref 0
 
 let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)

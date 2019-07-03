@@ -17,7 +17,7 @@ node insert2(node x, node vn)
 {
 	if (x==null) {
 		vn = null;
-		// return vn;
+		// vn.next = null;
     return vn;
 	}
 	else if (vn.val <= x.val) {
