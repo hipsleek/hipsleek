@@ -24,44 +24,6 @@ let raise_stree st = raise (EStree st)
  * Choosing rules
  *********************************************************************)
 
-let check_entail_sleek_x prog ante (conseq:CF.formula) =
-  let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
-  let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
-  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
-  let ctx = CF.build_context ectx ante no_pos in
-  let ctx = Solver.elim_exists_ctx ctx in
-  let conseq = CF.struc_formula_of_formula conseq no_pos in
-  let list_ctx, _ = Solver.heap_entail_struc_init prog false true
-      (CF.SuccCtx[ctx]) conseq no_pos None in
-  if CF.isFailCtx list_ctx then false, None
-  else
-    let residue = CF.formula_of_list_context list_ctx in
-    true, Some residue
-
-let check_entail_sleek prog ante conseq =
-  Debug.no_2 "check_entail_sleek" pr_formula pr_formula
-    (fun (x, _) -> string_of_bool x)
-    (fun _ _ -> check_entail_sleek_x prog ante conseq) ante conseq
-
-let check_entail_exact_sleek_x prog ante (conseq:CF.formula) =
-  let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
-  let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
-  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
-  let ctx = CF.build_context ectx ante no_pos in
-  let ctx = Solver.elim_exists_ctx ctx in
-  let conseq = CF.struc_formula_of_formula conseq no_pos in
-  let list_ctx, _ = Solver.heap_entail_struc_init prog false true
-      (CF.SuccCtx[ctx]) conseq no_pos None in
-  if CF.isFailCtx list_ctx then false
-  else
-    let residue = CF.formula_of_list_context list_ctx in
-    if CF.isEmpFormula residue then true
-    else false
-
-let check_entail_exact_sleek prog ante conseq =
-  Debug.no_2 "check_entail_exact_sleek" pr_formula pr_formula string_of_bool
-    (fun _ _ -> check_entail_exact_sleek_x prog ante conseq) ante conseq
-
 let rec find_sub_var sv cur_vars pre_pf =
   match pre_pf with
   | CP.BForm (b, _) ->
@@ -108,14 +70,35 @@ let choose_rule_pre_assign goal : rule list =
       (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
   let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
   let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
-  if eq_pairs = [] then []
-  else
-    let mk_rule (var, exp) =
-      RlPreAssign {
-        rpa_lhs = var;
-        rpa_rhs = exp
-      } in
-    List.map mk_rule eq_pairs
+  let mk_rule (var, exp) =
+    RlPreAssign {
+      rpa_lhs = var;
+      rpa_rhs = exp
+    } in
+  List.map mk_rule eq_pairs
+
+let choose_rule_post_assign goal : rule list =
+  let all_vars = goal.gl_vars in
+  let post = goal.gl_post_cond in
+  let pre = goal.gl_pre_cond in
+  let e_vars = CF.get_exists post |> List.filter is_node_var in
+  let post_pf = CF.get_pure post |> remove_exists_vars_pf in
+  let post_conjuncts = CP.split_conjunctions post_pf in
+  let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
+                 |> List.concat in
+  let filter_fun (x,y) =
+    let vars = CP.afv y in
+    not(CP.mem x all_vars) && CP.subset vars all_vars in
+  let filter_eq = Gen.BList.remove_dups_eq
+      (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
+  let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
+  let mk_rule (var, exp) =
+    RlPostAssign {
+      rapost_lhs = var;
+      rapost_rhs = exp
+    } in
+  List.map mk_rule eq_pairs
+
 
 let choose_rule_assign_x goal : rule list =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
@@ -332,6 +315,8 @@ let choose_rule_fread_x goal =
     let d_args = data.Cast.data_fields |> List.map fst in
     let d_arg_pairs = List.combine args d_args in
     let d_arg_pairs = List.filter (fun (x,_) -> not(CP.mem x vars)) d_arg_pairs in
+    let args = List.map fst d_arg_pairs in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let helper_arg (arg, field) =
       let rbind = {
           rfr_bound_var = var;
@@ -353,8 +338,8 @@ let get_cond_exp prog formula base recursive puref vars =
     let n_bf = CF.add_pure_formula_to_formula pf formula in
     let n_pf = CP.mkNot_s pf in
     let n_rc = CF.add_pure_formula_to_formula n_pf formula in
-    let fst = check_entail_exact_sleek prog n_bf base in
-    let snd = check_entail_exact_sleek prog n_rc recursive in
+    let fst = SB.check_entail_exact prog n_bf base in
+    let snd = SB.check_entail_exact prog n_rc recursive in
     fst && snd in
   conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
   |> List.filter aux
@@ -393,18 +378,25 @@ let choose_rule_unfold_pre goal =
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let prog = goal.gl_prog in
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let vars = goal.gl_vars @ res_vars |> CP.remove_dups_svl in
   let e_vars = CF.get_exists post |> List.filter is_node_var in
-  x_tinfo_hp (add_str "vars" pr_vars) vars no_pos;
+  x_binfo_hp (add_str "e_vars" pr_vars) e_vars no_pos;
   let vnodes = get_unfold_view vars post in
   let e_vnodes = get_unfold_view e_vars post in
+  let check_sat_wrapper formula =
+    try
+      let formula = formula |> remove_exists in
+      let tmp = SB.check_unsat prog formula in
+      tmp |> negate
+    with _ -> true in
   let helper_exists vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    let prog = goal.gl_prog in
-    let nf = nf |> List.filter
-               (fun x -> Solver.unsat_base_nth 7 prog (ref 0) x |> negate) in
+    x_binfo_hp (add_str "nf" pr_formulas) nf no_pos;
+    let nf = nf |> List.filter check_sat_wrapper in
+    x_binfo_hp (add_str "nf" pr_formulas) nf no_pos;
     if List.length nf = 1 then
       let case_f = List.hd nf in
       let rule =  RlUnfoldPost {
@@ -416,7 +408,7 @@ let choose_rule_unfold_post goal =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
     let prog = goal.gl_prog in
-    let nf = nf |> List.filter (fun x -> Solver.unsat_base_nth 7 prog (ref 0) x |> negate) in
+    let nf = nf |> List.filter check_sat_wrapper in
     let rules = nf |> List.map (fun f -> RlUnfoldPost {
         rp_var = vnode.CF.h_formula_view_node;
         rp_case_formula = f}) in
@@ -652,6 +644,7 @@ let choose_main_rules goal =
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ choose_rule_frame_data goal in
+  let rs = rs @ (choose_rule_post_assign goal) in
   let rs = eliminate_useless_rules goal rs in
   let rs = reorder_rules goal rs in
   rs
@@ -659,9 +652,11 @@ let choose_main_rules goal =
 let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
     let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
-    let sk = check_entail_exact_sleek prog pre post in
-    if sk then let rule = RlSkip in [rule]
-    else []
+    try
+      let sk, _ = SB.check_entail_residue prog pre post in
+      if sk then let rule = RlSkip in [rule]
+      else []
+    with _ -> []
   else []
 
 let choose_synthesis_rules_x goal : rule list =
@@ -699,12 +694,26 @@ let process_rule_pre_assign goal rcore =
                             gl_trace = (RlPreAssign rcore)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlPreAssign rcore) [sub_goal]
 
+let process_rule_post_assign goal rcore =
+  let lhs = rcore.rapost_lhs in
+  let rhs = rcore.rapost_rhs in
+  let n_vars = lhs::goal.gl_vars in
+  let n_post = remove_exists_vars goal.gl_post_cond [lhs] in
+  let e_var = CP.mkVar lhs no_pos in
+  let n_pf = CP.mkEqExp e_var rhs no_pos in
+  let n_pre = CF.add_pure_formula_to_formula n_pf goal.gl_pre_cond in
+  let sub_goal = {goal with gl_vars = n_vars;
+                            gl_post_cond = n_post;
+                            gl_pre_cond = n_pre;
+                            gl_trace = (RlPostAssign rcore)::goal.gl_trace} in
+  mk_derivation_subgoals goal (RlPostAssign rcore) [sub_goal]
+
 let process_rule_return goal rcore =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let lhs = goal.gl_post_cond |> CF.fv |> List.find CP.is_res_sv in
   let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rcore.r_exp no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-  let ent_check = check_entail_exact_sleek goal.gl_prog n_pre post in
+  let ent_check = SB.check_entail_exact goal.gl_prog n_pre post in
   match ent_check with
   | true -> mk_derivation_success goal (RlReturn rcore)
   | false -> mk_derivation_fail goal (RlReturn rcore)
@@ -759,7 +768,7 @@ let aux_func_call goal rule fname params subst res_var =
   let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
   let params_pre = CF.wrap_exists fresh_evars params_pre in
   let ent_check, residue =
-    check_entail_sleek goal.gl_prog pre_cond params_pre in
+    SB.check_entail_residue goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
     let params_post = CF.subst substs post_proc in
@@ -845,7 +854,7 @@ let process_rule_skip goal =
  * The search procedure
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
-  let goal = simplify_goal goal in
+  (* let goal = simplify_goal goal in *)
   if List.length goal.gl_trace > 5 then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
@@ -877,6 +886,7 @@ and process_one_rule goal rule : derivation =
   | RlFoldLeft rcore -> process_rule_fold_left goal rcore
   | RlFuncRes rcore -> process_rule_func_res goal rcore
   | RlPreAssign rcore -> process_rule_pre_assign goal rcore
+  | RlPostAssign rcore -> process_rule_post_assign goal rcore
   | RlAssign rcore -> process_rule_assign goal rcore
   | RlReturn rcore -> process_rule_return goal rcore
   | RlFWrite rcore -> process_rule_fwrite goal rcore

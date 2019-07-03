@@ -308,29 +308,30 @@ let repair_cproc iprog =
     List.fold_left helper None traces
   | _ -> None
 
-let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
+let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls level =
   let list = [] in
   x_binfo_hp (add_str "body" pr_exp) body no_pos;
-  (* let list = (modify_num_infestor body 1)::list in
-   * let list = (modify_num_infestor body 2)::list in *)
-  let list = (remove_field_infestor body 1 var_decls data_decls)::list in
-  let list = (remove_field_infestor body 2 var_decls data_decls)::list in
-  let list = (remove_field_infestor body 3 var_decls data_decls)::list in
-  let list = (modify_variable_infestor body 1 var_decls)::list in
-  let list = (modify_variable_infestor body 2 var_decls)::list in
-  let list = (modify_variable_infestor body 3 var_decls)::list in
-  let list = (modify_variable_infestor body 4 var_decls)::list in
-  let list = (modify_field_infestor body 1 var_decls data_decls)::list in
-  let list = (modify_field_infestor body 2 var_decls data_decls)::list in
-  let list = (modify_field_infestor body 3 var_decls data_decls)::list in
-  list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev
+  let list = (modify_num_infestor body 1 level)::list in
+  let list = (modify_num_infestor body 2 level)::list in
+  (* let list = (remove_field_infestor body 1 var_decls data_decls)::list in
+   * let list = (remove_field_infestor body 2 var_decls data_decls)::list in
+   * let list = (remove_field_infestor body 3 var_decls data_decls)::list in
+   * let list = (modify_variable_infestor body 1 var_decls level)::list in
+   * let list = (modify_variable_infestor body 2 var_decls)::list in
+   * let list = (modify_variable_infestor body 3 var_decls)::list in
+   * let list = (modify_variable_infestor body 4 var_decls)::list in
+   * let list = (modify_field_infestor body 1 var_decls data_decls)::list in
+   * let list = (modify_field_infestor body 2 var_decls data_decls)::list in
+   * let list = (modify_field_infestor body 3 var_decls data_decls)::list in *)
+  []
+  (* list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev *)
 
-let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
+let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) level =
   let body = proc.I.proc_body |> Gen.unsome in
   let var_decls = proc.I.proc_args |> List.map
                     (fun x -> (x.I.param_type, x.I.param_name)) in
   let data_decls = iprog.I.prog_data_decls in
-  let n_body_list = create_buggy_proc_wrapper body var_decls data_decls in
+  let n_body_list = create_buggy_proc_wrapper body var_decls data_decls level in
   let () = x_tinfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
   n_body_list |> List.map (fun x -> {proc with I.proc_body = Some x})
 
@@ -358,28 +359,32 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) =
   let () = x_binfo_hp (add_str "prog" pr_iprog) n_prog no_pos in
   ()
 
-let create_buggy_progs src (iprog : I.prog_decl) =
+let create_buggy_prog src (iprog : I.prog_decl) level =
   let procs = iprog.I.prog_proc_decls in
-  let procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
+  let b_procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
   let helper_buggy buggy_proc =
     List.map (fun x -> if eq_str x.I.proc_name buggy_proc.I.proc_name
                then buggy_proc else x) procs in
   let n_procs_list = List.fold_left (fun res_list cur_proc ->
-      let buggy_procs = create_buggy_proc iprog cur_proc in
+      let buggy_procs = create_buggy_proc iprog cur_proc level in
       let n_procs = buggy_procs |> List.map helper_buggy in
-      n_procs @ res_list) [] procs in
+      n_procs @ res_list) [] b_procs in
   let helper n_procs =
     let n_prog = {iprog with I.prog_proc_decls = n_procs} in
     n_prog in
   let () = infestor_num := 0 in
-  let filter iprog =
-    let cprog, _ = Astsimp.trans_prog iprog in
-    try
-      let () = Typechecker.check_prog_wrapper iprog cprog in
-      false
-    with _ -> true in
-  let _ = n_procs_list |> List.map helper
-          |> List.map (output_infestor_prog src) in
+  (* let filter iprog =
+   *   let cprog, _ = Astsimp.trans_prog iprog in
+   *   try
+   *     let () = Typechecker.check_prog_wrapper iprog cprog in
+   *     false
+   *   with _ -> true in *)
+  let _ = n_procs_list |> List.map helper in
+  (* |> List.map (output_infestor_prog src) in *)
+  ()
+
+let infest_and_repair src (iprog : I.prog_decl) =
+  let _ = create_buggy_prog src iprog 1 in
   ()
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =

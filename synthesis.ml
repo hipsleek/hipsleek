@@ -69,6 +69,7 @@ type rule =
   | RlUnfoldPost of rule_unfold_post
   | RlSkip
   | RlAssign of rule_assign
+  | RlPostAssign of rule_post_assign
   | RlPreAssign of rule_pre_assign
   | RlReturn of rule_return
   | RlBranch of rule_branch
@@ -80,6 +81,11 @@ type rule =
 and rule_pre_assign = {
   rpa_lhs : CP.spec_var;
   rpa_rhs : CP.exp
+}
+
+and rule_post_assign = {
+  rapost_lhs : CP.spec_var;
+  rapost_rhs : CP.exp;
 }
 
 and rule_branch = {
@@ -263,6 +269,10 @@ let pr_rule_pre_assign rule =
   let lhs, rhs = rule.rpa_lhs, rule.rpa_rhs in
   (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (pr_exp rhs)
 
+let pr_rule_post_assign rule =
+  let lhs, rhs = rule.rapost_lhs, rule.rapost_rhs in
+  (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (pr_exp rhs)
+
 let pr_func_call rule =
   let fc_name = rule.rfc_fname in
   let args = rule.rfc_params |> (pr_list Cprinter.string_of_sv) in
@@ -298,6 +308,7 @@ let pr_rule rule = match rule with
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlPreAssign rule -> "RlPreAssign" ^ "(" ^ (pr_rule_pre_assign rule) ^ ")"
+  | RlPostAssign rule -> "RlPostAssign" ^ "(" ^ (pr_rule_post_assign rule) ^ ")"
   | RlReturn rule -> "RlReturn " ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
   | RlFWrite rule -> "RlFWrite " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
@@ -500,9 +511,9 @@ let simplify_post post_cond =
 
 let simplify_goal goal =
   let n_pre = CF.elim_exists goal.gl_pre_cond in
-  let n_pre = elim_idents n_pre in
+  (* let n_pre = elim_idents n_pre in *)
   let n_post = elim_idents goal.gl_post_cond in
-  let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
+  (* let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in *)
   let n_post = simplify_post n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
@@ -1622,6 +1633,29 @@ let rec synthesize_st_core st : Iast.exp option=
   | RlPreAssign rcore ->
     let lhs = rcore.rpa_lhs in
     let rhs = rcore.rpa_rhs in
+    let v_decl = I.VarDecl {
+        exp_var_decl_type = CP.type_of_sv lhs;
+        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+        exp_var_decl_pos = no_pos;
+      } in
+    let lhs_exp = I.Var {
+        I.exp_var_name = CP.name_of_sv lhs;
+        I.exp_var_pos = no_pos;
+      } in
+    let rhs_exp = exp_to_iast rhs in
+    let assign_exp = I.Assign {
+        I.exp_assign_op = I.OpAssign;
+        I.exp_assign_lhs = lhs_exp;
+        I.exp_assign_rhs = rhs_exp;
+        I.exp_assign_path_id = None;
+        I.exp_assign_pos = no_pos;
+      } in
+    let seq = mkSeq v_decl rhs_exp in
+    let seq2 = mkSeq seq assign_exp in
+    aux_subtrees st seq2
+  | RlPostAssign rcore ->
+    let lhs = rcore.rapost_lhs in
+    let rhs = rcore.rapost_rhs in
     let v_decl = I.VarDecl {
         exp_var_decl_type = CP.type_of_sv lhs;
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];

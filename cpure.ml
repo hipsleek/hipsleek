@@ -7192,19 +7192,19 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     let lh = purge_mult lh in
     let rh = purge_mult rh in
     (lh, rh) in
-  let build_eq lhs rhs = 
+  let build_eq lhs rhs =
     (* to simplify to v=rhs *)
     (lhs,rhs) in
-  let do_all_eq e1 e2 l = 
+  let do_all_eq e1 e2 l =
     let (lhs,rhs) as r = do_all e1 e2 l in
-    let new_r = 
-      if !Globals.non_linear_flag then build_eq lhs rhs 
+    let new_r =
+      if !Globals.non_linear_flag then build_eq lhs rhs
       else r in
     new_r in
-  let do_all_eq e1 e2 l = 
+  let do_all_eq e1 e2 l =
     let pr = !print_exp in
-      Debug.no_2 "do_all_eq" pr pr (pr_pair pr pr) (fun _ _ -> do_all_eq e1 e2 l) e1 e2
-  in
+    Debug.no_2 "do_all_eq" pr pr (pr_pair pr pr)
+      (fun _ _ -> do_all_eq e1 e2 l) e1 e2 in
   let do_all3 e1 e2 e3 l =
     let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
@@ -15354,15 +15354,15 @@ let rec gen_cl_eqs pos svl p_res=
           gen_cl_eqs pos rest new_p_res
 
 
-let mk_eq_zero a1 = 
+let mk_eq_zero a1 =
   let a1 = mkVar a1 no_pos in
   mk_bform (Eq (a1, mkIConst 0 no_pos,no_pos))
 
-let mk_eq_null sv = 
+let mk_eq_null sv =
   let v = mkVar sv no_pos in
   mk_bform (Eq (v, Null no_pos, no_pos))
 
-let mk_eq_vars v1 v2 = 
+let mk_eq_vars v1 v2 =
   let v1 = mkVar v1 no_pos in
   let v2 = mkVar v2 no_pos in
   mk_bform (Eq (v1, v2, no_pos))
