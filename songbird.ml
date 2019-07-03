@@ -959,7 +959,8 @@ let check_entail_prog_state prog (es: CF.entail_state)
   let n_prog = translate_prog prog in
   let evars = bf.CF.formula_struc_implicit_inst
               @ bf.CF.formula_struc_explicit_inst
-              @ bf.CF.formula_struc_exists @ es.CF.es_evars in
+              @ bf.CF.formula_struc_exists @ es.CF.es_evars
+              |> CP.remove_dups_svl in
   x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos;
   x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos;
   x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
@@ -1006,12 +1007,12 @@ let check_entail_prog_state prog (es: CF.entail_state)
       let valid_ents = pairs |> List.filter is_valid |> List.map fst in
       let () = if invalid_ents != [] then
           List.iter (fun ent ->
-            let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+            let _ = x_binfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) invalid_ents in
       let () = if unkn_ents != [] then
           List.iter (fun ent ->
-            let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+            let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) unkn_ents in
       let () = if !songbird_export_invalid_entails then
