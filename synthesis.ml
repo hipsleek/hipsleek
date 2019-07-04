@@ -175,6 +175,7 @@ type goal = {
   gl_proc_decls: Cast.proc_decl list;
   gl_pre_cond : CF.formula;
   gl_post_cond : CF.formula;
+  gl_start_time : float;
   gl_vars: CP.spec_var list;
   gl_trace: rule list;
 }
@@ -511,9 +512,9 @@ let simplify_post post_cond =
 
 let simplify_goal goal =
   let n_pre = CF.elim_exists goal.gl_pre_cond in
-  (* let n_pre = elim_idents n_pre in *)
+  let n_pre = elim_idents n_pre in
   let n_post = elim_idents goal.gl_post_cond in
-  (* let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in *)
+  let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
   let n_post = simplify_post n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
@@ -582,13 +583,9 @@ let rec extract_hf_var_x hf var =
     let vf2 = extract_hf_var_x sf.CF.h_formula_star_h2 var in
     begin
       match vf1, vf2 with
-      | None, None -> None
       | Some _, None -> vf1
       | None, Some _ -> vf2
-      | Some _, Some _ ->
-        let hf_str = pr_hf hf in
-        let str = "extract_hf_var error: " ^ hf_str in
-        report_error no_pos str
+      | _ -> None
     end
   | _ -> None
 
@@ -794,7 +791,7 @@ let do_unfold_view_hf_vn_x cprog pr_views args (hf:CF.h_formula) =
       let unfold2 = helper hf2 in
       begin
         match unfold1, unfold2 with
-        | Some l1, Some l2 -> report_error no_pos "only unfold once"
+        | Some l1, Some l2 -> report_error no_pos ("only unfold once" ^ (pr_hf hf))
         | Some l1, None -> Some (List.map (add_h_formula_to_formula hf2) l1)
         | None, Some l2 -> Some (List.map (add_h_formula_to_formula hf1) l2)
         | None, None -> None
@@ -1951,6 +1948,19 @@ let check_hp_formula hp_names formula =
   Debug.no_1 "check_hp_formula" pr_formula string_of_bool
     (fun _ -> check_hp_formula_x hp_names formula) formula
 
+let isHFalse (formula : CF.formula) =
+  let is_hfalse hf = match hf with
+    | CF.HFalse -> true
+    | _ -> false in
+  let rec aux formula = match formula with
+    | CF.Base base ->
+      let hf = base.CF.formula_base_heap in
+      is_hfalse hf
+    | CF.Exists base ->
+      let hf = base.CF.formula_exists_heap in
+      is_hfalse hf
+    | CF.Or base -> aux base.CF.formula_or_f1 || aux base.CF.formula_or_f2 in
+  aux formula
 (*********************************************************************
  * Rule utilities
  *********************************************************************)
@@ -2170,6 +2180,7 @@ let negate_priority prio = match prio with
 
 let mk_goal cprog pre post vars =
   { gl_prog = cprog;
+    gl_start_time = get_time ();
     gl_proc_decls = [];
     gl_pre_cond = pre;
     gl_post_cond = post;
@@ -2181,6 +2192,7 @@ let mk_goal_w_procs cprog proc_decls pre post vars =
   let post = unprime_formula post in
   { gl_prog = cprog;
     gl_proc_decls = proc_decls;
+    gl_start_time = get_time ();
     gl_pre_cond = pre;
     gl_post_cond = post;
     gl_trace = [];

@@ -821,7 +821,7 @@ let solve_entailments prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
+    x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
     x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -1007,12 +1007,12 @@ let check_entail_prog_state prog (es: CF.entail_state)
       let valid_ents = pairs |> List.filter is_valid |> List.map fst in
       let () = if invalid_ents != [] then
           List.iter (fun ent ->
-            let _ = x_binfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+            let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) invalid_ents in
       let () = if unkn_ents != [] then
           List.iter (fun ent ->
-            let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+            x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos;
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) unkn_ents in
       let () = if !songbird_export_invalid_entails then
@@ -1304,8 +1304,8 @@ and hentail_after_sat_ebase prog ctx es bf =
     else
       let () = if !start_repair then
           repair_loc := Some VarGen.proving_loc#get in
-      x_binfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos;
-      x_binfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
+      x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos;
+      x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
       let msg = "songbird result is Failed." in
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)

@@ -307,7 +307,7 @@ let choose_rule_fread_x goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
@@ -382,7 +382,7 @@ let choose_rule_unfold_post goal =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let vars = goal.gl_vars @ res_vars |> CP.remove_dups_svl in
   let e_vars = CF.get_exists post |> List.filter is_node_var in
-  x_binfo_hp (add_str "e_vars" pr_vars) e_vars no_pos;
+  x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos;
   let vnodes = get_unfold_view vars post in
   let e_vnodes = get_unfold_view e_vars post in
   let check_sat_wrapper formula =
@@ -394,9 +394,9 @@ let choose_rule_unfold_post goal =
   let helper_exists vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    x_binfo_hp (add_str "nf" pr_formulas) nf no_pos;
+    x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
     let nf = nf |> List.filter check_sat_wrapper in
-    x_binfo_hp (add_str "nf" pr_formulas) nf no_pos;
+    x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
     if List.length nf = 1 then
       let case_f = List.hd nf in
       let rule =  RlUnfoldPost {
@@ -421,11 +421,13 @@ let choose_rule_unfold_post goal =
 
 let choose_rule_numeric_x goal =
   let vars = goal.gl_vars |> List.filter is_int_var in
+  x_tinfo_hp (add_str "vars" pr_vars) vars no_pos;
   let post_vars = CF.fv goal.gl_post_cond in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
-  let vars_lhs = List.filter (fun x -> (CP.is_res_spec_var x && is_int_var x)
-                                     || CP.mem x vars) post_vars in
+  let post_vars = List.filter is_int_var post_vars in
+  let vars_lhs = List.filter (fun x -> CP.mem x vars || CP.is_res_sv x) post_vars in
+  let () = x_tinfo_hp (add_str "vars_lhs" pr_vars) vars_lhs no_pos in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
     let var_formula = extract_var_f post cur_var in
@@ -436,19 +438,23 @@ let choose_rule_numeric_x goal =
       let templ = CP.Template (CP.mkTemplate tmpl_name tmpl_args no_pos) in
       let n_pf = CP.mkEqExp (CP.mkVar cur_var no_pos) templ no_pos in
       let n_pre = CP.mkAnd pure_pre n_pf no_pos in
-      let defn = SB.infer_templ_defn goal.gl_prog n_pre var_pf tmpl_name other_vars in
       begin
-        match defn with
-        | Some def ->
-          let def = CP.norm_exp def in
-          let rule = if CP.is_res_sv cur_var then
-              RlReturn { r_exp = def}
-            else
-              RlAssign {
-                ra_lhs = cur_var;
-                ra_rhs = def;
-              } in [rule]
-        | _ -> []
+        try
+          let defn = SB.infer_templ_defn goal.gl_prog n_pre var_pf tmpl_name other_vars in
+          begin
+            match defn with
+            | Some def ->
+              let def = CP.norm_exp def in
+              let rule = if CP.is_res_sv cur_var then
+                  RlReturn { r_exp = def}
+                else
+                  RlAssign {
+                    ra_lhs = cur_var;
+                    ra_rhs = def;
+                  } in [rule]
+            | _ -> []
+          end
+        with _ -> []
       end
     | None -> [] in
   let rules = vars_lhs |> List.map (fun x -> create_templ vars x) in
@@ -631,23 +637,26 @@ let rec choose_rule_interact goal rules =
       chosen_rules @ other_rules
 
 let choose_main_rules goal =
-  let rs = [] in
-  (* x_binfo_pp "marking" no_pos; *)
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  (* x_binfo_pp "marking" no_pos; *)
-  let rs = rs @ choose_rule_frame_pred goal in
-  let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_pre_assign goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_fwrite goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  let rs = rs @ (choose_rule_func_call goal) in
-  let rs = rs @ choose_rule_frame_data goal in
-  let rs = rs @ (choose_rule_post_assign goal) in
-  let rs = eliminate_useless_rules goal rs in
-  let rs = reorder_rules goal rs in
-  rs
+  let cur_time = get_time () in
+  let duration = cur_time -. goal.gl_start_time in
+  if duration > !synthesis_timeout then
+    []
+  else
+    let rs = [] in
+    let rs = rs @ (choose_rule_unfold_pre goal) in
+    let rs = rs @ choose_rule_frame_pred goal in
+    let rs = rs @ (choose_rule_assign goal) in
+    let rs = rs @ (choose_rule_pre_assign goal) in
+    let rs = rs @ (choose_rule_fread goal) in
+    let rs = rs @ (choose_rule_fwrite goal) in
+    let rs = rs @ (choose_rule_numeric goal) in
+    let rs = rs @ (choose_rule_unfold_post goal) in
+    let rs = rs @ (choose_rule_func_call goal) in
+    let rs = rs @ choose_rule_frame_data goal in
+    let rs = rs @ (choose_rule_post_assign goal) in
+    let rs = eliminate_useless_rules goal rs in
+    let rs = reorder_rules goal rs in
+    rs
 
 let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
@@ -854,14 +863,19 @@ let process_rule_skip goal =
  * The search procedure
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
-  (* let goal = simplify_goal goal in *)
+  let goal = simplify_goal goal in
   if List.length goal.gl_trace > 5 then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
-    let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
-    let rules = choose_synthesis_rules goal in
-    process_all_rules goal rules
+    let cur_time = get_time () in
+    let duration = cur_time -. goal.gl_start_time in
+    if duration > !synthesis_timeout then
+      mk_synthesis_tree_fail goal [] "TIMEOUT"
+    else
+      let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+      let rules = choose_synthesis_rules goal in
+      process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
   let rec process atrees rules =
@@ -881,24 +895,29 @@ and process_all_rules goal rules : synthesis_tree =
 
 and process_one_rule goal rule : derivation =
   let () = x_tinfo_hp (add_str "processing rule" pr_rule) rule no_pos in
-  match rule with
-  | RlFuncCall rcore -> process_rule_func_call goal rcore
-  | RlFoldLeft rcore -> process_rule_fold_left goal rcore
-  | RlFuncRes rcore -> process_rule_func_res goal rcore
-  | RlPreAssign rcore -> process_rule_pre_assign goal rcore
-  | RlPostAssign rcore -> process_rule_post_assign goal rcore
-  | RlAssign rcore -> process_rule_assign goal rcore
-  | RlReturn rcore -> process_rule_return goal rcore
-  | RlFWrite rcore -> process_rule_fwrite goal rcore
-  | RlUnfoldPre rcore -> process_rule_unfold_pre goal rcore
-  | RlUnfoldPost rcore -> process_rule_unfold_post goal rcore
-  | RlFRead rcore -> process_rule_fread goal rcore
-  | RlFramePred rcore -> process_rule_frame_pred goal rcore
-  | RlFrameData rcore -> process_rule_frame_data goal rcore
-  | RlExistsLeft rcore -> process_rule_exists_left goal rcore
-  | RlExistsRight rcore -> process_rule_exists_right goal rcore
-  | RlBranch rcore -> process_rule_branch goal rcore
-  | RlSkip -> process_rule_skip goal
+  let cur_time = get_time () in
+  let duration = cur_time -. goal.gl_start_time in
+  if duration > !synthesis_timeout then
+    mk_derivation_fail goal rule
+  else
+    match rule with
+    | RlFuncCall rcore -> process_rule_func_call goal rcore
+    | RlFoldLeft rcore -> process_rule_fold_left goal rcore
+    | RlFuncRes rcore -> process_rule_func_res goal rcore
+    | RlPreAssign rcore -> process_rule_pre_assign goal rcore
+    | RlPostAssign rcore -> process_rule_post_assign goal rcore
+    | RlAssign rcore -> process_rule_assign goal rcore
+    | RlReturn rcore -> process_rule_return goal rcore
+    | RlFWrite rcore -> process_rule_fwrite goal rcore
+    | RlUnfoldPre rcore -> process_rule_unfold_pre goal rcore
+    | RlUnfoldPost rcore -> process_rule_unfold_post goal rcore
+    | RlFRead rcore -> process_rule_fread goal rcore
+    | RlFramePred rcore -> process_rule_frame_pred goal rcore
+    | RlFrameData rcore -> process_rule_frame_data goal rcore
+    | RlExistsLeft rcore -> process_rule_exists_left goal rcore
+    | RlExistsRight rcore -> process_rule_exists_right goal rcore
+    | RlBranch rcore -> process_rule_branch goal rcore
+    | RlSkip -> process_rule_skip goal
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =
@@ -956,7 +975,7 @@ let synthesize_cast_stmts goal =
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
@@ -1004,16 +1023,20 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula in
         let pre = pre_hp.Cast.hp_formula |> remove_exists in
-        let (n_iprog, res) = synthesize_wrapper iprog prog proc
-            pre post syn_vars in
-        if res then
-          try
-            let cprog, _ = Astsimp.trans_prog n_iprog in
-            let () = Typechecker.check_prog_wrapper n_iprog cprog in
-            let () = stop := true in
-            repair_res := Some n_iprog
-          with _ -> ()
-        else () in
+        if isHFalse post then
+          let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+          ()
+        else
+          let (n_iprog, res) = synthesize_wrapper iprog prog proc
+              pre post syn_vars in
+          if res then
+            try
+              let cprog, _ = Astsimp.trans_prog n_iprog in
+              let () = Typechecker.check_prog_wrapper n_iprog cprog in
+              let () = stop := true in
+              repair_res := Some n_iprog
+            with _ -> ()
+          else () in
     List.iter helper hps_list
 
 let statement_search (iprog: IA.prog_decl) prog proc (suspicious: I.exp)

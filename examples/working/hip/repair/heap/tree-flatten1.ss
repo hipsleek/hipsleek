@@ -1,16 +1,14 @@
 data node2 {
-	int val;
 	node2 left;
 	node2 right; 
 }
 
 tree<m, n> == self = null & m = 0 & n = 0 
-	or self::node2<_, p, q> * p::tree<m1, n1> * q::tree<m2, n2> & m = 1 + m1 + m2 & n = 1 + n1 & n1 > n2
-	or self::node2<_, p, q> * p::tree<m1, n1> * q::tree<m2, n2> & m = 1 + m1 + m2 & n = 1 + n2 & n2 >= n1
+	or self::node2<p, q> * p::tree<m1, n1> * q::tree<m2, n2> & m = 1 + m1 + m2 & n = 1 + max(n1, n2)
 	inv m >= 0 & n >= 0;
 
 dll<p, n> == self = null & n = 0 
-	or self::node2<_, p, q> * q::dll<self, n1> & n = n1+1
+	or self::node2<p, q> * q::dll<self, n1> & n = n1+1
 	inv n >= 0;
 
 node2 append(node2 x, node2 y)
@@ -43,10 +41,10 @@ void flatten(node2 x)
 		node2 tmp;
 		tmp = append(x.left, x.right);
 		x.left = null;
-    dprint;
 		x.right = tmp;
-    dprint;
-		if (tmp != null) tmp.left = x;
+		if (tmp != null)
+    //   tmp.left = x;
+    tmp.right = x;
 	}
 }
 
