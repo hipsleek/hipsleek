@@ -2314,8 +2314,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec)
               else (CF.rename_struc_clash_bound_vars stripped_spec
                       (CF.formula_of_list_failesc_context sctx)) in
-            x_tinfo_hp (add_str "renamed_spec" Cprinter.string_of_struc_formula)
-                renamed_spec no_pos;
+            let () = x_tinfo_hp (add_str "renamed_spec"
+                                   Cprinter.string_of_struc_formula)
+                renamed_spec no_pos in
             let st1 = List.combine pre_free_vars pre_free_vars_fresh in
             let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
             let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
@@ -2379,8 +2380,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               should_output_html : CF.list_failesc_context =
             let pr2 = Cprinter.string_of_list_failesc_context in
             let pr3 = Cprinter.string_of_struc_formula in
-            Debug.tinfo_hprint (add_str  "org_spec" Cprinter.string_of_struc_formula)
-                org_spec no_pos;
+            let () = Debug.tinfo_hprint (add_str  "org_spec"
+                                           Cprinter.string_of_struc_formula)
+                org_spec no_pos in
             let wrap_fnc = if CF.is_infer_pre_must org_spec then wrap_err_must
               else wrap_err_pre in
             let pre_post_op_wrapper a b c = wrap_fnc (check_pre_post_orig a b) c in

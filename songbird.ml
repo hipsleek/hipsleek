@@ -821,7 +821,7 @@ let solve_entailments prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
+    x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
     x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -983,9 +983,11 @@ let check_entail_prog_state prog (es: CF.entail_state)
     let sb_conseq = List.hd conseqs in
     let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
+    let () = List.iter (fun ent ->
+      export_songbird_entailments_results n_prog [ent] [SBG.MvlUnkn]) ents in
     let check_fun =
-      let interact = false in
-      SBPH.check_entailment ~interact:interact ~disproof:!songbird_disproof n_prog in
+      SBPH.check_entailment ~interact:false ~disproof:!songbird_disproof
+        ~timeout:2 n_prog in
     let ptrees = List.map (fun ent -> check_fun ent) ents in
     let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
     if List.for_all is_valid ptrees then
@@ -1007,12 +1009,12 @@ let check_entail_prog_state prog (es: CF.entail_state)
       let valid_ents = pairs |> List.filter is_valid |> List.map fst in
       let () = if invalid_ents != [] then
           List.iter (fun ent ->
-            let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+            let _ = x_binfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) invalid_ents in
       let () = if unkn_ents != [] then
           List.iter (fun ent ->
-            x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos;
+            let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) unkn_ents in
       let () = if !songbird_export_invalid_entails then
@@ -1167,63 +1169,60 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
   let () = x_tinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
   let () = x_tinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
   match ctx with
-  | CF.Ctx es ->
-    (
-      match conseq with
-      | CF.EBase bf -> hentail_after_sat_ebase prog ctx es bf
-      | CF.ECase cases ->
-        let branches = cases.CF.formula_case_branches in
-        let results = List.map (fun (pf, struc) ->
-          let n_es =
-            let n_f = Syn.add_pure_formula_to_formula pf es.CF.es_formula in
-            {es with CF.es_formula = n_f} in
-          let ctx = CF.Ctx n_es in
-          heap_entail_after_sat_struc prog ctx struc) branches in
-        let rez1, _ = List.split results in
-        let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
-                     (List.hd rez1) (List.tl rez1) in
-        (rez1, Prooftracer.TrueConseq)
-      | CF.EList b ->
-        let _, struc_list = List.split b in
-        let res_list =
-          List.map (fun x -> heap_entail_after_sat_struc prog ctx x)
-            struc_list in
-        let ctx_lists = res_list |> List.split |> fst in
-        let res = CF.fold_context_left 41 ctx_lists in
-        (res, Prooftracer.TrueConseq)
-      | CF.EAssume assume ->
-        let assume_f = assume.CF.formula_assume_simpl in
-        let assume_f = CF.rename_bound_vars assume_f in
-        let f = es.CF.es_formula in
-        let assume_f =
-          let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
-          let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
-          let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-          let has_pred = Syn.check_hp_formula hp_names assume_f in
-          if has_pred then
-            let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
-            let n_args = (f |> CF.fv) @ syn_pre_vars in
-            let n_args = if !Syn.is_return_cand then
-                n_args @ (!Syn.syn_res_vars)
-              else n_args in
-            let n_args = n_args |> List.filter
-                                     (fun x -> Syn.is_int_var x || Syn.is_node_var x)
-                         |> CP.remove_dups_svl in
-            let var_decls = !Syn.block_var_decls
-                            |> List.filter (fun x -> not(CP.mem_svl x n_args))
-                            |> List.map CP.to_primed in
-            let n_args = n_args @ var_decls |> CP.remove_dups_svl in
-            let pred_name = "QQ" ^ (string_of_int !Syn.r_pre) in
-            (* let n_pred_f = Syn.create_spec_pred n_args pred_name in *)
-            let n_pred_f = Syn.create_spec_pred n_args "QQ" in
-            n_pred_f
-          else assume_f in
-        let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
-        let () = x_tinfo_hp (add_str "new_f" CPR.string_of_formula) new_f no_pos in
-        let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
-        (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-      | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
-    )
+  | CF.Ctx es -> (match conseq with
+    | CF.EBase bf -> hentail_after_sat_ebase prog ctx es bf
+    | CF.ECase cases ->
+      let branches = cases.CF.formula_case_branches in
+      let results = List.map (fun (pf, struc) ->
+        let n_es =
+          let n_f = Syn.add_pure_formula_to_formula pf es.CF.es_formula in
+          {es with CF.es_formula = n_f} in
+        let ctx = CF.Ctx n_es in
+        heap_entail_after_sat_struc prog ctx struc) branches in
+      let rez1, _ = List.split results in
+      let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
+                   (List.hd rez1) (List.tl rez1) in
+      (rez1, Prooftracer.TrueConseq)
+    | CF.EList b ->
+      let _, struc_list = List.split b in
+      let res_list =
+        List.map (fun x -> heap_entail_after_sat_struc prog ctx x)
+          struc_list in
+      let ctx_lists = res_list |> List.split |> fst in
+      let res = CF.fold_context_left 41 ctx_lists in
+      (res, Prooftracer.TrueConseq)
+    | CF.EAssume assume ->
+      let assume_f = assume.CF.formula_assume_simpl in
+      let assume_f = CF.rename_bound_vars assume_f in
+      let f = es.CF.es_formula in
+      let assume_f =
+        let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
+        let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+        let hp_names = List.map (fun x -> x.CA.hp_name) hps in
+        let has_pred = Syn.check_hp_formula hp_names assume_f in
+        if has_pred then
+          let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
+          let n_args = (f |> CF.fv) @ syn_pre_vars in
+          let n_args = if !Syn.is_return_cand then
+              n_args @ (!Syn.syn_res_vars)
+            else n_args in
+          let n_args = n_args |> List.filter
+                                   (fun x -> Syn.is_int_var x || Syn.is_node_var x)
+                       |> CP.remove_dups_svl in
+          let var_decls = !Syn.block_var_decls
+                          |> List.filter (fun x -> not(CP.mem_svl x n_args))
+                          |> List.map CP.to_primed in
+          let n_args = n_args @ var_decls |> CP.remove_dups_svl in
+          let pred_name = "QQ" ^ (string_of_int !Syn.r_pre) in
+          (* let n_pred_f = Syn.create_spec_pred n_args pred_name in *)
+          let n_pred_f = Syn.create_spec_pred n_args "QQ" in
+          n_pred_f
+        else assume_f in
+      let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
+      let () = x_tinfo_hp (add_str "new_f" CPR.string_of_formula) new_f no_pos in
+      let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
+      (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
+    | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq)))
   | CF.OCtx (c1, c2) ->
     let rs1, proof1 = heap_entail_after_sat_struc prog c1 conseq in
     let rs2, proof2 = heap_entail_after_sat_struc prog c2 conseq in
@@ -1304,8 +1303,8 @@ and hentail_after_sat_ebase prog ctx es bf =
     else
       let () = if !start_repair then
           repair_loc := Some VarGen.proving_loc#get in
-      x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos;
-      x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
+      x_binfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos;
+      x_binfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
       let msg = "songbird result is Failed." in
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)
