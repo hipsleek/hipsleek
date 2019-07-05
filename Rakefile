@@ -274,7 +274,7 @@ task ".merlin" do |task|
   merlin_config = src_lines + build_line + dep_lines + flg_lines
 
   unless File.exists?(merlin_file) && (File.read(merlin_file) == merlin_config)
-    File.write merlin_file, merlin_config
+    File.write merlin_file, merlin_config + "\n"
   end
 end
 
@@ -295,7 +295,7 @@ task "_tags" do |task|
   end.join "\n"
 
   unless File.exists?(tags_file) && (File.read(tags_file) == tags)
-    File.write tags_file, tags
+    File.write tags_file, tags + "\n"
   end
 end
 
