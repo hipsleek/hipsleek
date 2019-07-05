@@ -109,7 +109,8 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       let prog = !Syn.syn_cprog |> Gen.unsome in
       let proc = C.find_proc prog proc_name in
       let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
-      let _ = Synthesizer.synthesize_entailments iprog prog proc in
+      let proc_names = get_all_func r_iproc in
+      let _ = Synthesizer.synthesize_entailments iprog prog proc proc_names in
       !Synthesis.repair_res
     with _ -> None
 
@@ -157,7 +158,7 @@ let repair_iprog (iprog:I.prog_decl) : bool =
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
     let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
     let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let cands = List.filter (filter_cand !repair_loc) cands (* |> List.rev *) in
+    let cands, others = List.partition (filter_cand !repair_loc) cands (* |> List.rev *) in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
     let locs = cands |> List.map I.get_exp_pos in
     let () = x_tinfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
@@ -171,18 +172,29 @@ let repair_iprog (iprog:I.prog_decl) : bool =
     let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in
     (* let aux cand = repair_candidate_by_search repair_proc iprog r_iproc args cand in *)
     let res = cands |> List.map aux |> List.filter (fun x -> x != None) in
-    if res = [] then
-      let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
-      false
+    if res != [] then
+        let r_time = get_time() -. start_time in
+        x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
+        x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
+        x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
+          no_pos;
+        x_binfo_hp (add_str "check_entail" pr_int) !Syn.check_entail_num no_pos;
+        (* let _ = List.hd res in *)
+        true
     else
-      let r_time = get_time() -. start_time in
-      x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
-      x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
-      x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
-        no_pos;
-      x_binfo_hp (add_str "check_entail" pr_int) !Syn.check_entail_num no_pos;
-      let _ = List.hd res in
-      true
+      let res = others |> List.map aux |> List.filter (fun x -> x != None) in
+      if res = [] then
+        let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
+        false
+      else
+        let r_time = get_time() -. start_time in
+        x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
+        x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
+        x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
+          no_pos;
+        x_binfo_hp (add_str "check_entail" pr_int) !Syn.check_entail_num no_pos;
+        (* let _ = List.hd res in *)
+        true
   | _ -> false
 
 let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)

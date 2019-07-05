@@ -29,14 +29,11 @@ node rotate_left(node l, node rl, node rr)
 	ensures res::avl<2+lm+rlm+rrm, 2+ln>;	
 
 {
+	int h;	
+	h = height(l) + 2;
 	node tmp;
-	int h;
-	
-	h = height(l) + 1;
 	tmp = new node(h, l, rl);	
-	// h = h + 1;
-  h = h + 2;
   node tmp2;
-  tmp2 = new node(h, tmp, rr);
+  tmp2 = new node(h + 1, tmp, rr);
 	return tmp2;
 }

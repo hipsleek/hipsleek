@@ -1497,3 +1497,38 @@ let lookup_var v_name =
  *     (pr_pair Cprinter.string_of_exp string_of_typ)
  *     (fun _ -> trans_exp_x prog proc ie original_exp) ie *)
 
+let get_all_func_x body =
+  let rec aux (exp:I.exp) = match exp with
+    | I.Binary e ->
+      let l1 = aux e.I.exp_binary_oper1 in
+      let l2 = aux e.I.exp_binary_oper2 in
+      l1@l2
+    | I.Assign e -> aux e.exp_assign_rhs
+    | I.Block b -> aux b.exp_block_body
+    | I.Cond e ->
+      let l1 = aux e.exp_cond_then_arm in
+      let l2 = aux e.exp_cond_else_arm in
+      l1@l2
+    | I.Label (a, e) -> aux e
+    | I.Seq e ->
+      let l1 = aux e.exp_seq_exp1 in
+      let l2 = aux e.exp_seq_exp2 in
+      l1 @ l2
+    | I.Unary e ->
+      aux e.exp_unary_exp
+    | I.CallRecv e -> [e.I.exp_call_recv_method]
+    | I.CallNRecv e -> [e.I.exp_call_nrecv_method]
+    | I.Return e ->
+      let r_e = e.I.exp_return_val in
+      begin
+        match r_e with
+        | None -> []
+        | Some r_e -> aux r_e
+      end
+    | _ -> [] in
+  aux body |> Gen.BList.remove_dups_eq eq_str
+
+let get_all_func iproc =
+  let body = iproc.I.proc_body |> Gen.unsome in
+  Debug.no_1 "get_all_func" pr_exp (pr_list pr_id)
+    (fun _ -> get_all_func_x body) body

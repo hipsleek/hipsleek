@@ -24,6 +24,44 @@ let raise_stree st = raise (EStree st)
  * Choosing rules
  *********************************************************************)
 
+let check_entail_sleek_x prog ante (conseq:CF.formula) =
+  let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
+  let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  let ctx = Solver.elim_exists_ctx ctx in
+  let conseq = CF.struc_formula_of_formula conseq no_pos in
+  let list_ctx, _ = Solver.heap_entail_struc_init prog false true
+      (CF.SuccCtx[ctx]) conseq no_pos None in
+  if CF.isFailCtx list_ctx then false, None
+  else
+    let residue = CF.formula_of_list_context list_ctx in
+    true, Some residue
+
+let check_entail_sleek prog ante conseq =
+  Debug.no_2 "check_entail_sleek" pr_formula pr_formula
+    (fun (x, _) -> string_of_bool x)
+    (fun _ _ -> check_entail_sleek_x prog ante conseq) ante conseq
+
+let check_entail_exact_sleek_x prog ante (conseq:CF.formula) =
+  let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
+  let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  let ctx = Solver.elim_exists_ctx ctx in
+  let conseq = CF.struc_formula_of_formula conseq no_pos in
+  let list_ctx, _ = Solver.heap_entail_struc_init prog false true
+      (CF.SuccCtx[ctx]) conseq no_pos None in
+  if CF.isFailCtx list_ctx then false
+  else
+    let residue = CF.formula_of_list_context list_ctx in
+    if CF.isEmpFormula residue then true
+    else false
+
+let check_entail_exact_sleek prog ante conseq =
+  Debug.no_2 "check_entail_exact_sleek" pr_formula pr_formula string_of_bool
+    (fun _ _ -> check_entail_exact_sleek_x prog ante conseq) ante conseq
+
 let rec find_sub_var sv cur_vars pre_pf =
   match pre_pf with
   | CP.BForm (b, _) ->
@@ -117,22 +155,21 @@ let choose_rule_assign_x goal : rule list =
   let filter_fun (x,y) = (List.mem x all_vars) &&
                          CP.subset (CP.afv y) all_vars in
   let eq_pairs = eq_pairs |> List.filter filter_fun in
-  let ante_pf = CF.get_pure goal.gl_pre_cond in
   let filter_with_ante ante (var, exp) =
+    let ante_pf = CF.get_pure ante in
     let var = CP.mkVar var no_pos in
     let conseq = CP.mkEqExp var exp no_pos in
-    not(SB.check_pure_entail ante conseq) in
-  let eq_pairs = eq_pairs |> List.filter (filter_with_ante ante_pf) in
-  if eq_pairs = [] then []
-  else
-    let mk_rule (var, exp) =
-      if CP.is_res_sv var then RlReturn {r_exp = exp}
-      else
-        RlAssign {
-          ra_lhs = var;
-          ra_rhs = exp
-        } in
-    List.map mk_rule eq_pairs
+    let n_pre = CF.add_pure_formula_to_formula conseq ante in
+    not(SB.check_pure_entail ante_pf conseq) && (SB.check_sat goal.gl_prog n_pre) in
+  let eq_pairs = eq_pairs |> List.filter (filter_with_ante goal.gl_pre_cond) in
+  let mk_rule (var, exp) =
+    if CP.is_res_sv var then RlReturn {r_exp = exp}
+    else
+      RlAssign {
+        ra_lhs = var;
+        ra_rhs = exp
+      } in
+  List.map mk_rule eq_pairs
 
 let choose_rule_assign goal =
   Debug.no_1 "choose_rule_assign" pr_goal pr_rules
@@ -279,14 +316,15 @@ let unify_fcall proc_decl pre_proc post_proc goal =
 let choose_rule_func_call goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let procs = goal.gl_proc_decls in
-  if procs = [] then []
-  else
-    let proc_decl = List.hd procs in
+  let proc_names = List.map (fun x -> x.C.proc_name) procs in
+  let () = x_tinfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in
+  let aux proc_decl =
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
     let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
     let post_cond = specs |> get_post_cond |> rm_emp_formula in
     let rules = unify_fcall proc_decl pre_cond post_cond goal in
-    rules
+    rules in
+  procs |> List.map aux |> List.concat
 
 let choose_rule_fread_x goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
@@ -388,7 +426,8 @@ let choose_rule_unfold_post goal =
   let check_sat_wrapper formula =
     try
       let formula = formula |> remove_exists in
-      let tmp = SB.check_unsat prog formula in
+      let tmp = Solver.unsat_base_nth 7 prog (ref 0) formula in
+      (* let tmp = SB.check_unsat prog formula in *)
       tmp |> negate
     with _ -> true in
   let helper_exists vnode =
@@ -416,6 +455,7 @@ let choose_rule_unfold_post goal =
   if has_unfold_post goal.gl_trace then []
   else
     let rules1 = vnodes |> List.map helper |> List.concat in
+    (* let rules2 = [] in *)
     let rules2 = e_vnodes |> List.map helper_exists |> List.concat in
     rules1@rules2
 
@@ -428,6 +468,13 @@ let choose_rule_numeric_x goal =
   let post_vars = List.filter is_int_var post_vars in
   let vars_lhs = List.filter (fun x -> CP.mem x vars || CP.is_res_sv x) post_vars in
   let () = x_tinfo_hp (add_str "vars_lhs" pr_vars) vars_lhs no_pos in
+  let filter_with_ante ante (var, exp) =
+    let ante_pf = CF.get_pure ante in
+    let var = CP.mkVar var no_pos in
+    let conseq = CP.mkEqExp var exp no_pos in
+    let n_pre = CF.add_pure_formula_to_formula conseq ante in
+    not(SB.check_pure_entail ante_pf conseq)
+    && (SB.check_sat goal.gl_prog n_pre) in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
     let var_formula = extract_var_f post cur_var in
@@ -445,13 +492,15 @@ let choose_rule_numeric_x goal =
             match defn with
             | Some def ->
               let def = CP.norm_exp def in
-              let rule = if CP.is_res_sv cur_var then
-                  RlReturn { r_exp = def}
-                else
-                  RlAssign {
-                    ra_lhs = cur_var;
-                    ra_rhs = def;
-                  } in [rule]
+              if filter_with_ante pre (cur_var, def) then
+                let rule = if CP.is_res_sv cur_var then
+                    RlReturn { r_exp = def}
+                  else
+                    RlAssign {
+                      ra_lhs = cur_var;
+                      ra_rhs = def;
+                    } in [rule]
+              else []
             | _ -> []
           end
         with _ -> []
@@ -639,7 +688,7 @@ let rec choose_rule_interact goal rules =
 let choose_main_rules goal =
   let cur_time = get_time () in
   let duration = cur_time -. goal.gl_start_time in
-  if duration > !synthesis_timeout then
+  if duration > !synthesis_timeout && not(!enable_i) then
     []
   else
     let rs = [] in
@@ -662,7 +711,8 @@ let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
     let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
     try
-      let sk, _ = SB.check_entail_residue prog pre post in
+      let sk = SB.check_entail_exact prog pre post in
+      (* let sk, _ = check_entail_sleek prog pre post in *)
       if sk then let rule = RlSkip in [rule]
       else []
     with _ -> []
@@ -777,7 +827,8 @@ let aux_func_call goal rule fname params subst res_var =
   let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
   let params_pre = CF.wrap_exists fresh_evars params_pre in
   let ent_check, residue =
-    SB.check_entail_residue goal.gl_prog pre_cond params_pre in
+    (* SB.check_entail_residue goal.gl_prog pre_cond params_pre in *)
+    check_entail_sleek goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
     let params_post = CF.subst substs post_proc in
@@ -870,7 +921,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   else
     let cur_time = get_time () in
     let duration = cur_time -. goal.gl_start_time in
-    if duration > !synthesis_timeout then
+    if duration > !synthesis_timeout && not(!enable_i) then
       mk_synthesis_tree_fail goal [] "TIMEOUT"
     else
       let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
@@ -888,7 +939,8 @@ and process_all_rules goal rules : synthesis_tree =
         let pts = get_synthesis_tree_status stree in
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
-    | [] -> let () = fail_branch_num := !fail_branch_num + 1 in
+    | [] ->
+      let () = fail_branch_num := !fail_branch_num + 1 in
       let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
       mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
@@ -897,7 +949,7 @@ and process_one_rule goal rule : derivation =
   let () = x_tinfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   let cur_time = get_time () in
   let duration = cur_time -. goal.gl_start_time in
-  if duration > !synthesis_timeout then
+  if duration > !synthesis_timeout && not(!enable_i) then
     mk_derivation_fail goal rule
   else
     match rule with
@@ -972,9 +1024,9 @@ let synthesize_cast_stmts goal =
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     None
 
-let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
+let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs =
   (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
-  let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
+  let goal = mk_goal_w_procs prog called_procs pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
@@ -1000,8 +1052,9 @@ let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
     let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
     Some n_body
 
-let synthesize_entailments (iprog:IA.prog_decl) prog proc =
+let synthesize_entailments (iprog:IA.prog_decl) prog proc proc_names =
   let entailments = !Synthesis.entailments |> List.rev in
+  x_binfo_hp (add_str "proc" (pr_list pr_id)) proc_names no_pos;
   let hps = SB.solve_entailments prog entailments in
   match hps with
   | None -> ()
@@ -1027,8 +1080,13 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
           let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
           ()
         else
+          let all_procs = CA.list_of_procs prog in
+          let filter_fun proc =
+            let proc_name = proc.CA.proc_name |> CA.unmingle_name in
+            List.mem proc_name proc_names in
+          let called_procs = List.filter filter_fun all_procs in
           let (n_iprog, res) = synthesize_wrapper iprog prog proc
-              pre post syn_vars in
+              pre post syn_vars called_procs in
           if res then
             try
               let cprog, _ = Astsimp.trans_prog n_iprog in

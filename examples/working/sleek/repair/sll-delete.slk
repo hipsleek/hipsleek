@@ -10,7 +10,8 @@ void delete(node x, int a)
 	requires x::ll<n> & n > a & a > 0 
 	ensures (exists k: x::ll<k> & k = n-1);.
 
-synthesize [node x,int a]
- x::ll<n> & 0<a & a<n & a!=1
-~> 
- (exists fr: x::ll<fr> & fr =n-1).
+synthesize [node x,int a,int k]
+x::ll<n>& a-1 !=0 & a > 0 & a-n<0 & a-1-k=0
+~>
+(exists fr31, an5, q_6, an44, q_45:
+q_6::node<an44,q_45> * x::node<an5,q_6> * q_45::ll<fr31> & a-1-k=0 & fr31=n-3).

@@ -815,13 +815,13 @@ let solve_entailments prog entails =
   x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos;
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos;
+  x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
+  x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos;
   let ptree = SBPU.solve_entailments ~pre:"PP" ~post:"QQ" ~timeout:(Some 3) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
     x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -995,7 +995,6 @@ let check_entail_prog_state prog (es: CF.entail_state)
           valid_num := !valid_num + (List.length ents)
         else () in
       let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
-      x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos;
       let residue = translate_back_fs residues holes in
       let () = x_tinfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
       (true, Some residue)
@@ -1014,7 +1013,8 @@ let check_entail_prog_state prog (es: CF.entail_state)
             ()) invalid_ents in
       let () = if unkn_ents != [] then
           List.iter (fun ent ->
-            let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+              let _ = x_binfo_hp (add_str "Program: " SBC.pr_program) n_prog no_pos in
+            let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) unkn_ents in
       let () = if !songbird_export_invalid_entails then
