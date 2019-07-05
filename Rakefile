@@ -17,7 +17,8 @@ OCAMLFIND_DEPS = [
 ]
 
 SRC_DIRS = [
-  "."
+  "src",
+  "cil"
 ]
 
 EXECUTABLES = {
@@ -43,7 +44,7 @@ EXTRA_TAGS = {
       "warn_error(+4+8+9+11+12+25+28)",
       "warn(-26)"
     ],
-  "<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>" => "pp(camlp4of)",
+  "<src/{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>" => "pp(camlp4of)",
   "not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>)" => "pp(cppo -I ../ -D TRACE)",
   "\"joust\"" => "include",
   "\"ints\"" => "include",
@@ -179,6 +180,48 @@ namespace :test do
   end
 
   task info_flow: %w[info_flow:vmcai info_flow:eximpf]
+
+  namespace :infer do
+    task :shape do
+      sh "mkdir res"
+      Dir.glob("examples/working/infer/sa/*.c") do |f|
+        sh "./hip #{f} &> res/#{File.basename f, '.c'}.res"
+      end
+    end
+  end
+
+  namespace :fast do
+    CATEGORIES =
+      [
+        "hip_tr",
+        "hip",
+        "imm",
+        "imm-filed",
+        "sleek",
+        "parahip",
+        "hip_baga",
+        "sleek_threads",
+        "hip_threads",
+        "hip_vperm",
+        "sleek_vperm",
+        "sleek_fracperm",
+        "sleek_veribsync",
+        "hip_veribsync",
+        "infinity",
+        "mem",
+        "coqinf",
+        "sleek_infer"
+      ]
+
+    CATEGORIES.each do |category|
+      desc "Run #{category} tests"
+      task category do
+        Dir.chdir "examples/working" do
+          sh "./run-fast-tests.pl -root ../../ #{category}"
+        end
+      end
+    end
+  end
 end
 
 # Useful Ocamlbuild rules
@@ -253,5 +296,17 @@ task "_tags" do |task|
 
   unless File.exists?(tags_file) && (File.read(tags_file) == tags)
     File.write tags_file, tags
+  end
+end
+
+namespace :commit do
+  task :prep do
+    sh "cp -a src/. ./"
+  end
+
+  task :end do
+    sh "rm *.ml"
+    sh "rm *.mll"
+    sh "rm *.mly"
   end
 end
