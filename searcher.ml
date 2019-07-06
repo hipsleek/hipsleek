@@ -94,3 +94,36 @@ let solve_unknown_hp s_goal candidates =
         process others
     | _ -> false in
   process candidates
+
+
+(* let repair_candidate_by_search (proc_name: string) (iprog: I.prog_decl)
+ *     (r_iproc: I.proc_decl) args suspicious_stmt =
+ *   if !Syn.repair_res != None then None
+ *   else
+ *     let iprog = mk_candidate_iprog iprog r_iproc args suspicious_stmt in
+ *     let () = x_tinfo_pp "marking" no_pos in
+ *     let () = Syn.entailments := [] in
+ *     let () = Syn.rel_num := 0 in
+ *     let () = Syn.res_num := 0 in
+ *     let () = Syn.repair_res := None in
+ *     let () = if is_return_exp suspicious_stmt then
+ *         Syn.is_return_cand := true
+ *       else Syn.is_return_cand := false in
+ *     let () = verified_procs := [] in
+ *     let () = Syn.syn_pre := None in
+ *     let cprog, _ = Astsimp.trans_prog iprog in
+ *     let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
+ *     let () = enable_frameless := true in
+ *     try
+ *       let () = Typechecker.check_prog_wrapper iprog cprog in
+ *       let () = x_binfo_pp "start synthesis process" no_pos in
+ *       let iprog = !Syn.syn_iprog |> Gen.unsome in
+ *       let prog = !Syn.syn_cprog |> Gen.unsome in
+ *       let proc = C.find_proc prog proc_name in
+ *       let () = Syn.repair_pos := Some (I.get_exp_pos suspicious_stmt) in
+ *       let candidates = reverse_infestor iprog suspicious_stmt in
+ *       let candidates = List.map (Astsimp.trans_exp iprog r_iproc) candidates
+ *                        |> List.map fst in
+ *       let _ = Synthesizer.statement_search iprog prog proc suspicious_stmt candidates in
+ *       !Synthesis.repair_res
+ *     with _ -> None *)

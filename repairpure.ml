@@ -1048,8 +1048,8 @@ let get_infest_level (body: I.exp) f_exp =
   aux_b body
 
 (* different numeric constraint: n -> n + 3 *)
-let modify_num_infestor body dif_num level =
-  (* let max_level = get_max_infest_level body in *)
+let modify_num_infestor body dif_num =
+  let pos_list = ref [] in
   let rec aux exp changed =
     if changed = 0 then exp, 0
     else
@@ -1062,15 +1062,17 @@ let modify_num_infestor body dif_num level =
         (I.Label (a, n_l), res)
       | I.Seq seq ->
         let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
-        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+        let (n_e2, r2) =
+          if r1 = changed then
+            aux seq.I.exp_seq_exp2 r1
+          else (seq.I.exp_seq_exp2, r1) in
         (I.Seq {seq with exp_seq_exp1 = n_e1;
                          exp_seq_exp2 = n_e2}, r2)
       | I.Cond cond ->
-        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
-        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
+        (* let (n_e1, r1) = aux cond.I.exp_cond_condition changed in *)
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
         let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
-        let n_e = I.Cond {cond with exp_cond_condition = n_e1;
-                                    exp_cond_then_arm = n_e2;
+        let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
                                     exp_cond_else_arm = n_e3} in
         (n_e, r3)
       | I.Assign e ->
@@ -1081,6 +1083,7 @@ let modify_num_infestor body dif_num level =
       | I.IntLit num ->
         if changed = 1 then
           let n_num = num.I.exp_int_lit_val + 3 in
+          let () = pos_list := (num.I.exp_int_lit_pos)::(!pos_list) in
           (I.IntLit {num with exp_int_lit_val = n_num}, changed - 1)
         else (exp, changed - 1)
       | I.Return e ->
@@ -1096,7 +1099,69 @@ let modify_num_infestor body dif_num level =
         (I.Binary {bin with exp_binary_oper1 = n_e1;
                             exp_binary_oper2 = n_e2}, r2)
       | _ -> (exp, changed) in
-  aux body dif_num
+  let n_body, num = aux body dif_num in
+  (n_body, num, !pos_list)
+
+let calculate_level exp =
+  let rec aux exp = match exp with
+    | I.Block block -> aux block.I.exp_block_body
+    | I.Label (a, l) -> aux l
+    | I.Seq seq ->
+        let l1 = aux seq.I.exp_seq_exp1 in
+        let l2 = aux seq.I.exp_seq_exp2 in
+        if l1 > l2 then l1 else l2
+    | I.Cond cond ->
+        let l1 = aux cond.I.exp_cond_then_arm in
+        let l2 = aux cond.I.exp_cond_else_arm in
+        if l1 > l2 then l1 + 1 else l2 + 1
+    | _ -> 1 in
+  aux exp
+
+let contain_infest_pos exp pos_list =
+  let rec aux exp = match exp with
+      | I.Block block ->
+        aux block.I.exp_block_body
+      | I.Label (a, l) ->
+        aux l
+      | I.Seq seq ->
+        aux seq.I.exp_seq_exp1 || aux seq.I.exp_seq_exp2
+      | I.Cond cond ->
+        aux cond.I.exp_cond_then_arm ||
+        aux cond.I.exp_cond_else_arm
+      | I.Assign e ->
+        aux e.I.exp_assign_lhs ||
+        aux e.I.exp_assign_rhs
+      | I.Return e ->
+        begin
+          match e.I.exp_return_val with
+            | None -> false
+            | Some r_e -> aux r_e
+        end
+      | I.Binary bin ->
+        aux bin.I.exp_binary_oper1 ||
+        aux bin.I.exp_binary_oper2
+      | _ ->
+        let loc = I.get_exp_pos exp in
+        List.exists (fun x -> VarGen.eq_loc loc x) pos_list in
+  aux exp
+
+let find_infest_level body pos_list =
+  let rec aux exp =  match exp with
+    | I.Block block ->
+      aux block.I.exp_block_body
+    | I.Label (a, l) -> aux l
+    | I.Seq seq ->
+      let e1 = seq.I.exp_seq_exp1 in
+      let e2 = seq.I.exp_seq_exp2 in
+      if contain_infest_pos e1 pos_list then calculate_level e2
+      else aux e2
+    | I.Cond cond ->
+      let l1 = aux cond.I.exp_cond_then_arm in
+      let l2 = aux cond.I.exp_cond_else_arm in
+      l1 + l2
+    | _ ->
+      if contain_infest_pos exp pos_list then 1 else 0 in
+  aux body
 
 (* to delete one branch *)
 let delete_one_branch body dif_num =

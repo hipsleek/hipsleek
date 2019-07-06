@@ -816,7 +816,7 @@ let solve_entailments prog entails =
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
   x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos;
-  x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos;
+  x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos;
   let ptree = SBPU.solve_entailments ~pre:"PP" ~post:"QQ" ~timeout:(Some 3) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in

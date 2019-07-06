@@ -114,39 +114,6 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       !Synthesis.repair_res
     with _ -> None
 
-let repair_candidate_by_search (proc_name: string) (iprog: I.prog_decl)
-    (r_iproc: I.proc_decl) args suspicious_stmt =
-  if !Syn.repair_res != None then None
-  else
-    let iprog = mk_candidate_iprog iprog r_iproc args suspicious_stmt in
-    let () = x_tinfo_pp "marking" no_pos in
-    let () = Syn.entailments := [] in
-    let () = Syn.rel_num := 0 in
-    let () = Syn.res_num := 0 in
-    let () = Syn.repair_res := None in
-    let () = if is_return_exp suspicious_stmt then
-        Syn.is_return_cand := true
-      else Syn.is_return_cand := false in
-    let () = verified_procs := [] in
-    let () = Syn.syn_pre := None in
-    let cprog, _ = Astsimp.trans_prog iprog in
-    let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
-    let () = enable_frameless := true in
-    try
-      let () = Typechecker.check_prog_wrapper iprog cprog in
-      let () = x_binfo_pp "start synthesis process" no_pos in
-      let iprog = !Syn.syn_iprog |> Gen.unsome in
-      let prog = !Syn.syn_cprog |> Gen.unsome in
-      let proc = C.find_proc prog proc_name in
-      let () = Syn.repair_pos := Some (I.get_exp_pos suspicious_stmt) in
-      let candidates = reverse_infestor iprog suspicious_stmt in
-      let candidates = List.map (Astsimp.trans_exp iprog r_iproc) candidates
-                       |> List.map fst in
-      let _ = Synthesizer.statement_search iprog prog proc suspicious_stmt candidates in
-      !Synthesis.repair_res
-    with _ -> None
-
-
 let repair_iprog (iprog:I.prog_decl) : bool =
   let start_time = get_time () in
   match (!Typechecker.repair_proc) with
@@ -170,7 +137,6 @@ let repair_iprog (iprog:I.prog_decl) : bool =
     let () = Syn.syn_res_vars := res_vars in
     let args = cproc.C.proc_args in
     let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in
-    (* let aux cand = repair_candidate_by_search repair_proc iprog r_iproc args cand in *)
     let res = cands |> List.map aux |> List.filter (fun x -> x != None) in
     if res != [] then
         let r_time = get_time() -. start_time in
@@ -193,7 +159,6 @@ let repair_iprog (iprog:I.prog_decl) : bool =
         x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
           no_pos;
         x_binfo_hp (add_str "check_entail" pr_int) !Syn.check_entail_num no_pos;
-        (* let _ = List.hd res in *)
         true
   | _ -> false
 
@@ -320,11 +285,26 @@ let repair_cproc iprog =
     List.fold_left helper None traces
   | _ -> None
 
+let buggy_num_level body =
+  let rec aux body num list =
+    let n_body, r_num, pos_list = modify_num_infestor body num in
+    if r_num = 0 then
+      let n_list = (n_body, pos_list)::list in
+      aux body (num+1) n_list
+    else list in
+  let n_body_list = aux body 1 [] in
+  let aux (body, pos_list) =
+    let () = x_binfo_hp (add_str "proc" pr_exp) body no_pos in
+    let level = find_infest_level body pos_list in
+    let () = x_binfo_hp (add_str "level" pr_int) level no_pos in
+    (body, level) in
+  n_body_list |> List.map aux
+
 let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls level =
   let list = [] in
-  x_binfo_hp (add_str "body" pr_exp) body no_pos;
-  let list = (modify_num_infestor body 1 level)::list in
-  let list = (modify_num_infestor body 2 level)::list in
+  let n_body_w_level = buggy_num_level body in
+  let n_body = n_body_w_level |> List.filter (fun (_, x) -> x = level) in
+  n_body |> List.map fst
   (* let list = (remove_field_infestor body 1 var_decls data_decls)::list in
    * let list = (remove_field_infestor body 2 var_decls data_decls)::list in
    * let list = (remove_field_infestor body 3 var_decls data_decls)::list in
@@ -335,7 +315,6 @@ let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls level =
    * let list = (modify_field_infestor body 1 var_decls data_decls)::list in
    * let list = (modify_field_infestor body 2 var_decls data_decls)::list in
    * let list = (modify_field_infestor body 3 var_decls data_decls)::list in *)
-  []
   (* list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev *)
 
 let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) level =
@@ -344,10 +323,10 @@ let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) level =
                     (fun x -> (x.I.param_type, x.I.param_name)) in
   let data_decls = iprog.I.prog_data_decls in
   let n_body_list = create_buggy_proc_wrapper body var_decls data_decls level in
-  let () = x_tinfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
+  let () = x_binfo_hp (add_str "proc" (pr_list_nl pr_exp)) n_body_list no_pos in
   n_body_list |> List.map (fun x -> {proc with I.proc_body = Some x})
 
-let output_infestor_prog (src: string) (iprog : I.prog_decl) =
+let output_infestor_prog (src: string) (iprog : I.prog_decl) : string =
   let file_name, dir = Filename.basename src, Filename.dirname src in
   let suffix = Filename.extension file_name in
   let f_name = Filename.chop_suffix file_name suffix in
@@ -359,57 +338,68 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) =
   let pre_datas = ["barrier"; "phase"; "thrd"; "__RET"; "__ArrBoundErr"; "lock";
                   "__DivByZeroErr"; "char_star"; "int_ptr_ptr"; "int_ptr"] in
   let negate x = not x in
+  let filter_fun proc = match proc.I.proc_body with
+    | None -> false
+    | _ -> true in
   let view_decls = view_decls |> List.filter
                      (fun x -> List.mem x.I.view_name pre_views |> negate) in
   let data_decls = iprog.I.prog_data_decls |> List.filter
                      (fun x -> List.mem x.I.data_name pre_datas |> negate) in
+  let procs = iprog.I.prog_proc_decls |> List.filter filter_fun in
   let n_prog = {iprog with I.prog_view_decls = view_decls;
+                           I.prog_proc_decls = procs;
                            I.prog_data_decls = data_decls} in
   let output = pr_iprog n_prog in
   let oc = open_out to_saved_file in
   fprintf oc "%s\n" output; close_out oc;
-  let () = x_binfo_hp (add_str "prog" pr_iprog) n_prog no_pos in
-  ()
+  to_saved_file
 
 let create_buggy_prog src (iprog : I.prog_decl) level =
   let procs = iprog.I.prog_proc_decls in
   let b_procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
-  let helper_buggy buggy_proc =
-    List.map (fun x -> if eq_str x.I.proc_name buggy_proc.I.proc_name
-               then buggy_proc else x) procs in
-  let n_procs_list = List.fold_left (fun res_list cur_proc ->
-      let buggy_procs = create_buggy_proc iprog cur_proc level in
-      let n_procs = buggy_procs |> List.map helper_buggy in
-      n_procs @ res_list) [] b_procs in
-  let helper n_procs =
-    let n_prog = {iprog with I.prog_proc_decls = n_procs} in
-    n_prog in
-  let () = infestor_num := 0 in
-  (* let filter iprog =
-   *   let cprog, _ = Astsimp.trans_prog iprog in
-   *   try
-   *     let () = Typechecker.check_prog_wrapper iprog cprog in
-   *     false
-   *   with _ -> true in *)
-  let _ = n_procs_list |> List.map helper in
-  (* |> List.map (output_infestor_prog src) in *)
-  ()
-
-let infest_and_repair src (iprog : I.prog_decl) =
-  let _ = create_buggy_prog src iprog 1 in
-  ()
-
-let rec start_repair_wrapper (iprog: I.prog_decl) =
+  if b_procs = [] then report_error no_pos "NO PROC WITH THE UN-EMPTY BODY"
+  else
+    let b_proc = b_procs |> List.rev |> List.hd in
+    let buggy_procs = create_buggy_proc iprog b_proc level in
+    let aux_fun b_proc =
+      let n_procs = procs |> List.map (fun x ->
+          if eq_str x.I.proc_name b_proc.I.proc_name then b_proc
+          else x) in
+      {iprog with I.prog_proc_decls = n_procs} in
+    let n_progs = List.map aux_fun buggy_procs in
+    n_progs
+      
+let start_repair_wrapper (iprog: I.prog_decl) =
   let repair_proc_wrapper iprog =
     let start_time = get_time () in
     let tmp = repair_cproc iprog in
     if tmp != None then
-      let r_time = get_time() -. start_time in
-      x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
-      x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
+      (* let r_time = get_time() -. start_time in
+       * x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
+       * x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos; *)
       true
     else
-      let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
+      (* let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in *)
       false in
-  (* repair_proc_wrapper iprog *)
   repair_iprog iprog
+
+let infest_and_repair src (iprog : I.prog_decl) =
+  let buggy_progs = create_buggy_prog src iprog 1 in
+  let () = enable_repair := true in
+  let () = infestor_num := 0 in
+  let aux buggy_prog =
+    let () = Syn.repair_res := None in
+    let cprog, _ = Astsimp.trans_prog buggy_prog in
+    try
+      let _ = Typechecker.check_prog_wrapper buggy_prog cprog in
+      let () = x_binfo_pp "INFESTED PROGRAM IS NOT BUGGY W.R.T THE SPECIFICATION" no_pos in
+      ()
+    with _ ->
+      let r_iprog = start_repair_wrapper buggy_prog in
+      let s_file = output_infestor_prog src buggy_prog in
+      if r_iprog then
+        x_binfo_pp ("REPAIRING " ^ s_file ^ " SUCCESSFULLY") no_pos
+      else
+        x_binfo_pp ("REPAIRING " ^ s_file ^ " FAIL") no_pos in
+  buggy_progs |> List.iter aux
+
