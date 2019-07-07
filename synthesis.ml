@@ -13,6 +13,7 @@ module I = Iast
 module C = Cast
 
 (** Printing  **********)
+let pr_int = string_of_int
 let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
 let pr_formulas = Cprinter.string_of_formula_list_ln
@@ -536,15 +537,6 @@ let simplify_post post_cond =
   Debug.no_1 "simplify_post" pr_formula pr_formula
     (fun _ -> simplify_post_x post_cond) post_cond
 
-let simplify_goal goal =
-  let n_pre = CF.elim_exists goal.gl_pre_cond in
-  let n_pre = elim_idents n_pre in
-  let n_post = elim_idents goal.gl_post_cond in
-  let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
-  let n_post = simplify_post n_post in
-  {goal with gl_pre_cond = n_pre;
-             gl_post_cond = n_post}
-
 let mkAndList pf_list =
   let rec aux pf_list = match pf_list with
   | [] -> CP.mkTrue no_pos
@@ -629,12 +621,12 @@ let extract_var_f_x f var = match f with
       begin
         match heap_extract with
         | None ->
-          let pf_var = extract_var_pf pf [var] |> CP.arith_simplify 1 in
+          let pf_var = extract_var_pf pf [var] in
           Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
         | Some (hf, vars) ->
           let h_vars = CF.h_fv hf in
           let vars = [var] @ h_vars |> CP.remove_dups_svl in
-          let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
+          let pf_var = extract_var_pf pf vars in
           Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
       end
     | CF.Exists exists_f ->
@@ -1080,6 +1072,15 @@ let add_formula_to_formula f1 f2 =
 let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
+
+let simplify_goal goal =
+  let n_pre = remove_exists goal.gl_pre_cond in
+  let n_pre = elim_idents n_pre in
+  let n_post = elim_idents goal.gl_post_cond in
+  let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
+  let n_post = simplify_post n_post in
+  {goal with gl_pre_cond = n_pre;
+             gl_post_cond = n_post}
 
 let mkTrue_pf_formula (formula:CF.formula) =
   match formula with
@@ -2190,6 +2191,9 @@ let compare_rule_assign_vs_assign goal r1 r2 =
   else if CP.is_res_spec_var r2.ra_lhs then PriLow
   else PriEqual
 
+let compare_rule_unfold_post_vs_mk_null r1 r2 =
+  PriHigh
+
 let compare_rule_assign_vs_other goal r1 r2 = match r2 with
     | RlAssign r2 -> compare_rule_assign_vs_assign goal r1 r2
     | _ ->
@@ -2201,6 +2205,7 @@ let compare_rule_frame_data_vs_other r1 r2 =
   | RlFramePred _
   | RlFrameData _ -> if CP.is_res_sv r1.rfd_lhs then PriHigh
     else PriLow
+  | RlMkNull _ -> PriHigh
   | _ -> PriLow
 
 let compare_rule_frame_pred_vs_other r1 r2 =
@@ -2210,8 +2215,9 @@ let compare_rule_frame_pred_vs_other r1 r2 =
     else PriLow
   | RlAllocate _ -> PriHigh
   | RlMkNull _ -> PriHigh
-  (* | RlFuncRes _
-   * | RlFuncCall _ -> PriHigh *)
+  | RlUnfoldPost _ -> PriHigh
+  | RlFuncRes _
+  | RlFuncCall _ -> PriHigh
   | _ -> PriLow
 
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
@@ -2222,10 +2228,14 @@ let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | _ -> PriHigh
 
+let compare_rule_unfold_post_vs_unfold_post r1 r2 =
+  if CP.is_res_sv r1.rp_var then PriHigh
+  else if CP.is_res_sv r2.rp_var then PriLow
+  else PriEqual
+
 let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
-  | RlUnfoldPost r2 -> if CP.is_res_sv r1.rp_var then PriHigh
-    else if CP.is_res_sv r2.rp_var then PriLow
-    else PriEqual
+  | RlUnfoldPost r2 -> compare_rule_unfold_post_vs_unfold_post r1 r2
+  | RlMkNull r2 -> compare_rule_unfold_post_vs_mk_null r1 r2
   | _ -> PriLow
 
 let compare_rule goal r1 r2 =
@@ -2250,6 +2260,14 @@ let is_code_rule trace = match trace with
     | RlAssign _ | RlReturn _ | RlFWrite _ | RlFuncRes _
     | RlFuncCall _ -> true
     | _ -> false
+
+let trace_length trace =
+  let is_code_rule rule = match rule with
+    | RlAssign _ | RlReturn _ | RlFWrite _ | RlFuncRes _
+    | RlFuncCall _ -> true
+    | _ -> false in
+  let trace = List.filter is_code_rule trace in
+  List.length trace
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =
@@ -2280,6 +2298,7 @@ let mk_goal cprog pre post vars =
     gl_vars = vars;  }
 
 let mk_goal_w_procs cprog proc_decls pre post vars =
+  let () = fail_branch_num := 0 in
   let pre = unprime_formula pre in
   let post = unprime_formula post in
   { gl_prog = cprog;
@@ -2361,7 +2380,8 @@ let process_rule_exists_left goal rule =
   mk_derivation_subgoals goal (RlExistsLeft rule) [n_goal]
 
 let process_rule_exists_right goal rule =
-  let n_goal = {goal with gl_post_cond = rule.n_post} in
+  let n_goal = {goal with gl_post_cond = rule.n_post;
+                          gl_trace = (RlExistsRight rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlExistsRight rule) [n_goal]
 
 let process_rule_branch goal rule =
