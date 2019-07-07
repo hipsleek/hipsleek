@@ -1146,6 +1146,10 @@ let contain_infest_pos exp pos_list =
   aux exp
 
 let find_infest_level body pos_list =
+  let rec helper list = match list with
+    | [] -> 0
+    | h::t -> let tmp = helper t in
+      if h > tmp then h else tmp in
   let rec aux exp =  match exp with
     | I.Block block ->
       aux block.I.exp_block_body
@@ -1159,6 +1163,37 @@ let find_infest_level body pos_list =
       let l1 = aux cond.I.exp_cond_then_arm in
       let l2 = aux cond.I.exp_cond_else_arm in
       l1 + l2
+    | I.Assign e ->
+      let l1 = aux e.I.exp_assign_lhs in
+      let l2 = aux e.I.exp_assign_lhs in
+      if l1 > l2 then l1 else l2
+    | I.CallRecv e ->
+      let args = e.I.exp_call_recv_arguments in
+      let l_list = List.map aux args in
+      helper l_list
+
+    | I.CallNRecv e ->
+      let args = e.I.exp_call_nrecv_arguments in
+      let l_list = List.map aux args in
+      helper l_list
+    (* | I.Member e ->
+     *     if type_of_exp exp var_decls data_decls =
+     *        type_of_exp e.I.exp_member_base var_decls data_decls then
+     *       if changed = 1 then
+     *         let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
+     *         (e.I.exp_member_base, 0)
+     *       else (exp, changed - 1)
+     *     else (exp, changed) *)
+    | I.Return e ->
+      begin
+        match e.I.exp_return_val with
+          | None -> 0
+          | Some r_e -> aux r_e
+      end
+    | I.Binary bin ->
+      let l1 = aux bin.I.exp_binary_oper1 in
+      let l2 = aux bin.I.exp_binary_oper2 in
+      if l1 > l2 then l1 else l2
     | _ ->
       if contain_infest_pos exp pos_list then 1 else 0 in
   aux body
@@ -1259,6 +1294,7 @@ let buggy_boolean_exp body dif_num =
 
 (* x->next : x *)
 let remove_field_infestor body dif_num var_decls data_decls =
+  let pos_list = ref [] in
   let rec aux exp changed =
     let rec helper args changed = match args with
       | [] -> [], changed
@@ -1304,12 +1340,13 @@ let remove_field_infestor body dif_num var_decls data_decls =
         let n_exp = I.CallNRecv {e with exp_call_nrecv_arguments = n_args;} in
         (n_exp, n_changed)
       | I.Member e ->
-        if changed = 1 then
-          if type_of_exp exp var_decls data_decls =
-             type_of_exp e.I.exp_member_base var_decls data_decls then
+        if type_of_exp exp var_decls data_decls =
+           type_of_exp e.I.exp_member_base var_decls data_decls then
+          if changed = 1 then
+            let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
             (e.I.exp_member_base, 0)
-          else (exp, changed)
-        else (exp, changed - 1)
+          else (exp, changed - 1)
+        else (exp, changed)
       | I.Return e ->
         let n_e, res = match e.I.exp_return_val with
           | None -> None, changed
@@ -1323,7 +1360,8 @@ let remove_field_infestor body dif_num var_decls data_decls =
         (I.Binary {bin with exp_binary_oper1 = n_e1;
                             exp_binary_oper2 = n_e2}, r2)
       | _ -> (exp, changed) in
-  aux body dif_num
+  let n_body, num = aux body dif_num in
+  (n_body, num, !pos_list)
 
 (* x->next : x->prev *)
 let modify_field_infestor body dif_num var_decls data_decls =
@@ -1554,14 +1592,6 @@ let lookup_var v_name =
     }
   with e -> raise e
 
-(* let trans_exp_x prog proc ie : C.exp = *)
-
-(* let trans_exp (prog : I.prog_decl) (proc : I.proc_decl) orig_e (ie : I.exp) =
- *   Debug.no_1 "Repair.trans_exp"
- *     Iprinter.string_of_exp
- *     (pr_pair Cprinter.string_of_exp string_of_typ)
- *     (fun _ -> trans_exp_x prog proc ie original_exp) ie *)
-
 let get_all_func_x body =
   let rec aux (exp:I.exp) = match exp with
     | I.Binary e ->
@@ -1569,6 +1599,7 @@ let get_all_func_x body =
       let l2 = aux e.I.exp_binary_oper2 in
       l1@l2
     | I.Assign e -> aux e.exp_assign_rhs
+    (* | I.New e -> [e.I.exp_new_class_name] *)
     | I.Block b -> aux b.exp_block_body
     | I.Cond e ->
       let l1 = aux e.exp_cond_then_arm in

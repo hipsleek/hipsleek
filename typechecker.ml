@@ -2141,8 +2141,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let ct_f = Cpure.mkAnd c_f t_f pos in
             let cta_f = Cpure.mkAnd ct_f a_f pos in
             nheap_args,perm,perm_vars,cta_f
-          else heap_args,None,[],(Cpure.mkTrue pos)
-        in
+          else heap_args,None,[],(Cpure.mkTrue pos) in
         let res_var =  CP.SpecVar (Named c, res_name, Unprimed) in
         let new_heap_args,level_f = if (!Globals.allow_locklevel && c=lock_name) then
             (*If this is a lock, astsimpl ensures that it has a single argument*)

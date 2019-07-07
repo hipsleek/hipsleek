@@ -2403,7 +2403,7 @@ and mkLexVar_pure a l1 l2 =
 
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
-and mkVarNull v pos = 
+and mkVarNull v pos =
   if is_null_const v then Null pos
   else mkVar v pos
 

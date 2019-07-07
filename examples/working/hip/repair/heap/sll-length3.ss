@@ -11,9 +11,7 @@ int length(node x)
 {
   if (x == null) return 0;
   else {
-    int k;
-    k = 1 + length(x.next.next);
-    return k;
+   return 1 +  length(x);
   }
 }
 

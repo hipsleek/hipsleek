@@ -17,7 +17,7 @@ let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
 let pr_formulas = Cprinter.string_of_formula_list_ln
 let pr_exp = Cprinter.string_of_formula_exp
-let pr_var = Cprinter.string_of_spec_var
+let pr_var = Cprinter.string_of_typed_spec_var
 let pr_vars = Cprinter.string_of_typed_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_sv = Cprinter.string_of_spec_var
@@ -67,6 +67,8 @@ type rule =
   | RlFoldLeft of rule_fold_left
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
+  | RlAllocate of rule_allocate
+  | RlMkNull of rule_mk_null
   | RlSkip
   | RlAssign of rule_assign
   | RlPostAssign of rule_post_assign
@@ -78,9 +80,20 @@ type rule =
   | RlFuncCall of rule_func_call
   | RlFuncRes of rule_func_res
 
+and rule_mk_null ={
+  rmn_null: CP.exp;
+  rmn_var : CP.spec_var;
+}
+
 and rule_pre_assign = {
   rpa_lhs : CP.spec_var;
   rpa_rhs : CP.exp
+}
+
+and rule_allocate = {
+  ra_data: string;
+  ra_var : CP.spec_var;
+  ra_params: CP.spec_var list;
 }
 
 and rule_post_assign = {
@@ -302,8 +315,21 @@ let pr_frame_data rcore =
 let pr_var_init rule =
   "(" ^ (pr_var rule.rvi_var) ^ ", " ^ (pr_exp rule.rvi_rhs) ^ ")"
 
+let pr_rule_alloc r =
+  let data = r.ra_data in
+  let params = r.ra_params in
+  data ^ "(" ^ (pr_vars params) ^ ")"
+
+let pr_rule_mk_null r =
+  let var = r.rmn_var in
+  let e = r.rmn_null in
+  (pr_var var) ^ ", " ^ (pr_exp e)
+
+
 let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
+  | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
+  | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
   | RlFoldLeft r -> "RlFoldLeft " ^ (pr_formula r.rfl_pre)
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
@@ -650,7 +676,7 @@ let contains s1 s2 =
   try ignore (Str.search_forward re s1 0); true
   with Not_found -> false
 
-let rec add_h_formula_to_formula_x h_formula (formula:CF.formula) : CF.formula =
+let add_h_formula_to_formula_x h_formula (formula:CF.formula) : CF.formula =
   match formula with
   | Base bf ->
     let hf = bf.formula_base_heap in
@@ -660,11 +686,11 @@ let rec add_h_formula_to_formula_x h_formula (formula:CF.formula) : CF.formula =
     let hf = bf.formula_exists_heap in
     let n_hf = CF.mkStarH hf h_formula no_pos in
     Exists {bf with formula_exists_heap = n_hf}
-  | Or bf ->
-    let n_f1 = add_h_formula_to_formula_x h_formula bf.formula_or_f1 in
-    let n_f2 = add_h_formula_to_formula_x h_formula bf.formula_or_f2 in
-    Or {bf with formula_or_f1 = n_f1;
-                formula_or_f2 = n_f2}
+  | Or bf -> report_error no_pos "the formula cannot be disjunctive"
+    (* let n_f1 = add_h_formula_to_formula_x h_formula bf.formula_or_f1 in
+     * let n_f2 = add_h_formula_to_formula_x h_formula bf.formula_or_f2 in
+     * Or {bf with formula_or_f1 = n_f1;
+     *             formula_or_f2 = n_f2} *)
 
 let add_h_formula_to_formula added_hf formula =
   Debug.no_2 "add_h_formula_to_formula" pr_hf pr_formula pr_formula
@@ -1146,12 +1172,33 @@ let simplify_ante ante =
   Debug.no_1 "simplify_ante" pr_formula pr_formula
     (fun _ -> simplify_ante_x ante) ante
 
+let rec has_mk_null trace = match trace with
+  | [] -> false
+  | h::t -> begin
+      match h with
+      | RlMkNull _ -> true
+      | _ -> has_mk_null t
+    end
+
 let rec has_unfold_pre trace = match trace with
   | [] -> false
   | h::t -> begin
       match h with
       | RlUnfoldPre r -> true
       | _ -> has_unfold_pre t
+    end
+
+let rec has_allocate trace cur_params = match trace with
+  | [] -> false
+  | h::t -> begin
+      match h with
+      | RlAllocate r ->
+        let params = r.ra_params in
+        let var = r.ra_var in
+        if CP.mem var cur_params ||
+           CP.eq_spec_var_list params cur_params then true
+        else has_allocate t cur_params
+      | _ -> has_allocate t cur_params
     end
 
 let has_unfold_post trace =
@@ -1457,13 +1504,13 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
         C.exp_var_decl_name = CP.name_of_sv var;
         C.exp_var_decl_pos = no_pos;
       } in
-    let seq = mkCSeq var_exp c_rhs in
+    (* let seq = mkCSeq var_exp c_rhs in *)
     let assign = C.Assign {
       C.exp_assign_lhs = CP.name_of_sv var;
       C.exp_assign_rhs = c_rhs;
       C.exp_assign_pos = no_pos
     } in
-    let seq = mkCSeq seq assign in
+    let seq = mkCSeq var_exp assign in
     aux_c_subtrees st seq
   | RlFRead rcore ->
     let lhs = rcore.rfr_value in
@@ -1622,6 +1669,43 @@ let rec synthesize_st_core st : Iast.exp option=
       | [h] -> h
       | _ -> report_error no_pos "syn_st_core: no more than one st"
     end
+  | RlAllocate rc ->
+    let r_data = rc.ra_data in
+    let r_var = rc.ra_var in
+    let r_params = rc.ra_params in
+    let params = List.map (mkVar) r_params in
+    let e_new = I.New {
+        I.exp_new_class_name = r_data;
+        I.exp_new_arguments = params;
+        I.exp_new_pos = no_pos;
+      } in
+    let assign = I.Assign {
+        I.exp_assign_op = I.OpAssign;
+        I.exp_assign_lhs = mkVar r_var;
+        I.exp_assign_path_id = None;
+        I.exp_assign_rhs = e_new;
+        I.exp_assign_pos = no_pos;
+      } in
+    let lhs = I.VarDecl {
+        I.exp_var_decl_type = CP.type_of_sv r_var;
+        I.exp_var_decl_decls = [(CP.name_of_sv r_var, None, no_pos)];
+        I.exp_var_decl_pos = no_pos;
+      } in
+    let seq = mkSeq lhs assign in
+    aux_subtrees st seq
+  | RlMkNull rc ->
+    let var = rc.rmn_var in
+    let null_e = rc.rmn_null in
+    let n_e = exp_to_iast null_e in
+    let v_decl = I.VarDecl {
+        exp_var_decl_type = CP.type_of_sv var;
+        exp_var_decl_decls = [(CP.name_of_sv var, None, no_pos)];
+        exp_var_decl_pos = no_pos;
+      } in
+    let assign = mkAssign (mkVar var) n_e in
+    let seq = mkSeq v_decl assign in
+    aux_subtrees st seq
+  (* | RlAllocate rcore -> *)
   | RlAssign rassign ->
     let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
     let c_exp = exp_to_iast rhs in
@@ -1993,6 +2077,10 @@ let rec rm_useless_stc (st_core:synthesis_tree_core) =
     else st_core.stc_subtrees |> List.hd |> rm_useless_stc
   | _ -> {st_core with stc_subtrees = List.map rm_useless_stc st_core.stc_subtrees}
 
+let trace_length goal =
+  let trace = goal.gl_trace in
+  List.length trace
+
 let rec is_fwrite_called trace rcore : bool  =
   match trace with
   | [] -> false
@@ -2120,8 +2208,10 @@ let compare_rule_frame_pred_vs_other r1 r2 =
   | RlFramePred _
   | RlFrameData _ -> if CP.is_res_sv r1.rfp_lhs then PriHigh
     else PriLow
-  | RlFuncRes _
-  | RlFuncCall _ -> PriHigh
+  | RlAllocate _ -> PriHigh
+  | RlMkNull _ -> PriHigh
+  (* | RlFuncRes _
+   * | RlFuncCall _ -> PriHigh *)
   | _ -> PriLow
 
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
@@ -2149,6 +2239,8 @@ let compare_rule goal r1 r2 =
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
   | RlPreAssign _ -> PriLow
+  | RlAllocate _ -> PriLow
+  | RlMkNull _ -> PriLow
   | _ -> PriEqual
 
 let is_code_rule trace = match trace with

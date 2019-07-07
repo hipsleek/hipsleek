@@ -19,12 +19,31 @@ void insert(node x, int a)
 //         q_4425::ll<flted_7_4407> & (n-1)-flted_7_4407=0).
 
 
-synthesize [node q_4409,node x,int a]
- x::node<Anon_4408,q_4409> * q_4409::ll<flted_7_4407>&
-q_4409!=null & n=flted_7_4407+1
-~>
- (exists Anon_60,q_61,Anon_62,
-    q_63: q_61::node<Anon_62,q_63> * x::node<Anon_60,q_61> * 
-      q_63::ll<flted_7_4407>& n = flted_7_4407+1).
+// synthesize [node q_4409,node x,int a]
+//  x::node<Anon_4408,q_4409> * q_4409::ll<flted_7_4407>&
+// q_4409!=null & n=flted_7_4407+1
+// ~>
+//  (exists Anon_60,q_61,Anon_62,
+//     q_63: q_61::node<Anon_62,q_63> * x::node<Anon_60,q_61> * 
+//       q_63::ll<flted_7_4407>& n = flted_7_4407+1).
 
-// to check choose function call rule
+synthesize [node x,int a]
+ emp&x=x & q_4402=null & a=a & flted_7_4400=0 & n-1=0
+~>
+ (exists f_r_4435,q_84: q_84::ll<f_r_4435> &
+flted_7_4400=0 & n-1=0 & f_r_4435=0).
+
+
+// synthesize [node fr38,node fr37,node x,int a]
+// x::node<An44,fr32> * fr38::node<a,fr37>&
+// fr37=null & flt44=0 & n=1 & fr32=null
+// ~>
+//  (exists fr33,An5,q6,An83: q6::node<An83,fr33> * x::node<An5,q6> &
+// fl44=0 & n=1 & fr33=null).
+// RlAllocate node([[int a,node x]])
+// [RlMkNull node f_r_4438,  null
+// [RlFrameData(node q_6, node x)
+// [RlFrameData(node x, node f_r_4436)
+// [RlAssign (node x =  f_r_4436)
+// [RlSkip
+// []]]]]]
