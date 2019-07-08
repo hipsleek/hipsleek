@@ -300,6 +300,13 @@ task "_tags" do |task|
 end
 
 namespace :commit do
+  task :init do
+    sh "mkdir src"
+    sh "mv *.ml src/"
+    sh "mv *.mll src/"
+    sh "mv *.mly src/"
+  end
+
   task :prep do
     sh "cp -a src/. ./"
   end
