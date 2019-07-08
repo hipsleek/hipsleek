@@ -2154,7 +2154,7 @@ let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 5.
-let synthesis_timeout = ref 60.
+let synthesis_timeout = ref 30.
 
 let dis_inv_baga () =
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen ..";

@@ -809,23 +809,68 @@ let export_songbird_satisfiability_results prog fs results =
  * other
  *********************************************************************)
 
-let solve_entailments prog entails =
+let solve_entailments_one prog entails =
   let entails = List.map (fun (x, y) -> (Syn.remove_exists x, y)) entails in
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
-  x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos;
+  let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
-  let ptree = SBPU.solve_entailments ~pre:"PP" ~post:"QQ" ~timeout:(Some 3) sb_prog sb_ents in
+  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 3) sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos;
+    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+        no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
   else None
+
+let get_entails entails str_list =
+  let aux str_list (ante, conseq) =
+    if Syn.get_hp_formula str_list ante != [] ||
+       Syn.get_hp_formula str_list conseq != [] then
+      (Syn.get_all_hp ante) @ (Syn.get_all_hp conseq) @ str_list
+    else str_list in
+  let all_str = List.fold_left aux str_list entails in
+  entails |> List.filter (fun (x,y) -> Syn.get_hp_formula all_str x != [] ||
+                                       Syn.get_hp_formula all_str y != [])
+
+let solve_entailments_two prog entails =
+  let entails = List.map (fun (x, y) -> (Syn.remove_exists x, y)) entails in
+  let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
+  let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
+  let entails1 = get_entails entails ["N_P1"; "N_Q1"] in
+  let entails2 = get_entails entails ["N_P2"; "N_Q2"] in
+  let aux entails num =
+    let sb_ents = List.map translate_entailment entails in
+    let sb_prog = translate_prog prog in
+    let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+    let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+    let ptree = if num = 1 then
+        SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 3)
+          sb_prog sb_ents
+      else SBPU.solve_entailments ~pre:"N_P2" ~post:"N_Q2" ~timeout:(Some 3)
+          sb_prog sb_ents in
+    let res = SBPFU.get_ptree_validity ptree in
+    let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
+    if res = SBG.MvlTrue then
+      let vdefns_list = SBPFU.get_solved_vdefns ptree in
+      let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+          no_pos in
+      let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
+      Some hps_list
+    else None in
+  let res1 = aux entails1 1 in
+  match res1 with
+  | None -> None
+  | Some hp1 ->
+    let res2 = aux entails2 2 in
+    match res2 with
+    | None -> None
+    | Some hp2 -> Some (hp1, hp2)
 
 let get_vars_in_fault_ents ents =
   let pr_vars = Cprinter.string_of_spec_var_list in
@@ -1199,13 +1244,24 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
         let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
         let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
         let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-        let has_pred = Syn.check_hp_formula hp_names assume_f in
-        if has_pred then
+        let has_pred = Syn.get_hp_formula hp_names assume_f in
+        if has_pred != [] then
+          let pred_name = List.find (fun x -> is_substr "Q" x) has_pred in
+          (* let pred_name = "QQ" ^ (string_of_int !Syn.r_pre) in *)
+          let pred_name = "N_" ^ pred_name in
+
           let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
           let n_args = (f |> CF.fv) @ syn_pre_vars in
           let n_args = if !Syn.is_return_cand then
               n_args @ (!Syn.syn_res_vars)
             else n_args in
+          let n_args = if !Syn.is_return_fst && pred_name = "N_Q1" then
+              n_args @ (!Syn.syn_res_vars)
+            else n_args in
+          let n_args = if !Syn.is_return_snd && pred_name = "N_Q2" then
+              n_args @ (!Syn.syn_res_vars)
+            else n_args in
+          let n_args = n_args |> CP.remove_dups_svl in
           let n_args = n_args |> List.filter
                                    (fun x -> Syn.is_int_var x || Syn.is_node_var x)
                        |> CP.remove_dups_svl in
@@ -1213,9 +1269,8 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
                           |> List.filter (fun x -> not(CP.mem_svl x n_args))
                           |> List.map CP.to_primed in
           let n_args = n_args @ var_decls |> CP.remove_dups_svl in
-          let pred_name = "QQ" ^ (string_of_int !Syn.r_pre) in
-          (* let n_pred_f = Syn.create_spec_pred n_args pred_name in *)
-          let n_pred_f = Syn.create_spec_pred n_args "QQ" in
+          let n_pred_f = Syn.create_spec_pred n_args pred_name in
+          (* let n_pred_f = Syn.create_spec_pred n_args "QQ" in *)
           n_pred_f
         else assume_f in
       let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
@@ -1245,9 +1300,9 @@ and hentail_after_sat_ebase prog ctx es bf =
     let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
     let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
     let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-    let conseq_hps = Syn.check_hp_formula hp_names bf.CF.formula_struc_base in
+    let conseq_hps = Syn.get_hp_formula hp_names bf.CF.formula_struc_base in
     let ante_hps = Syn.check_hp_formula hp_names es.CF.es_formula in
-    if conseq_hps then
+    if conseq_hps != [] then
       let ante = es.CF.es_formula in
       let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv |> List.filter (fun x ->
@@ -1256,10 +1311,11 @@ and hentail_after_sat_ebase prog ctx es bf =
                       |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
                       |> List.map CP.to_primed in
       let ante_vars = ante_vars @ var_decls |> CP.remove_dups_svl in
-      let pred_name = "PP" ^ (string_of_int !Syn.r_pre) in
       let () = Syn.r_pre := !Syn.r_pre + 1 in
-      (* let old_conseq = Syn.create_spec_pred ante_vars pred_name in *)
-      let old_conseq = Syn.create_spec_pred ante_vars "PP" in
+      let pred_name = List.find (fun x -> is_substr "P" x) conseq_hps in
+      let pred_name = "N_" ^ pred_name in
+      let old_conseq = Syn.create_spec_pred ante_vars pred_name in
+      (* let old_conseq = Syn.create_spec_pred ante_vars "PP" in *)
       let pure_ante = CF.mkEmp_formula ante in
       let n_conseq, residue =
         if !enable_frameless then

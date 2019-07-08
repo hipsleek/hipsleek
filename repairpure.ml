@@ -34,6 +34,7 @@ let pr_pos = string_of_loc
 let next_proc = ref false
 let stop = ref false
 let infestor_num = ref 0
+let is_repair_pair = ref false
 
 type block_tree = {
   bt_statements: C.exp list;
@@ -44,6 +45,39 @@ type block_tree = {
 and block_tree_node =
   | BtEmp
   | BtNode of block_tree
+
+type bck_tree = {
+  bck_statements: I.exp list;
+  bck_left: bck_tree_node;
+  bck_right: bck_tree_node;
+}
+
+and bck_tree_node =
+  | BckEmp
+  | BckNode of bck_tree
+
+let max a b = if a > b then a else b
+
+let get_bck_trace_stmts (bt:bck_tree_node) =
+  let rec aux (bt:bck_tree) =
+    match bt.bck_left, bt.bck_right with
+    | BckEmp, BckEmp -> [[bt.bck_statements]]
+    | BckEmp, BckNode right ->
+      let r_traces = aux right in
+      List.map (fun x -> bt.bck_statements::x) r_traces
+    | BckNode left, BckEmp ->
+      let l_trace = aux left in
+      List.map (fun x -> bt.bck_statements::x) l_trace
+    | BckNode left, BckNode right ->
+      let stmts = bt.bck_statements in
+      let left = aux left in
+      let right = aux right in
+      let l_traces = List.map (fun x -> stmts::x) left in
+      let r_traces = List.map (fun x -> stmts::x) right in
+      l_traces @ r_traces in
+  match bt with
+  | BckEmp -> report_error no_pos "body cannot be empty"
+  | BckNode node -> aux node
 
 let rec pr_bt (bt: block_tree) =
   let stmts = bt.bt_statements in
@@ -57,6 +91,19 @@ let rec pr_bt (bt: block_tree) =
 and pr_btn (btn: block_tree_node) = match btn with
   | BtEmp -> "BtEmp"
   | BtNode bt -> "BtNode (" ^ (pr_bt bt) ^ ")"
+
+let rec pr_bck (bck: bck_tree) =
+  let stmts = bck.bck_statements in
+  let str_stmts = stmts |> pr_list pr_exp in
+  let l_tree = bck.bck_left |> pr_bck_node in
+  let r_tree = bck.bck_right |> pr_bck_node in
+  str_stmts ^ "\n" ^
+  l_tree ^ "\n" ^
+  r_tree
+
+and pr_bck_node (btn: bck_tree_node) = match btn with
+  | BckEmp -> "BckEmp"
+  | BckNode bt -> "BckNode (" ^ (pr_bck bt) ^ ")"
 
 let get_statement_traces (bt:block_tree) =
   let rec aux (bt:block_tree) =
@@ -131,6 +178,33 @@ let get_block_traces (proc : C.proc_decl) =
   | None -> input_tree
   | Some c_exp -> aux c_exp input_tree
 
+let get_ast_traces (exp: I.exp) =
+  let input_tree = {
+      bck_statements = [];
+      bck_left = BckEmp;
+      bck_right = BckEmp;
+    } in
+  let rec aux (exp: I.exp) block_tree = match exp with
+    | I.Label (_, n_e) -> aux n_e block_tree
+    | I.Block exp -> aux exp.I.exp_block_body block_tree
+    | I.Seq s_exp ->
+      let block_tree = aux s_exp.I.exp_seq_exp1 block_tree in
+      aux s_exp.I.exp_seq_exp2 block_tree
+    | I.Return _ ->
+      let stmts = (block_tree.bck_statements) @ [exp] in
+      {block_tree with bck_statements = stmts}
+    | I.Assign a_exp ->
+      let stmts = (block_tree.bck_statements) @ [exp] in
+      {block_tree with bck_statements = stmts}
+    | I.Cond exp ->
+      let l_tree = aux exp.I.exp_cond_then_arm input_tree in
+      let r_tree = aux exp.I.exp_cond_else_arm input_tree in
+      {block_tree with bck_left = BckNode l_tree;
+                       bck_right = BckNode r_tree}
+    | _ -> block_tree in
+  let tree = aux exp input_tree in
+  BckNode tree
+
 let get_stmt_candidates (exp: I.exp) =
   let rec aux (exp:I.exp) list =
     match exp with
@@ -146,21 +220,21 @@ let get_stmt_candidates (exp: I.exp) =
     | _ -> [exp] @ list in
   List.rev(aux exp [])
 
-let rec get_var_decls pos (exp: C.exp) = match exp with
-  | C.VarDecl var ->
-    let v_pos = var.C.exp_var_decl_pos in
-    if get_start_lnum v_pos < get_start_lnum pos then
-      let v_name = var.C.exp_var_decl_name in
-      let v_typ = var.C.exp_var_decl_type in
-      [(v_typ, v_name)]
-    else []
-  | C.Seq seq -> (get_var_decls pos seq.C.exp_seq_exp1) @
-                 (get_var_decls pos seq.C.exp_seq_exp2)
-  | C.Cond cond -> (get_var_decls pos cond.C.exp_cond_then_arm) @
-                   (get_var_decls pos cond.C.exp_cond_else_arm)
-  | C.Block b -> get_var_decls pos b.C.exp_block_body
-  | C.Label e -> get_var_decls pos e.C.exp_label_exp
-  | _ -> []
+(* let rec get_var_decls pos (exp: C.exp) = match exp with
+ *   | C.VarDecl var ->
+ *     let v_pos = var.C.exp_var_decl_pos in
+ *     if get_start_lnum v_pos < get_start_lnum pos then
+ *       let v_name = var.C.exp_var_decl_name in
+ *       let v_typ = var.C.exp_var_decl_type in
+ *       [(v_typ, v_name)]
+ *     else []
+ *   | C.Seq seq -> (get_var_decls pos seq.C.exp_seq_exp1) @
+ *                  (get_var_decls pos seq.C.exp_seq_exp2)
+ *   | C.Cond cond -> (get_var_decls pos cond.C.exp_cond_then_arm) @
+ *                    (get_var_decls pos cond.C.exp_cond_else_arm)
+ *   | C.Block b -> get_var_decls pos b.C.exp_block_body
+ *   | C.Label e -> get_var_decls pos e.C.exp_label_exp
+ *   | _ -> [] *)
 
 let rec get_block_var_decls pos (exp: C.exp) = match exp with
   | C.VarDecl var ->
@@ -228,11 +302,12 @@ let rec type_of_exp (exp:I.exp) var_decls data_decls : typ = match exp with
       end
   | _ -> Void
 
-let create_fcode_exp (vars: typed_ident list) : I.exp =
+let create_fcode_exp (vars: typed_ident list) num : I.exp =
   let args = vars |> List.map snd
              |> List.map (fun x -> I.Var { exp_var_name = x;
                                            exp_var_pos = no_pos}) in
-  I.CallNRecv { exp_call_nrecv_method = fcode_str;
+  let str = fcode_str ^ (pr_int num) in
+  I.CallNRecv { exp_call_nrecv_method = str;
                 exp_call_nrecv_lock = None;
                 exp_call_nrecv_ho_arg = None;
                 exp_call_nrecv_arguments = args;
@@ -1628,3 +1703,31 @@ let get_all_func iproc =
   let body = iproc.I.proc_body |> Gen.unsome in
   Debug.no_1 "get_all_func" pr_exp (pr_list pr_id)
     (fun _ -> get_all_func_x body) body
+
+let get_var_decls_x pos (exp:I.exp) =
+  let traces = get_ast_traces exp in
+  let traces = get_bck_trace_stmts traces in
+  let aux_list list =
+    let list = list |> List.concat in
+    let pos_list = list |> List.map I.get_exp_pos in
+    pos_list |> List.exists (VarGen.eq_loc pos) in
+  let get_var_decl (exp:I.exp) = match exp with
+    | I.VarDecl var ->
+      let v_pos = var.I.exp_var_decl_pos in
+      if get_start_lnum v_pos <= get_start_lnum pos then
+        let typ = var.I.exp_var_decl_type in
+        var.I.exp_var_decl_decls |> List.map (fun (x, _, _) -> x)
+        |> List.map (CP.mk_typed_sv typ)
+      else []
+    | _ -> [] in
+  let aux_var_decl list =
+    let list = list |> List.concat in
+    let list = list |> List.map get_var_decl |> List.concat in
+    list in
+  let traces = List.filter aux_list traces in
+  let var_decls = List.map aux_var_decl traces in
+  var_decls |> List.concat
+
+let get_var_decls pos (exp:I.exp) : CP.spec_var list =
+  Debug.no_1 "get_var_decls" Iprinter.string_of_exp pr_vars
+    (fun _ -> get_var_decls_x pos exp) exp

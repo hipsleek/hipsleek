@@ -795,7 +795,7 @@ void change(ref int[] pat,ref int[] sub)
 {
     int[]  line;
     bool result;
-    
+
     result = getline(line, 100);//MAXSTR
     // while ((result)) {
 	subline(line, pat, sub);
@@ -841,7 +841,6 @@ int main(int argc)
    {
        sub[0] = 0;
    }
-   
    //change(pat, sub);
    return 0;
 }

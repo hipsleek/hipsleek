@@ -201,7 +201,7 @@ let choose_rule_assign_x goal : rule list =
     not(SB.check_pure_entail ante_pf conseq) && (SB.check_sat goal.gl_prog n_pre) in
   let eq_pairs = eq_pairs |> List.filter (filter_with_ante goal.gl_pre_cond) in
   let mk_rule (var, exp) =
-    if CP.is_res_sv var then RlReturn {r_exp = exp}
+    if CP.is_res_sv var then RlReturn {r_exp = exp; r_checked = false;}
     else
       RlAssign {
         ra_lhs = var;
@@ -224,26 +224,6 @@ let get_node_vars post_cond =
     | Some f -> CF.is_emp_formula f |> negate
     | None -> false in
   post_vars |> List.filter filter_fun
-
-let choose_rule_return goal =
-  let post = goal.gl_post_cond in
-  let post_vars = post |> get_node_vars in
-  if List.length post_vars = 1 then
-    let p_var = List.hd post_vars in
-    if CP.is_res_sv p_var then
-      let pre = goal.gl_pre_cond in
-      let pre_vars = pre |> get_node_vars in
-      if List.length pre_vars = 1 then
-        let p_var = List.hd pre_vars in
-        if CP.is_res_sv p_var then []
-        else
-          let rule = RlReturn {
-              r_exp = CP.mkVar p_var no_pos;
-            } in
-          [rule]
-      else []
-    else []
-  else []
 
 let choose_rule_fwrite goal =
   let pre = goal.gl_pre_cond in
@@ -560,7 +540,7 @@ let choose_rule_numeric_x goal =
               let def = CP.norm_exp def in
               if filter_with_ante pre (cur_var, def) then
                 let rule = if CP.is_res_sv cur_var then
-                    RlReturn { r_exp = def}
+                    RlReturn { r_exp = def; r_checked = false}
                   else
                     RlAssign {
                       ra_lhs = cur_var;
@@ -613,6 +593,33 @@ let find_instantiate_var_x goal var =
 let find_instantiate_var goal var =
   Debug.no_2 "find_instantiate_var" pr_goal pr_var pr_vars
     (fun _ _ -> find_instantiate_var_x goal var) goal var
+
+let choose_rule_return goal =
+  let post = goal.gl_post_cond in
+  let pre = goal.gl_pre_cond in
+  let post_vars = post |> get_node_vars in
+  let all_vars = goal.gl_vars in
+  let check_return res_var r_var =
+    let n_pf = CP.mkEqVar res_var r_var no_pos in
+    let n_pre = CF.add_pure_formula_to_formula n_pf pre in
+    let ent_check, _ = SB.check_entail_residue goal.gl_prog n_pre post in
+    ent_check in
+  if List.length post_vars = 1 then
+    let p_var = List.hd post_vars in
+    if CP.is_res_sv p_var then
+      let pre = goal.gl_pre_cond in
+      let pre_vars = pre |> get_node_vars
+                     |> List.filter (fun x -> CP.mem x all_vars && not(CP.is_res_sv x)) in
+      let pre_vars = List.filter (check_return p_var) pre_vars in
+      let aux pre_var =
+          let rule = RlReturn {
+              r_exp = CP.mkVar pre_var no_pos;
+              r_checked = true;
+            } in
+          [rule] in
+      pre_vars |> List.map aux |> List.concat
+    else []
+  else []
 
 let choose_rule_frame_pred goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -743,20 +750,24 @@ let rec choose_rule_interact goal rules =
                      ^ (string_of_int (List.length rules)) ^ ": " in
     let () = x_binfo_pp choose_str no_pos in
     let choice = String.uppercase_ascii (String.trim (read_line ())) in
-    let rule_id = int_of_string (choice) in
-    let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
-    let chosen_rules, other_rules =
-      List.partition (fun (x, _) -> x + 1 = rule_id) rules_w_ids in
-    if chosen_rules = [] then
-      let err_str = "Wrong choose, please choose again" in
-      let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
-      choose_rule_interact goal rules
-    else
-      let chosen_rules = List.map snd chosen_rules in
-      let other_rules = List.map snd other_rules in
-      let () = x_binfo_hp (add_str "You chose" (pr_list_ln pr_rule))
-          chosen_rules no_pos in
-      chosen_rules @ other_rules
+    (* if choice = "a" then
+     *   let () = enable_i := false in
+     *   rules
+     * else *)
+      let rule_id = int_of_string (choice) in
+      let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
+      let chosen_rules, other_rules =
+        List.partition (fun (x, _) -> x + 1 = rule_id) rules_w_ids in
+      if chosen_rules = [] then
+        let err_str = "Wrong choose, please choose again" in
+        let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
+        choose_rule_interact goal rules
+      else
+        let chosen_rules = List.map snd chosen_rules in
+        let other_rules = List.map snd other_rules in
+        let () = x_binfo_hp (add_str "You chose" (pr_list_ln pr_rule))
+            chosen_rules no_pos in
+        chosen_rules @ other_rules
 
 let choose_rule_mk_null goal : rule list=
   if has_mk_null goal.gl_trace then []
@@ -807,8 +818,8 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_func_call goal) in
     let rs = rs @ choose_rule_frame_data goal in
     let rs = rs @ (choose_rule_post_assign goal) in
-    let rs = rs @ (choose_rule_allocate goal) in
-    let rs = rs @ (choose_rule_mk_null goal) in
+    (* let rs = rs @ (choose_rule_allocate goal) in *)
+    (* let rs = rs @ (choose_rule_mk_null goal) in *)
     let rs = rs @ (choose_rule_return goal) in
     let rs = eliminate_useless_rules goal rs in
     let rs = reorder_rules goal rs in
@@ -880,7 +891,8 @@ let process_rule_return goal rcore =
   let lhs = goal.gl_post_cond |> CF.fv |> List.find CP.is_res_sv in
   let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rcore.r_exp no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-  let ent_check, _ = SB.check_entail_residue goal.gl_prog n_pre post in
+  (* let ent_check, _ = SB.check_entail_residue goal.gl_prog n_pre post in *)
+  let ent_check = SB.check_entail_exact goal.gl_prog n_pre post in
   (* let ent_check, _ = check_entail_sleek goal.gl_prog n_pre post in *)
   match ent_check with
   | true -> mk_derivation_success goal (RlReturn rcore)
@@ -959,9 +971,7 @@ let aux_func_call goal rule fname params subst res_var =
                               gl_trace = rule::goal.gl_trace;
                               gl_pre_cond = post_state} in
     mk_derivation_subgoals goal rule [sub_goal]
-  | _ ->
-    let () = x_tinfo_pp "marking" no_pos in
-    mk_derivation_fail goal rule
+  | _ -> mk_derivation_fail goal rule
 
 let process_rule_func_call goal rcore : derivation =
   let fname, params = rcore.rfc_fname, rcore.rfc_params in
@@ -1062,7 +1072,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
   if trace_length goal.gl_trace > 2 || List.length goal.gl_trace > 6
      || !fail_branch_num > 200 then
-    let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
+    let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
     let cur_time = get_time () in
@@ -1149,15 +1159,15 @@ let synthesize_program goal =
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
-  let () = x_binfo_hp (add_str "fail branches" pr_int) (!fail_branch_num) no_pos in
   match st_status with
   | StValid st_core ->
     (* let st_core = rm_useless_stc st_core in *)
-    x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos;
+    let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
-    let () = x_tinfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
+    let () = x_binfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
     i_exp
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
+    let () = x_binfo_hp (add_str "fail branches" pr_int) (!fail_branch_num) no_pos in
     None
 
 let synthesize_cast_stmts goal =
@@ -1173,8 +1183,7 @@ let synthesize_cast_stmts goal =
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     None
 
-let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs =
-  (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
+let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = mk_goal_w_procs prog called_procs pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
@@ -1182,7 +1191,7 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs =
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
   let n_proc, res = match iast_exp with
     | None -> (i_proc, false)
-    | Some exp0 -> (replace_exp_proc exp0 i_proc, true) in
+    | Some exp0 -> (replace_exp_proc exp0 i_proc num, true) in
   let n_iprocs = List.map (fun x -> if contains pname x.Iast.proc_name
                             then n_proc else x) i_procs in
   ({iprog with I.prog_proc_decls = n_iprocs}, res)
@@ -1201,14 +1210,12 @@ let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
     let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
     Some n_body
 
-let synthesize_entailments (iprog:IA.prog_decl) prog proc proc_names =
+let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
   let entailments = !Synthesis.entailments |> List.rev in
-  x_binfo_hp (add_str "proc" (pr_list pr_id)) proc_names no_pos;
-  let hps = SB.solve_entailments prog entailments in
+  let hps = SB.solve_entailments_one prog entailments in
   match hps with
   | None -> ()
   | Some hps_list ->
-    let () = x_tinfo_pp "marking" no_pos in
     let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
         iprog.IA.prog_proc_decls in
     let decl_vars = match iproc.IA.proc_body with
@@ -1221,8 +1228,8 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc proc_names =
     let helper hps =
       if !stop then ()
       else
-        let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
-        let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
+        let post_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
+        let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P2") hps in
         let post = post_hp.Cast.hp_formula in
         let pre = pre_hp.Cast.hp_formula |> remove_exists in
         if isHFalse post then
@@ -1235,7 +1242,7 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc proc_names =
             List.mem proc_name proc_names in
           let called_procs = List.filter filter_fun all_procs in
           let (n_iprog, res) = synthesize_wrapper iprog prog proc
-              pre post syn_vars called_procs in
+              pre post syn_vars called_procs 1 in
           if res then
             try
               let cprog, _ = Astsimp.trans_prog n_iprog in
@@ -1245,6 +1252,47 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc proc_names =
             with _ -> ()
           else () in
     List.iter helper hps_list
+
+let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
+  let entailments = !Synthesis.entailments |> List.rev in
+  let hps = SB.solve_entailments_two prog entailments in
+  let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
+      iprog.IA.prog_proc_decls in
+  let decl_vars = match iproc.IA.proc_body with
+    | None -> []
+    | Some exp -> get_var_decls (Gen.unsome !repair_pos) exp in
+  let syn_vars = proc.Cast.proc_args
+                 |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+  let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
+  let helper iprog hps num =
+    let post_hp = if num = 1 then
+        List.find (fun x -> x.Cast.hp_name = "N_Q1") hps
+      else List.find (fun x -> x.Cast.hp_name = "N_Q2") hps in
+    let pre_hp = if num = 1 then
+        List.find (fun x -> x.Cast.hp_name = "N_P1") hps
+      else List.find (fun x -> x.Cast.hp_name = "N_P2") hps in
+    let post = post_hp.Cast.hp_formula in
+    let pre = pre_hp.Cast.hp_formula |> remove_exists in
+    let all_procs = CA.list_of_procs prog in
+    let filter_fun proc =
+      let proc_name = proc.CA.proc_name |> CA.unmingle_name in
+      List.mem proc_name proc_names in
+    let called_procs = List.filter filter_fun all_procs in
+    let (n_iprog, res) = synthesize_wrapper iprog prog proc
+        pre post syn_vars called_procs num in
+    (n_iprog, res) in
+  match hps with
+  | None -> None
+  | Some (hps1, hps2) ->
+    let hp1 = List.hd hps1 in
+    let (n_iprog, res) = helper iprog hp1 1 in
+    if res then
+      let hp2 = List.hd hps2 in
+      let (n_iprog, res) = helper n_iprog hp2 2 in
+      if res then Some n_iprog
+      else None
+    else None
+
 
 let statement_search (iprog: IA.prog_decl) prog proc (suspicious: I.exp)
     candidates =
@@ -1265,7 +1313,7 @@ let statement_search (iprog: IA.prog_decl) prog proc (suspicious: I.exp)
 
 let synthesize_block_statements iprog prog orig_proc proc decl_vars =
   let entailments = !Synthesis.entailments |> List.rev in
-  let hps = SB.solve_entailments prog entailments in
+  let hps = SB.solve_entailments_one prog entailments in
   let syn_vars = proc.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
@@ -1301,7 +1349,7 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
 
 let infer_block_specs (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
-  let hps = SB.solve_entailments prog entailments in
+  let hps = SB.solve_entailments_one prog entailments in
   match hps with
   | None -> None
   | Some hps_list ->

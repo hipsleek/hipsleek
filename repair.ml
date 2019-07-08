@@ -30,38 +30,39 @@ let filter_cand buggy_loc cand =
     let cand_lnum = cand_pos.start_pos.Lexing.pos_lnum in
     b_lnum >= cand_lnum
 
-let mk_candidate_proc (iproc:I.proc_decl) args candidate =
+let mk_candidate_proc (iproc:I.proc_decl) args candidate num =
   let body = Gen.unsome iproc.I.proc_body in
   let loc = I.get_exp_pos candidate in
-  let helper sv = let CP.SpecVar (a, b, _) = sv in
-    (a,b) in
-  let decl_vars = Synthesis.get_var_decls loc body |> List.map helper in
+  let helper sv = (CP.type_of_sv sv, CP.name_of_sv sv) in
+  let decl_vars = get_var_decls loc body |> List.map helper in
   let args = args @ decl_vars in
-  let fcode = create_fcode_exp args in
-  let n_body = Some (replace_exp body  fcode candidate) in
+  let fcode = create_fcode_exp args num in
+  let n_body = Some (replace_exp body fcode candidate) in
   ({iproc with proc_body = n_body}, args)
 
-let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
-  let n_iproc, args = mk_candidate_proc iproc args candidate in
+let rec helper args = match args with
+  | [] -> ""
+  | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
+  | h::t -> let tail = helper t in
+    let head = string_of_typ (fst h) ^ " " ^ (snd h) in
+    head ^ "," ^ tail
+
+let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
+  let n_iproc, args = mk_candidate_proc iproc args candidate num in
   let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
   let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
   let () = Syn.block_var_decls := decl_vars in
-  let rec helper args = match args with
-    | [] -> ""
-    | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
-    | h::t -> let tail = helper t in
-      let head = string_of_typ (fst h) ^ " " ^ (snd h) in
-      head ^ "," ^ tail in
   let names = args |> List.map snd in
   let arg_str = helper args in
   let arg_names = pr_idents_wo_brackets names "," in
   let typ = type_of_exp candidate [] [] in
-  let fcode = hp_str ^ " P(" ^ arg_str ^ ").\n" ^
-              hp_str ^ " Q(" ^ arg_str ^ ").\n" ^
-              (string_of_typ typ) ^  " " ^ fcode_str ^ "(" ^ arg_str ^ ")\n" ^
-              "requires P(" ^ arg_names ^ ")\n" ^
-              "ensures Q(" ^ arg_names ^ ");" in
+  let fc_str = fcode_str ^ (pr_int num) in
+  let fcode = hp_str ^ " P" ^ (pr_int num) ^ "(" ^ arg_str ^ ").\n" ^
+              hp_str ^ " Q" ^ (pr_int num) ^ "(" ^ arg_str ^ ").\n" ^
+              (string_of_typ typ) ^  " " ^ fc_str ^ "(" ^ arg_str ^ ")\n" ^
+              "requires P" ^ (pr_int num) ^ "(" ^ arg_names ^ ")\n" ^
+              "ensures Q" ^ (pr_int num) ^ "(" ^ arg_names ^ ");" in
   let () = x_tinfo_hp (add_str "fcode" pr_id) fcode no_pos in
   let n_prog = Parser.parse_hip_string "fcode" fcode in
   let procs = n_prog.I.prog_proc_decls in
@@ -81,7 +82,8 @@ let repair_heap_template () =
   let prog = !Syn.syn_cprog |> Gen.unsome in
   let proc_name = !Syn.tmpl_proc_name |> Gen.unsome in
   let proc = C.find_proc prog proc_name in
-  let _ = Synthesizer.synthesize_entailments iprog prog proc in
+  let () = x_binfo_hp (add_str "proc_name" pr_id) proc_name no_pos in
+  let _ = Synthesizer.synthesize_entailments_one iprog prog proc [] in
   let res = !Synthesis.repair_res in
   ()
 
@@ -89,7 +91,7 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     (r_iproc: I.proc_decl) args candidate =
   if !Syn.repair_res != None then None
   else
-    let iprog = mk_candidate_iprog iprog r_iproc args candidate in
+    let iprog = mk_candidate_iprog iprog r_iproc args candidate 1 in
     let () = x_tinfo_pp "marking" no_pos in
     let () = Syn.entailments := [] in
     let () = Syn.rel_num := 0 in
@@ -110,12 +112,186 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       let proc = C.find_proc prog proc_name in
       let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
       let proc_names = get_all_func r_iproc in
-      let _ = Synthesizer.synthesize_entailments iprog prog proc proc_names in
+      let _ = Synthesizer.synthesize_entailments_one iprog prog proc proc_names in
       !Synthesis.repair_res
     with _ -> None
 
+let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
+  let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
+  let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+  let cands, others = List.partition (filter_cand !repair_loc) cands (* |> List.rev *) in
+  let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+  let locs = cands |> List.map I.get_exp_pos in
+  let () = x_tinfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
+  let cproc = !Syn.repair_proc |> Gen.unsome in
+  let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
+  let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+  let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
+                 |> CP.remove_dups_svl in
+  let () = Syn.syn_res_vars := res_vars in
+  let args = cproc.C.proc_args in
+  let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in
+  let res = cands |> List.map aux |> List.filter (fun x -> x != None) in
+  if res != [] then
+    let () = x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
+      no_pos in
+    true
+  else
+    let res = others |> List.map aux |> List.filter (fun x -> x != None) in
+    if res = [] then
+      let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
+      false
+    else
+      let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
+      true
+
+let map_stmt_with_level traces =
+  let calculate_level traces =
+    let rec aux_node traces = match traces with
+    | BckEmp -> 0
+    | BckNode node ->
+      let l1 = aux_node node.bck_left in
+      let l2 = aux_node node.bck_right in
+      if l1 > l2 then l1 + 1 else l2 + 1 in
+    aux_node traces in
+  let rec aux (traces) bck_list = match traces with
+    | BckEmp -> bck_list
+    | BckNode node ->
+      let level = calculate_level traces in
+      let bck_list = (node.bck_statements, level)::bck_list in
+      let bck_list = aux node.bck_left bck_list in
+      aux node.bck_right bck_list in
+  aux traces []
+
+let get_candidate_pairs pairs level =
+  let pairs = pairs |> List.filter (fun (_, x) -> x = 1) in
+  let rec aux list num =
+    if num <= 1 then
+      List.map (fun x -> [x]) list
+    else
+      let l1 = aux list (num-1) in
+      let aux_a x =
+        let aux_b y =
+          if List.mem x y then []
+          else x::y in
+        l1 |> List.map aux_b |> List.filter (fun x -> x != [])
+        |> List.concat in
+      list |> List.map aux_a |> List.filter (fun x -> x != []) in
+  aux pairs level |> List.filter (fun x -> x != []) |> List.concat
+
+let get_level_two_cand pairs =
+  let pairs = pairs |> List.filter (fun (_, x) -> x = 1) in
+  let blocks = pairs |> List.map fst in
+  if List.length pairs < 2 then []
+  else
+    let firsts = blocks in
+    let aux list block =
+      let seconds = List.filter (fun x -> x!= block) blocks in
+      let n_list = seconds |> List.map (fun y -> (block, y)) in
+      let n_list = List.filter (fun (x,y) -> not(List.mem (y,x) list)) n_list in
+      n_list @ list in
+    List.fold_left aux [] firsts
+
+let mk_pair_candidate_iprog iprog iproc (fst_cand, snd_cand) =
+  let args = iproc.I.proc_args in
+  let args = args |> List.map
+               (fun x -> (x.I.param_type, x.I.param_name)) in
+  let aux iprog iproc candidate num =
+    let n_iproc, args = mk_candidate_proc iproc args candidate num in
+    let () = x_tinfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
+    let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
+    let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
+    let () = Syn.block_var_decls := decl_vars in
+    let names = args |> List.map snd in
+    let arg_str = helper args in
+    let arg_names = pr_idents_wo_brackets names "," in
+    let typ = type_of_exp candidate [] [] in
+    let fc_str = fcode_str ^ (pr_int num) in
+    let fcode = hp_str ^ " P" ^ (pr_int num) ^ "(" ^ arg_str ^ ").\n" ^
+              hp_str ^ " Q" ^ (pr_int num) ^ "(" ^ arg_str ^ ").\n" ^
+              (string_of_typ typ) ^  " " ^ fc_str ^ "(" ^ arg_str ^ ")\n" ^
+              "requires P" ^ (pr_int num) ^ "(" ^ arg_names ^ ")\n" ^
+              "ensures Q" ^ (pr_int num) ^ "(" ^ arg_names ^ ");" in
+
+    let () = x_tinfo_hp (add_str "fcode" pr_id) fcode no_pos in
+    let n_prog = Parser.parse_hip_string "fcode" fcode in
+    let procs = n_prog.I.prog_proc_decls in
+    let hps = n_prog.I.prog_hp_decls in
+    let () = x_tinfo_hp (add_str "hp" pr_hps) hps no_pos in
+    let helper_proc proc = if proc.I.proc_name = iproc.I.proc_name
+      then n_iproc else proc in
+    let n_procs = List.map helper_proc iprog.I.prog_proc_decls in
+    let n_procs = n_prog.I.prog_proc_decls @ n_procs in
+    let n_hps = n_prog.I.prog_hp_decls @ iprog.I.prog_hp_decls in
+    let n_prog = {iprog with prog_hp_decls = n_hps;
+                             prog_proc_decls = n_procs} in
+    (n_prog, n_iproc) in
+  let (n_prog, n_iproc) = aux iprog iproc fst_cand 1 in
+  let (n_prog, _) = aux n_prog n_iproc snd_cand 2 in
+  n_prog
+
+let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
+  if !is_repair_pair then None
+  else
+    let iprog = mk_pair_candidate_iprog iprog r_iproc (fst_cand, snd_cand) in
+    let () = Syn.entailments := [] in
+    let () = Syn.rel_num := 0 in
+    let () = Syn.res_num := 0 in
+    let () = Syn.repair_res := None in
+    let () = if is_return_exp fst_cand then
+        Syn.is_return_fst := true
+      else Syn.is_return_fst := false in
+    let () = if is_return_exp snd_cand then
+        Syn.is_return_snd := true
+      else Syn.is_return_snd := false in
+    let () = verified_procs := [] in
+    let () = Syn.syn_pre := None in
+    let cprog, _ = Astsimp.trans_prog iprog in
+    let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
+    try
+      let () = Typechecker.check_prog_wrapper iprog cprog in
+      let () = x_binfo_pp "start synthesis process" no_pos in
+      let iprog = !Syn.syn_iprog |> Gen.unsome in
+      let prog = !Syn.syn_cprog |> Gen.unsome in
+      let proc = C.find_proc prog proc_name in
+      let () = Syn.repair_pos_fst := Some (I.get_exp_pos fst_cand) in
+      let () = Syn.repair_pos_snd := Some (I.get_exp_pos snd_cand) in
+      let proc_names = get_all_func r_iproc in
+      let res = Synthesizer.synthesize_entailments_two iprog prog proc proc_names in
+      match res with
+      | Some _ ->
+        let () = is_repair_pair := true in
+        res
+      | _ -> None
+    with _ -> None
+
+let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
+  let body = r_iproc.I.proc_body |> Gen.unsome in
+  let traces = get_ast_traces body in
+  let () = x_binfo_hp (add_str "traces" pr_bck_node) traces no_pos in
+  let blocks = map_stmt_with_level traces in
+  let candidates = get_level_two_cand blocks in
+  let aux_pair (fst,snd) =
+    fst |> List.map (fun x ->
+        snd |> List.map (fun y -> (x,y))) |> List.concat in
+  let pairs = List.map aux_pair candidates |> List.concat in
+  let pr_pairs = pr_list (pr_pair pr_exp pr_exp) in
+  let () = x_binfo_hp (add_str "candidates" pr_pairs) pairs no_pos in
+  let cproc = !Syn.repair_proc |> Gen.unsome in
+  let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
+  let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+  let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
+                 |> CP.remove_dups_svl in
+  let () = Syn.syn_res_vars := res_vars in
+  let r_list = pairs |> List.map (repair_one_pair repair_proc iprog r_iproc) in
+  let r_list = List.filter (fun x -> x!= None) r_list in
+  if r_list != [] then
+    let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
+    true
+  else
+    false
+
 let repair_iprog (iprog:I.prog_decl) : bool =
-  let start_time = get_time () in
   match (!Typechecker.repair_proc) with
   | (Some repair_proc) ->
     let p_name = Cast.unmingle_name repair_proc in
@@ -123,42 +299,8 @@ let repair_iprog (iprog:I.prog_decl) : bool =
     let () = start_repair := true in
     let procs = iprog.I.prog_proc_decls in
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
-    let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
-    let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let cands, others = List.partition (filter_cand !repair_loc) cands (* |> List.rev *) in
-    let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let locs = cands |> List.map I.get_exp_pos in
-    let () = x_tinfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
-    let cproc = !Syn.repair_proc |> Gen.unsome in
-    let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
-    let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
-    let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
-                   |> CP.remove_dups_svl in
-    let () = Syn.syn_res_vars := res_vars in
-    let args = cproc.C.proc_args in
-    let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in
-    let res = cands |> List.map aux |> List.filter (fun x -> x != None) in
-    if res != [] then
-        let r_time = get_time() -. start_time in
-        x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
-        x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
-        x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
-          no_pos;
-        x_binfo_hp (add_str "check_entail" pr_int) !Syn.check_entail_num no_pos;
-        true
-    else
-      let res = others |> List.map aux |> List.filter (fun x -> x != None) in
-      if res = [] then
-        let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
-        false
-      else
-        let r_time = get_time() -. start_time in
-        x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
-        x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos;
-        x_binfo_hp (add_str "failed branches" pr_int) !Syn.fail_branch_num
-          no_pos;
-        x_binfo_hp (add_str "check_entail" pr_int) !Syn.check_entail_num no_pos;
-        true
+    (* repair_level_one iprog repair_proc r_iproc *)
+    repair_level_two iprog repair_proc r_iproc
   | _ -> false
 
 let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)

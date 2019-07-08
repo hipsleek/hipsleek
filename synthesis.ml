@@ -35,8 +35,12 @@ let check_entail_num = ref 0
 let r_pre = ref 0
 
 let repair_pos = ref (None : VarGen.loc option)
+let repair_pos_fst = ref (None : VarGen.loc option)
+let repair_pos_snd = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
 let is_return_cand = ref false
+let is_return_fst = ref false
+let is_return_snd = ref false
 let check_post_list = ref ([]: bool list)
 let unk_hps = ref ([] : Cast.hp_decl list)
 let block_var_decls = ref ([]: CP.spec_var list)
@@ -181,7 +185,8 @@ and rule_assign = {
 }
 
 and rule_return = {
-  r_exp : CP.exp
+  r_exp : CP.exp;
+  r_checked: bool;
 }
 
 type goal = {
@@ -980,7 +985,12 @@ let create_spec_pred vars pred_name =
     Cast.hp_view = None;
     Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
   } in
-  let () = unk_hps := hp_decl::(!unk_hps) in
+  let cur_hps = !unk_hps in
+  (* let cur_hps = if is_substr "P" pred_name || is_substr "Q" pred_name then
+   *   let filter_fun hp = not(is_substr "P" hp.C.hp_name || is_substr "Q" hp.C.hp_name) in
+   *   List.filter filter_fun cur_hps
+   *   else cur_hps in *)
+  let () = unk_hps := hp_decl::cur_hps in
   let hrel = CF.HRel (hl_name, args, no_pos) in
   let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
   hrel_f
@@ -1758,7 +1768,9 @@ let rec synthesize_st_core st : Iast.exp option=
     let seq = mkSeq v_decl rhs_exp in
     let seq2 = mkSeq seq assign_exp in
     aux_subtrees st seq2
-  | RlReturn rcore -> let c_exp = exp_to_iast rcore.r_exp in
+  | RlReturn rcore ->
+    let () = x_binfo_pp "marking" no_pos in
+    let c_exp = exp_to_iast rcore.r_exp in
     Some (I.Return {
       exp_return_val = Some c_exp;
       exp_return_path_id = None;
@@ -1837,41 +1849,44 @@ and aux_subtrees st cur_codes =
       let seq = mkSeq cur_codes st_code in Some seq
   | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
 
-let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
-  | I.Assign e ->
-    let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
-    let n_e2 = replace_exp_aux nexp e.I.exp_assign_rhs in
-    I.Assign {e with exp_assign_lhs = n_e1;
-                   exp_assign_rhs = n_e2}
-  | I.Bind e ->
-    let n_body = replace_exp_aux nexp e.I.exp_bind_body in
-    I.Bind {e with exp_bind_body = n_body}
-  | I.Block e ->
-    let n_body = replace_exp_aux nexp e.I.exp_block_body in
-    I.Block {e with exp_block_body = n_body}
-  | I.Cast e ->
-    let n_body = replace_exp_aux nexp e.I.exp_cast_body in
-    I.Cast {e with exp_cast_body = n_body;}
-  | I.CallNRecv e ->
-    let name = e.I.exp_call_nrecv_method in
-    let () = x_tinfo_hp (add_str "name" pr_id) name no_pos in
-    if name = "fcode" then nexp
-    else exp
-  | I.UnkExp _ -> let () = x_tinfo_pp "marking" no_pos in
-    exp
-  | I.Cond e ->
-    let () = x_tinfo_pp "marking" no_pos in
-    let r1 = replace_exp_aux nexp e.exp_cond_then_arm in
-    let r2 = replace_exp_aux nexp e.exp_cond_else_arm in
-    I.Cond {e with exp_cond_then_arm = r1;
-                 exp_cond_else_arm = r2}
-  | I.Label (a, body) -> Label (a, replace_exp_aux nexp body)
-  | I.Seq e ->
-    let n_e1 = replace_exp_aux nexp e.I.exp_seq_exp1 in
-    let n_e2 = replace_exp_aux nexp e.I.exp_seq_exp2 in
-    I.Seq {e with exp_seq_exp1 = n_e1;
-                exp_seq_exp2 = n_e2}
-  | _ -> exp
+let replace_exp_aux nexp exp num : I.exp =
+  let rec aux nexp exp = match (exp:I.exp) with
+    | I.Assign e ->
+      let n_e1 = aux nexp e.I.exp_assign_lhs in
+      let n_e2 = aux nexp e.I.exp_assign_rhs in
+      I.Assign {e with exp_assign_lhs = n_e1;
+                       exp_assign_rhs = n_e2}
+    | I.Bind e ->
+      let n_body = aux nexp e.I.exp_bind_body in
+      I.Bind {e with exp_bind_body = n_body}
+    | I.Block e ->
+      let n_body = aux nexp e.I.exp_block_body in
+      I.Block {e with exp_block_body = n_body}
+    | I.Cast e ->
+      let n_body = aux nexp e.I.exp_cast_body in
+      I.Cast {e with exp_cast_body = n_body;}
+    | I.CallNRecv e ->
+      let name = e.I.exp_call_nrecv_method in
+      let () = x_tinfo_hp (add_str "name" pr_id) name no_pos in
+      let fc = "fcode" ^ (pr_int num) in
+      if name = fc then nexp
+      else exp
+    | I.UnkExp _ -> let () = x_tinfo_pp "marking" no_pos in
+      exp
+    | I.Cond e ->
+      let () = x_tinfo_pp "marking" no_pos in
+      let r1 = aux nexp e.exp_cond_then_arm in
+      let r2 = aux nexp e.exp_cond_else_arm in
+      I.Cond {e with exp_cond_then_arm = r1;
+                     exp_cond_else_arm = r2}
+    | I.Label (a, body) -> Label (a, aux nexp body)
+    | I.Seq e ->
+      let n_e1 = aux nexp e.I.exp_seq_exp1 in
+      let n_e2 = aux nexp e.I.exp_seq_exp2 in
+      I.Seq {e with exp_seq_exp1 = n_e1;
+                    exp_seq_exp2 = n_e2}
+    | _ -> exp in
+  aux nexp exp
 
 let rec replace_cexp_aux nexp exp : C.exp =
   match (exp:C.exp) with
@@ -1906,10 +1921,10 @@ let rec replace_cexp_aux nexp exp : C.exp =
                 C.exp_seq_exp2 = n_e2}
   | _ -> exp
 
-let replace_exp_proc n_exp proc =
+let replace_exp_proc n_exp proc num =
   let n_body = match proc.Iast.proc_body with
     | None -> None
-    | Some exp -> Some (replace_exp_aux n_exp exp) in
+    | Some exp -> Some (replace_exp_aux n_exp exp num) in
   x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos;
   x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos;
   {proc with I.proc_body = n_body}
@@ -2019,6 +2034,27 @@ let rec check_hp_hf_x hp_names hf = match hf with
                (check_hp_hf_x hp_names sf.CF.h_formula_star_h2)
   | _ -> report_error no_pos "unhandled case of check_conseq_hp"
 
+let rec get_hp_hf hp_names hf =
+  match hf with
+  | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
+  | CF.HFalse -> []
+  | CF.HRel (sv, args, _) ->
+    let sv_name = CP.name_of_sv sv in
+    if List.exists (fun x -> eq_str x sv_name) hp_names
+    then [sv_name] else []
+  | CF.Star sf -> (get_hp_hf hp_names sf.CF.h_formula_star_h1) @
+               (get_hp_hf hp_names sf.CF.h_formula_star_h2)
+  | _ -> report_error no_pos "unhandled case of get_conseq_hp"
+
+let rec get_all_hp_hf hf =
+  match hf with
+  | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
+  | CF.HFalse -> []
+  | CF.HRel (sv, args, _) -> [CP.name_of_sv sv]
+  | CF.Star sf -> (get_all_hp_hf sf.CF.h_formula_star_h1) @
+               (get_all_hp_hf sf.CF.h_formula_star_h2)
+  | _ -> report_error no_pos "unhandled case of get_conseq_hp"
+
 let check_hp_hf hp_names hf =
   Debug.no_1 "check_hp_hf" pr_hf string_of_bool
     (fun _ -> check_hp_hf_x hp_names hf) hf
@@ -2028,6 +2064,18 @@ let rec check_hp_formula_x hp_names formula = match (formula:CF.formula) with
   | CF.Exists ef -> check_hp_hf hp_names ef.CF.formula_exists_heap
   | CF.Or f -> (check_hp_formula_x hp_names f.CF.formula_or_f1) ||
                (check_hp_formula_x hp_names f.CF.formula_or_f2)
+
+let rec get_hp_formula hp_names formula = match (formula:CF.formula) with
+  | CF.Base bf -> get_hp_hf hp_names bf.CF.formula_base_heap
+  | CF.Exists ef -> get_hp_hf hp_names ef.CF.formula_exists_heap
+  | CF.Or f -> (get_hp_formula hp_names f.CF.formula_or_f1) @
+               (get_hp_formula hp_names f.CF.formula_or_f2)
+
+let rec get_all_hp formula = match (formula:CF.formula) with
+  | CF.Base bf -> get_all_hp_hf bf.CF.formula_base_heap
+  | CF.Exists ef -> get_all_hp_hf ef.CF.formula_exists_heap
+  | CF.Or f -> (get_all_hp f.CF.formula_or_f1) @
+               (get_all_hp f.CF.formula_or_f2)
 
 let check_hp_formula hp_names formula =
   Debug.no_1 "check_hp_formula" pr_formula string_of_bool
@@ -2195,16 +2243,18 @@ let compare_rule_unfold_post_vs_mk_null r1 r2 =
   PriHigh
 
 let compare_rule_assign_vs_other goal r1 r2 = match r2 with
-    | RlAssign r2 -> compare_rule_assign_vs_assign goal r1 r2
-    | _ ->
-      if CP.is_res_spec_var r1.ra_lhs then PriHigh
-      else PriEqual
+  | RlAssign r2 -> compare_rule_assign_vs_assign goal r1 r2
+  | RlReturn _ -> PriLow
+  | _ ->
+    if CP.is_res_spec_var r1.ra_lhs then PriHigh
+    else PriEqual
 
 let compare_rule_frame_data_vs_other r1 r2 =
   match r2 with
   | RlFramePred _
   | RlFrameData _ -> if CP.is_res_sv r1.rfd_lhs then PriHigh
     else PriLow
+  | RlReturn _ -> PriLow
   | RlMkNull _ -> PriHigh
   | _ -> PriLow
 
@@ -2218,6 +2268,7 @@ let compare_rule_frame_pred_vs_other r1 r2 =
   | RlUnfoldPost _ -> PriHigh
   | RlFuncRes _
   | RlFuncCall _ -> PriHigh
+  | RlReturn _ -> PriLow
   | _ -> PriLow
 
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
@@ -2236,11 +2287,17 @@ let compare_rule_unfold_post_vs_unfold_post r1 r2 =
 let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
   | RlUnfoldPost r2 -> compare_rule_unfold_post_vs_unfold_post r1 r2
   | RlMkNull r2 -> compare_rule_unfold_post_vs_mk_null r1 r2
+  | RlReturn _ -> PriLow
+  | RlAllocate _ -> PriHigh
   | _ -> PriLow
+
+let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
+  | RlReturn _ -> PriLow
+  | _ -> PriHigh
 
 let compare_rule goal r1 r2 =
   match r1 with
-  | RlUnfoldPre _ -> PriHigh
+  | RlUnfoldPre _ -> compare_rule_unfold_pre_vs_other r1 r2
   | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2
   | RlFramePred r -> compare_rule_frame_pred_vs_other r r2
@@ -2251,7 +2308,10 @@ let compare_rule goal r1 r2 =
   | RlPreAssign _ -> PriLow
   | RlAllocate _ -> PriLow
   | RlMkNull _ -> PriLow
-  | _ -> PriEqual
+  | _ ->
+    match r2 with
+    | RlReturn _ -> PriLow
+    | _ -> PriEqual
 
 let is_code_rule trace = match trace with
   | [] -> false

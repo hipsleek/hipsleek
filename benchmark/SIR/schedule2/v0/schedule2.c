@@ -73,7 +73,7 @@ int enqueue(int prio, node new_process,ref node curJob,ref node pq0, ref node pq
   prio > 3 | prio < 0 -> ensures pq0'::ll<n>*pq1'::ll<n1>*pq2'::ll<n2>*pq3'::ll<n3>*
     new_process::node<v1,v2,null> & res = -4;//'
  }
- 
+
 {
     int status;
     status = put_end(prio, new_process,pq0,pq1,pq2,pq3);
