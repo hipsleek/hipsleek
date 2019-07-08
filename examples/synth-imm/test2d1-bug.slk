@@ -1,0 +1,64 @@
+data node{
+     int key;
+     node down;
+     node fwd;
+}.
+
+
+pred skl0<p> ==
+    /* only the down ptr can be null */
+    self = null or
+    /* empty skl cannot have a 0 lvl */
+    self = p    or
+    self::node<val,down,fwd> * down::skl0<fwd> * fwd::skl0<p>
+    & self!=p
+    inv true.
+
+pred skl1<p,n> ==
+    self = null & n=0 or
+    self = p    & n=0 or
+    self::node<val,down,fwd> * down::skl1<fwd,m1> * fwd::skl1<p,m2>
+    & self!=p & n = m1 + m2 + 1
+    inv n>=0.
+
+pred skl2<p,n,mn,mx> ==
+    self = p    & n=0  //& mn<=mx  // how to express this?
+    or
+    self::node<mn,p,p> & n=1 & mn=mx & self!=p
+    or
+    self::node<mn,down,fwd> *
+    down::skl2<fwd,m1,mn1,mx1> *
+    fwd::skl2<p,m2,mn2,mx>
+    & self!=p & n = m1 + m2 + 1
+    & mx1<=mn2 & mn<=mn1
+    inv n>=0 & mn<=mx.
+
+ checkentail a::skl2<z,Anon_12,mn2,mx2> @L
+           * x'::node<mn_2247,a,a>
+            & x'!=y_2204 & n=1+m1_2252+m2_2256 & mx1_2254<=mn2_2257 &
+           mn1<=mn1_2253 & mn_2247=mn1 & fwd_2248=fwd_2255 & p_2249=y_2204 &
+           mx_2250=mx1  & x'!=y' & y_2204=y & mx1<=mn2 & a!=z &
+           x!=y &  y'=y & x'=x & y'=fwd_2255 & fwd_78_2272=fwd_2255 &
+           down_2251=fwd_2255 & m2_2256=0 & down_2251=p_2249 & m1_2252=0 &
+           down_2251=fwd_2248 & z_2281=z & Anon_11=Anon_12 & mn2_2282=mn2 &
+           mx2_2283=mx2 & down_79_2442=down_2251 & res=x'
+    |-
+    (exists a_135,n_136,mn1_137,
+mx1_138: res::skl2<a_135,n_136,mn1_137,mx1_138> &
+res!=a & a_135=a & n_136=n & mn1_137=mn1 & mx1_138=mx ).
+
+/*
+
+ checkentail a::skl2<z,Anon_12,mn2,mx2>[]@L * x'::node<mn_2285,a',a'>@M&
+v_bool_91_2096' & x'!=y_2229 & n=1+m1_2290+m2_2294 & mx1_2292<=mn2_2295 &
+mn1<=mn1_2291 & mn_2285=mn1 & fwd_2286=fwd_2293 & p_2287=y_2229 &
+mx_2288=mx1 & !(v_bool_88_2097') & x'!=y' & y_2229=y & mx1<=mn2 & a!=z &
+x!=y & a'=a & y'=y & x'=x & y'=fwd_2293 & fwd_92_2314=fwd_2293 &
+down_2289=fwd_2293 & mn2_2295<=mx_2288 & m2_2294=0 & down_2289=p_2287 &
+mn1_2291<=mx1_2292 & m1_2290=0 & down_2289=fwd_2286 & z_2328=z &
+Anon_11=Anon_12 & mn2_2329=mn2 & mx2_2330=mx2 & down_93_2580=down_2289 &
+res=x' & MayLoop[]&{FLOW,(4,5)=__norm#E}
+ |-  (exists a_135,n_136,mn1_137,
+mx1_138: res::skl2<a_135,n_136,mn1_137,mx1_138>[]@M&
+res!=a & a_135=a & n_136=n & mn1_137=mn1 & mx1_138=mx1&{FLOW,(4,5)=__norm#E}).
+*/

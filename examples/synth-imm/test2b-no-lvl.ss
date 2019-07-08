@@ -50,12 +50,10 @@ void foo(node x, node y)
      ensures  true;
 
 node append_helper(node x, node y, node a)
-   /*
    requires  x::skl0<y> * a::skl0<z>@L
    ensures   res::skl0<a>;
    requires  x::skl1<y,n> * a::skl1<z,_>@L
    ensures   res::skl1<a,n>;
-   */
    requires  x::skl2<y,n,mn1,mx1> * a::skl2<z,_,mn2,mx2>@L & mx1<=mn2
    ensures   res::skl2<a,n,mn1,mx1>;
 
@@ -123,11 +121,13 @@ node append3(node x, node y, node a)
    /*
    requires  x::skl0<y> * a::skl0<z>@L & a!=z & a!=null
    ensures   res::skl0<a>;
+   */
    requires  x::skl1<y,n> * a::skl1<z,_>@L & a!=z & a!=null
    ensures   res::skl1<a,n>;
-   */
+   /*
    requires  x::skl2<y,n,mn1,mx1> * a::skl2<z,m,mn2,mx2>@L & a!=z & a!=null & mx1<=mn2 & x!=null & x!=y & y!=null
    ensures   res::skl2<a,n,mn1,mx1>;
+   */
 {
    node temp;
    if(x == null || x == y) { x = a ; return x; }
@@ -165,14 +165,46 @@ node search(node x, node y, int k)
 pred lseg0<p,mn,mx> == self=p & mn<=mx
                or self::node<mn,null,q> * q::lseg0<p,mn1,mx> & mn<=mn1 & mn1<=mx
                inv mn<=mx;
-
-
+/*
+ return the node whose key is the same as k, or,
+ if that node does not exist, it returns the node
+ with the highest key less than k.
+*/
 node search0(node x, node y, int k)
      requires x::lseg0<y,mn,mx> & mn<=k<=mx
-     ensures  res=null or res::node<kk,_,_> & mn<=kk<=k;
+     ensures  //res=null or res::node<kk,_,_> & mn<=kk<=k;
               // x::lseg<z,S1>*z::node<k,null,p>*p::lseg<y,S2> & res=z;
+              res=null or
+              x::lseg0<z,mn,mx1> * z::node<kk,null,qq> * qq::lseg0<y,mn1,mx>
+              & mx1<=kk<=k & k<=mn1;
 {
  if(x==y) return null;
- else if (x.key == k) return null;
+ else if (x.key == k) return x;
+ else if (x.fwd == y) return null;
+ else if (x.key<= k && k<=x.fwd.key) return x;
  else return search0(x.fwd,y,k);
 }
+
+
+/*
+ returns the node whose key is the same as k, or,
+ if that node does not exist, it returns the node
+ with the highest key less than k.
+*/
+node search1(node x, node y, int k)
+     requires x::skl2<y,n,mn,mx>@L & mn<=k<=mx
+     ensures  true;
+{
+ if(x==y || x==null)  return null;
+ else {
+      node temp = x.fwd;
+      if(temp != null && temp!= y)
+         if (temp.key < k)
+              return search1(x.fwd,y,k);
+         else return search1(x.down,x.fwd,k);
+      else return search1(x.down,x.fwd,k);
+}}
+
+/*
+PL Verif NUS  SoC
+*/
