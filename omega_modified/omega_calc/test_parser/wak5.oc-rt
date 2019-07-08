@@ -1,0 +1,11 @@
+# Omega Calculator v2.1 (based on Omega Library 2.1, July, 2008):
+# S1 := {[1,In_2,0,In_4,In_5,In_6,In_7]: 2 <= In_4 <= 1024 && 2 <= In_2 <= 1024};
+# 
+# S2 := {[1,In_2,0,In_4,In_5,In_6,In_7]: 1 <= In_4 < In_2 <= 1024};
+# 
+# 
+# Hull (S1 union S2);
+
+{[1,In_2,0,In_4,In_5,In_6,In_7]: 1 <= In_4 <= 1024 && 2 <= In_2 <= 1024}
+
+# 

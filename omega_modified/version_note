@@ -1,0 +1,31 @@
+OC only supports file mode, it means OC receives input as a file and send the result to output device (a file or the terminal).
+The pseudo code of main function is below:
+ - show welcome message
+ - read parameter
+ - parse parameter
+ - if (filename) begin
+    - parse file content to get commands
+	- process command one by one, cache the result
+	- send all result to output device
+  end
+To communicate with OC through a channel, we should support additional interactive mode by stopping the cache. As the result, after processing a command, OC sends result to output device immediately.
+
+The pseudo code of new main function
+ - show welcome message
+ - fflush(_ffout) //force to send to output device
+ - read parameter
+ - parse parameter
+ - if (filename) begin  //file mode
+    - parse file content to get commands
+	- process command one by one, cache the result
+	- send all result to output device
+  end
+  else begin  //interactive mode
+    while (running) do
+	  - read command
+	  - process the command
+	  - send the result to output device
+	  - fflush(_ffout) //force to send to output device
+	end
+  
+Search keyword "modified by locle" to study the change

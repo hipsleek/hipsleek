@@ -245,10 +245,11 @@ let rec math_of_var_list (vars : ident list) : string =
   | v :: rest -> v ^ ", " ^ (math_of_var_list rest)
 
 let normalize_var_name (varname : string) : string =
-  for i = 0 to (String.length varname) - 1 do
-    if varname.[i] = '_' then varname.[i] <- 'N'
+  let varname_bytes = Bytes.of_string varname in
+  for i = 0 to (Bytes.length varname_bytes) - 1 do
+    if Bytes.get varname_bytes i = '_' then varname_bytes.[i] <- 'N'
   done;
-  varname
+  Bytes.to_string varname_bytes
 
 
 
