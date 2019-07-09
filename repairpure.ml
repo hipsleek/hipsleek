@@ -59,6 +59,11 @@ and bck_tree_node =
 
 let max a b = if a > b then a else b
 
+let get_loc_ln p = p.start_pos.Lexing.pos_lnum
+
+let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
+                      = p2.start_pos.Lexing.pos_lnum
+
 let sum_list list =
   let rec aux list sum = match list with
     | [] -> sum
@@ -197,7 +202,7 @@ let get_ast_traces (exp: I.exp) =
     | I.Seq s_exp ->
       let block_tree = aux s_exp.I.exp_seq_exp1 block_tree in
       aux s_exp.I.exp_seq_exp2 block_tree
-    | I.Return _ | I.CallRecv _ | I.CallNRecv _
+    | I.Return _ | I.CallRecv _ | I.CallNRecv _ | I.VarDecl _
     | I.Assign _ ->
       let stmts = (block_tree.bck_statements) @ [exp] in
       {block_tree with bck_statements = stmts}
@@ -1276,17 +1281,28 @@ let contain_infest_pos exp pos_list =
       | I.Binary bin ->
         aux bin.I.exp_binary_oper1 ||
         aux bin.I.exp_binary_oper2
+      | I.CallRecv c ->
+        let args = c.I.exp_call_recv_arguments in
+        let check_list = args |> List.map aux in
+        List.exists (fun x -> x) check_list
+      | I.CallNRecv c ->
+        let args = c.I.exp_call_nrecv_arguments in
+        let check_list = args |> List.map aux in
+        List.exists (fun x -> x) check_list
       | _ ->
         let loc = I.get_exp_pos exp in
         List.exists (fun x -> VarGen.eq_loc loc x) pos_list in
   aux exp
 
 let find_infest_level body pos_list =
+  let () = x_tinfo_hp (add_str "all pos" (pr_list pr_pos)) pos_list no_pos in
   let rec helper list = match list with
     | [] -> 0
     | h::t -> let tmp = helper t in
       if h > tmp then h else tmp in
-  let rec aux exp =  match exp with
+  let rec aux exp =
+    let () = x_tinfo_hp (add_str "exp" pr_exp) exp no_pos in
+    match exp with
     | I.Block block ->
       aux block.I.exp_block_body
     | I.Label (a, l) -> aux l
@@ -1307,24 +1323,15 @@ let find_infest_level body pos_list =
       let args = e.I.exp_call_recv_arguments in
       let l_list = List.map aux args in
       helper l_list
-
     | I.CallNRecv e ->
       let args = e.I.exp_call_nrecv_arguments in
       let l_list = List.map aux args in
       helper l_list
-    (* | I.Member e ->
-     *     if type_of_exp exp var_decls data_decls =
-     *        type_of_exp e.I.exp_member_base var_decls data_decls then
-     *       if changed = 1 then
-     *         let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
-     *         (e.I.exp_member_base, 0)
-     *       else (exp, changed - 1)
-     *     else (exp, changed) *)
     | I.Return e ->
       begin
         match e.I.exp_return_val with
-          | None -> 0
-          | Some r_e -> aux r_e
+        | None -> 0
+        | Some r_e -> aux r_e
       end
     | I.Binary bin ->
       let l1 = aux bin.I.exp_binary_oper1 in
@@ -1783,7 +1790,7 @@ let reverse_infestor iprog (i_exp: I.exp) =
 let lookup_var v_name =
   try
     let all_vars = !Syn.block_var_decls in
-    x_binfo_hp (add_str "all vars" Syn.pr_vars) all_vars no_pos;
+    let () = x_tinfo_hp (add_str "all vars" Syn.pr_vars) all_vars no_pos in
     let var = List.find (fun x -> eq_str (CP.name_of_sv x) v_name) all_vars in
     E.VarInfo {
       E.var_name = CP.name_of_sv var;
@@ -1831,11 +1838,15 @@ let get_all_func iproc =
 
 let get_var_decls_x pos (exp:I.exp) =
   let traces = get_ast_traces exp in
+  let () = x_tinfo_hp (add_str "traces" pr_bck_node) traces no_pos in
   let traces = get_bck_trace_stmts traces in
   let aux_list list =
     let list = list |> List.concat in
     let pos_list = list |> List.map I.get_exp_pos in
-    pos_list |> List.exists (VarGen.eq_loc pos) in
+    let ln_nums = pos_list |> List.map get_loc_ln in
+    let () = x_tinfo_hp (add_str "pos" (pr_list pr_int)) ln_nums no_pos in
+    let () = x_tinfo_hp (add_str "pos" pr_int) (get_loc_ln pos) no_pos in
+    pos_list |> List.exists (eq_loc_ln pos) in
   let get_var_decl (exp:I.exp) = match exp with
     | I.VarDecl var ->
       let v_pos = var.I.exp_var_decl_pos in
@@ -1850,6 +1861,7 @@ let get_var_decls_x pos (exp:I.exp) =
     let list = list |> List.map get_var_decl |> List.concat in
     list in
   let traces = List.filter aux_list traces in
+  let () = x_tinfo_hp (add_str "traces" (pr_list (pr_list (pr_list pr_exp)))) traces no_pos in
   let var_decls = List.map aux_var_decl traces in
   var_decls |> List.concat
 

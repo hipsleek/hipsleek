@@ -1,37 +1,26 @@
 data node {
-   node next
+	int val; 
+	node next;	
 }.
 
-pred ll<n> == self = null & n = 0
-	or (exists q: self::node<q> * q::ll<n-1>).
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> & n > 0.
 
 node copy(node x)
 requires x::ll<n>
 ensures res::ll<n> * x::ll<n>;.
 
-// synthesize [node x,node tmp,node k]
-//  q_7408::ll<n11> * tmp::ll<n11>@M * x::node<q_7408> * 
-//  k::node<tmp>& n11+1=n & x!=null & n11+1=n
+// synthesize [node x,node tmp]
+// x::ll<n>&x!=null
 // ~>
-//  res::ll<n> * x::ll<n>.
+// (exists fr35,fr36,v747,nxt8,an97,q_98:
+// x::node<an97,q_98> * x::node<v747,nxt8> * q_98::ll<fr35> * tmp::ll<fr36> &
+// fr35=n-1 & fr36=n-1).
 
-
-// synthesize [node x]
-// emp&x=null & x=null & n=0
+// synthesize [node q_65,node x,node tmp,node rs0]
+// x::node<ann64,q_65> * rs0::ll<flt63> * q_65::ll<flt63> &
+// x!=null & flt63+1=n & 0<n
 // ~>
-// (exists f_r_10844: res::ll<f_r_10844>&x=null & x=null & n=0 & f_r_10844=0).
-
-// synthesize [node tmp,node k,node x]
-//  k::node<tmp> * x::node<q_19483> * q_19483::ll<n_19486> * tmp::ll<n_19486>&
-// x=x & n+(-1-n_19486)=0 & (n-1)-flted_6_19482=0
-// ~>
-//  (exists f_r_19499,q_5: x::node<q_5> * q_5::ll<n_19486> * res::ll<f_r_19499>&
-//  x=x & n+(-1-n_19486)=0 & (n-1)-flted_6_19482=0 & f_r_19499=n_19486+1).
-
-
-synthesize [node tmp,node k,node x]
- k::node<tmp> * x::node<q_19483> * q_19483::ll<n_19486>&
-n=1+n_19486 & n=flted_6_19482+1
-~>
- (exists f_r_55,q_56: res::node<tmp> * x::node<q_56> * q_56::ll<n_19486>&
-n= 1+n_19486 & n=flted_6_19482+1 & f_r_55=1+n_19486 & n_19486+1=f_r_55).
+// (exists fr43, fr44, v45, nxt46, an47, q_48:
+// x::node<an47,q_48> * x::node<v45,nxt46> * q_48::ll<fr43> * tmp::ll<fr44> &
+// fr43+1=n & fr44+1=n).

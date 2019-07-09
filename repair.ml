@@ -50,6 +50,7 @@ let rec helper args = match args with
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
   let n_iproc, args = mk_candidate_proc iproc args candidate num in
   let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
+  (* report_error no_pos "to debug template proc" *)
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
   let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
   let () = Syn.block_var_decls := decl_vars in
@@ -410,8 +411,6 @@ let repair_cproc iprog =
         let repair_pos = !repair_loc |> Gen.unsome in
         let helper pos exp_list =
           let pos_list = exp_list |> List.map C.pos_of_exp in
-          let eq_loc_ln p1 p2 = p1.start_pos.Lexing.pos_lnum
-                                = p2.start_pos.Lexing.pos_lnum in
           List.exists (eq_loc_ln pos) pos_list in
         let helper2 trace = trace |> List.exists (helper repair_pos) in
         let traces = traces |> List.filter helper2 in
@@ -514,8 +513,10 @@ let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
   let n_body_w_level_one = buggy_level_one body var_decls data_decls in
   let n_body_w_level = buggy_level_two body var_decls data_decls in
   let pr_w_level = pr_list (pr_pair pr_exp pr_int) in
+  let all_cases = n_body_w_level_one @ n_body_w_level in
   let () = x_binfo_hp (add_str "w_level" pr_w_level) n_body_w_level no_pos in
-  n_body_w_level_one @ n_body_w_level
+  all_cases
+  (* n_body_w_level_one *)
 
 let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in

@@ -140,6 +140,8 @@ let choose_rule_post_assign goal : rule list =
 let choose_rule_allocate goal : rule list =
   let prog = goal.gl_prog in
   let all_vars = goal.gl_vars in
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
   let () = x_tinfo_hp (add_str "pre" pr_formula) goal.gl_pre_cond no_pos in
   let rec mk_args_input args = match args with
@@ -174,7 +176,13 @@ let choose_rule_allocate goal : rule list =
     let args_groups = args_groups |> List.filter filter_fun in
     let rules = args_groups |> List.map (mk_rule data_decl) in
     rules in
-  data_decls |> List.map aux |> List.concat
+  let check_allocate pre post =
+    let pre_nodes = pre |> get_heap |> get_heap_nodes in
+    let post_nodes = post |> get_heap |> get_heap_nodes in
+    List.length post_nodes - List.length pre_nodes = 1 in
+  if check_allocate pre post then
+    data_decls |> List.map aux |> List.concat
+  else []
 
 let choose_rule_assign_x goal : rule list =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
@@ -694,7 +702,6 @@ let find_frame_node_var goal all_vars post_var =
   let frame_vars = pre_vars |> List.filter helper in
   frame_vars |> List.map (fun x -> (post_var, x))
 
-
 let choose_rule_frame_data goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let post_vars = post |> get_node_vars in
@@ -804,7 +811,7 @@ let choose_main_rules goal =
   else
     let rs = [] in
     let rs = rs @ (choose_rule_unfold_pre goal) in
-    let rs = rs @ choose_rule_frame_pred goal in
+    let rs = rs @ (choose_rule_frame_pred goal) in
     let rs = rs @ (choose_rule_assign goal) in
     let rs = rs @ (choose_rule_pre_assign goal) in
     let rs = rs @ (choose_rule_fread goal) in
@@ -812,10 +819,10 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_numeric goal) in
     let rs = rs @ (choose_rule_unfold_post goal) in
     let rs = rs @ (choose_rule_func_call goal) in
-    let rs = rs @ choose_rule_frame_data goal in
+    let rs = rs @ (choose_rule_frame_data goal) in
     let rs = rs @ (choose_rule_post_assign goal) in
-    (* let rs = rs @ (choose_rule_allocate goal) in
-     * let rs = rs @ (choose_rule_mk_null goal) in *)
+    let rs = rs @ (choose_rule_allocate goal) in
+    let rs = rs @ (choose_rule_mk_null goal) in
     let rs = rs @ (choose_rule_return goal) in
     let rs = eliminate_useless_rules goal rs in
     let rs = reorder_rules goal rs in
@@ -1066,9 +1073,9 @@ let process_rule_allocate goal rcore =
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
-  if trace_length goal.gl_trace > 2 || List.length goal.gl_trace > 6
-     || !fail_branch_num > 200 then
-    let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
+  if trace_length goal.gl_trace > 2 || List.length goal.gl_trace > 5
+     (* || !fail_branch_num > 200 *) then
+    let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
     let cur_time = get_time () in

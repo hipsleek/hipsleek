@@ -13,7 +13,7 @@ ensures res::ll<n> * x::ll<n>;
   if (x == null) return x;
   else {
       node tmp;
-      tmp = copy(x.next.next);
+      tmp = copy(x);
       node n;
       n = new node(x.val, tmp);
       return n;
