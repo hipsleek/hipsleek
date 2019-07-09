@@ -19,7 +19,7 @@ int length(node x)
 // res=n & flted_7_52+1=n_94).
 
 synthesize [node x]
-x::ll<n> & x=null
+x::ll<n> & x=!null
 ~>
 x::ll<n> & n=res.
 

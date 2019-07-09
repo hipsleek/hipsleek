@@ -112,6 +112,7 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       let proc = C.find_proc prog proc_name in
       let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
       let proc_names = get_all_func r_iproc in
+      let () = x_binfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in
       let _ = Synthesizer.synthesize_entailments_one iprog prog proc proc_names in
       !Synthesis.repair_res
     with _ -> None
@@ -285,13 +286,14 @@ let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let () = Syn.syn_res_vars := res_vars in
   let r_list = pairs |> List.map (repair_one_pair repair_proc iprog r_iproc) in
   let r_list = List.filter (fun x -> x!= None) r_list in
+  let () = is_repair_pair := false in
   if r_list != [] then
     let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
     true
   else
     false
 
-let repair_iprog (iprog:I.prog_decl) : bool =
+let repair_iprog (iprog:I.prog_decl) level : bool =
   match (!Typechecker.repair_proc) with
   | (Some repair_proc) ->
     let p_name = Cast.unmingle_name repair_proc in
@@ -299,8 +301,11 @@ let repair_iprog (iprog:I.prog_decl) : bool =
     let () = start_repair := true in
     let procs = iprog.I.prog_proc_decls in
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
-    (* repair_level_one iprog repair_proc r_iproc *)
-    repair_level_two iprog repair_proc r_iproc
+    if level = 1 then
+      repair_level_one iprog repair_proc r_iproc
+    else if level = 2 then
+      repair_level_two iprog repair_proc r_iproc
+    else false
   | _ -> false
 
 let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)
@@ -426,7 +431,7 @@ let repair_cproc iprog =
     List.fold_left helper None traces
   | _ -> None
 
-let buggy_num_level body var_decls data_decls =
+let buggy_level_one body var_decls data_decls =
   let rec aux body num list =
     let n_body, r_num, pos_list = modify_num_infestor body num in
     if r_num = 0 then
@@ -441,28 +446,76 @@ let buggy_num_level body var_decls data_decls =
       aux2 body (num+1) n_list
     else list in
   let n_body_list = n_body_list @ (aux2 body 1 []) in
-  let aux (body, pos_list) =
+  let rec aux3 body num list =
+    let n_body, r_num, pos_list = add_field_infestor body num var_decls data_decls in
+    if r_num = 0 then
+      let n_list = (n_body, pos_list)::list in
+      aux3 body (num+1) n_list
+    else list in
+  let n_body_list = n_body_list @ (aux3 body 1 []) in
+  let rec aux4 body num list =
+    let n_body, r_num, pos_list = modify_operator_infestor body num in
+    if r_num = 0 then
+      let n_list = (n_body, pos_list)::list in
+      aux4 body (num+1) n_list
+    else list in
+  let n_body_list = n_body_list @ (aux4 body 1 []) in
+  let aux_f (body, pos_list) =
     let () = x_binfo_hp (add_str "proc" pr_exp) body no_pos in
     let level = find_infest_level body pos_list in
     let () = x_binfo_hp (add_str "level" pr_int) level no_pos in
     (body, level) in
-  n_body_list |> List.map aux
+  n_body_list |> List.map aux_f
+
+let buggy_level_two body var_decls data_decls =
+  let rec aux (body: I.exp) = match body with
+    | I.Block block ->
+      let n_blocks = aux block.I.exp_block_body in
+      let aux_a (x,y) =
+        (I.Block {block with I.exp_block_body = x}, y) in
+      let n_blocks = n_blocks |> List.map aux_a in
+      n_blocks
+    | I.Label (a, l) ->
+      let n_labels = aux l in
+      let aux_f (x,y) = (I.Label (a, x), y) in
+      n_labels |> List.map aux_f
+    | I.Cond cond ->
+      let t_arm = cond.I.exp_cond_then_arm in
+      let e_arm = cond.I.exp_cond_else_arm in
+      let left = buggy_level_one t_arm var_decls data_decls in
+      let right = buggy_level_one e_arm var_decls data_decls in
+      if left != [] && right != [] then
+        let aux_lelf (lf, l1) =
+          right |> List.map (fun (rt, l2) -> (lf, rt, l1 + l2)) in
+        let triples = left |> List.map aux_lelf |> List.concat in
+        let aux_triple (x,y,z) =
+          let n_cond = I.Cond { cond with I.exp_cond_then_arm = x;
+                                          I.exp_cond_else_arm = y} in
+          (n_cond, z) in
+        triples |> List.map aux_triple
+      else []
+    | _ -> [] in
+  aux body
+    (* | I.Seq seq ->
+     *   let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
+     *   let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+     *   (I.Seq {seq with exp_seq_exp1 = n_e1;
+     *                      exp_seq_exp2 = n_e2}, r2)
+     *   | I.Cond cond ->
+     *     let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
+     *     let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
+     *     let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
+     *                                 exp_cond_else_arm = n_e3} in
+     *     (n_e, r3) *)
+
 
 let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
   let list = [] in
-  let n_body_w_level = buggy_num_level body var_decls data_decls in
-  n_body_w_level
-  (* let list = (remove_field_infestor body 1 var_decls data_decls)::list in
-   * let list = (remove_field_infestor body 2 var_decls data_decls)::list in
-   * let list = (remove_field_infestor body 3 var_decls data_decls)::list in
-   * let list = (modify_variable_infestor body 1 var_decls level)::list in
-   * let list = (modify_variable_infestor body 2 var_decls)::list in
-   * let list = (modify_variable_infestor body 3 var_decls)::list in
-   * let list = (modify_variable_infestor body 4 var_decls)::list in
-   * let list = (modify_field_infestor body 1 var_decls data_decls)::list in
-   * let list = (modify_field_infestor body 2 var_decls data_decls)::list in
-   * let list = (modify_field_infestor body 3 var_decls data_decls)::list in *)
-  (* list |> List.filter (fun (_, y) -> y = 0) |> List.map fst |> List.rev *)
+  let n_body_w_level_one = buggy_level_one body var_decls data_decls in
+  let n_body_w_level = buggy_level_two body var_decls data_decls in
+  let pr_w_level = pr_list (pr_pair pr_exp pr_int) in
+  let () = x_binfo_hp (add_str "w_level" pr_w_level) n_body_w_level no_pos in
+  n_body_w_level_one @ n_body_w_level
 
 let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in
@@ -472,11 +525,11 @@ let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   let n_body_list = create_buggy_proc_wrapper body var_decls data_decls in
   n_body_list |> List.map (fun (x, y) -> ({proc with I.proc_body = Some x}, y))
 
-let output_infestor_prog (src: string) (iprog : I.prog_decl) : string =
+let output_infestor_prog (src: string) (iprog : I.prog_decl) level : string =
   let file_name, dir = Filename.basename src, Filename.dirname src in
   let suffix = Filename.extension file_name in
   let f_name = Filename.chop_suffix file_name suffix in
-  let b_file = f_name ^ "_buggy_" ^ (string_of_int !infestor_num) ^ suffix in
+  let b_file = f_name ^ "_buggy_" ^ (pr_int level) ^ "_" ^ (pr_int !infestor_num) ^ suffix in
   let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
   let () = infestor_num := !infestor_num + 1 in
   let view_decls = iprog.I.prog_view_decls in
@@ -515,37 +568,49 @@ let create_buggy_prog src (iprog : I.prog_decl)=
     let n_progs = List.map aux_fun buggy_procs in
     n_progs
 
-let start_repair_wrapper (iprog: I.prog_decl) =
-  let repair_proc_wrapper iprog =
-    let start_time = get_time () in
-    let tmp = repair_cproc iprog in
-    if tmp != None then
-      (* let r_time = get_time() -. start_time in
-       * x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos;
-       * x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos; *)
-      true
-    else
-      (* let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in *)
-      false in
-  repair_iprog iprog
+let start_repair_wrapper (iprog: I.prog_decl) level =
+  repair_iprog iprog level
 
 let infest_and_repair src (iprog : I.prog_decl) =
   let buggy_progs = create_buggy_prog src iprog in
   let () = enable_repair := true in
   let () = infestor_num := 0 in
-  let aux (buggy_prog, level) =
+  let repair_time = ref 0.0 in
+  let aux_one (buggy_prog, level) =
     let () = Syn.repair_res := None in
     let cprog, _ = Astsimp.trans_prog buggy_prog in
     try
       let _ = Typechecker.check_prog_wrapper buggy_prog cprog in
       let () = x_binfo_pp "INFESTED PROGRAM IS NOT BUGGY W.R.T THE SPECIFICATION" no_pos in
-      ()
+      (0, 0)
     with _ ->
-      let r_iprog = start_repair_wrapper buggy_prog in
-      let s_file = output_infestor_prog src buggy_prog in
+      let start_time = get_time () in
+      let r_iprog = start_repair_wrapper buggy_prog level in
+      let duration = get_time () -. start_time in
+      let () = repair_time := (!repair_time) +. duration in
+      let s_file = output_infestor_prog src buggy_prog level in
       if r_iprog then
-        x_binfo_pp ("REPAIRING " ^ s_file ^ " SUCCESSFULLY") no_pos
+        let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " SUCCESSFULLY") no_pos in
+        (1, 1)
       else
-        x_binfo_pp ("REPAIRING " ^ s_file ^ " FAIL") no_pos in
-  buggy_progs |> List.iter aux
-
+        let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " FAIL") no_pos in
+        (1, 0) in
+  let aux level =
+    let level1 = List.filter (fun (_, x) -> x = level) buggy_progs in
+    let res_level1 = level1 |> List.map aux_one in
+    let buggy_sum = res_level1 |> List.map fst |> sum_list in
+    let repaired_sum = res_level1 |> List.map snd |> sum_list in
+    let l_str = "LEVEL " ^ (pr_int level) in
+    if buggy_sum > 0 then
+      let () = x_binfo_hp (add_str (l_str ^" #BUGGY") pr_int) buggy_sum no_pos in
+      let () = x_binfo_hp (add_str (l_str ^ " #REPAIRED") pr_int) repaired_sum no_pos in
+      let () = x_binfo_hp (add_str (l_str ^ " INFERENCE TIME") pr_float)
+          (!Syn.inference_time/.(float_of_int buggy_sum)) no_pos in
+      let () = x_binfo_hp (add_str (l_str ^ " SYNTHESIS TIME") pr_float)
+          (!Syn.synthesis_time/.(float_of_int buggy_sum)) no_pos in
+      let () = x_binfo_hp (add_str (l_str ^ " TOTAL REPAIR TIME") pr_float)
+          (!repair_time/.(float_of_int buggy_sum)) no_pos in
+      ()
+    else () in
+  if !infest_level_two then aux 2
+  else aux 1

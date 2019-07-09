@@ -33,6 +33,8 @@ let sb_num = ref 0
 let fail_branch_num = ref 0
 let check_entail_num = ref 0
 let r_pre = ref 0
+let inference_time = ref 0.0
+let synthesis_time = ref 0.0
 
 let repair_pos = ref (None : VarGen.loc option)
 let repair_pos_fst = ref (None : VarGen.loc option)
@@ -2263,11 +2265,13 @@ let compare_rule_frame_pred_vs_other r1 r2 =
   | RlFramePred _
   | RlFrameData _ -> if CP.is_res_sv r1.rfp_lhs then PriHigh
     else PriLow
+  | RlPreAssign _
+  | RlPostAssign _
   | RlAllocate _ -> PriHigh
   | RlMkNull _ -> PriHigh
   | RlUnfoldPost _ -> PriHigh
   | RlFuncRes _
-  | RlFuncCall _ -> PriHigh
+  | RlFuncCall _ -> PriLow
   | RlReturn _ -> PriLow
   | _ -> PriLow
 
@@ -2313,13 +2317,17 @@ let compare_rule goal r1 r2 =
     | RlReturn _ -> PriLow
     | _ -> PriEqual
 
-let is_code_rule trace = match trace with
+let is_code_rule_x trace = match trace with
   | [] -> false
   | h::_ ->
     match h with
     | RlAssign _ | RlReturn _ | RlFWrite _ | RlFuncRes _
     | RlFuncCall _ -> true
     | _ -> false
+
+let is_code_rule trace =
+  Debug.no_1 "is_code_rule" pr_trace string_of_bool
+    (fun _ -> is_code_rule_x trace) trace
 
 let trace_length trace =
   let is_code_rule rule = match rule with

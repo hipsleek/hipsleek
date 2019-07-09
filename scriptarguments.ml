@@ -812,6 +812,7 @@ let common_arguments = [
   ("--en-frameless", Arg.Set Globals.enable_frameless,
    "enable frameless inferrence in repair");
   ("--infestor", Arg.Set Globals.infestor, "enable creating buggy programs");
+  ("--en-infest-2", Arg.Set Globals.infest_level_two, "enable infest and repair level 2");
   ("--en-i", Arg.Set Globals.enable_i,"enable interactive mode");
   ("--en-repair-templ", Arg.Set Globals.enable_repair_template,"enable repair process");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");

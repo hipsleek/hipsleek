@@ -9,10 +9,10 @@ int length(node x)
   requires x::ll<n>
   ensures x::ll<n> & res = n;.
 
-// synthesize [node x]
-// x::ll<n> & x!=null
-// ~>
-// (exists n2: x::ll<n2> & n2=n & res = n).
+synthesize [node x]
+x::ll<n> & x!=null
+~>
+(exists n2: x::ll<n2> & n2=n & res = n).
 
 // unfold-pre
 // synthesize [node x]
@@ -33,8 +33,8 @@ int length(node x)
 // (exists n2: x::ll<n2> & n2=n & res = n).
 // unfold post
 
-synthesize [node q_54,node x,int rs0]
-x::node<q_54> * q_54::ll<f3> & 1+f3=n & x!=null & rs0=f3
-~> 
-(exists flted_6_57,q_58,n2_50: x::node<q_58>@M * q_58::ll<flted_6_57>@M&
-n2_50=n & res=n & flted_6_57+1=n2_50).
+// synthesize [node q_54,node x,int rs0]
+// x::node<q_54> * q_54::ll<f3> & 1+f3=n & x!=null & rs0=f3
+// ~> 
+// (exists flted_6_57,q_58,n2_50: x::node<q_58>@M * q_58::ll<flted_6_57>@M&
+// n2_50=n & res=n & flted_6_57+1=n2_50).

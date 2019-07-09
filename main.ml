@@ -712,7 +712,7 @@ let process_source_full source =
           begin
             if (!Globals.enable_repair) then
               let () = x_binfo_pp "START REPAIR" no_pos in
-              let r_iprog = Repair.start_repair_wrapper intermediate_prog in
+              let r_iprog = Repair.start_repair_wrapper intermediate_prog 1 in
               match r_iprog with
               | false -> raise e
               | true ->
@@ -751,7 +751,7 @@ let process_source_full source =
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
   (* Get the total verification time *)
   let ptime4 = Unix.times () in
-  let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+  let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
 
   (* An Hoa : export the proof to html *)
   let () = if !Globals.print_proof then

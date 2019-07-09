@@ -17,10 +17,10 @@ ensures x::ll<n> & res = n;
 {
 int tmp;
 if ((x) == (NULL)) {
-  return 3;
+  return 0;
 } else {
 tmp = length(x->next);;
-return 1 + tmp;
+return 4 + tmp;
 }
 }
 

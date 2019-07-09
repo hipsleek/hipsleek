@@ -1461,6 +1461,8 @@ let enable_repair = ref false
 let enable_frameless = ref false
 let infestor = ref false
 
+let infest_level_two = ref false
+
 let enable_i = ref false
 
 let enable_repair_template = ref false
@@ -2154,7 +2156,7 @@ let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 5.
-let synthesis_timeout = ref 30.
+let synthesis_timeout = ref 60.
 
 let dis_inv_baga () =
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen ..";

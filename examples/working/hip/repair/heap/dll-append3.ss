@@ -14,9 +14,9 @@ void append2(node2 x, node2 y)
 	if (x.next == null) {
     x.next = y;
     if (y != null)
-      y.next = x;
+      y.prev = x;
 	}
 	else {
-		append2(x.next, y);
+		append2(x.next.next, y);
 	}
 }

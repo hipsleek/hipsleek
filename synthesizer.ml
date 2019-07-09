@@ -750,24 +750,20 @@ let rec choose_rule_interact goal rules =
                      ^ (string_of_int (List.length rules)) ^ ": " in
     let () = x_binfo_pp choose_str no_pos in
     let choice = String.uppercase_ascii (String.trim (read_line ())) in
-    (* if choice = "a" then
-     *   let () = enable_i := false in
-     *   rules
-     * else *)
-      let rule_id = int_of_string (choice) in
-      let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
-      let chosen_rules, other_rules =
-        List.partition (fun (x, _) -> x + 1 = rule_id) rules_w_ids in
-      if chosen_rules = [] then
-        let err_str = "Wrong choose, please choose again" in
-        let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
-        choose_rule_interact goal rules
-      else
-        let chosen_rules = List.map snd chosen_rules in
-        let other_rules = List.map snd other_rules in
-        let () = x_binfo_hp (add_str "You chose" (pr_list_ln pr_rule))
-            chosen_rules no_pos in
-        chosen_rules @ other_rules
+    let rule_id = int_of_string (choice) in
+    let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
+    let chosen_rules, other_rules =
+      List.partition (fun (x, _) -> x + 1 = rule_id) rules_w_ids in
+    if chosen_rules = [] then
+      let err_str = "Wrong choose, please choose again" in
+      let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
+      choose_rule_interact goal rules
+    else
+      let chosen_rules = List.map snd chosen_rules in
+      let other_rules = List.map snd other_rules in
+      let () = x_binfo_hp (add_str "You chose" (pr_list_ln pr_rule))
+          chosen_rules no_pos in
+      chosen_rules @ other_rules
 
 let choose_rule_mk_null goal : rule list=
   if has_mk_null goal.gl_trace then []
@@ -818,8 +814,8 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_func_call goal) in
     let rs = rs @ choose_rule_frame_data goal in
     let rs = rs @ (choose_rule_post_assign goal) in
-    (* let rs = rs @ (choose_rule_allocate goal) in *)
-    (* let rs = rs @ (choose_rule_mk_null goal) in *)
+    (* let rs = rs @ (choose_rule_allocate goal) in
+     * let rs = rs @ (choose_rule_mk_null goal) in *)
     let rs = rs @ (choose_rule_return goal) in
     let rs = eliminate_useless_rules goal rs in
     let rs = reorder_rules goal rs in
@@ -829,8 +825,8 @@ let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
     let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
     try
-      let sk,_ = SB.check_entail_residue prog pre post in
-      (* let sk = SB.check_entail_exact prog pre post in *)
+      (* let sk,_ = SB.check_entail_residue prog pre post in *)
+      let sk = SB.check_entail_exact prog pre post in
       (* let sk, _ = check_entail_sleek prog pre post in *)
       if sk then let rule = RlSkip in [rule]
       else []
@@ -1186,7 +1182,10 @@ let synthesize_cast_stmts goal =
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = mk_goal_w_procs prog called_procs pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let start_time = get_time () in
   let iast_exp = synthesize_program goal in
+  let duration = get_time () -. start_time in
+  let () = synthesis_time := (!synthesis_time) +. duration in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
   let n_proc, res = match iast_exp with
@@ -1228,8 +1227,8 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
     let helper hps =
       if !stop then ()
       else
-        let post_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
-        let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P2") hps in
+        let post_hp = List.find (fun x -> x.Cast.hp_name = "N_Q1") hps in
+        let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
         let post = post_hp.Cast.hp_formula in
         let pre = pre_hp.Cast.hp_formula |> remove_exists in
         if isHFalse post then
