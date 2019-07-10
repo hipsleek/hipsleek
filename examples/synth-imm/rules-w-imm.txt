@@ -1,0 +1,59 @@
+[EMP]
+   EV(\Gamma,Pre,Post)=0    \Phi => \Psi
+-------------------------------------------
+\Gamma; {\Phi; emp}  --> {\Psi; emp} | skip
+
+
+
+[READ]
+   @i1<:@L
+   a \in GV(\Gamma,Pre,Post)       y \notin Vars(\Gamma,Pre,Post)
+\Gamma \union {y}; [y/a] {\Phi; <x,\iota>@i1->a * P}
+                                       --> [y/a] {\Psi;<x,\iota>@i1->a * Q} | c
+----------------------------------------------------------------------------------
+\Gamma; {\Phi;<x,\iota>@i1->a * P} --> {\Psi;<x,\iota>@i1->a * Q} | let y = *(x+\iota);c
+
+
+[WRITE]
+   @i1<:@M      Vars(e) \subset \Gamma        e != e'
+\Gamma ;  {\Phi; <x,\iota>@i1->e * P} --> {\Psi;<x,\iota>@i1->e * Q} | c
+--------------------------------------------------------------------------------------
+   \Gamma; {\Phi;<x,\iota>@i1->e' * P} --> {\Psi;<x,\iota>@i1->e * Q} | *(x+\iota)=e;c
+
+
+[FRAME]
+    @i1 = @i2
+    EV(\Gamma,Pre,Post) \cap Vars(R)=0
+   \Gamma; {\Phi; P} --> {\Psi; Q} | c
+-------------------------------------------------
+\Gamma; {\Phi; P * R@i1} --> {\Psi; Q * R@i2} | c
+
+
+[CALL]
+  func = f(x_i):{\Phi_f;P_f}{\Psi_f;Q_f} \in \Sigma
+  R =^l [\sigma]P_f         \Phi => [\sigma] \Phi_f
+  \Phi':=[\sigma]\Psi_f       R':=[\sigma]Q_f        e_i=[\sigma]x_i
+Vars(e_i) \subset \Gamma     \Sigma;\Gamma;{\Phi /\ \Phi'; P*R'} --> {Post}|c
+------------------------------------------------------------------------------
+         \Sigma;\Gamma;{\Phi; P*R} --> {Post}| f(e_i);c
+
+
+
+==========================================
+==========================================
+             swap example
+==========================================
+==========================================
+
+                  Fail because @L<:@M is false
+------------------------------------------------------------- WRITE on y
+{x,y,a2,b2}; {x@M->b2 * y@L->b2} --> {x@M->b2 * y@L->a2} | c4
+             c3 := *x=b2 ; c4
+------------------------------------------------------------- WRITE on x
+{x,y,a2,b2}; {x@M->a2 * y@L->b2} --> {x@M->b2 * y@L->a2} | c3
+          c2 := let b2 = *y ; c3
+------------------------------------------------------------- READ on y
+{x,y,a2}; {x@M->a2 * y@L->b} --> {x@M->b * y@L->a2} | c2
+          c1 := let a2 = *x ; c2
+------------------------------------------------------------- READ on x
+{x,y}; {x@M->a * y@L->b} --> {x@M->b * y@L->a} | c1
