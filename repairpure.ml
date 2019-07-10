@@ -1291,7 +1291,7 @@ let contain_infest_pos exp pos_list =
         List.exists (fun x -> x) check_list
       | _ ->
         let loc = I.get_exp_pos exp in
-        List.exists (fun x -> VarGen.eq_loc loc x) pos_list in
+        List.exists (fun x -> eq_loc_ln loc x) pos_list in
   aux exp
 
 let find_infest_level body pos_list =
@@ -1302,6 +1302,7 @@ let find_infest_level body pos_list =
       if h > tmp then h else tmp in
   let rec aux exp =
     let () = x_tinfo_hp (add_str "exp" pr_exp) exp no_pos in
+    let () = x_tinfo_hp (add_str "exp post" pr_pos) (I.get_exp_pos exp) no_pos in
     match exp with
     | I.Block block ->
       aux block.I.exp_block_body

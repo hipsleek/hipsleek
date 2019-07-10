@@ -2284,6 +2284,10 @@ let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | _ -> PriHigh
 
+let compare_rule_allocate_vs_other r1 r2 = match r2 with
+  | RlAllocate _ -> PriEqual
+  | _ -> PriLow
+
 let compare_rule goal r1 r2 =
   match r1 with
   | RlUnfoldPre _ -> compare_rule_unfold_pre_vs_other r1 r2
@@ -2295,7 +2299,7 @@ let compare_rule goal r1 r2 =
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
   | RlPreAssign _ -> PriLow
-  | RlAllocate _ -> PriLow
+  | RlAllocate r1 -> compare_rule_allocate_vs_other r1 r2
   | RlMkNull _ -> PriHigh
   | _ ->
     match r2 with
@@ -2325,6 +2329,7 @@ let num_of_code_rules trace =
 let length_of_trace trace =
   let is_simplify_rule rule = match rule with
     | RlExistsRight _ | RlUnfoldPre _ | RlUnfoldPost _
+    | RlFrameData _ | RlFramePred _
     | RlPreAssign _ | RlPostAssign _ -> true
     | _ -> false in
   let trace = trace |> List.filter (fun x -> is_simplify_rule x |> negate) in

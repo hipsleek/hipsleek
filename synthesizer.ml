@@ -448,22 +448,10 @@ let choose_rule_unfold_pre goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
+    let () = x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos in
     let pre_list = List.filter (fun x -> SB.check_unsat goal.gl_prog x
                                          |> negate) nf in
     if pre_list = [] then []
-    (* else if List.length pre_list = 2 then
-     *   let vn_var = vnode.CF.h_formula_view_node in
-     *   let base_pf = pre_list |> List.hd |> CF.get_pure in
-     *   let cond = extract_var_pf base_pf [vn_var] in
-     *   let base, recur = List.hd pre_list, pre_list |> List.tl |> List.hd in
-     *   let cond_exp = get_cond_exp prog pre base recur cond vars in
-     *   if cond_exp = [] then []
-     *   else
-     *     let cond_exp = CP.join_conjunctions cond_exp in
-     *     let rule = RlBranch { rb_if_pre = base |> remove_exists;
-     *                           rb_cond = cond_exp;
-     *                           rb_else_pre = recur |> remove_exists} in
-     *     [rule] *)
     else if List.length pre_list = 1 then
       let n_pre = pre_list |> List.hd |> remove_exists in
       let rule = RlUnfoldPre {n_pre = n_pre} in
@@ -477,7 +465,7 @@ let choose_rule_unfold_post goal =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let vars = goal.gl_vars @ res_vars |> CP.remove_dups_svl in
   let e_vars = CF.get_exists post |> List.filter is_node_var in
-  x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos;
+  let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
   let vnodes = get_unfold_view vars post in
   let e_vnodes = get_unfold_view e_vars post in
   let check_sat_wrapper formula =
@@ -826,14 +814,14 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_unfold_pre goal) in
     let rs = rs @ (choose_rule_frame_pred goal) in
     let rs = rs @ (choose_rule_assign goal) in
-    let rs = rs @ (choose_rule_pre_assign goal) in
+    (* let rs = rs @ (choose_rule_pre_assign goal) in *)
     let rs = rs @ (choose_rule_fread goal) in
     let rs = rs @ (choose_rule_fwrite goal) in
     let rs = rs @ (choose_rule_numeric goal) in
     let rs = rs @ (choose_rule_unfold_post goal) in
     let rs = rs @ (choose_rule_func_call goal) in
     let rs = rs @ (choose_rule_frame_data goal) in
-    let rs = rs @ (choose_rule_post_assign goal) in
+    (* let rs = rs @ (choose_rule_post_assign goal) in *)
     let rs = rs @ (choose_rule_allocate goal) in
     let rs = rs @ (choose_rule_mk_null goal) in
     let rs = rs @ (choose_rule_return goal) in
@@ -845,8 +833,8 @@ let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
     let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
     try
-      (* let sk,_ = SB.check_entail_residue prog pre post in *)
-      let sk = SB.check_entail_exact prog pre post in
+      (* to check_residue for the delete case *)
+      let sk,_ = SB.check_entail_residue prog pre post in
       (* let sk, _ = check_entail_sleek prog pre post in *)
       if sk then let rule = RlSkip in [rule]
       else []
@@ -964,8 +952,8 @@ let aux_func_call goal rule fname params subst res_var =
   let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
   let params_pre = CF.wrap_exists fresh_evars params_pre in
   let ent_check, residue =
-    SB.check_entail_residue goal.gl_prog pre_cond params_pre in
-    (* check_entail_sleek goal.gl_prog pre_cond params_pre in *)
+    (* SB.check_entail_residue goal.gl_prog pre_cond params_pre in *)
+    check_entail_sleek goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
     let params_post = CF.subst substs post_proc in
@@ -1082,7 +1070,8 @@ let process_rule_allocate goal rcore =
 let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
   let trace = goal.gl_trace in
-  if num_of_code_rules trace > 2 || length_of_trace trace > 3 then
+  if num_of_code_rules trace > 2 || length_of_trace trace > 3
+   || List.length trace > 6 then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else

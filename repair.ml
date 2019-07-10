@@ -431,40 +431,43 @@ let repair_cproc iprog =
   | _ -> None
 
 let buggy_level_one body var_decls data_decls =
-  let rec aux body num list =
+  let n_body_list = [] in
+  let rec aux1 body num list =
     let n_body, r_num, pos_list = modify_num_infestor body num in
     if r_num = 0 then
-      let n_list = (n_body, pos_list)::list in
-      aux body (num+1) n_list
+      let level = find_infest_level n_body pos_list in
+      let n_list = (n_body, level)::list in
+      aux1 body (num+1) n_list
     else list in
-  let n_body_list = aux body 1 [] in
+  let n_body_list = n_body_list @ (aux1 body 1 []) in
   let rec aux2 body num list =
     let n_body, r_num, pos_list = remove_field_infestor body num var_decls data_decls in
     if r_num = 0 then
-      let n_list = (n_body, pos_list)::list in
+      let () = x_tinfo_hp (add_str "body" pr_exp) body no_pos in
+      let () = x_tinfo_hp (add_str "n_body" pr_exp) n_body no_pos in
+      let level = find_infest_level n_body pos_list in
+      let () = x_tinfo_hp (add_str "level" pr_int) level no_pos in
+      let n_list = (n_body, level)::list in
       aux2 body (num+1) n_list
     else list in
   let n_body_list = n_body_list @ (aux2 body 1 []) in
   let rec aux3 body num list =
     let n_body, r_num, pos_list = add_field_infestor body num var_decls data_decls in
     if r_num = 0 then
-      let n_list = (n_body, pos_list)::list in
+      let level = find_infest_level n_body pos_list in
+      let n_list = (n_body, level)::list in
       aux3 body (num+1) n_list
     else list in
   let n_body_list = n_body_list @ (aux3 body 1 []) in
   let rec aux4 body num list =
     let n_body, r_num, pos_list = modify_operator_infestor body num in
     if r_num = 0 then
-      let n_list = (n_body, pos_list)::list in
+      let level = find_infest_level n_body pos_list in
+      let n_list = (n_body, level)::list in
       aux4 body (num+1) n_list
     else list in
   let n_body_list = n_body_list @ (aux4 body 1 []) in
-  let aux_f (body, pos_list) =
-    let () = x_binfo_hp (add_str "proc" pr_exp) body no_pos in
-    let level = find_infest_level body pos_list in
-    let () = x_binfo_hp (add_str "level" pr_int) level no_pos in
-    (body, level) in
-  n_body_list |> List.map aux_f
+  n_body_list
 
 let buggy_level_two body var_decls data_decls =
   let rec aux (body: I.exp) = match body with
@@ -495,28 +498,14 @@ let buggy_level_two body var_decls data_decls =
       else []
     | _ -> [] in
   aux body
-    (* | I.Seq seq ->
-     *   let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
-     *   let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
-     *   (I.Seq {seq with exp_seq_exp1 = n_e1;
-     *                      exp_seq_exp2 = n_e2}, r2)
-     *   | I.Cond cond ->
-     *     let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
-     *     let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
-     *     let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
-     *                                 exp_cond_else_arm = n_e3} in
-     *     (n_e, r3) *)
-
 
 let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
-  let list = [] in
   let n_body_w_level_one = buggy_level_one body var_decls data_decls in
   let n_body_w_level = buggy_level_two body var_decls data_decls in
   let pr_w_level = pr_list (pr_pair pr_exp pr_int) in
   let all_cases = n_body_w_level_one @ n_body_w_level in
-  let () = x_binfo_hp (add_str "w_level" pr_w_level) n_body_w_level no_pos in
+  let () = x_tinfo_hp (add_str "w_level" pr_w_level) n_body_w_level no_pos in
   all_cases
-  (* n_body_w_level_one *)
 
 let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   let body = proc.I.proc_body |> Gen.unsome in
@@ -573,6 +562,10 @@ let start_repair_wrapper (iprog: I.prog_decl) level =
   let start_time = get_time () in
   let res = repair_iprog iprog level in
   let duration = get_time() -. start_time in
+  let () = if res then
+      x_binfo_pp "REPAIRING SUCCESSFUL" no_pos
+    else
+      x_binfo_pp "REPAIRING FAIL" no_pos in
   if not(!infestor) then
     let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos in
     res

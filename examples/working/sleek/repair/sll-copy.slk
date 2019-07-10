@@ -24,3 +24,11 @@ ensures res::ll<n> * x::ll<n>;.
 // (exists fr43, fr44, v45, nxt46, an47, q_48:
 // x::node<an47,q_48> * x::node<v45,nxt46> * q_48::ll<fr43> * tmp::ll<fr44> &
 // fr43+1=n & fr44+1=n).
+
+synthesize [node x,node tmp]
+x::ll<n>&x!=null
+~>
+(exists fr01,fr02,vl73,nxt74,an97, q_98:
+x::node<an97,q_98> * x::node<vl73,nxt74> *
+      q_98::ll<fr01> * tmp::ll<fr02>&
+x=x & fr01=n-1 & fr02=n-1).
