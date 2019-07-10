@@ -370,7 +370,7 @@ let norm_complex_unfold iprog
       let f = vd.C.view_un_struc_formula in
       let vn =  vd.C.view_name in
       let unfold_set1 = List.filter (fun (n,_,_) -> not(n=vn)) unfold_set1 in
-      let svl = List.concat (List.map (fun (f,_) -> fv ~vartype:Global_var.var_with_view_only f) f) in
+      let svl = List.concat (List.map (fun (f,_) -> fv ~vartype:Vartypes.var_with_view_only f) f) in
       let () = y_tinfo_hp (add_str "svl" !CP.print_svl) svl in
       let unf = Gen.BList.intersect_eq (fun (e,_,_) sv -> e=(CP.name_of_spec_var sv)) unfold_set1 svl in
       let () = y_tinfo_hp (add_str "unf" (pr_list (fun (e,_,_) ->e))) unf in

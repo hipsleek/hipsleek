@@ -219,7 +219,7 @@ let unfold_body_lemma iprog ldef ulst =
       let pr = Iprinter.string_of_coerc_decl      in
       let body = ldef.Iast.coercion_body in
       (* WN: collect heap views to see if overlaps with unfold set *)
-      let fvars = IF.all_fv ~vartype:Global_var.var_with_view_only body in
+      let fvars = IF.all_fv ~vartype:Vartypes.var_with_view_only body in
       let () = y_tinfo_hp (add_str "views" (pr_list string_of_primed_ident)) fvars in
       let rs = BList.intersect_eq (fun (v,_) (w,_,_) -> v=w) fvars ulst in
       if rs==[] then ldef

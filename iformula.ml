@@ -920,7 +920,7 @@ and fv_ann_formula (f:formula):(ident*primed) list =
 and collect_annot_vars f  = fv_ann_formula f
 
 
-and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list =
+and h_fv ?(vartype=Vartypes.var_with_none) (f:h_formula):(ident*primed) list =
   let rec aux f =
     match f with
     | Conj ({h_formula_conj_h1 = h1;
@@ -1026,10 +1026,10 @@ and get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
   in
   helper f0
 
-and heap_fv_one_formula ?(vartype =Global_var.var_with_none) (f:one_formula):(ident*primed) list =  (h_fv ~vartype:vartype f.formula_heap)
+and heap_fv_one_formula ?(vartype =Vartypes.var_with_none) (f:one_formula):(ident*primed) list =  (h_fv ~vartype:vartype f.formula_heap)
 
 (*TO CHECK: how about formula_and*)
-and heap_fv ?(vartype=Global_var.var_with_none) (f:formula):(ident*primed) list = match f with
+and heap_fv ?(vartype=Vartypes.var_with_none) (f:formula):(ident*primed) list = match f with
   | Base b->
     let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
     let hvars = (h_fv ~vartype:vartype b.formula_base_heap) in
@@ -1043,7 +1043,7 @@ and heap_fv ?(vartype=Global_var.var_with_none) (f:formula):(ident*primed) list 
 
   | Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv ~vartype:vartype b.formula_or_f1)@(heap_fv ~vartype:vartype b.formula_or_f2))
 
-and struc_hp_fv ?(vartype=Global_var.var_with_none) (f:struc_formula): (ident*primed) list =  match f with
+and struc_hp_fv ?(vartype=Vartypes.var_with_none) (f:struc_formula): (ident*primed) list =  match f with
   | EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt (struc_hp_fv ~vartype:vartype) b.formula_struc_continuation)
                                            @(heap_fv ~vartype:vartype b.formula_struc_base))
                 (b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
@@ -1063,7 +1063,7 @@ and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
 
 (*TO CHECK: how about formula_and*)
 (* excludes HRel arguments *)
-and unbound_heap_fv (f:formula):(ident*primed) list = heap_fv ~vartype:Global_var.var_with_heap_only f
+and unbound_heap_fv (f:formula):(ident*primed) list = heap_fv ~vartype:Vartypes.var_with_heap_only f
 (* match f with *)
 (* | Base b->  *)
 (*   let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in *)
@@ -1120,12 +1120,12 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
   helper f0
 
 
-and all_fv_one_formula ?(vartype=Global_var.var_with_none) (f:one_formula):(ident*primed) list =
+and all_fv_one_formula ?(vartype=Vartypes.var_with_none) (f:one_formula):(ident*primed) list =
   let hvars = h_fv ~vartype:vartype f.formula_heap in
   let pvars = if vartype # is_heap_only then [] else Ipure.fv f.formula_pure in
   Gen.BList.remove_dups_eq (=) (hvars@pvars)
 
-and all_fv ?(vartype=Global_var.var_with_none) (f:formula):(ident*primed) list =
+and all_fv ?(vartype=Vartypes.var_with_none) (f:formula):(ident*primed) list =
   let rec aux f =
     match f with
     | Base b->

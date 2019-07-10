@@ -1,0 +1,9 @@
+# Omega Calculator v2.1 (based on Omega Library 2.1, July, 2008):
+# 
+# reachable (a,b,c)
+# 	  { a->b:{[1]->[2]},
+# 	     b->c:{[2]->[3]},
+# 	     a:{[1]}};
+Node b: {[2]}
+Node c: {[3]}
+# 

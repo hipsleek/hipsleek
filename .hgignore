@@ -15,8 +15,6 @@ baga/.*/logs/*
 /\.mona_temp*
 /*hip$
 /*sleek$
-/\#.*
-\#.*
 xml/xml_parser.ml
 xml/xml_parser.mli
 xml/xml_lexer.ml
@@ -26,7 +24,6 @@ fixcalc.*.inf$
 fixcalc.td$
 /fixcalc.*.inp$
 fixcalc.*.inp$
-/[abcde]$
 /tmp/
 /*.log$
 /*.mli$
@@ -48,9 +45,6 @@ cil/bin/.*.bat$
 cil/doc/header.html$
 cil/doc/index.html$
 cil/bin/CilConfig.pm$
-omega_modified/code_gen/obj/.library
-omega_modified/omega_lib/obj/.library
-omega_modified/omega_calc/obj/
 /mona.failure
 .merlin
 .*swp

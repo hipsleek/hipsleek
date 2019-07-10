@@ -943,6 +943,11 @@ let common_arguments = [
        Globals.proof_logging_txt:=true;
        Globals.sleek_logging_txt:=true
      ), "Shorthand for --en-slk-logging");
+  ("--esl-all", Arg.Unit (fun _ ->
+       Globals.proof_logging_txt:=true;
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_log_all := true
+     ), "Shorthand for --en-slk-logging");
   ("--dump-slk-proof", Arg.Unit (fun _ ->
        Globals.proof_logging_txt:=true;
        Globals.sleek_logging_txt:=true;
@@ -1370,7 +1375,8 @@ let common_arguments = [
         Globals.return_must_on_pure_failure := true;
         Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
-  ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
+  ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
+  ("--force-print-residue", Arg.Set Globals.force_print_residue, "Always print resiude")
 ]
 
 (* arguments/flags used only by hip *)
@@ -1481,6 +1487,7 @@ Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)->
         let _,f,_=List.find(fun (a,_,_)-> (String.compare a s1) ==0) hip_arguments in
         let rec process_arg s1 s2 f : unit= match f with
           |	Arg.Unit f -> f ()
+          | Arg.Expand _
           |   Arg.Rest _
           |	Arg.Bool _-> ()
           |	Arg.Set b -> b:=true

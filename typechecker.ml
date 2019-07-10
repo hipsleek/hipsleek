@@ -561,7 +561,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let is_ana_ni = List.exists (fun x -> x==Globals.INF_ANA_NI) inf_o_lst in
       let wrap_ana_ni f x =
         if is_ana_ni then  Wrapper.wrap_ana_ni (Some true) f x else f x in
-      let () = y_binfo_hp (add_str "inf_o_lst" (pr_list string_of_inf_const)) inf_o_lst in
+      let () = y_tinfo_hp (add_str "inf_o_lst" (pr_list string_of_inf_const)) inf_o_lst in
       let postf = b.CF.formula_inf_post in
       let postxf = b.CF.formula_inf_xpost in
       let old_vars = if do_infer then b.CF.formula_inf_vars else [] in
@@ -1951,7 +1951,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* let () = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
           let () = CF.must_consistent_list_failesc_context "bind 1" ctx  in
           (* let () = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
-          let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
+          (* let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in *)
+          let unfolded = tmp_ctx in
           let unfolded =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) unfolded in
           (* let () = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
           (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
@@ -3990,6 +3991,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               x_tinfo_hp (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
               let new_spec = x_add_1 Astsimp.add_pre prog new_spec in
               x_tinfo_hp (add_str "NEW SPECS(AF)" pr_spec) new_spec no_pos;
+              let () = proc.proc_stk_of_static_specs # push new_spec in
 
               if (pre_ctr # get> 0)
               then
@@ -4217,7 +4219,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                 if !Globals.web_compile_flag then
                   print_string_quiet ("\nProcedure <b>"^proc.proc_name^"</b> <font color=\"blue\">SUCCESS</font>.\n")
                 else
-                  print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
+                  let () = print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS.\n") in
+                  if (pre_ctr # get> 0) then
+                    let () = print_endline_quiet "\nVariable Inference result:" in
+                    let () = print_endline_quiet proc0.proc_name in
+                    print_endline_quiet (Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))
+                  else
+                    ()
               else
                 let () = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                 if !Globals.web_compile_flag then

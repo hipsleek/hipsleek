@@ -1586,12 +1586,12 @@ let gfp_preprocess pairs0 =
 
 let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* TODO: Handle non-recursive ones separately *)
-  let () = x_binfo_pp ("input_pairs_num: " ^ (pr_list
+  let () = x_tinfo_pp ("input_pairs_num: " ^ (pr_list
                                             (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos in
 
   let pairs = fixc_preprocess input_pairs_num in
 
-  let () = x_binfo_hp (add_str "input_pairs(b4): " (pr_list
+  let () = x_tinfo_hp (add_str "input_pairs(b4): " (pr_list
                                                   (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos in
 
   (*  let pairs, subs = if bottom_up then arrange_para_new pairs ante_vars,[] *)

@@ -63,8 +63,8 @@ struct
   let hash_to_list ht =
     Hashtbl.fold (fun a b c -> (a,b)::c) ht []
 
-  let list_cnt_sort_dec l = 
-    List.sort (fun (_,a) (_,b) -> 
+  let list_cnt_sort_dec l =
+    List.sort (fun (_,a) (_,b) ->
         if a=b then 0
         else if a>b then -1
         else 1) l
@@ -78,22 +78,22 @@ struct
       else 1 in
     List.sort compare vlist
 
-  let silenced_print f s = if !silence_output then () else f s 
+  let silenced_print f s = if !silence_output then () else f s
 
   let rec restart f arg =
     try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
-  let string_of_pair (p1:'a->string) (p2:'b->string) ((a,b):'a * 'b) : string = 
+  let string_of_pair (p1:'a->string) (p2:'b->string) ((a,b):'a * 'b) : string =
     "("^(p1 a)^","^(p2 b)^")"
 
-  let rec remove_dups n = 
+  let rec remove_dups n =
     match n with
       [] -> []
     | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let pr_id x = x
   let pr_string x = "\""^x^"\""
-  let opt_map f v = match v with Some a -> Some (f a) | None -> None 
+  let opt_map f v = match v with Some a -> Some (f a) | None -> None
   let concatMap f xs =
     let rec aux xs = match xs with
       | [] -> []
@@ -103,25 +103,25 @@ struct
   let print_endline_quiet s =
     let flag = !silence_output(* compete_mode *) in
     (* print_endline ("compete mode : "^(string_of_bool flag)); *)
-    if flag then () 
-    else print_endline s 
+    if flag then ()
+    else print_endline s
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
-  let print_string_quiet s = 
-    if !silence_output (* compete_mode *) then () 
-    else print_string s 
+  let print_string_quiet s =
+    if !silence_output (* compete_mode *) then ()
+    else print_string s
 
-  let warn_exception e = 
+  let warn_exception e =
     let s = Printexc.to_string e in
     print_endline_quiet ("\nException processed: "^s)
 
-  let print_web_mode s = 
+  let print_web_mode s =
     if !Globals.tnt_web_mode then print_endline s
-    else print_endline_quiet s 
+    else print_endline_quiet s
 
-  let print_string_web_mode s = 
+  let print_string_web_mode s =
     if !Globals.tnt_web_mode then print_string s
-    else print_string_quiet s 
+    else print_string_quiet s
 
   let pr_var_prime (id,p) = match p with
     | Primed -> id^"'"
@@ -138,7 +138,7 @@ struct
     | None -> "None"
     | Some v -> "Some("^(f v)^")"
 
-  let pr_opt = pr_option 
+  let pr_opt = pr_option
 
   let pr_opt_int = pr_option string_of_int
 
@@ -160,7 +160,7 @@ struct
   let pr_hepta_ln f1 f2 f3 f4 f5 f6 f7 (x,y,z,z2,z3,z4,z5) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^"\n,6:"^(f6 z4)^"\n,7:"^(f7 z5)^")"
 
   let pr_add_num f xs =
-    let rec aux n xs = 
+    let rec aux n xs =
       match xs with
       | [] -> []
       | x::xs -> ("("^(string_of_int n)^"):"^(f x))::(aux (n+1) xs)
@@ -172,7 +172,7 @@ struct
   let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
   let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
   let pr_list f xs = pr_list_brk "[" "]" f xs
-  let pr_list_n f xs = 
+  let pr_list_n f xs =
     let n = List.length xs in
     if n>1 then (string_of_int n)^(pr_list f xs)
     else pr_list f xs
@@ -189,15 +189,15 @@ struct
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 
-  let map_opt f x = match x with 
+  let map_opt f x = match x with
     | None -> None
     | Some v -> Some (f v)
 
-  let map_opt_res f x = match x with 
+  let map_opt_res f x = match x with
     | None -> (None,[])
     | Some v -> let r1,r2 = f v in (Some r1,r2)
 
-  let fold_opt f x = match x with 
+  let fold_opt f x = match x with
     | None -> []
     | Some v -> (f v)
 
@@ -264,7 +264,7 @@ struct
     | [] -> raise Not_found
     | x::xs -> last_ne l x
 
-  let spacify i = 
+  let spacify i =
     let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
     function [] -> ""
            | [x] -> x
@@ -278,7 +278,7 @@ struct
     if i = 0 then ([], xs)
     else
       let a, b = split_at (List.tl xs) (i-1) in
-      ((List.hd xs) :: a, b) 
+      ((List.hd xs) :: a, b)
 
   let rec split3 (l : ('a * 'b * 'c) list) : 'a list * 'b list * 'c list = match l with
     | (h1, h2, h3) :: rest ->
@@ -293,7 +293,7 @@ struct
     | ([], [], []) -> []
     | _ -> failwith ("combine3: combining lists with different lengths")
 
-  let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c list) : 'd list = 
+  let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c list) : 'd list =
     match (a0, bs, cs) with
     | (a :: r1, b :: r2, c :: r3) ->
       let r = map3 f r1 r2 r3 in
@@ -301,7 +301,7 @@ struct
     | [], [], [] -> []
     | _ -> failwith ("map3: mapping lists with different lengths.")
 
-  let rec map4 (f : 'a -> 'b -> 'c -> 'd -> 'e) (a0 : 'a list) (bs : 'b list) (cs : 'c list) (ds : 'd list) : 'e list = 
+  let rec map4 (f : 'a -> 'b -> 'c -> 'd -> 'e) (a0 : 'a list) (bs : 'b list) (cs : 'c list) (ds : 'd list) : 'e list =
     match (a0, bs, cs, ds) with
     | (a :: r1, b :: r2, c :: r3, d:: r4) ->
       let r = map4 f r1 r2 r3 r4 in
@@ -314,16 +314,16 @@ struct
     if n <= 0 then []
     else v :: (repeat v (n-1))
 
-  let report_error ?(exc=None) pos msg = 
-    let msg = match exc with 
+  let report_error ?(exc=None) pos msg =
+    let msg = match exc with
       | None -> msg
       | Some e -> (msg^">>from"^(Printexc.to_string e)) in
     Error.report_error
       { Error.error_loc = pos; Error.error_text = msg}
 
-  let report_warning pos msg = 
+  let report_warning pos msg =
     if !compete_mode then ()
-    else 
+    else
       Error.report_warning
         { Error.error_loc = pos; Error.error_text = msg}
 
@@ -334,12 +334,12 @@ struct
   (* Hashtable stuff *)
 
   let copy_keys (keys : 'a list) (fr_tab : ('a, 'b) Hashtbl.t) (to_tab : ('a, 'b) Hashtbl.t) =
-    let cp_key (k : 'a) = 
+    let cp_key (k : 'a) =
       try
         let v = Hashtbl.find fr_tab k in
         Hashtbl.add to_tab k v
       with
-      | Not_found -> () 
+      | Not_found -> ()
     in
     ignore (List.map cp_key keys)
 
@@ -423,9 +423,9 @@ struct
   (*   ((List.length l1) =  l) && (l = (List.length l2)) *)
 
 
-  let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
+  let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) =
     let rec helper xs n = match xs with
-      | e :: rest -> 
+      | e :: rest ->
         if f e then (n, e)
         else helper rest (n + 1)
       | _ -> raise Not_found
@@ -437,38 +437,38 @@ struct
     | _::t -> (list_last t)
     | [] -> failwith "Gen.list_last: empty list"
 
-  let remove_elem_eq eq e l = List.filter (fun x -> not(eq x e)) l 
+  let remove_elem_eq eq e l = List.filter (fun x -> not(eq x e)) l
 
   let mem_eq eq x l = List.exists (eq x) l
 
-  let rec remove_dups_eq eq n = 
+  let rec remove_dups_eq eq n =
     match n with
       [] -> []
     | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
 
-  let remove_dups_eq_stable eq n = 
+  let remove_dups_eq_stable eq n =
     let rec aux eq n =
       match n with
         [] -> []
       | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
     in List.rev (aux eq (List.rev n))
 
-  let rec remove_dups_eq_reserved_order eq n = 
+  let rec remove_dups_eq_reserved_order eq n =
     match n with
       [] -> []
-    | q::qs -> 
-      if (mem_eq eq q qs) then 
+    | q::qs ->
+      if (mem_eq eq q qs) then
         q::(remove_dups_eq eq (List.filter (fun p -> not (eq p q)) qs))
       else q::(remove_dups_eq eq qs)
 
-  let rec check_dups_eq eq n = 
+  let rec check_dups_eq eq n =
     match n with
     | [] -> false
-    | q::qs -> if (List.exists (fun c-> eq q c) qs) then true else check_dups_eq eq qs 
+    | q::qs -> if (List.exists (fun c-> eq q c) qs) then true else check_dups_eq eq qs
 
   let rec get_all_pairs ls = match ls with
     | [] -> []
-    | c::cs -> 
+    | c::cs ->
       let lst = List.map (fun x -> (c,x)) cs in
       lst @ (get_all_pairs cs)
 
@@ -506,26 +506,26 @@ struct
   let diff_split_eq eq l1 l2 =
     List.partition (fun x -> not (List.exists (eq x) l2)) l1
 
-  let list_subset_eq eq l1 l2 = 
+  let list_subset_eq eq l1 l2 =
     let l = (List.length (difference_eq eq l1 l2)) in
     l==0
 
   (* change name to setequal *)
-  let list_setequal_eq eq l1 l2 = 
-    (list_subset_eq eq l1 l2) && (list_subset_eq eq l2 l1) 
+  let list_setequal_eq eq l1 l2 =
+    (list_subset_eq eq l1 l2) && (list_subset_eq eq l2 l1)
 
-  let list_equiv_eq eq l1 l2 = 
+  let list_equiv_eq eq l1 l2 =
     try
       List.for_all2 eq l1 l2
     with _ -> false
 
-  let rec list_find (f:'a -> 'b option) l = match l with 
+  let rec list_find (f:'a -> 'b option) l = match l with
     | [] -> None
     | x::xs -> match f x with
       | None -> list_find f xs
       | Some s -> Some s
   let add_index l =
-    let rec helper id l = match l with 
+    let rec helper id l = match l with
       | [] -> []
       | h::t -> (id,h)::(helper (id+1) t) in
     helper 0 l
@@ -552,15 +552,15 @@ module BListEQ =
     (* end *)
     include BList
     let mem x l = List.exists (eq x) l
-    let string_of (ls:'a list) : string 
+    let string_of (ls:'a list) : string
       = string_of_f string_of_elem ls
 
-    let rec check_dups n = 
+    let rec check_dups n =
       match n with
       | [] -> false
-      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups qs 
+      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups qs
 
-    let rec find_dups n = 
+    let rec find_dups n =
       match n with
       | [] -> []
       | q::qs -> if (List.exists (eq q) qs) then q::(find_dups qs) else find_dups qs
@@ -570,16 +570,16 @@ module BListEQ =
       | [] -> []
       | x::rest -> if List.exists (eq x) rest then [x] else find_one_dup rest
 
-    let overlap l1 l2 = 
+    let overlap l1 l2 =
       List.exists (fun x -> (mem x l2)) l1
 
     let intersect l1 l2 =
-      List.filter (fun x -> List.exists (eq x) l2) l1  
+      List.filter (fun x -> List.exists (eq x) l2) l1
 
     let difference l1 l2 =
       List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
-    let list_equal l1 l2 = 
+    let list_equal l1 l2 =
       let l = (List.length (intersect l1 l2)) in
       ((List.length l1) =  l) && (l = (List.length l2))
 
@@ -594,7 +594,7 @@ class ['a] mut_option =
     val mutable value = (None:'a option)
     method is_init  = init_flag
     method get = value
-    method set (i:'a option) = 
+    method set (i:'a option) =
       begin
         if init_flag then ()
         else (init_flag = true; value <- i)
@@ -615,13 +615,13 @@ class mut_bool =
   end;;
 
 class change_flag =
-  object 
+  object
     val mutable cnt = 0
-    method reset = 
+    method reset =
       begin
         cnt <- 0
       end
-    method inc = 
+    method inc =
       begin
         cnt <- cnt+1
       end
@@ -634,44 +634,44 @@ class ['a] stack =
   object (self)
     val mutable recent = 0
     val mutable stk = []
-    method push (i:'a) = 
+    method push (i:'a) =
       begin
         stk <- i::stk;
         recent <- recent+1
       end
     method get_stk  = stk (* return entire content of stack *)
-    method get_stk_recent  = 
+    method get_stk_recent  =
       if recent<=0 then []
-      else BList.take recent stk 
-    method get_stk_recent_reset  = 
+      else BList.take recent stk
+    method get_stk_recent_reset  =
       if recent<=0 then []
-      else 
+      else
         (* let () = print_endline ("XXXX get_stk_recent_reset "^(string_of_int recent)) in *)
         let s=BList.take recent stk in
         (self # reset_recent;s)
     (* return recent content of stack *)
-    method get_stk_and_reset  = 
-      let s=stk in 
+    method get_stk_and_reset  =
+      let s=stk in
       (self # reset;s) (* return entire content of stack & clear *)
-    method set_stk newstk  = 
-      stk <- newstk 
+    method set_stk newstk  =
+      stk <- newstk
     (* override with a new stack *)
-    method pop = match stk with 
-      | [] -> print_string "ERROR : popping empty stack"; 
+    method pop = match stk with
+      | [] -> print_string "ERROR : popping empty stack";
         raise Stack_Error
       | x::xs -> stk <- xs
-    method pop_top = match stk with 
-      | [] -> print_string "ERROR : popping empty stack"; 
+    method pop_top = match stk with
+      | [] -> print_string "ERROR : popping empty stack";
         raise Stack_Error
       | x::xs -> (stk <- xs;recent<-recent-1; x)
-    method top : 'a = match stk with 
-      | [] -> print_string "ERROR : top of empty stack"; 
+    method top : 'a = match stk with
+      | [] -> print_string "ERROR : top of empty stack";
         raise Stack_Error
       | x::xs -> x
-    method pop_no_exc = match stk with 
-      | [] -> () 
+    method pop_no_exc = match stk with
+      | [] -> ()
       | x::xs -> (stk <- xs; recent<-recent-1)
-    method map f = 
+    method map f =
       stk <- List.map f stk
     method is_empty = stk == []
     method is_empty_recent = recent<=0
@@ -682,18 +682,18 @@ class ['a] stack =
     method len_recent = recent
     method reverse = stk <- List.rev stk
     method reverse_of = List.rev stk
-    method mem (i:'a) = List.mem i stk 
-    method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+    method mem (i:'a) = List.mem i stk
+    method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk
     method find f = List.find f stk
     (* method exists (i:'a) = List.mem i stk  *)
     (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
-    method exists f = List.exists f stk 
-    method push_list (ls:'a list) = 
+    method exists f = List.exists f stk
+    method push_list (ls:'a list) =
       begin
         stk <- ls@stk;
         recent <- (List.length ls)+recent
       end
-    method pop_list (ls:'a list) = 
+    method pop_list (ls:'a list) =
       begin
         stk <- BList.drop (List.length ls) stk;
         recent <- recent - (List.length ls)
@@ -703,12 +703,12 @@ class ['a] stack =
         stk <- BList.drop n stk;
         recent <- recent - n
       end
-    method reset = 
+    method reset =
       begin
         self # reset_recent;
         stk <- []
       end
-    method reset_recent = 
+    method reset_recent =
       recent <- 0;
     method clone =
       Oo.copy self
@@ -722,9 +722,9 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
   object (self)
     inherit ['a] stack as super
     val name = nn (* name of stack *)
-    val elem_pr = epr 
-    val elem_eq = eq 
-    method get_stk_no_dupl  = 
+    val elem_pr = epr
+    val elem_eq = eq
+    method get_stk_no_dupl  =
       (* remove dupl *)
       let s = super # get_stk in
       BList.remove_dups_eq eq s
@@ -733,49 +733,49 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     (*   let s = self # get_stk_no_dupl in *)
     (*   print_endline ("\nget_stk("^name^"):"^((Basic.pr_list epr) s));  *)
     (*   s *)
-    method push_list_x f loc (* ?(pr_flag=false) *) (ls:'a list) =  
+    method push_list_x f loc (* ?(pr_flag=false) *) (ls:'a list) =
       (* WN : below is to be removed later *)
       (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
       let n = List.length ls in
       if n=0 (* || name="" *)  then ()
-      else 
-      let () = 
+      else
+      let () =
         match !Globals.show_push_list with
         | None -> ()
-        | Some s -> 
+        | Some s ->
           let flag = match !Globals.show_push_list_rgx with
             | None -> true
             | Some rgx -> Str.string_match rgx name 0 in
           if flag || f (* s=name || s="" *) then
-            print_endline ("\npush_list("^name^"):"^loc^(string_of_int n)^((Basic.pr_list epr) ls)) 
+            print_endline ("\npush_list("^name^"):"^loc^(string_of_int n)^((Basic.pr_list epr) ls))
           else () in
-      super # push_list ls 
-    method push_list_loc s (ls:'a list) =  
+      super # push_list ls
+    method push_list_loc s (ls:'a list) =
       self # push_list_x false s ls
-    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
+    method push_list (* ?(pr_flag=false) *) (ls:'a list) =
       self # push_list_x false "" ls
-    method push_list_pr loc (ls:'a list) =  
+    method push_list_pr loc (ls:'a list) =
       self # push_list_x true  loc (* ~pr_flag:true *) ls
-    method reset_pr  =  
+    method reset_pr  =
         (* let () = print_endline ("\nXXXX reset("^name) in *)
-        super # reset 
-    method push_pr (s:string) (ls:'a) =  
+        super # reset
+    method push_pr (s:string) (ls:'a) =
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
-      super # push ls 
-    method string_of = 
+      super # push ls
+    method string_of =
       let stk2 = self # get_stk(* _no_dupl *) in
       Basic.pr_list_ln elem_pr stk
-    method string_of_recent = 
+    method string_of_recent =
       let stk = self # get_stk_recent in
       Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
-    method string_of_no_ln_rev = 
+    method string_of_no_ln_rev =
       let s = super#reverse_of in
       Basic.pr_list elem_pr s
-    method string_of_reverse = 
+    method string_of_reverse =
       let s = super#reverse_of  in
       Basic.pr_list_ln elem_pr s
-    method string_of_reverse_log = 
+    method string_of_reverse_log =
       let s = super#reverse_of  in
       Basic.pr_list_mln elem_pr s
     method dump_no_ln =
@@ -784,10 +784,10 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
         List.iter (fun e -> print_string (elem_pr e)) s
       end
     method mem (i:'a) = List.exists (elem_eq i) stk
-    method overlap (ls:'a list) = 
+    method overlap (ls:'a list) =
       if (ls == []) then false
       else List.exists (fun x -> List.exists (elem_eq x) ls) stk
-    method reset_recent = 
+    method reset_recent =
       (* if nn="es_infer_hp_rel" then  *)
       (*   begin *)
       (*     print_endline ("XXXX reset recent "^(string_of_int recent)); *)
@@ -798,28 +798,28 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
 
 
 class ['a] stack_filter nn (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
-  object 
+  object
     inherit ['a] stack_pr nn epr eq as super
     val filter_fn = fil
     method filter = stk <- List.filter fil stk
-    method string_of_reverse_log_filter = 
+    method string_of_reverse_log_filter =
       stk <- List.filter fil stk;
       super#string_of_no_ln_rev
       (* string_of_reverse_log *)
   end;;
 
 class ['a] stack_noexc nn (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
-  object 
+  object
     inherit ['a] stack_pr nn epr eq
     val emp_val = x_init
-    method top_no_exc : 'a = match stk with 
+    method top_no_exc : 'a = match stk with
       | [] ->  emp_val
       | x::xs -> x
     (* method top : 'a = self # top_no_exc  *)
-    method last : 'a = match stk with 
+    method last : 'a = match stk with
       | [] -> emp_val
       | _ -> List.hd (List.rev stk)
-    method pop_top_no_exc = match stk with 
+    method pop_top_no_exc = match stk with
       | [] -> emp_val
       | x::xs -> stk <- xs; x
   end;;
@@ -842,7 +842,7 @@ class ['a] stack_noexc nn (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
 (*    end;; *)
 
 class detect_obj =
-  object 
+  object
     val mutable flag = false
     method get : bool = flag
     method set = flag <- true
@@ -851,7 +851,7 @@ class detect_obj =
 
 
 class counter x_init =
-  object 
+  object
     val mutable ctr = x_init
     method get : int = ctr
     method get_orig : int = x_init
@@ -862,7 +862,7 @@ class counter x_init =
     method add (i:int) = ctr <- ctr + i
     method reset = ctr <- x_init (* 0x0 *)
     method string_of : string= (string_of_int ctr)
-    method str_get_next : string 
+    method str_get_next : string
       = ctr <- ctr + 1; string_of_int ctr
   end;;
 
@@ -873,18 +873,18 @@ let fresh_int2 () = seq_number2 # inc_and_get
 let reset_int2 () = seq_number2 # reset
 
 class ctr_with_aux x_init =
-  object 
+  object
     inherit counter x_init as super
     val mutable aux_ctr = x_init
-    method inc_and_get = 
+    method inc_and_get =
       ctr <- ctr + 1; aux_ctr <- x_init; ctr
-    method inc_and_get_aux_str = 
+    method inc_and_get_aux_str =
       let () = aux_ctr <- aux_ctr + 1 in
         (string_of_int ctr)^"."^(string_of_int aux_ctr)
   end
 
 class ctr_call x_init =
-  object 
+  object
     inherit counter x_init as super
     val mutable last_call = ""
     method next_call =
@@ -950,13 +950,13 @@ end;;
 
 module EQList =
   functor (Elt: EQType) ->
-  struct 
+  struct
     type a = Elt.a list
     let rec eq x y = match x,y with
       | [],[] -> true
       | x::xs,y::ys -> (Elt.eq x y) && (eq xs ys)
       | _,_ -> false
-    let string_of xs = 
+    let string_of xs =
       let o = List.map (Elt.string_of) xs
       in "["^(String.concat "," o)^"]"
   end;;
@@ -977,17 +977,17 @@ struct
 
   let no_errors () = (error_list#len = 0)
 
-  let err loc msg = 
+  let err loc msg =
     error_list#push (loc ^ ": error: "^msg)
 
   let error msg = (print_string (msg ^"\n"); flush_all(); err "" msg)
-  let print_errors () = 
+  let print_errors () =
     List.iter (function x -> print_string (x ^ "\n")) error_list#get_stk;
     print_string (string_of_int (error_list#len)^" errors.\n");
     print_string "The program is INVALID\n";
     exit 2
 
-  let warn msg = 
+  let warn msg =
     warning_no #inc;
     Basic.print_string_quiet ("*** Warning: "^ msg ^ "\n"); flush_all()
 
@@ -995,8 +995,8 @@ struct
     | None -> warn msg
     | Some _ -> ()
 
-  let fail s =   
-    print_string (s ^ "\n"); 
+  let fail s =
+    print_string (s ^ "\n");
     Printf.printf "There were %d warnings.\n" warning_no#get;
     flush_all();
     failwith s
@@ -1021,16 +1021,16 @@ module EqMap =
     type key = elem keyt
     type emap = (elem * key) list
     type epart = (elem list) list
-    type elist = (elem list) 
-    type epair = ((elem * elem) list) 
+    type elist = (elem list)
+    type epair = ((elem * elem) list)
     open Basic
 
-    let eq = Elt.eq 
-    let string_of_elem = Elt.string_of 
+    let eq = Elt.eq
+    let string_of_elem = Elt.string_of
     (* let string_of_emap = Basic.pr_list (fun (e,_) -> Elt.string_of e) *)
     (* let string_of_epart = Basic.pr_list (Basic.pr_list Elt.string_of) *)
 
-    let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
+    let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s
 
     (* TODO : rec03.slk bug here *)
     (* partition@53 *)
@@ -1063,7 +1063,7 @@ module EqMap =
       | None, None -> 0
       | None, Some _ -> -1
       | Some _, None -> 1
-      | Some n1, Some n2 -> 
+      | Some n1, Some n2 ->
         if n1=n2 then 0
         else if n1<n2 then -1 else 1
     let compare_v (e1,k1) (e2,k2) =
@@ -1090,7 +1090,7 @@ module EqMap =
         | [] -> [ls]
         | (e2,k2)::ss -> if k==k2 then aux k (e2::ls) ss
           else ls::(aux k2 [e2] ss) in
-      let ans = match s with 
+      let ans = match s with
         | [] -> []
         | (e,k)::ss -> aux k [e] ss in
       let ans = List.filter (fun x -> List.length x>1) ans in
@@ -1098,7 +1098,7 @@ module EqMap =
 
     let string_of (e: emap) : string =
       let f = string_of_elem in
-      let ll = partition e in 
+      let ll = partition e in
       (* let ll = List.filter (fun v -> List.length v > 1) ll in *)
 
       "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
@@ -1110,10 +1110,10 @@ module EqMap =
       (pr_list (pr_pair Elt.string_of key_string_of) e)
 
     let un_partition (ll:epart) : emap =
-      let flat xs = 
-        if (List.length xs>1) then 
+      let flat xs =
+        if (List.length xs>1) then
           let newk = new_key () in
-          List.map (fun x -> (x,newk)) xs 
+          List.map (fun x -> (x,newk)) xs
         else [] in
       List.concat (List.map (fun x -> flat x) ll)
 
@@ -1132,7 +1132,7 @@ module EqMap =
 
     (* find key of e in s and return remainder after
        all elements equivalent to e is removed *)
-    let find_remove (s : emap) (e:elem) : key * emap  = 
+    let find_remove (s : emap) (e:elem) : key * emap  =
       let r1 = find_aux s e None in
       (r1, if r1==None then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
 
@@ -1146,14 +1146,14 @@ module EqMap =
 
     (* add x=y to e-set s and returning a new e-set with
        extra elements added *)
-    let add_equiv  (s: emap) (x:elem) (y:elem) : emap = 
+    let add_equiv  (s: emap) (x:elem) (y:elem) : emap =
       if (eq x y) then s
       else
         let r1 = find s x in
         let r2 = find s y in
         begin
           match r1 with
-          | None -> 
+          | None ->
             begin
               match r2 with
               | None ->
@@ -1161,16 +1161,16 @@ module EqMap =
                 (x,r3)::((y,r3)::s)
               | _ -> (x,r2)::s
             end
-          | _ -> 
+          | _ ->
             begin
               match r2 with
               | None ->  (y,r1)::s
-              | _ -> 
+              | _ ->
                 begin
                   if r1==r2 then s
                   else
                     (* let r3=new_key() in *)
-                    List.map (fun ((a,b) as ar) -> 
+                    List.map (fun ((a,b) as ar) ->
                         if (b==r1) then (a,r2) else ar) s
                 end
             end
@@ -1186,10 +1186,10 @@ module EqMap =
     let mem x ls =
       List.exists (fun e -> eq x e) ls
 
-    let overlap l1 l2 = 
+    let overlap l1 l2 =
       List.exists (fun x -> (mem x l2)) l1
 
-    (* this method is used to merge two partitions 
+    (* this method is used to merge two partitions
        which may have different keys *)
     (* split out sub-lists in l which overlaps with x *)
     let split_partition (x:elist) (l:epart): (epart * epart) =
@@ -1211,7 +1211,7 @@ module EqMap =
     let get_elems (s:emap) : elist = domain s
 
     (* return pairs of equivalent elements from e_set *)
-    let get_equiv (s:emap) : epair = 
+    let get_equiv (s:emap) : epair =
       let ll = partition s in
       let make_p l = match l with
         | [] -> []
@@ -1234,10 +1234,10 @@ module EqMap =
       r
 
     (* remove key e from e_set  *)
-    let elim_elems_one  (s:emap) (e:elem) : emap = 
+    let elim_elems_one  (s:emap) (e:elem) : emap =
       List.filter (fun (a,k2) -> not(eq a e)) s
 
-    let elim_elems  (s:emap) (e:elem list) : emap = 
+    let elim_elems  (s:emap) (e:elem list) : emap =
       List.filter (fun (a,k2) -> not(mem a e)) s
 
     (* return all elements equivalent to e, not including itself *)
@@ -1250,13 +1250,13 @@ module EqMap =
     let find_equiv_all_new  (e:elem) (s:emap) : elist  =
       let r1 = find s e in
       if (r1==None) then [e]
-      else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
-  
+      else List.map fst (List.filter (fun (a,k) -> k==r1) s)
+
 
     (* return a distinct element equal to e *)
     let find_equiv  (e:elem) (s:emap) : elem option  =
       let ls=find_equiv_all e s in
-      try 
+      try
         let p = List.find (fun x -> not(eq x e)) ls in
         Some p
       with _ -> None
@@ -1272,11 +1272,11 @@ module EqMap =
         | (x,_)::_ -> (Some x, s1)
 
     (* return a distinct element equal to e and elim e from e_set if found *)
-    let find_equiv_elim (e:elem) (s:emap) : (elem * emap) option  = 
+    let find_equiv_elim (e:elem) (s:emap) : (elem * emap) option  =
       let (ne,ns) = find_equiv_elim_sure e s in
       match ne with
       | None -> None
-      | Some x -> Some (x, ns) 
+      | Some x -> Some (x, ns)
 
     (* make fv=tv and then eliminate fv *)
     (* fv should never be constant *)
@@ -1295,12 +1295,12 @@ module EqMap =
 
 
     let subs_elem sst a =
-      try 
+      try
         let (_,b) = List.find (fun (x,_) -> Elt.compare a x == 0) sst in
         b
       with _ -> a
 
-    let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap = 
+    let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap =
       let new_s = List.map (fun (a,k) -> (subs_elem f_t_ls a,k)) s in
       emap_sort new_s
 
@@ -1320,20 +1320,20 @@ module EqMap =
     let is_one2one (f:elem -> elem) (s:elist) : bool =
       let l = List.map f s in
       if (check_no_dups l) then true
-      else (print_string ("duplicates here :"^(BList.string_of_f string_of_elem l)^"\n") ; false) 
+      else (print_string ("duplicates here :"^(BList.string_of_f string_of_elem l)^"\n") ; false)
 
     (* rename the elements of e_set *)
     (* pre : f must be 1-to-1 map *)
-    let rename_eset (f:elem -> elem) (s:emap) : emap = 
+    let rename_eset (f:elem -> elem) (s:emap) : emap =
       let b = is_one2one f (get_elems s) in
       if b then  List.map (fun (e,k) -> (f e,k)) s
-      else Error.report_error {Error.error_loc = no_pos; 
+      else Error.report_error {Error.error_loc = no_pos;
                                Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
-    let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
+    let rename_eset_with_key (f:elem -> elem) (s:emap) : emap =
       let b = is_one2one f (get_elems s) in
       if b then  List.map (fun (e,k) -> (f e, k)) s
-      else Error.report_error {Error.error_loc = no_pos; 
+      else Error.report_error {Error.error_loc = no_pos;
                                Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
     (* s - from var; t - to var *)
@@ -1371,13 +1371,13 @@ module EqMap =
     (* [v,y,w] [v=w, v=y] ---> [(v,v),(w,v),(y,v)] *)
     let build_subs_4_evars evars eset =
       let rec aux ev  =
-        match ev with 
+        match ev with
         | [] -> []
-        | e::evs -> 
+        | e::evs ->
           let eqlist = find_equiv_all e eset in
           let (bound,free) = List.partition (fun c -> BList.mem_eq eq c evars) eqlist in
           let (used,rest) = List.partition (fun c -> BList.mem_eq eq c bound) evs in
-          let target = match free with 
+          let target = match free with
             | [] -> e
             | h::_ -> h in
           let nsubs = List.map (fun x -> (x,target)) (e::used) in
@@ -1386,7 +1386,7 @@ module EqMap =
   end;;
 
 module ID =
-struct 
+struct
   type t = string
   let zero = ""
   let is_zero t = (t="")
@@ -1424,7 +1424,7 @@ module IntCtr =
     let zero = Elt.zero
     let ctr = ref zero
     let reset () = ctr := zero
-    let inc () : unit = 
+    let inc () : unit =
       let v = Elt.inc (!ctr) in (ctr:=v)
   end;;
 
@@ -1440,7 +1440,7 @@ type elem = int
 
 
 module StackTrace =
-struct 
+struct
   (* keep track of calls being traced by ho_debug *)
   let ctr = new ctr_call 0
 
@@ -1459,7 +1459,7 @@ struct
 
   let is_same_dd_get () =
     if dd_stk # is_empty then None
-    else 
+    else
       let v1 = dd_stk # top in
       let v2 = debug_stk # top in
       (* let l1 = dd_stk # get_stk in *)
@@ -1469,15 +1469,15 @@ struct
       if (v1=v2) then Some v1 else None
 
   let is_same_dd () =
-    match (is_same_dd_get()) 
+    match (is_same_dd_get())
     with | None -> false
          | _ -> true
 
   (* pop last element from call stack of ho debug *)
-  let pop_call () = 
+  let pop_call () =
     let () = match is_same_dd_get () with
       | None -> ()
-      | Some no -> 
+      | Some no ->
         let n2 = !debug_trace_log_num in
         if n2<0 || n2=no then dd_stk # pop
         else ()
@@ -1492,12 +1492,12 @@ struct
 
     (* call f and pop its trace in call stack of ho debug *)
   let pop_aft_apply_with_exc s (f:'a->'b) (e:'a) : 'b =
-    let r = try 
+    let r = try
       (f e)
-    with exc -> 
-        begin 
+    with exc ->
+        begin
           trace_exception s exc;
-          pop_call(); 
+          pop_call();
           raise exc
         end
     in pop_call(); r
@@ -1505,14 +1505,14 @@ struct
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_aft_apply_with_exc_no s (f:'a->'b) (e:'a) : 'b =
-    try 
+    try
       let r = (f e) in
-      if !debug_precise_trace then debug_stk # pop; 
+      if !debug_precise_trace then debug_stk # pop;
       r
-    with exc -> 
+    with exc ->
         begin
           trace_exception s exc;
-          if !debug_precise_trace then debug_stk # pop; 
+          if !debug_precise_trace then debug_stk # pop;
           raise exc
         end
 
@@ -1527,11 +1527,11 @@ struct
     else ()
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
-  let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
+  let push_call_gen (os:string) (flag_detail:bool) : (string * string) =
     (* let () = ctr#inc in *)
     let v = ctr#next_call in
     let () = debug_stk#push v in
-    if flag_detail || !debug_trace_log then 
+    if flag_detail || !debug_trace_log then
       if !debug_trace_log_num<0 || !debug_trace_log_num=v then
         dd_stk#push v;
     let lc = ctr # get_last_call in
@@ -1542,11 +1542,11 @@ struct
     s,h
 
   (* push call without detailed tracing *)
-  let push_call (os:string) : (string * string) = 
+  let push_call (os:string) : (string * string) =
     push_call_gen os false
 
   (* push call with detailed tracing *)
-  let push_call_dd (os:string) : (string * string) = 
+  let push_call_dd (os:string) : (string * string) =
     push_call_gen os true
 
 end;;
@@ -1618,7 +1618,7 @@ module Baga =
     let string_of (b:baga) : string =
       Basic.pr_list (Elt.string_of) b
 
-    let rec is_dupl_baga_eq eq (xs:baga) : bool = 
+    let rec is_dupl_baga_eq eq (xs:baga) : bool =
       match xs with
       | [] -> false
       | x::xs1 -> if not(Elt.sat x) then true
@@ -1629,7 +1629,7 @@ module Baga =
     let is_dupl_baga (xs:baga) : bool = is_dupl_baga_eq eq xs
 
     (* false result denotes contradiction *)
-    let is_sat_baga_eq eq (xs:baga) : bool = 
+    let is_sat_baga_eq eq (xs:baga) : bool =
       let r= not(is_dupl_baga_eq eq xs) in
       begin
         Basic.print_endline_quiet ("is_sat_baga_eq("^(string_of xs)^")="^(string_of_bool r));
@@ -1637,7 +1637,7 @@ module Baga =
       end
 
     (* false result denotes contradiction *)
-    let is_sat_baga (xs:baga) : bool = 
+    let is_sat_baga (xs:baga) : bool =
       let r = not(is_dupl_baga xs) in
       begin
         Basic.print_endline_quiet ("is_sat_baga("^(string_of xs)^")="^(string_of_bool r));
@@ -1675,7 +1675,7 @@ module DisjSet =
     type ptr = Elt.t
 
     (* disjointness structures*)
-    type dlist = (ptr list) 
+    type dlist = (ptr list)
     type dpart = dlist list
     (* module BG = Baga(Elt) *)
     let eq = Elt.eq
@@ -1712,7 +1712,7 @@ module DisjSet =
       (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)
 
     (* returns checks if l1/\l2 !=null based on physical equality *)
-    let overlap_q l1 l2 = 
+    let overlap_q l1 l2 =
       List.exists (fun x -> (List.memq x l2)) l1
 
     (* checks s |- x!=y *)
@@ -1726,7 +1726,7 @@ module DisjSet =
     let rec remove_dups_disj_set (s: dpart): dpart =
       match s with
       | [] -> []
-      | x::xs -> if (List.length x == 0) || List.exists (fun y -> (List.length x == List.length y) && List.for_all2 eq x y) xs   
+      | x::xs -> if (List.length x == 0) || List.exists (fun y -> (List.length x == List.length y) && List.for_all2 eq x y) xs
         then remove_dups_disj_set xs else [x]@(remove_dups_disj_set xs)
 
     (* returns s1/\s2 *)
@@ -1746,14 +1746,14 @@ module DisjSet =
     let conj_disj_set (d1: dpart) (d2: dpart): dpart = d1@d2
 
     (*  returns d1\/d2 *)
-    let or_disj_set (d1: dpart) (d2: dpart): dpart = 
-      List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) d2) d1) 
+    let or_disj_set (d1: dpart) (d2: dpart): dpart =
+      List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) d2) d1)
 
     (* returns s1*s2 *)
     let star_disj_set (s1: dpart) (s2: dpart): dpart =
       if is_empty s1 then s2
       else if is_empty s2 then s1
-      else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
+      else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1)
 
     (* check if there was a conflict in a difference list *)
     let  is_conflict_list (l:dlist) :bool =
@@ -1782,14 +1782,14 @@ module DisjSet =
         List.assoc x subs
       with _ -> x
 
-    let mk_exist_dset (evars:ptr list) (subs: (ptr*ptr) list) (xss:dpart) : dpart = 
+    let mk_exist_dset (evars:ptr list) (subs: (ptr*ptr) list) (xss:dpart) : dpart =
       let rec aux ls =
         match ls with
         | [] -> []
-        | x::xs -> 
+        | x::xs ->
           let x = apply_subs subs x in
           if BList.mem_eq eq x evars then (aux xs)
-          else x::(aux xs) 
+          else x::(aux xs)
       in
       List.map aux xss
 
@@ -1798,56 +1798,56 @@ module DisjSet =
 class mult_counters =
   object (self)
     val ctrs = Hashtbl.create 10
-    method get (s:string) : int = 
+    method get (s:string) : int =
       try
         let r = Hashtbl.find ctrs s in r
       with
       | Not_found -> 0
-    method add (s:string) (i:int) = 
+    method add (s:string) (i:int) =
       try
         let r = Hashtbl.find ctrs s in
         Hashtbl.replace ctrs  s (r+i)
       with
       | Not_found -> Hashtbl.add ctrs s i
     method inc (s:string) = self # add s 1
-    method string_of : string= 
+    method string_of : string=
       let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
       let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
       "Counters: \n"^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
   end;;
 
 class task_table =
-  object 
+  object
     val tasks = Hashtbl.create 10
-    method add_task_instance msg time = 	
+    method add_task_instance msg time =
       let m = if (time>profile_threshold) then  [time] else [] in
-      try 
-        (* t1 : time, cnt1: count, max1: those that exceeed threshold *)      
+      try
+        (* t1 : time, cnt1: count, max1: those that exceeed threshold *)
         let (t1,cnt1,max1) = Hashtbl.find tasks msg in
         Hashtbl.replace tasks msg (t1+.time,cnt1+1,m@max1)
-      with Not_found -> 
+      with Not_found ->
         Hashtbl.add tasks msg (time,1,m)
-    method print_task_instance msg : unit = 	
-      try 
+    method print_task_instance msg : unit =
+      try
         let (t1,cnt1,_) = Hashtbl.find tasks msg in
         Basic.print_endline_quiet ("Time("^msg^") : "^(string_of_float t1)^" (seconds)")
-      with Not_found -> 
+      with Not_found ->
         Basic.print_endline_quiet ("Task "^msg^" does not exist in profiling table.")
-    method print : unit = 
+    method print : unit =
       let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
       let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
       let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
       let f a = (string_of_float ((floor(100. *.a))/.100.)) in
       let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
-      let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+      let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  ->
           let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
-                   (if (List.length l)>0 then 
-                      let l = (List.sort compare l) in		
+                   (if (List.length l)>0 then
+                      let l = (List.sort compare l) in
                       (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
                     else "")^"],  "^(fp (t/.ot))^"%)") in
-          ((a1+1),r) 
+          ((a1+1),r)
         ) (0,"") str_list in
-      print_string ("\nProfiling Results: " ^(string_of_int cnt)^" keys."^str^"\n" ) 
+      print_string ("\nProfiling Results: " ^(string_of_int cnt)^" keys."^str^"\n" )
   end;;
 
 
@@ -1855,45 +1855,45 @@ module Profiling =
 struct
   let counters = new mult_counters
   let tasks = new task_table
-  let profiling_stack = new stack_noexc "profiling_stk" ("stack underflow",0.,false) 
+  let profiling_stack = new stack_noexc "profiling_stk" ("stack underflow",0.,false)
     (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")") (=)
 
-  let add_to_counter (s:string) i = 
+  let add_to_counter (s:string) i =
     if !enable_counters then counters#add s i
     else ()
   let inc_counter (s:string) = add_to_counter s 1
 
   let string_of_counters () =  counters#string_of
 
-  let get_all_time () = 
+  let get_all_time () =
     let r = Unix.times () in
     r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
 
-  let get_main_time () = 
+  let get_main_time () =
     let r = Unix.times () in
     r.Unix.tms_utime +. r.Unix.tms_stime (* +. r.Unix.tms_cutime +. r.Unix.tms_cstime *)
 
   let get_time () = get_all_time()
 
-  let push_time_no_cnt msg = 
+  let push_time_no_cnt msg =
     if (!profiling) then
       let timer = get_time () in
-      profiling_stack # push (msg, timer,true) 
+      profiling_stack # push (msg, timer,true)
     else ()
-  let push_time_always msg = 
+  let push_time_always msg =
     (* inc_counter ("cnt_"^msg); *)
     let timer = get_time () in
-    profiling_stack#push (msg, timer,true) 
+    profiling_stack#push (msg, timer,true)
   (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
 
-  let push_time msg = 
+  let push_time msg =
     if (!profiling) then
       push_time_always msg
     else ()
 
-  let pop_time_always msg = 
+  let pop_time_always msg =
     let m1,t1,_ = profiling_stack # top in
-    if (String.compare m1 msg)==0 then 
+    if (String.compare m1 msg)==0 then
       let t2 = get_time () in
       if (t2-.t1)< 0. then Error.report_error {Error.error_loc = no_pos; Error.error_text = ("negative time")}
       else
@@ -1904,13 +1904,13 @@ struct
         (* 	print_string ("\n double accounting for "^msg^"\n") *)
         (* print_string ("\n skip double accounting for "^msg^"\n")  *)
         tasks # add_task_instance m1 0.
-      end	
-      else tasks # add_task_instance m1 (t2-.t1) 
+      end
+      else tasks # add_task_instance m1 (t2-.t1)
     else
       (* let () = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
       Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
 
-  let pop_time msg = 
+  let pop_time msg =
     if (!profiling) then
       pop_time_always msg
     else ()
@@ -1922,7 +1922,7 @@ struct
   let print_counters_info () =
     if !enable_counters then
       print_string (string_of_counters ())
-    else () 
+    else ()
 
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
     try
@@ -1978,20 +1978,20 @@ struct
 
   let spec_counter = new counter 1
 
-  let gen_time_msg _  = 
+  let gen_time_msg _  =
     spec_counter#inc;
     "time_stk_"^ (spec_counter#string_of)
 
-  let pop_time_to_s_no_count  msg = 
+  let pop_time_to_s_no_count  msg =
     if (!profiling) then
       let rec helper l = match l with
         | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
-        | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
+        | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t
           else t in
-      profiling_stack#set_stk (helper profiling_stack#get_stk) 
+      profiling_stack#set_stk (helper profiling_stack#get_stk)
     else ()
 
-  let add_index l = 
+  let add_index l =
     let rec ff i l = match l with
       | [] -> []
       | a::b-> (i,a)::(ff (i+1) b) in
@@ -2021,7 +2021,7 @@ struct
     with Sys_error _ -> n
 
   let tmp_name n =
-    try (let d = Filename.dirname Sys.executable_name ^ "/../tmp/" in    
+    try (let d = Filename.dirname Sys.executable_name ^ "/../tmp/" in
          Sys.getcwd() ^ "/" ^ d ^ n)
     with Sys_error _ -> n
 
@@ -2030,7 +2030,7 @@ struct
     let d = String.rindex n '.' in
     String.sub n d (String.length n - d)
 
-  let get_path s = 
+  let get_path s =
     if String.contains s '/' then
       let i = String.rindex s '/' in
       String.sub s 0 (i+1)
@@ -2038,10 +2038,10 @@ struct
 
   (** String-handling utility functions. *)
 
-  let trim_quotes s = 
+  let trim_quotes s =
     let trim_last s' = if String.get s' ((String.length s')-1) = '"' then
         String.sub s' 0 ((String.length s')-1) else s' in
-    if String.get s 0 = '"' then 
+    if String.get s 0 = '"' then
       (trim_last (String.sub s 1 ((String.length s) - 1)))
     else
       trim_last s
@@ -2077,18 +2077,18 @@ struct
               end;
               incr n
             done) with Bail -> ());
-      Str.first_chars s' (String.length s - !skip)
+      Str.first_chars (Bytes.to_string s') (String.length s - !skip)
     end
 
   let trim_str input =
     let start_idx = ref 0 in
     let len = String.length input in
-    let () = 
+    let () =
       while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
         start_idx := !start_idx + 1
       done in
     let end_idx = ref (len - 1) in
-    let () = 
+    let () =
       while (!end_idx > !start_idx) && ((String.get input !end_idx) = ' ') do
         end_idx := !end_idx - 1
       done in
@@ -2114,32 +2114,32 @@ struct
     else s
 
   let unprime s =
-    let l = String.length s in 
-    if l = 0 then s else 
+    let l = String.length s in
+    if l = 0 then s else
     if (String.get s (l-1)) = '\'' then
       String.sub s 0 (l-1) else s
 
   let is_primed s =
-    let l = String.length s in 
-    if l = 0 then false else 
+    let l = String.length s in
+    if l = 0 then false else
       (String.get s (l-1) = '\'')
 
   let replace_dot_with_uscore s =
     let dot = Str.regexp "\\." in
     let caret = Str.regexp "\\^" in
-    Str.global_replace dot "" 
+    Str.global_replace dot ""
       (Str.global_replace caret "$" s)
 
   let replace_minus_with_uscore s =
     let minus = Str.regexp "-" in
     let caret = Str.regexp "\\^" in
-    Str.global_replace minus "_" 
+    Str.global_replace minus "_"
       (Str.global_replace caret "$" s)
 
   let replace_path_sep_with_uscore s =
     let path_sep = Str.regexp "/" in
     let caret = Str.regexp "\\^" in
-    Str.global_replace path_sep "" 
+    Str.global_replace path_sep ""
       (Str.global_replace caret "$" s)
 
   let split_by sep s =
@@ -2162,7 +2162,7 @@ struct
     | None -> a
 
   (** removing 'option' types *)
-  let unsome : 'a option -> 'a = 
+  let unsome : 'a option -> 'a =
     function
     | Some x -> x
     | None   -> failwith "[util] tried to deoptionify None"
@@ -2178,9 +2178,10 @@ struct
     if Sys.file_exists fname then
       let chn = open_in fname in
       let len = in_channel_length chn in
-      let str = String.make len ' ' in
+      let str = Bytes.make len ' ' in
       let () = really_input chn str 0 len in
-      (close_in chn; str)
+      (close_in chn;
+      Bytes.to_string str)
     else
       (warn ("Could not read file " ^ fname ^ "; assuming empty content.");
        "")
@@ -2281,7 +2282,7 @@ struct
 
   type 'a ilist = ('a list) ref
 
-  let new_ilist () : 'a ilist 
+  let new_ilist () : 'a ilist
     = ref []
 
   let add_ilist (x:'a list) (imp:'a ilist) : 'a ilist
@@ -2293,7 +2294,7 @@ struct
   let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
     = match stk with
     | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("pushf_add_level on empty stack")}
-    | lvl::stk -> let (new_i,v)=f i 
+    | lvl::stk -> let (new_i,v)=f i
       in (new_i,(v@lvl)::stk)
 
   let add_level (lst:'b list)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
@@ -2345,7 +2346,7 @@ struct
       match xs with
       | [] -> true
       | ((x,[])::xs1) -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
-      | ((x,n::t)::xs1) -> 
+      | ((x,n::t)::xs1) ->
         if (n<no) then false
         else if (n==no) then helper xs1 no
         else helper xs1 n
@@ -2357,24 +2358,24 @@ struct
       match xs with
       | [] -> if (is_empty acc) then [] else [(List.rev acc,no)]
       | ((x,[])::xs1) -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("cannot happen!")}
-      | ((x,n::t)::xs1) -> 
+      | ((x,n::t)::xs1) ->
         if (n==no) then helper xs1 ((x,t)::acc) no
-        else 
+        else
           let rs=helper xs [] (no+1) in
           if (is_empty acc) then rs
           else (List.rev acc,no)::rs
     in let r=check_sorted_tag xs in
-    if r then helper xs acc 1 
+    if r then helper xs acc 1
     else Error.report_error {Error.error_loc = no_pos; Error.error_text = ("need to sort group_tag!")}
 
   let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
     let rec helper xs ys =
       match xs with
       | [] -> []
-      | ((x,n1)::xs1) -> 
+      | ((x,n1)::xs1) ->
         match ys with
         | [] -> []
-        | ((y,n2)::ys1) -> 
+        | ((y,n2)::ys1) ->
           if (n1==n2) then (f x y)::helper xs ys1
           else if (n1<n2) then helper xs1 ys
           else helper xs ys1
@@ -2455,7 +2456,7 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
     let is_gte t e1 e2 = not (is_lt t e1 e2)
     let is_lt_opt t e1 e2 =
       try Some (has_path_exc t e1 e2) with Not_found -> None
-    let is_gte_opt t e1 e2 = 
+    let is_gte_opt t e1 e2 =
       try Some (not (has_path_exc t e1 e2)) with Not_found -> None
     let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
   end
@@ -2468,7 +2469,7 @@ let try_finally e f a g =
   try
     let r = f a in
     (g flag; r)
-  with _ as e -> 
+  with _ as e ->
     (g flag; raise e)
 
 let range a b =

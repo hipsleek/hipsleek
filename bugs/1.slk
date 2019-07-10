@@ -1,0 +1,7 @@
+data node {
+ int val;
+ node next;
+}.
+
+checkentail x::node<2,_> |- x::node<a,b>.
+print residue.

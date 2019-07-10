@@ -28,7 +28,7 @@ module IO = struct
     | e -> trace "from_string" "Unmashaled failed"; raise e
 
   (** [read ch] read data from channel. The data always starts with an int specifying the data length.
-      	@param ch input channel 
+      	@param ch input channel
       	@return data
       	*)
   let read (ch: in_channel) : 'a =
@@ -40,7 +40,7 @@ module IO = struct
         let data_str = String.create data_len in
         let () = really_input ch data_str 0 data_len in
 
-        from_string data_str
+        from_string (Bytes.to_string data_str)
       end else begin
         failwith "IO.read: Bad input data to Net!"
       end
@@ -60,7 +60,7 @@ module IO = struct
     assert (msg_type = msg_type_result);
     data
 
-  (** [write ch data] marshals [data] and writes it to channel [ch]. 
+  (** [write ch data] marshals [data] and writes it to channel [ch].
       	@param ch output channel to be written.
       	@param data data to be written to the channel [ch].
       	*)
@@ -70,26 +70,26 @@ module IO = struct
       let data_len = String.length data_str in
       (* trace "write" ("len="^(string_of_int data_len)); *)
       output_binary_int ch data_len;
-      output ch data_str 0 data_len;
+      output ch (Bytes.of_string data_str) 0 data_len;
       flush ch;
     with e -> trace "write" (Printexc.to_string e); raise e
 
   (** [write_job_to_slave ch seqno idx timeout prover_arg formula] writes
-      	a tuple of (seqno, idx, timeout, prover_arg, formula) to the channel [ch]. 
-      	The type of message is {!Net.IO.msg_type_job}. 
+      	a tuple of (seqno, idx, timeout, prover_arg, formula) to the channel [ch].
+      	The type of message is {!Net.IO.msg_type_job}.
       	@param ch output channel to be written
       	@return none
       	*)
-  let write_job_to_slave (ch:out_channel) (seqno: int) (idx: int) (timeout: float) 
+  let write_job_to_slave (ch:out_channel) (seqno: int) (idx: int) (timeout: float)
       (prover_arg: string) (*(formula: Tpdispatcher.prove_type)*) formula : unit =
     write ch (msg_type_job, (seqno, idx, timeout, prover_arg, formula))
 
   (** [write_job_to_master ch seqno idx timeout prover_arg formula ] writes a tuple of (seqno, idx, timeout, prover_arg, formula) to the channel [ch].
-      	The type of message is {!Net.IO.msg_type_job_list}. 
+      	The type of message is {!Net.IO.msg_type_job_list}.
       	@param ch output channel to be written.
       	@return none.
       	*)
-  let write_job_to_master (ch: out_channel) (seqno: int) (timeout: float) 
+  let write_job_to_master (ch: out_channel) (seqno: int) (timeout: float)
       (prover_arg:string) (*(formula: Tpdispatcher.prove_type)*) formula stopper =
     write ch (msg_type_job_list, (seqno, timeout, prover_arg, formula, stopper))
 
@@ -100,7 +100,7 @@ module IO = struct
     write ch (seqno, prover_arg, formula, prio)
 
   (** [write_result ch seqno idx result] writes a tuple of (seqno, idx, result) to the channel [ch].
-      	The type of message is {!Net.IO.msg_type_result}. 
+      	The type of message is {!Net.IO.msg_type_result}.
       	@param ch output channel to be written
       	@return none *)
   let write_result (ch: out_channel) (seqno: int) (idx: int) (result:'a option) : unit =
@@ -113,10 +113,10 @@ end
 module Pipe = struct
   let pipe_prove_in = ref "" (**named pipe for reading requests*)
   let pipe_prove_out = ref "" (**named pipe for sending back results*)
-  let open_in = open_in_gen [Open_binary; Open_rdonly] 0o600 
+  let open_in = open_in_gen [Open_binary; Open_rdonly] 0o600
   let open_out = open_out_gen [Open_binary; Open_wronly; Open_trunc] 0o600
 
-  (** [make_pipes ()] creates a pair of named pipes for two processes on the same machine to communicate. 
+  (** [make_pipes ()] creates a pair of named pipes for two processes on the same machine to communicate.
       	Pipe names are set in {!Pipe.pipe_prove_in} and {!Pipe.pipe_prove_out}.*)
   let make_pipes () =
     let rec mkpipe p num_retries =
@@ -138,11 +138,11 @@ module Pipe = struct
   let clean () =
     try
       Unix.unlink !pipe_prove_in;
-      Unix.unlink !pipe_prove_out; 
+      Unix.unlink !pipe_prove_out;
     with _ -> ()
 
   (** [init_client named_pipe] returns a pair of input and output channels with the prefix [named_pipe].
-      	@param named_pipe prefix string of pipe name 
+      	@param named_pipe prefix string of pipe name
       	@return a pair of (input,output) channels*)
   let init_client named_pipe =
     set_pipe named_pipe;
@@ -155,7 +155,7 @@ module Pipe = struct
       trace "Pipe.init_client" (Printexc.to_string e);
       exit 0
 
-  (** [init_server named_pipe processing_func] starts a service that runs [processing_func] which waits data from [named_pipe] input channel, 
+  (** [init_server named_pipe processing_func] starts a service that runs [processing_func] which waits data from [named_pipe] input channel,
       	consume the data, and return result to output channel.
       	@param named_pipe communication path for the client to send request to server that executes [processing_func].
       	@return none
@@ -189,8 +189,8 @@ module Socket = struct
   (**[get_address host] returns inet_addr of the [host]*)
   let get_address (host: string) : Unix.inet_addr = (Unix.gethostbyname(host)).Unix.h_addr_list.(0)
 
-  (** [get_host_port s ] extracts string [s] of the form [host:port_number]. 
-      	If port is not provided, default_port is used. 
+  (** [get_host_port s ] extracts string [s] of the form [host:port_number].
+      	If port is not provided, default_port is used.
       	If both host and port are not provided, current host and default port are used.
       	@param s string of the form [host:port] or [host]
       	*)
@@ -203,8 +203,8 @@ module Socket = struct
     | _ -> failwith "Invalid host:port format."
 
 
-  (** [open_connection sockaddr] connects to socket [sockaddr] and return a pair of input and output channels. 
-      	@param sockaddr socket address. 
+  (** [open_connection sockaddr] connects to socket [sockaddr] and return a pair of input and output channels.
+      	@param sockaddr socket address.
       	@return a pair of (input,output) channels. *)
   let open_connection (sockaddr: Unix.sockaddr) : in_channel * out_channel =
     let domain =
@@ -233,8 +233,8 @@ module Socket = struct
       trace "Socket.init_client" (Printf.sprintf "init_client: %s, %s, %s\n" (Unix.error_message err) ctx1 ctx2);
       raise exn
 
-  (** [establish_server server_fun sockaddr ] spawns a server process that serve [server_fun] at socket [sockaddr]. 
-      	The server_fun will listen to data from input [sockaddr], process the received data and return the result to socket. 
+  (** [establish_server server_fun sockaddr ] spawns a server process that serve [server_fun] at socket [sockaddr].
+      	The server_fun will listen to data from input [sockaddr], process the received data and return the result to socket.
       	@param server_fun function that read input [sockaddr], process, and write to [sockaddr]. *)
   let establish_server (server_fun: (in_channel -> out_channel -> 'a)) (sockaddr: Unix.sockaddr) : unit =
     let domain =
@@ -277,8 +277,8 @@ module Socket = struct
       Printf.printf "Unix error: %s, %s, %s\n" (Unix.error_message err) ctx1 ctx2;
       raise exn
 
-  (** [init_server port_str processing_func] start the server at port [port_str]. 
-      	@param port_str string of port number. If empty, default_port is used. 
+  (** [init_server port_str processing_func] start the server at port [port_str].
+      	@param port_str string of port number. If empty, default_port is used.
       	@return none. *)
   let init_server (port_str: string) (processing_func: (in_channel -> out_channel -> 'a)) : unit =
     let port = if port_str = "" then default_port else int_of_string port_str in

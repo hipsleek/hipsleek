@@ -3401,7 +3401,7 @@ infer_type:
 
 infer_id:
   [[ t = infer_type -> [FstAns t]
-   | `IDENTIFIER id; t = OPT infer_extn_for_id ->
+   | (id, _) = cid; t = OPT infer_extn_for_id ->
       match t with
       | None -> [SndAns id]
       | Some props ->

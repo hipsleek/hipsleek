@@ -1,0 +1,11 @@
+# Omega Calculator v2.1 (based on Omega Library 2.1, July, 2008):
+# I := {[i,j] : 1 <= i+j,j <= 10};
+# 
+# codegen I;
+for(t1 = -9; t1 <= 9; t1++) {
+  for(t2 = max(-t1+1,1); t2 <= min(-t1+10,10); t2++) {
+    s1(t1,t2);
+  }
+}
+
+# 

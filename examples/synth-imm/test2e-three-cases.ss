@@ -29,24 +29,50 @@ pred skl2<p,n,mn,mx> ==
     /* empty down */
     self::node<mn,fwd,fwd> *
     fwd::skl2<p,m2,mn2,mx>
-    & self!=p & self!=fwd
-    & n = m2 + 1 & n > 1
+    & self!=p & fwd!=p
+    & n = m2 + 1
     & mn<=mn2 & mn2<=mx
     /* empty fwd */
     or
     self::node<mn,down,p> *
-    down::skl2<p,m1,mn1,mx> *
-    & self!=p & self!=down
-    & n = m1 + 1 & n > 1
+    down::skl2<p,m1,mn1,mx>
+    & self!=p & down!=p
+    & n = m1 + 1
     & mn<=mn1 & mn1<=mx
     /* non-empty down & non-empty fwd*/
     or
     self::node<mn,down,fwd> *
     down::skl2<fwd,m1,mn1,mx1> *
     fwd::skl2<p,m2,mn2,mx>
-    & self!=p
-    & n = m1 + m2 + 1 & n > 1
+    & self!=p & fwd!=p & down!=fwd
+    & n = m1 + m2 + 1
     & mx1<=mn2 & mn<=mn1 & mn1<=mx1 & mn2<=mx
+    inv n>=0.
+
+pred skl3<p,n> ==
+    self = p    & n=0
+    or
+    /* empty down & fwd */
+    self::node<mn,p,p> & self!=p & n = 1
+    or
+    /* empty down */
+    self::node<mn,fwd,fwd> *
+    fwd::skl3<p,m2>
+    & self!=p & fwd!=p
+    & n = m2 + 1
+    /* empty fwd */
+    or
+    self::node<mn,down,p> *
+    down::skl3<p,m1>
+    & self!=p & down!=p
+    & n = m1 + 1
+    /* non-empty down & non-empty fwd*/
+    or
+    self::node<mn,down,fwd> *
+    down::skl3<fwd,m1> *
+    fwd::skl3<p,m2>
+    & self!=p & fwd!=p & down!=fwd
+    & n = m1 + m2 + 1
     inv n>=0.
 
 
@@ -57,19 +83,32 @@ int length(node x, node y)
      ensures  res=n;
      requires x::skl2<y,n,mn,mx>@L
      ensures  res=n;
+//      requires x::skl3<y,n>@L
+//      ensures  res=n;
 {
- if (x==y){ return 0; }
- else {
-    int m2 = length(x.fwd, y);
-    int m1 = length(x.down, x.fwd);
-    return m1 + m2 + 1;
- }
+   if(x == y) return 0 ;
+   else {
+      int m1,m2;
+      if(x.fwd == y) m1 = 0;
+      else m1 = length(x.fwd, y);
+      //update dwn
+      if (x.down == x.fwd) m2 = 0;
+      else m2 = length(x.down, x.fwd);
+      return m1 + m2 + 1;
+   }
 }
+// {
+//   if (x==y){ return 0; }
+//   else {
+//      int m2 = length(x.fwd, y);
+//      int m1 = length(x.down, x.fwd);
+//      return m1 + m2 + 1;
+//   }
+// }
 
 
 node append3(node x, node y, node a)
    // y and z may be aliased
-  /*
   requires  x::skl0<y> * a::skl0<z>@L & a!=z
   case {
      x=y  -> ensures   res=a;
@@ -80,7 +119,6 @@ node append3(node x, node y, node a)
      x=y  -> ensures   res=a;
      x!=y -> ensures   res::skl1<a,n> & res!=a;
   }
-  */
   requires  x::skl2<y,n,mn1,mx1> * a::skl2<z,_,mn2,mx2>@L & a!=z
   case {
      x=y  -> ensures  res=a;
@@ -93,23 +131,51 @@ node append3(node x, node y, node a)
    else {
       temp = x.fwd;
       //update fwd
-      // x::skl2<y,n,mn1,mx1> * a::skl2<z,_,mn2,mx2>@L & a!=z & mx1<=mn2
       if(x.fwd == y) x.fwd  = a;
       else x.fwd  = append3(x.fwd,y,a);
-      // x::node<mn1,down,fwd'> * down::skl<temp,mn1',mx1'>
-      // * a::skl2<z,_,mn2,mx2>@L & a!=z & mx1<=mn2
-      // fwd'::skl<a,mn2',mx1> & mx1'<=mn2' & mn1<=mn1'
-      // or
-      // fwd'=a
-//      skl2<y,n,mn1,mx1>
       //update dwn
       if (x.down == temp) x.down = x.fwd;
-      else x.down = append3(x.down,temp,x.fwd); // |-mx1' <= mn2'
-                                                // | mx1' <= mn2
+      else x.down = append3(x.down,temp,x.fwd);
    }
    return x;
 }
 
+/*
+node search(node x, node y, int val)
+  requires  x::skl2<y,n,mn,mx>
+  case {
+     x=y  -> ensures  x::skl2<y,n,mn1,mx1> & res=null;
+     x!=y ->
+          case {
+            val<mn   ->  ensurs res = null;
+            val>=mn  ->  ensures
+            x::skl2<res,n1,mn1,mx1>
+            * res::node<val0,dn,fw>
+            * dn::skl2<fw,n2,mn2,mx2>
+            * fw::skl2<y,n3,mn3,mx>
+          }
+  }
+
+{
+ if(x==y) return null;
+ else {
+    if (x.key == val) return x;
+    else
+      if (x.fwd == y)
+         { if (x.down == x.fwd) return x
+           else return search(x.down,y,val);
+         }
+     else {
+         node temp = x.fwd;
+         if(temp.val <= val) return search(x.fwd,y,val);
+         else
+          { if (x.down == x.fwd) return x
+            else return search(x.down,y,val);
+          }
+     }
+ }
+}
+*/
 
 pred lseg<p,n> == self=p & n=0 or
                   self::node<_,null,q> * q::lseg<p,n-1> & self!=p
@@ -133,6 +199,9 @@ pred lsort2<p,n,mn,mx> ==
 int length_ls(node x, node y)
      requires x::lseg<y,n>@L
      ensures  res=n;
+     requires x::lsort2<y,n,mn,mx>@L
+     ensures  res=n;
+
 {
  if (x==y) return 0;
  else return 1+length_ls(x.fwd,y);

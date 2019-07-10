@@ -664,7 +664,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let () = y_tinfo_hp (add_str "lhs_contra:subs" (pr_list (pr_pair pr_sv pr_sv))) eqs1 in
       let f = CP.subst eqs1 f in
       let () = x_tinfo_hp (add_str "lhs_contra:f(after subs)" !print_formula) f pos in
-      let vf = CP.fv f in
+      let vf = CP.fv ~vartype:Vartypes.var_with_rel f in
       let over_v = CP.intersect vf ivars in
       if (over_v ==[]) then None
       else
@@ -701,7 +701,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
         (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
         if CP.isConstTrue f || CP.isConstFalse f then None
         else
-          let ps2 = List.filter (fun p -> CP.intersect_svl ivars (CP.fv p) <> []) (CP.list_of_conjs f) in
+          let ps2 = List.filter (fun p -> CP.intersect_svl ivars (CP.fv ~vartype:Vartypes.var_with_rel  p) <> []) (CP.list_of_conjs f) in
           let () = DD.ninfo_hprint (add_str "ps2: " (pr_list !print_formula)) ps2 pos in
           let neg_f =
             if List.for_all (fun p -> CP.is_eq_neq_exp p (* && *)
@@ -779,7 +779,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
       List.partition (fun d -> (CP.get_RelForm d) != [] ) cl in
     let ivs = estate.es_infer_vars_rel in
     let lhs_rel =
-      List.filter (fun d -> (CP.intersect (CP.fv d) ivs) != [] ) lhs_rel in
+      List.filter (fun d -> (CP.intersect (CP.fv ~vartype:Vartypes.var_with_rel d) ivs) != [] ) lhs_rel in
     let lhs_rels,xp = match lhs_rel with
       | [] -> None, join_conjunctions lhs_wo_rel
       | _ -> x_tinfo_hp (add_str "infer_lhs_contra_estate: lhs_rels"
@@ -799,14 +799,14 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
           | Some f ->
             x_dinfo_pp ">>>>>> infer_lhs_contra_estate <<<<<<" pos;
             x_dinfo_pp "Add relational assumption" pos;
-            let (vs_rel,vs_lhs) = List.partition CP.is_rel_var (CP.fv f) in
+            let (vs_rel,vs_lhs) = List.partition CP.is_rel_var (CP.fv ~vartype:Vartypes.var_with_rel f) in
             let rel_ass = x_add infer_lhs_contra 2 p_thus lhs_xpure vs_lhs pos "relational assumption" in
             let () = x_dinfo_hp (add_str "rel_ass(unsat) : " (pr_opt !CP.print_formula)) rel_ass pos in
             begin
               match rel_ass with
               | None -> (None, [])
               | Some neg_lhs ->
-                if (CP.fv neg_lhs == []) then (None,[])
+                if (CP.fv ~vartype:Vartypes.var_with_rel neg_lhs == []) then (None,[])
                 else
                   let rel_ass =
                     if List.length (List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs f)))=1 then
@@ -942,7 +942,7 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
   let () = x_tinfo_hp (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
   (* let () = x_tinfo_hp (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in *)
   let () = x_tinfo_hp (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
-  let lhs_xpure = CP.filter_ante lhs_xpure_orig rhs_xpure in
+  let lhs_xpure = x_add CP.filter_ante lhs_xpure_orig rhs_xpure in
   let () = x_tinfo_hp (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
   let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
   let fml = CP.drop_rel_formula fml in
@@ -1778,7 +1778,7 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap
     (* TODO: Double check *)
     (* Debug.info_hprint (add_str "lhs_rel" (pr_list !CP.print_formula)) lhs_rel no_pos; *)
     (* Debug.info_hprint (add_str "lhs_rel" (pr_list !CP.print_formula)) lhs_wo_rel no_pos; *)
-    let lhs_rel = List.filter (fun d -> (CP.intersect (CP.fv d) ivs) != [] ) lhs_rel in
+    let lhs_rel = List.filter (fun d -> (CP.intersect (CP.fv ~vartype:Vartypes.var_with_rel d) ivs) != [] ) lhs_rel in
     (* Debug.info_hprint (add_str "lhs_rel" (pr_list pr_none)) lhs_rel no_pos; *)
     let lhs_rels,xp = match lhs_rel with
       | [] -> None, join_conjunctions lhs_wo_rel
@@ -2231,7 +2231,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
           let new_lhs_list = List.map (fun new_lhs_local ->
               x_tinfo_hp (add_str "rel-defn:rhs" Cprinter.string_of_pure_formula) rhs no_pos;
               x_tinfo_hp (add_str "rel-defn:new lhs" Cprinter.string_of_pure_formula) new_lhs_local no_pos;
-              let new_lhs_local = filter_ante_wo_rel new_lhs_local rhs in
+              let new_lhs_local = x_add filter_ante_wo_rel new_lhs_local rhs in
               x_tinfo_hp (add_str "rel-defn:filter_ante lhs" Cprinter.string_of_pure_formula) new_lhs_local no_pos;
               let rec_lhs_rel_vars = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_rhs_n) lhs_rel_list in
               let lhs_vars_wo_rel = CP.remove_dups_svl (List.concat (List.map CP.fv_wo_rel lhs_rel_list)) in
@@ -4634,12 +4634,12 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
   (* in *)
   let mkRel h hf h_args p pos=
     let lhs =
-      if !Globals.adhoc_flag_6 then
+      if false (* !Globals.adhoc_flag_6 *) then
         CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos
       else formula_of_heap hf pos
     in
     let rhs =
-      if !Globals.adhoc_flag_6 then CF.mkTrue (mkNormalFlow ()) pos
+      if false (* !Globals.adhoc_flag_6 *) then CF.mkTrue (mkNormalFlow ()) pos
       else formula_of_pure_N p pos in
     mkHprel (CP.RelAssume [h]) [] [] [] lhs None rhs  es_cond_path
   in

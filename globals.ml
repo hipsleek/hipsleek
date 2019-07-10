@@ -808,6 +808,7 @@ let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
+let sleek_log_all = ref false
 let dump_proof = ref false
 let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
@@ -1844,7 +1845,7 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
-let print_extra = ref false
+let print_extra = ref true (* set true by default *)
 
 let enforce_type_error = ref true (* strictly enforce type error *)
 
@@ -1956,6 +1957,7 @@ let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
+let force_print_residue = ref false
 
 (* for Termination *)
 let dis_term_chk = ref false
@@ -2886,10 +2888,11 @@ let print_proof = ref false
 let strquote s = "\"" ^ s ^ "\""
 
 let norm_file_name str =
-  for i = 0 to (String.length str) - 1 do
-    if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
+  let str_bytes = Bytes.of_string str in
+  for i = 0 to (Bytes.length str_bytes) - 1 do
+    if Bytes.get str_bytes i = '.' || Bytes.get str_bytes i = '/' then str_bytes.[i] <- '_'
   done;
-  str
+  Bytes.to_string str_bytes
 
 (* let wrap_classic et f a = *)
 (*   let flag = !do_classic_frame_rule in *)

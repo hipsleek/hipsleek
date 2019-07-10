@@ -788,7 +788,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let enhance_paset impr_stk paset =
       let def_opt_univ_rhs = None in
       let lhs_nodes = get_views_offset prog lhs_h in
-      let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
+      let heap_ptrs = h_fv ~vartype:Vartypes.var_with_heap_ptr_only lhs_h in
       let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
       let () = y_tinfo_hp (add_str "pasets" !CP.print_svl) paset in
       (* let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in *)

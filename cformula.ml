@@ -2900,7 +2900,7 @@ and subst_pos_formula (p:loc) (f: formula): formula=
                 formula_or_pos = p}
   | Exists ef -> Exists {ef with formula_exists_pos =  p}
 
-and struc_fv ?(vartype=Global_var.var_with_none) (f: struc_formula) : CP.spec_var list =
+and struc_fv ?(vartype=Vartypes.var_with_none) (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   let rec aux f =
@@ -3135,13 +3135,13 @@ and remove_ann  (f:formula) (annot_lst : ann list) : formula =
   | []       -> f
   | annot::r -> remove_ann (remove_one_ann f annot) r
 
-and one_formula_fv (f:one_formula) : CP.spec_var list =
+and one_formula_fv ?(vartype=Vartypes.var_with_none) (f:one_formula) : CP.spec_var list =
   let base = formula_of_one_formula f in
-  let vars = fv base in
+  let vars = fv ~vartype base in
   let tid = f.formula_thread in
   (tid::vars)
 
-and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
+and fv' ?(vartype=Vartypes.var_with_none) (f : formula) : CP.spec_var list =
   let rec aux f =
     match f with
     | Or ({
@@ -3155,7 +3155,7 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
         formula_base_and = a;
         formula_base_type = t }) ->
       let vars = if vartype # is_heap_only then []
-        else List.concat (List.map one_formula_fv a) @ (MCP.mfv p)
+        else List.concat (List.map (one_formula_fv ~vartype) a) @ (MCP.mfv ~vartype p)
       in
       CP.remove_dups_svl ((h_fv ~vartype:vartype h) @ vars)
     | Exists ({
@@ -3185,6 +3185,14 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
       res
   in aux f
 
+and fv ?(vartype=Vartypes.var_with_none) (f : formula) =
+  Debug.no_1
+    "Cformula.fv"
+    !print_formula
+    !print_svl
+    (fv' ~vartype)
+    f
+
 (* and is_absent imm = *)
 (*   match imm with *)
 (*   | CP.ConstAnn(Accs) -> true *)
@@ -3197,12 +3205,12 @@ and remove_absent ann vs =
     List.split res_ls
   else (ann,vs)
 
-and h_fv_node ?(vartype=Global_var.var_with_none) v perm ann param_ann vs ho_vs annot_args =
+and h_fv_node ?(vartype=Vartypes.var_with_none) v perm ann param_ann vs ho_vs annot_args =
   let (param_ann,vs) = remove_absent param_ann vs in
   Debug.no_2 "h_fv_node" string_of_ann_list !print_svl !print_svl
     (fun _ _ -> h_fv_node_x ~vartype:vartype v perm ann param_ann vs ho_vs annot_args) param_ann vs
 
-and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
+and h_fv_node_x ?(vartype=Vartypes.var_with_none) vv perm ann param_ann
     vs ho_vs annot_args =
   let pvars = fv_cperm perm in
   let avars = (CP.fv_ann ann) in
@@ -3255,10 +3263,10 @@ and f_h_fv (f : formula) : CP.spec_var list =
   | Base b -> h_fv b.formula_base_heap
   | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars
 
-and h_fv ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list =
+and h_fv ?(vartype=Vartypes.var_with_none) (h : h_formula) : CP.spec_var list =
   (* Debug.no_1 "h_fv" !print_h_formula !print_svl *) (h_fv_x ~vartype:vartype) h
 
-and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list =
+and h_fv_x ?(vartype=Vartypes.var_with_none) (h : h_formula) : CP.spec_var list =
   let rec aux h =
     match h with
     | Star ({h_formula_star_h1 = h1;
@@ -16517,28 +16525,42 @@ let rec get_grp_post_rel_flag fml = match fml with
   | Or o -> merge_flag (get_grp_post_rel_flag o.formula_or_f1) (get_grp_post_rel_flag o.formula_or_f2)
   | Exists e -> if List.exists CP.is_rel_var (CP.fv (MCP.pure_of_mix e.formula_exists_pure)) then 1 else 0
 
-let rec get_pre_post_vars (pre_vars: CP.spec_var list) xpure_heap (sp:struc_formula) prog:
+let rec get_pre_post_vars' ?(vartype=Vartypes.var_with_none) (pre_vars: CP.spec_var list) xpure_heap (sp:struc_formula) prog:
   (CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.formula list * int) =
   match sp with
   | ECase b ->
-    let res = List.map (fun (p,s)-> add_fst (CP.fv p) (get_pre_post_vars pre_vars xpure_heap s prog)) b.formula_case_branches in
+    let res = List.map (fun (p,s)-> add_fst (CP.fv ~vartype p) (get_pre_post_vars ~vartype pre_vars xpure_heap s prog)) b.formula_case_branches in
     fold_left_6 res
   | EBase b ->
-    let base_vars = fv b.formula_struc_base in
+    let base_vars = fv ~vartype b.formula_struc_base in
     let rel_fmls = get_pre_pure_fml xpure_heap prog b.formula_struc_base in
     (match b.formula_struc_continuation with
      | None -> (base_vars,[],[],[],rel_fmls,0)
-     | Some l ->  add_fifth rel_fmls (add_fst base_vars (get_pre_post_vars (pre_vars@base_vars) xpure_heap l prog)))
+     | Some l ->  add_fifth rel_fmls (add_fst base_vars (get_pre_post_vars ~vartype (pre_vars@base_vars) xpure_heap l prog)))
   | EAssume b ->
     let f = b.formula_assume_simpl in
     let svl = b.formula_assume_vars in
     let grp_post_rel_flag = get_grp_post_rel_flag f in
     ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f),
-     (List.map CP.to_primed svl) @ (fv f),[],[],grp_post_rel_flag)
-  | EInfer b -> add_fourth b.formula_inf_vars (get_pre_post_vars pre_vars xpure_heap b.formula_inf_continuation prog)
+     (List.map CP.to_primed svl) @ (fv ~vartype f),[],[],grp_post_rel_flag)
+  | EInfer b -> add_fourth b.formula_inf_vars (get_pre_post_vars ~vartype pre_vars xpure_heap b.formula_inf_continuation prog)
   | EList b ->
-    let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars xpure_heap c prog) b in
+    let l = List.map (fun (_,c)-> get_pre_post_vars ~vartype pre_vars xpure_heap c prog) b in
     fold_left_6 l
+
+and get_pre_post_vars ?(vartype=Vartypes.var_with_none) (pre_vars: CP.spec_var list) xpure_heap (sp:struc_formula) prog =
+  Debug.no_4
+    "get_pre_post_vars"
+    !print_svl
+    (fun _ -> "xpure_heap")
+    !print_struc_formula
+    (fun _ -> "prog")
+    (pr_hexa !print_svl !print_svl !print_svl !print_svl (pr_list !CP.print_formula) string_of_int)
+    (get_pre_post_vars' ~vartype)
+    pre_vars
+    xpure_heap
+    sp
+    prog
 
 let get_pre_post_invs_x (pre_rel_vars: CP.spec_var list) post_rel_vars get_inv_fn (sp0:struc_formula) =
   let rec helper sp lend_vnodes0=
