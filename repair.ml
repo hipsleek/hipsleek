@@ -570,7 +570,13 @@ let create_buggy_prog src (iprog : I.prog_decl)=
     n_progs
 
 let start_repair_wrapper (iprog: I.prog_decl) level =
-  repair_iprog iprog level
+  let start_time = get_time () in
+  let res = repair_iprog iprog level in
+  let duration = get_time() -. start_time in
+  if not(!infestor) then
+    let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos in
+    res
+  else res
 
 let infest_and_repair src (iprog : I.prog_decl) =
   let buggy_progs = create_buggy_prog src iprog in

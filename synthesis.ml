@@ -67,11 +67,9 @@ type priority =
 exception EPrio of priority
 
 type rule =
-  | RlExistsLeft of rule_exists_left
   | RlExistsRight of rule_exists_right
   | RlFrameData of rule_frame_data
   | RlFramePred of rule_frame_pred
-  | RlFoldLeft of rule_fold_left
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlAllocate of rule_allocate
@@ -81,7 +79,6 @@ type rule =
   | RlPostAssign of rule_post_assign
   | RlPreAssign of rule_pre_assign
   | RlReturn of rule_return
-  | RlBranch of rule_branch
   | RlFRead of rule_field_read
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
@@ -338,7 +335,6 @@ let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
   | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
-  | RlFoldLeft r -> "RlFoldLeft " ^ (pr_formula r.rfl_pre)
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
@@ -351,11 +347,7 @@ let pr_rule rule = match rule with
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlFramePred rule -> "RlFramePred" ^ (pr_instantiate rule)
   | RlFrameData rcore -> "RlFrameData" ^ (pr_frame_data rcore)
-  | RlExistsLeft rule -> "RlExistsLeft" ^ (pr_vars rule.exists_vars)
   | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
-  | RlBranch rule -> "RlBranch (" ^ (pr_pf rule.rb_cond) ^ ", " ^
-                     (pr_formula rule.rb_if_pre) ^ ", " ^
-                     (pr_formula rule.rb_else_pre)  ^ ")"
 
 let pr_trace = pr_list pr_rule
 
@@ -1489,7 +1481,7 @@ let mkSeq exp1 exp2 = I.mkSeq exp1 exp2 no_pos
 
 let rec st_core2cast st : Cast.exp option = match st.stc_rule with
   | RlSkip -> None
-  | RlExistsLeft _ | RlExistsRight _ | RlFramePred _ | RlFrameData _
+  | RlExistsRight _ | RlFramePred _ | RlFrameData _
   | RlUnfoldPost _ | RlUnfoldPre _ ->
     begin
       let sts = List.map st_core2cast st.stc_subtrees in
@@ -1673,7 +1665,7 @@ and aux_c_subtrees st cur_codes =
 let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
   | RlSkip -> None
-  | RlExistsLeft _ | RlExistsRight _ | RlFramePred _ | RlFrameData _
+  | RlExistsRight _ | RlFramePred _ | RlFrameData _
   | RlUnfoldPost _ | RlUnfoldPre _ ->
     begin
       let sts = List.map synthesize_st_core st.stc_subtrees in
@@ -1833,13 +1825,12 @@ let rec synthesize_st_core st : Iast.exp option=
       } in
     let asgn = mkAssign (mkVar rvar) fcall in
     let seq = mkSeq r_var asgn in aux_subtrees st seq
-  | RlBranch rcore ->
-    let cond_e = pure_to_iast rcore.rb_cond in
-    let sts = List.map synthesize_st_core st.stc_subtrees in
-    let if_b = sts |> List.hd |> Gen.unsome in
-    let else_b = sts |> List.tl |> List.hd |> Gen.unsome in
-    Some (I.mkCond cond_e if_b else_b None no_pos)
-  | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
+  (* | RlBranch rcore ->
+   *   let cond_e = pure_to_iast rcore.rb_cond in
+   *   let sts = List.map synthesize_st_core st.stc_subtrees in
+   *   let if_b = sts |> List.hd |> Gen.unsome in
+   *   let else_b = sts |> List.tl |> List.hd |> Gen.unsome in
+   *   Some (I.mkCond cond_e if_b else_b None no_pos) *)
 
 and aux_subtrees st cur_codes =
   let st_code = List.map synthesize_st_core st.stc_subtrees in
@@ -2110,10 +2101,6 @@ let is_used_after (var:CP.spec_var) st_subtrees =
     | RlAssign rule ->
       let vars = (rule.ra_lhs)::(CP.afv rule.ra_rhs) in
       CP.mem_svl var vars
-    | RlBranch rule ->
-      let vars = (CP.fv (rule.rb_cond)) @ (CF.fv rule.rb_if_pre)
-                 @ (CF.fv rule.rb_else_pre) in
-      CP.mem_svl var vars
     | RlFWrite rule ->
       let vars = rule.rfw_bound_var::[rule.rfw_value] in
       CP.mem_svl var vars
@@ -2127,10 +2114,6 @@ let rec rm_useless_stc (st_core:synthesis_tree_core) =
       {st_core with stc_subtrees = List.map rm_useless_stc st_core.stc_subtrees}
     else st_core.stc_subtrees |> List.hd |> rm_useless_stc
   | _ -> {st_core with stc_subtrees = List.map rm_useless_stc st_core.stc_subtrees}
-
-let trace_length goal =
-  let trace = goal.gl_trace in
-  List.length trace
 
 let rec is_fwrite_called trace rcore : bool  =
   match trace with
@@ -2242,7 +2225,7 @@ let compare_rule_assign_vs_assign goal r1 r2 =
   else PriEqual
 
 let compare_rule_unfold_post_vs_mk_null r1 r2 =
-  PriHigh
+  PriLow
 
 let compare_rule_assign_vs_other goal r1 r2 = match r2 with
   | RlAssign r2 -> compare_rule_assign_vs_assign goal r1 r2
@@ -2257,7 +2240,7 @@ let compare_rule_frame_data_vs_other r1 r2 =
   | RlFrameData _ -> if CP.is_res_sv r1.rfd_lhs then PriHigh
     else PriLow
   | RlReturn _ -> PriLow
-  | RlMkNull _ -> PriHigh
+  | RlMkNull _ -> PriLow
   | _ -> PriLow
 
 let compare_rule_frame_pred_vs_other r1 r2 =
@@ -2268,7 +2251,7 @@ let compare_rule_frame_pred_vs_other r1 r2 =
   | RlPreAssign _
   | RlPostAssign _
   | RlAllocate _ -> PriHigh
-  | RlMkNull _ -> PriHigh
+  | RlMkNull _ -> PriLow
   | RlUnfoldPost _ -> PriHigh
   | RlFuncRes _
   | RlFuncCall _ -> PriLow
@@ -2277,10 +2260,12 @@ let compare_rule_frame_pred_vs_other r1 r2 =
 
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
+  | RlMkNull _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
+  | RlMkNull _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_unfold_post_vs_unfold_post r1 r2 =
@@ -2311,7 +2296,7 @@ let compare_rule goal r1 r2 =
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
   | RlPreAssign _ -> PriLow
   | RlAllocate _ -> PriLow
-  | RlMkNull _ -> PriLow
+  | RlMkNull _ -> PriHigh
   | _ ->
     match r2 with
     | RlReturn _ -> PriLow
@@ -2329,12 +2314,20 @@ let is_code_rule trace =
   Debug.no_1 "is_code_rule" pr_trace string_of_bool
     (fun _ -> is_code_rule_x trace) trace
 
-let trace_length trace =
+let num_of_code_rules trace =
   let is_code_rule rule = match rule with
     | RlAssign _ | RlReturn _ | RlFWrite _ | RlFuncRes _
     | RlFuncCall _ -> true
     | _ -> false in
   let trace = List.filter is_code_rule trace in
+  List.length trace
+
+let length_of_trace trace =
+  let is_simplify_rule rule = match rule with
+    | RlExistsRight _ | RlUnfoldPre _ | RlUnfoldPost _
+    | RlPreAssign _ | RlPostAssign _ -> true
+    | _ -> false in
+  let trace = trace |> List.filter (fun x -> is_simplify_rule x |> negate) in
   List.length trace
 
 let reorder_rules goal rules =
@@ -2426,12 +2419,6 @@ let mk_synthesis_tree_fail goal sub_trees msg : synthesis_tree =
  * Normalization rules
  *********************************************************************)
 
-let choose_rule_exists_left goal =
-  let vars = CF.get_exists goal.gl_pre_cond in
-  if vars = [] then []
-  else let rule = RlExistsLeft { exists_vars = vars} in
-    [rule]
-
 let rm_redundant_constraint (goal: goal) : goal =
   let pf_pre = CF.get_pure goal.gl_pre_cond in
   let n_pf_pre = CP.elim_idents pf_pre in
@@ -2442,18 +2429,7 @@ let rm_redundant_constraint (goal: goal) : goal =
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
-let process_rule_exists_left goal rule =
-  let n_pre = remove_exists_vars goal.gl_pre_cond rule.exists_vars in
-  let n_goal = {goal with gl_pre_cond = n_pre} in
-  mk_derivation_subgoals goal (RlExistsLeft rule) [n_goal]
-
 let process_rule_exists_right goal rule =
   let n_goal = {goal with gl_post_cond = rule.n_post;
                           gl_trace = (RlExistsRight rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlExistsRight rule) [n_goal]
-
-let process_rule_branch goal rule =
-  let if_goal = {goal with gl_pre_cond = rule.rb_if_pre} in
-  let else_goal = {goal with gl_pre_cond = rule.rb_else_pre} in
-  mk_derivation_subgoals goal (RlBranch rule) [if_goal; else_goal]
-

@@ -3,7 +3,7 @@ data node {
 }.
 
 pred ll<n> == self = null & n = 0
-	or (exists q: self::node<q> * q::ll<n-1>).
+	or (exists q: self::node<q> * q::ll<n-1> & n > 0).
 
 int length(node x)
   requires x::ll<n>
@@ -16,7 +16,6 @@ int length(node x)
 // x'=x & k'=n & f_r_14864=n-1).
 
 synthesize [node x]
- x::ll<n>&x=x
+ x::ll<n>&x!=null & x=x
 ~>
- (exists f_r_10792,r_9: x::node<r_9> * r_9::ll<f_r_10792>&
-x=x & n=res & f_r_10792=n-1).
+ (exists fr56,r_3: x::node<r_3> * r_3::ll<fr56> & x=x & n=res & fr56=n-1).

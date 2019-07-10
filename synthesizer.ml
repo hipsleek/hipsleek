@@ -137,6 +137,11 @@ let choose_rule_post_assign goal : rule list =
     } in
   List.map mk_rule eq_pairs
 
+let check_allocate pre post =
+  let pre_nodes = pre |> get_heap |> get_heap_nodes in
+  let post_nodes = post |> get_heap |> get_heap_nodes in
+  List.length post_nodes - List.length pre_nodes = 1
+
 let choose_rule_allocate goal : rule list =
   let prog = goal.gl_prog in
   let all_vars = goal.gl_vars in
@@ -176,10 +181,6 @@ let choose_rule_allocate goal : rule list =
     let args_groups = args_groups |> List.filter filter_fun in
     let rules = args_groups |> List.map (mk_rule data_decl) in
     rules in
-  let check_allocate pre post =
-    let pre_nodes = pre |> get_heap |> get_heap_nodes in
-    let post_nodes = post |> get_heap |> get_heap_nodes in
-    List.length post_nodes - List.length pre_nodes = 1 in
   if check_allocate pre post then
     data_decls |> List.map aux |> List.concat
   else []
@@ -374,8 +375,8 @@ let unify_fcall proc_decl pre_proc post_proc goal =
 let choose_rule_func_call goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let procs = goal.gl_proc_decls in
-  let proc_names = List.map (fun x -> x.C.proc_name) procs in
-  let () = x_tinfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in
+  (* let proc_names = List.map (fun x -> x.C.proc_name) procs in
+   * let () = x_tinfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in *)
   let aux proc_decl =
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
     let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
@@ -775,6 +776,8 @@ let rec choose_rule_interact goal rules =
 let choose_rule_mk_null goal : rule list=
   if has_mk_null goal.gl_trace then []
   else
+    let pre = goal.gl_pre_cond in
+    let post = goal.gl_post_cond in
     let prog = goal.gl_prog in
     let data_decls = prog.C.prog_data_decls in
     let others = ["__Exc"; "thrd"; "Object"; "__Error"; "__MayError"; "__Fail";
@@ -782,7 +785,14 @@ let choose_rule_mk_null goal : rule list=
                   "__RET"; "__ArrBoundErr"; "__DivByZeroErr"; "String"] in
     let filter_fun x = not(List.mem x.C.data_name others) in
     let data_decls = data_decls |> List.filter filter_fun in
-    let int_vars = goal.gl_vars |> List.filter is_int_var in
+    let procs = goal.gl_proc_decls in
+    let aux_proc_args proc =
+      let args = proc.C.proc_args in
+      args |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let all_args = procs |> List.map aux_proc_args |> List.concat
+                   |> CP.remove_dups_svl in
+    let int_vars = goal.gl_vars |> List.filter is_int_var
+                 |> List.filter (fun x -> CP.mem x all_args) in
     let aux_int var =
       let n_var = CP.fresh_spec_var var in
       let one = CP.mkIConst 1 no_pos in
@@ -799,9 +809,12 @@ let choose_rule_mk_null goal : rule list=
       let var = CP.mk_typed_sv typ name in
       RlMkNull {rmn_null = CP.Null no_pos;
                 rmn_var = var} in
-    let list1 = data_decls |> List.map aux in
-    let list2 = int_vars |> List.map aux_int in
-    list1 @ list2
+    if check_allocate pre post then
+      let list1 = data_decls |> List.map aux in
+      let list2 = int_vars |> List.map aux_int in
+      list1 @ list2
+      (* list1 *)
+    else []
 
 let choose_main_rules goal =
   let cur_time = get_time () in
@@ -980,11 +993,6 @@ let process_rule_func_call goal rcore : derivation =
   let fname, params = rcore.rfc_fname, rcore.rfc_params in
   aux_func_call goal (RlFuncCall rcore) fname params rcore.rfc_substs None
 
-let process_rule_fold_left goal rcore : derivation =
-  let n_goal = {goal with gl_trace = (RlFoldLeft rcore)::goal.gl_trace;
-                          gl_pre_cond = rcore.rfl_pre} in
-  mk_derivation_subgoals goal (RlFoldLeft rcore) [n_goal]
-
 let process_rule_func_res goal rcore : derivation =
   let fname, params = rcore.rfr_fname, rcore.rfr_params in
   let res_var = Some rcore.rfr_return in
@@ -1073,9 +1081,9 @@ let process_rule_allocate goal rcore =
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
-  if trace_length goal.gl_trace > 2 || List.length goal.gl_trace > 5
-     (* || !fail_branch_num > 200 *) then
-    let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
+  let trace = goal.gl_trace in
+  if num_of_code_rules trace > 2 || length_of_trace trace > 3 then
+    let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
     let cur_time = get_time () in
@@ -1114,7 +1122,6 @@ and process_one_rule goal rule : derivation =
     match rule with
     | RlFuncCall rcore -> process_rule_func_call goal rcore
     | RlAllocate rcore -> process_rule_allocate goal rcore
-    | RlFoldLeft rcore -> process_rule_fold_left goal rcore
     | RlFuncRes rcore -> process_rule_func_res goal rcore
     | RlPreAssign rcore -> process_rule_pre_assign goal rcore
     | RlPostAssign rcore -> process_rule_post_assign goal rcore
@@ -1126,9 +1133,7 @@ and process_one_rule goal rule : derivation =
     | RlFRead rcore -> process_rule_fread goal rcore
     | RlFramePred rcore -> process_rule_frame_pred goal rcore
     | RlFrameData rcore -> process_rule_frame_data goal rcore
-    | RlExistsLeft rcore -> process_rule_exists_left goal rcore
     | RlExistsRight rcore -> process_rule_exists_right goal rcore
-    | RlBranch rcore -> process_rule_branch goal rcore
     | RlSkip -> process_rule_skip goal
     | RlMkNull rcore -> process_rule_mk_null goal rcore
 
