@@ -31,10 +31,22 @@ ensures res::ll<n> * x::ll<n>;.
 // (exists fr01, fr02, vl73, nxt74: x::node<vl73,nxt74> * nxt74::ll<fr01> * tmp::ll<fr02>
 // & -n<0 & fr01=n-1 & fr02=n-1).
 
-synthesize [node q_65,node x,node tmp]
-x::node<Anon_64,q_65> * q_65::ll<flt63>&x!=null & flt63+1=n & 0<n
-~>
-(exists fr01_43,fr02_44,vl73_45, nxt74_46:
-x::node<vl73_45,nxt74_46> * nxt74_46::ll<fr01_43> * tmp::ll<fr02_44> & fr01_43+1=n & fr02_44+1=n).
+// synthesize [node q_65,node x,node tmp]
+// x::node<Anon_64,q_65> * q_65::ll<flt63>&x!=null & flt63+1=n & 0<n
+// ~>
+// (exists fr01_43,fr02_44,vl73_45, nxt74_46:
+// x::node<vl73_45,nxt74_46> * nxt74_46::ll<fr01_43> * tmp::ll<fr02_44> & fr01_43+1=n & fr02_44+1=n).
 
+// synthesize [node q_4405,node x,node tmp,node rs0]
+// rs0::ll<n_2019> & 0<n & flt03+1=n & x!=null & n_2019=flt03 & n22=flt03
+// ~>
+// (exists fr02: tmp::ll<fr02> & -n<0 & n22=n-1 & fr02=n-1).
+
+
+synthesize [node x,node tmp,node k]
+k::node<an117,tmp> * x::node<an117,q118> * q118::ll<n121> * tmp::ll<n121> &
+-1-n121 < 0 & n-1-n121=0 & n-1-flt16=0
+~>
+(exists an62,q21,an11, q12: res::node<an62,q21> * x::node<an11,q12> *
+q21::ll<n121> * q12::ll<n121>).
 

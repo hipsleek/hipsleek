@@ -143,10 +143,8 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   else
     let res = others |> List.map aux |> List.filter (fun x -> x != None) in
     if res = [] then
-      let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in
       false
     else
-      let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
       true
 
 let map_stmt_with_level traces =
@@ -293,7 +291,6 @@ let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let r_list = List.filter (fun x -> x!= None) r_list in
   let () = is_repair_pair := false in
   if r_list != [] then
-    let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
     true
   else
     false

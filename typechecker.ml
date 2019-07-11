@@ -1677,7 +1677,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           x_tinfo_pp ">>>>>> bind type-checker <<<<<<" pos;
           x_tinfo_hp (add_str "node" (fun x -> x)) v pos;
           x_tinfo_hp (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;
-          x_binfo_hp (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
+          x_tinfo_hp (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
           x_tinfo_hp (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;
           x_tinfo_hp (add_str "read-only" string_of_bool) read_only pos;
           (* yes below is safe *)

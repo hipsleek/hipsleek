@@ -253,7 +253,7 @@ let choose_rule_heap_assign goal =
       [rule] in
   let check_eq_var var1 var2 =
     let conseq = CP.mkEqVar var1 var2 no_pos in
-    SB.check_pure_entail post_pf conseq in
+    SB.check_pure_entail ante_pf conseq in
   if List.length pre_nodes = 1 && List.length post_nodes = 1 then
     let pre_node = List.hd pre_nodes in
     let post_node = List.hd post_nodes in
@@ -268,8 +268,8 @@ let choose_rule_heap_assign goal =
       let args2 = dn2.CF.h_formula_data_arguments in
       let var1 = dn1.CF.h_formula_data_node in
       let var2 = dn2.CF.h_formula_data_node in
-      if CP.mem var1 all_vars && CP.mem var2 all_vars &&
-         List.for_all2 check_eq_var args1 args2 then
+      if not(CP.eq_sv var1 var2) && CP.mem var1 all_vars &&
+         CP.mem var2 all_vars && List.for_all2 check_eq_var args1 args2 then
         mk_rule var2 var1
       else []
     | CF.ViewNode vn1, CF.ViewNode vn2 ->
@@ -277,7 +277,8 @@ let choose_rule_heap_assign goal =
       let args2 = vn2.CF.h_formula_view_arguments in
       let var1 = vn1.CF.h_formula_view_node in
       let var2 = vn2.CF.h_formula_view_node in
-      if CP.mem var1 all_vars && CP.mem var2 all_vars &&
+      if not(CP.eq_sv var1 var2) && CP.mem var1 all_vars &&
+         CP.mem var2 all_vars &&
          List.for_all2 check_eq_var args1 args2 then
         mk_rule var2 var1
       else []
@@ -1131,7 +1132,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
   let trace = goal.gl_trace in
   if num_of_code_rules trace > 2 || length_of_trace trace > 3
-   || List.length trace > 6 then
+   || List.length trace >= 6 then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else

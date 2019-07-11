@@ -3001,11 +3001,11 @@ let print_cf_result f m =
   print_endline_quiet (((add_str ("\n"^m) Cprinter.string_of_formula) f)^"\n")
 
 let process_simplify (f : meta_formula) =
-  let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
   try
     let rs = run_simplify f in
     let (hf,pf,_,_,_,_) = CF.split_components rs in
-    let () = x_tinfo_hp (add_str "heap" Cprinter.string_of_h_formula) hf no_pos in 
+    let () = x_tinfo_hp (add_str "heap" Cprinter.string_of_h_formula) hf no_pos in
     if CF.is_emp_h_formula hf then print_result (MCP.pure_of_mix pf) num_id
     else print_cf_result rs num_id
   with _ -> print_exc num_id
@@ -3022,42 +3022,51 @@ let process_synthesize typed_vars pre post =
   let () = x_tinfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
   let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
+  let start_time = get_time() in
   let goal = Synt.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs in
-  let _ = Synthesizer.synthesize_program goal in
+  let res = Synthesizer.synthesize_program goal in
+  let duration = get_time() -. start_time in
+  let () = x_binfo_hp (add_str "SYNTHESIS TIME: " string_of_float)
+      duration no_pos in
+  let () = match res with
+    | None -> let () = x_binfo_pp "SYNTHESIS: FAIL" no_pos in ()
+    | _ -> let () = x_binfo_pp "SYNTHESIS RESULT: SUCCESS" no_pos in
+      () in
   ()
 
 let process_hull (f : meta_formula) =
-  let num_id = "Hull  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  let num_id = "Hull  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
   try
     let rs = run_hull f in
     print_result rs num_id
   with _ -> print_exc num_id
 
 let process_pairwise (f : meta_formula) =
-  let num_id = "PairWise  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
-  try 
+  let num_id = "PairWise  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+  try
     let rs = run_pairwise f in
     print_result rs num_id
   with _ -> print_exc num_id
 
 
-let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+let process_infer itype (ivars: ident list) (iante0 : meta_formula)
+    (iconseq0 : meta_formula) etype =
   let () = x_tinfo_pp "inside process_infer" no_pos in
   let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
   let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
   let pn = sleek_proof_counter#inc_and_get in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 & pnum!=pn then 
+  if pnum>0 & pnum!=pn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
-  else 
+  else
     let nn = "("^(string_of_int (pn))^") " in
     let is_tnt_flag = List.mem INF_TERM itype in
     let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
     let is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
     let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
-    let opt_pure_field = 
-      if List.mem INF_PURE_FIELD itype 
+    let opt_pure_field =
+      if List.mem INF_PURE_FIELD itype
       then Some true else None in
     (* combine local vs. global of failure explaining *)
     let dfailure_anlysis = if List.mem INF_EFA itype then false else
@@ -3080,13 +3089,13 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
     let num_id = "\nEntail "^nn in
     (* CLASSIC: Set classic reasoning for sleek with infer[@classic] cmd *)
     let run_infer x = wrap_classic x_loc etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
-    let run_infer x = 
+    let run_infer x =
       if is_field_imm_flag then wrap_field_imm (Some true) run_infer x
       else run_infer x in
-    let run_infer x = 
+    let run_infer x =
       if is_arr_as_var_flag then wrap_arr_as_var run_infer x
       else run_infer x in
-    let run_infer x = 
+    let run_infer x =
       wrap_pure_field (opt_pure_field) run_infer x in
     let r =  try
         let (valid, rs, sel_hps),_ = run_infer iconseq0 in
@@ -3099,7 +3108,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
         (* | _ -> ()  *)
         (* in  *)
         res
-      with ex -> 
+      with ex ->
         (* print_exc num_id *)
         (if !VarGen.trace_failure then (print_string "caught\n"; print_backtrace_quiet ()));
         let _ = print_string ("\nEntail "^nn^": "^(Printexc.to_string ex)^"\n") in
@@ -3107,17 +3116,19 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
         (*   let _ = match itype with *)
         (* | Some INF_TERM -> should_infer_tnt := false *)
         (* | _ -> ()  *)
-        false
-    in
+        false in
     let _ = Globals.disable_failure_explaining := old_dfa in
     let () = Globals.enable_error_as_exc := gl_efa_exc in
     r
 
-let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+let process_infer itype (ivars: ident list) (iante0 : meta_formula)
+    (iconseq0 : meta_formula) etype =
   let pr1 = add_str "itype" (pr_list string_of_inf_const) in
   let pr2 = add_str "ivars" (pr_list pr_id) in
   let pr3 = add_str "etype" (pr_option string_of_bool) in
-  Debug.no_3 "process_infer" pr1 pr2 pr3 pr_none (fun _ _ _ -> process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype) itype ivars etype
+  Debug.no_3 "process_infer" pr1 pr2 pr3 pr_none
+    (fun _ _ _ -> process_infer itype (ivars: ident list)
+        (iante0 : meta_formula) (iconseq0 : meta_formula) etype) itype ivars etype
 
 let process_capture_residue (lvar : ident) =
   let flist = match !CF.residues with
@@ -3131,13 +3142,12 @@ let process_print_command pcmd0 =
     let mf = try get_var pvar with Not_found->  Error.report_error {
         Error.error_loc = no_pos;
         Error.error_text = "couldn't find " ^ pvar;
-      }in
+      } in
     let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
   (* type: (Globals.ident * bool) Globals.regex_list option *)
   | PCmd (pcmd,opt) ->
-    if pcmd = "lemmas" then
-      Lem_store.all_lemma # dump
+    if pcmd = "lemmas" then Lem_store.all_lemma # dump
     else if pcmd = "residue" then
       let _ = Debug.ninfo_pprint "inside residue" no_pos in
       print_residue !CF.residues
@@ -3160,29 +3170,34 @@ let process_print_command pcmd0 =
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
       let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
       let pr (a,f) = if f then a^"*" else a in
-      let opt_str = (match opt with None -> ""
-                                 | Some lst -> string_of_regex_list pr lst) in
-      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
+      let opt_str = match opt with
+        | None -> ""
+        | Some lst -> string_of_regex_list pr lst in
+      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n")
+                    (pr_list Cprinter.string_of_view_decl_short)) lst
     else if pcmd = "data" then
       let data_d_lst = !cprog.Cast.prog_data_decls in
       let () = List.iter (fun d ->
           let n = d.Cast.data_name in
           let fields = List.map (fun ((t,id),_) -> t) d.Cast.data_fields in
           let fields = List.filter (fun t -> is_node_typ t ) fields in
-          let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
+          let fields = List.map (fun t -> match t with
+              | Named id -> id
+              | _ -> failwith ("impossible"^x_loc)) fields in
           let () = HipUtil.data_scc_obj # replace x_loc n fields in
-      ()
-    ) data_d_lst in
+          ()
+        ) data_d_lst in
       let lst = HipUtil.data_scc_obj # get_scc in
-      let get_selected_scc_gen (opt:((ident * bool) regex_list) option) get_name sel_fn scc_lst =
-         match opt with 
-         | None -> scc_lst 
-         | Some ans ->  
+      let get_selected_scc_gen (opt:((ident * bool) regex_list) option)
+          get_name sel_fn scc_lst =
+         match opt with
+         | None -> scc_lst
+         | Some ans ->
         begin
           match ans with
           | REGEX_STAR -> scc_lst
-          | REGEX_LIST lst ->  
-            let sel_lst = List.map (fun scc -> 
+          | REGEX_LIST lst ->
+            let sel_lst = List.map (fun scc ->
                 let ns = List.map (fun v -> get_name v) scc in
                 let lst = List.filter (fun (id,_) -> List.mem id ns) lst in
                 lst
@@ -3190,25 +3205,24 @@ let process_print_command pcmd0 =
             let c_lst = List.combine sel_lst scc_lst in
             let c_lst = List.filter (fun (lst,scc) -> lst!=[]) c_lst in
             List.map sel_fn c_lst
-        end
-      in
-      let  get_selected_scc_each opt get_name scc_lst =
+        end in
+      let get_selected_scc_each opt get_name scc_lst =
         let sel_f (lst,scc) =
           if (List.exists (fun (_,b)->b) lst) then scc
           else Gen.BList.intersect_eq (fun v1 (v2,_) -> v1=v2) scc lst in
-        let sel_f p = 
+        let sel_f p =
           let pr_scc = pr_list pr_id in
           let pr1 = pr_pair (pr_list (pr_pair pr_id string_of_bool)) pr_scc  in
-          Debug.no_1 "sel_f" pr1 pr_scc sel_f p 
-        in
-        get_selected_scc_gen opt get_name sel_f scc_lst
-      in
+          Debug.no_1 "sel_f" pr1 pr_scc sel_f p in
+        get_selected_scc_gen opt get_name sel_f scc_lst in
       let sel_scc = get_selected_scc_each opt (fun x -> x) lst in
       let sel_data_d = build_sel_scc sel_scc (fun d -> d.Cast.data_name) data_d_lst in
       let pr (a,f) = if f then a^"*" else a in
-      let opt_str = (match opt with None -> ""
-                                 | Some lst -> string_of_regex_list pr lst) in
-      let () = y_binfo_hp (add_str ("Printing data" ^ opt_str ^ "\n") (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+      let opt_str = (match opt with
+          | None -> ""
+          | Some lst -> string_of_regex_list pr lst) in
+      let () = y_binfo_hp (add_str ("Printing data" ^ opt_str ^ "\n")
+                             (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
       ()
     else
       print_string (x_loc^"unsupported print command: " ^ pcmd)
@@ -3216,60 +3230,49 @@ let process_print_command pcmd0 =
 let process_cmp_command (input: ident list * ident * meta_formula list) =
   let iv,var,fl = input in
   if var = "residue" then
-    (if !Globals.sleek_print_residue then
-       begin
-         match !CF.residues with
-         | None -> print_string ": no residue \n"
-         | Some (ls_ctx, print) -> begin
-             if (print) then begin
-               if(List.length fl = 1) then (
-                 let f = List.hd fl in
-                 let cfs = CF.list_formula_of_list_context ls_ctx in
-                 let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
-                 let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
-                 let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
-                 let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
-                 if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
-               )
-               else print_string ("ERROR: Input is 1 formula only\n")
-             end
-           end
-       end)
-  else if (var = "assumption") then(
-    match !CF.residues with
-    | None -> print_string ": no residue \n"
-    | Some (ls_ctx, print) ->(
-        if (print) then (
-          if(List.length fl = 2) then (
-            let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in
-            let (n_tl,cf11) = meta_to_formula_not_rename f1 false [] []  in
-            let (n_tl,cf12) = meta_to_formula_not_rename f2 false [] n_tl  in
-            let _ = Debug.info_zprint  (lazy  ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n")) no_pos in
-            let hprels = match ls_ctx with
-              | CF.SuccCtx (c::_) ->  CF.collect_hp_rel c
-              | _ -> [] (*TODO: report error ?*)
-            in
-            let hprel1 = List.hd hprels in
-            let cf21,cf22 = hprel1.CF.hprel_lhs,hprel1.CF.hprel_rhs in
-            let res,mtl = CEQ.check_equiv_constr iv (cf11,cf12) (cf21, cf22) in
-            if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
-          )
-          else  print_string ("ERROR: Input is 1 formula only\n")
-        )
-      )
-  )
-  else
-    print_string ("unsupported compare command: " ^ var)
+    if !Globals.sleek_print_residue then
+      match !CF.residues with
+      | None -> print_string ": no residue \n"
+      | Some (ls_ctx, print) ->
+        if print then
+          if List.length fl = 1 then
+            let f = List.hd fl in
+            let cfs = CF.list_formula_of_list_context ls_ctx in
+            let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
+            let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
+            let _ = Debug.info_zprint (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
+            let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
+            if res then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+          else print_string ("ERROR: Input is 1 formula only\n")
+        else if (var = "assumption") then
+          begin
+            match !CF.residues with
+            | None -> print_string ": no residue \n"
+            | Some (ls_ctx, print) ->
+              if (print) then
+                if(List.length fl = 2) then
+                  let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in
+                  let (n_tl,cf11) = meta_to_formula_not_rename f1 false [] []  in
+                  let (n_tl,cf12) = meta_to_formula_not_rename f2 false [] n_tl  in
+                  let _ = Debug.info_zprint  (lazy  ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n")) no_pos in
+                  let hprels = match ls_ctx with
+                    | CF.SuccCtx (c::_) ->  CF.collect_hp_rel c
+                    | _ -> [] (*TODO: report error ?*) in
+                  let hprel1 = List.hd hprels in
+                  let cf21,cf22 = hprel1.CF.hprel_lhs,hprel1.CF.hprel_rhs in
+                  let res,mtl = CEQ.check_equiv_constr iv (cf11,cf12) (cf21, cf22) in
+                  if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+                else  print_string ("ERROR: Input is 1 formula only\n")
+          end
+        else print_string ("unsupported compare command: " ^ var)
 
 let get_residue () = !CF.residues
 
 let get_residue () =
   Debug.no_1 "get_residue" pr_no (pr_opt pr_no) get_residue ()
-(*match !CF.residues with*)
-(*| None -> ""*)
-(*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 
-let meta_constr_to_constr (meta_constr: meta_formula * meta_formula): (CF.formula * CF.formula) = 
+let meta_constr_to_constr (meta_constr: meta_formula * meta_formula)
+  : (CF.formula * CF.formula) =
   let if1, if2 = meta_constr in
   let (n_tl,f1) = meta_to_formula_not_rename if1 false [] []  in
   let (n_tl,f2) = meta_to_formula_not_rename if2 false [] n_tl  in
