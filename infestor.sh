@@ -1,5 +1,5 @@
-./hip examples/working/hip/repair/infestor/buggy_0_sll-length.c --en-repair
-./hip examples/working/hip/repair/infestor/buggy_1_sll-length.c --en-repair
-./hip examples/working/hip/repair/infestor/buggy_2_sll-length.c --en-repair
+./hip examples/working/hip/repair/infestor/sll-length.ss --infestor
+./hip examples/working/hip/repair/infestor/sll-length.ss --infestor
+--en-infest-2
 
-# ./hip examples/working/hip/repair/infestor/buggy_3_sll-length.c --en-repair
+

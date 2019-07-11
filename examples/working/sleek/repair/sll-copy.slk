@@ -25,10 +25,16 @@ ensures res::ll<n> * x::ll<n>;.
 // x::node<an47,q_48> * x::node<v45,nxt46> * q_48::ll<fr43> * tmp::ll<fr44> &
 // fr43+1=n & fr44+1=n).
 
-synthesize [node x,node tmp]
-x::ll<n>&x!=null
+// synthesize [node x,node tmp]
+// x::ll<n> & x!=null
+// ~>
+// (exists fr01, fr02, vl73, nxt74: x::node<vl73,nxt74> * nxt74::ll<fr01> * tmp::ll<fr02>
+// & -n<0 & fr01=n-1 & fr02=n-1).
+
+synthesize [node q_65,node x,node tmp]
+x::node<Anon_64,q_65> * q_65::ll<flt63>&x!=null & flt63+1=n & 0<n
 ~>
-(exists fr01,fr02,vl73,nxt74,an97, q_98:
-x::node<an97,q_98> * x::node<vl73,nxt74> *
-      q_98::ll<fr01> * tmp::ll<fr02>&
-x=x & fr01=n-1 & fr02=n-1).
+(exists fr01_43,fr02_44,vl73_45, nxt74_46:
+x::node<vl73_45,nxt74_46> * nxt74_46::ll<fr01_43> * tmp::ll<fr02_44> & fr01_43+1=n & fr02_44+1=n).
+
+

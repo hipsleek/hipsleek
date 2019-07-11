@@ -51,7 +51,6 @@ let syn_iprog = ref (None: I.prog_decl option)
 let syn_cprog = ref (None: C.prog_decl option)
 let tmpl_proc_name = ref (None: string option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
-let triples = ref ([] : (CF.formula * CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
 let syn_res_vars = ref ([] : CP.spec_var list)
 
@@ -67,6 +66,7 @@ type priority =
 exception EPrio of priority
 
 type rule =
+  | RlSkip
   | RlExistsRight of rule_exists_right
   | RlFrameData of rule_frame_data
   | RlFramePred of rule_frame_pred
@@ -74,15 +74,20 @@ type rule =
   | RlUnfoldPost of rule_unfold_post
   | RlAllocate of rule_allocate
   | RlMkNull of rule_mk_null
-  | RlSkip
   | RlAssign of rule_assign
-  | RlPostAssign of rule_post_assign
-  | RlPreAssign of rule_pre_assign
   | RlReturn of rule_return
   | RlFRead of rule_field_read
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
   | RlFuncRes of rule_func_res
+  | RlPostAssign of rule_post_assign
+  | RlPreAssign of rule_pre_assign
+  | RlHeapAssign of rule_heap_assign
+
+and rule_heap_assign = {
+  rha_left : CP.spec_var;
+  rha_right : CP.spec_var;
+}
 
 and rule_mk_null ={
   rmn_null: CP.exp;
@@ -335,6 +340,7 @@ let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
   | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
+  | RlHeapAssign r -> "RlHeapAssign (" ^ (pr_var r.rha_left) ^ ", " ^ (pr_var r.rha_right)
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
@@ -686,6 +692,14 @@ let add_h_formula_to_formula_x h_formula (formula:CF.formula) : CF.formula =
 let add_h_formula_to_formula added_hf formula =
   Debug.no_2 "add_h_formula_to_formula" pr_hf pr_formula pr_formula
     (fun _ _ -> add_h_formula_to_formula_x added_hf formula) added_hf formula
+
+let add_h_formula_list_to_formula hf_list formula =
+  let rec aux hf_list f = match hf_list with
+    | [] -> f
+    | head::tail ->
+      let n_f = add_h_formula_to_formula head f in
+      aux tail n_f in
+  aux hf_list formula
 
 let rec simpl_f (f:CF.formula) = match f with
   | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
@@ -1206,6 +1220,21 @@ let rec has_allocate trace cur_params = match trace with
       | _ -> has_allocate t cur_params
     end
 
+let has_heap_assign lhs rhs trace =
+  let rec aux trace = match trace with
+    | [] -> false
+    | head::tail ->
+      begin
+        match head with
+        | RlHeapAssign r ->
+          let r_lhs = r.rha_left in
+          let r_rhs = r.rha_right in
+          if CP.eq_sv lhs r_lhs && CP.eq_sv rhs r_rhs then true
+          else aux tail
+        | _ -> aux tail
+      end in
+  aux trace
+
 let has_unfold_post trace =
   let rec aux trace num = match trace with
   | [] -> false
@@ -1674,6 +1703,17 @@ let rec synthesize_st_core st : Iast.exp option=
       | [h] -> h
       | _ -> report_error no_pos "syn_st_core: no more than one st"
     end
+  | RlHeapAssign rc ->
+    let lhs = rc.rha_left in
+    let rhs = rc.rha_right in
+    let assign = I.Assign {
+        I.exp_assign_op = OpAssign;
+        I.exp_assign_lhs = mkVar lhs;
+        I.exp_assign_rhs = mkVar rhs;
+        I.exp_assign_path_id = None;
+        I.exp_assign_pos = no_pos;
+      } in
+    aux_subtrees st assign
   | RlAllocate rc ->
     let r_data = rc.ra_data in
     let r_var = rc.ra_var in
@@ -2310,8 +2350,8 @@ let is_code_rule_x trace = match trace with
   | [] -> false
   | h::_ ->
     match h with
-    | RlAssign _ | RlReturn _ | RlFWrite _ | RlFuncRes _
-    | RlFuncCall _ -> true
+    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _
+    | RlFuncRes _ | RlFuncCall _ -> true
     | _ -> false
 
 let is_code_rule trace =

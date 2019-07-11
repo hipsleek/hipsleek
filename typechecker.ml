@@ -1677,7 +1677,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           x_tinfo_pp ">>>>>> bind type-checker <<<<<<" pos;
           x_tinfo_hp (add_str "node" (fun x -> x)) v pos;
           x_tinfo_hp (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;
-          x_tinfo_hp (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
+          x_binfo_hp (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
           x_tinfo_hp (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;
           x_tinfo_hp (add_str "read-only" string_of_bool) read_only pos;
           (* yes below is safe *)
@@ -1765,14 +1765,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               if (read_only)
               then
                 let read_f = mkPermInv () fresh_perm_exp in
-                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos)
-                                       read_f) CVP.empty_vperm_sets CF.TypeTrue
-                  (CF.mkTrueFlow ()) [] pos
+                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
               else
                 let write_f = mkPermWrite () fresh_perm_exp in
-                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos)
-                                       write_f) CVP.empty_vperm_sets CF.TypeTrue
-                  (CF.mkTrueFlow ()) [] pos
+                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
             else vheap in
           let () = x_tinfo_hp (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
           let vheap = x_add_1 Immutable.normalize_field_ann_formula vheap in
@@ -1817,25 +1813,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               begin
                 if Globals.is_en_efa_exc () && (Globals.global_efa_exc ())
                 then
-                  let to_print = ("bind 3: node " ^ (Cprinter.string_of_formula
-                                                       vheap ) ^
-                                  " cannot be derived from context (")
-                                 ^ (string_of_loc pos) ^ ")" in
+                  let to_print = ("bind 3: node " ^ (pr_formula vheap ) ^ " cannot be derived from context (") ^ (string_of_loc pos) ^ ")" in
                   let idf = (fun c -> c) in
-                  CF.transform_list_failesc_context
-                    (idf,idf,
-                     (fun es -> CF.Ctx{es with CF.es_final_error
-                                               = CF.acc_error_msg
-                                                   es.CF.es_final_error to_print
-                                      }))
-                    rs
+                  CF.transform_list_failesc_context (idf, idf, (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print})) rs
                 else
                   let () = repair_loc := Some VarGen.proving_loc#get in
                   let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^
                            ("bindxxx: node " ^ (Cprinter.string_of_formula vheap) ^
                             " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n"
-                           (* add branch info *)
-                           ^ ("(Cause of Bind Failure)") ^
+                     ^ ("(Cause of Bind Failure)") ^
                            (Cprinter.string_of_failure_list_failesc_context rs )
                            ^ (string_of_loc pos) in
                   raise (Err.Ppf ({
@@ -1856,19 +1842,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 stk_vars # pop_list lsv;
                 let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                 let tmp_res2 =
-                  if not(CP.isLend imm_node) && not(CP.isAccs imm_node)
-                  (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then
+                  if (not(CP.isLend imm_node) && not(CP.isAccs imm_node))
+                     (* || (!repair_collect_constraint) *) then
+                  (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*)
                     CF.normalize_max_renaming_list_failesc_context_4_bind pid
                       vheap pos true tmp_res1
                       (* for Lend, Accs it should not be added back and
                          field level annotations should be added back and compacted *)
-                  else tmp_res1
-                in
+                  else tmp_res1 in
                 x_tinfo_pp "WN : adding vheap to exception too" no_pos;
                 x_tinfo_hp (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos;
-                x_tinfo_hp (add_str "bind:tmp_res1"
-                              (pr_list Cprinter.string_of_failesc_context))
-                  tmp_res1 no_pos;
+                x_tinfo_hp (add_str "bind:tmp_res1" pr_failesc_ctx) tmp_res1 no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                 let bind_field = CF.mk_bind_fields_struc vs_prim in
                 let tmp_res2 =
@@ -1880,30 +1864,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                             CF.mkAnd_pure es.CF.es_formula (MCP.mix_of_pure bind_field) no_pos
                           else es.CF.es_formula in
                         CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula
-                                           prog es_f Solver.unfold_for_abs_merge
-                                           pos;}))
-                    tmp_res2
-                in
+                                           prog es_f Solver.unfold_for_abs_merge pos})) tmp_res2 in
                 let tmp_res2 = SV.prune_ctx_failesc_list prog tmp_res2 in
-                x_tinfo_hp (add_str "bind:tmp_res2"
-                              (pr_list Cprinter.string_of_failesc_context))
-                  tmp_res2 no_pos;
+                x_tinfo_hp (add_str "bind:tmp_res2" pr_failesc_ctx) tmp_res2 no_pos;
                 let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
-                x_tinfo_hp (add_str "bind:tmp_res3"
-                              (pr_list Cprinter.string_of_failesc_context))
-                  tmp_res3 no_pos;
+                x_tinfo_hp (add_str "bind:tmp_res3" pr_failesc_ctx) tmp_res3 no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff
                   then SV.elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
-                x_tinfo_hp (add_str "bind:tmp_res2"
-                              (pr_list Cprinter.string_of_failesc_context))
-                  res no_pos;
+                x_tinfo_hp (add_str "bind:tmp_res2" pr_failesc_ctx) res no_pos;
                 (* normalize_list_failesc_context_w_lemma prog res *)
                 CF.pop_esc_level_list res pid
               end
-        end  (*end Bind*)
-      in
+        end  (*end Bind*) in
       (* bind, efa-exc is turned on by default*)
       let bind_op_wrapper () =
         wrap_err_bind bind_op ()

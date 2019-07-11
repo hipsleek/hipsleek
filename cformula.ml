@@ -14803,8 +14803,8 @@ let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) i : list_fai
 (*       } in     *)
 (*       transform_list_failesc_context (idf,idf,fct) c *)
 
-let proc_esc_stack pid f_es es = 
-  List.map (fun ((p,l) as e) -> 
+let proc_esc_stack pid f_es es =
+  List.map (fun ((p,l) as e) ->
       if eq_control_path_id p pid then
         (* Debug.info_hprint (add_str "proc_esc_stack(=pid)" Cprinter.string_of_esc_stack_lvl) e no_pos; *)
         (p,transform_branch_ctx f_es l)
@@ -14829,11 +14829,10 @@ let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
 (* if !max_renaming then transform_list_failesc_context (idf,f_esc,(normalize_es f pos b)) ctx *)
 (*   else transform_list_failesc_context (idf,f_esc,(normalize_clash_es f pos b)) ctx *)
 
-
 let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
   let pr_f = !print_formula in
   let pr_ctx = pr_list !print_failesc_context in
-  Debug.no_2 "normalize_max_renaming_list_failesc_context_4_bind" 
+  Debug.no_2 "normalize_max_renaming_list_failesc_context_4_bind"
     pr_f pr_ctx pr_ctx
     (fun _ _ -> normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx) f ctx
 

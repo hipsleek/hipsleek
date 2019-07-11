@@ -234,6 +234,56 @@ let get_node_vars post_cond =
     | None -> false in
   post_vars |> List.filter filter_fun
 
+let choose_rule_heap_assign goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
+  let pre_nodes = get_node_vars pre in
+  let post_nodes = get_node_vars post in
+  let pre_pf = CF.get_pure pre in
+  let post_pf = CF.get_pure post in
+  let ante_pf = CP.mkAnd pre_pf post_pf no_pos in
+  let mk_rule lhs rhs =
+    if has_heap_assign lhs rhs goal.gl_trace then []
+    else
+      let rule = RlHeapAssign {
+          rha_left = lhs;
+          rha_right = rhs
+        } in
+      [rule] in
+  let check_eq_var var1 var2 =
+    let conseq = CP.mkEqVar var1 var2 no_pos in
+    SB.check_pure_entail post_pf conseq in
+  if List.length pre_nodes = 1 && List.length post_nodes = 1 then
+    let pre_node = List.hd pre_nodes in
+    let post_node = List.hd post_nodes in
+    let post = remove_exists post in
+    let pre_f = extract_var_f pre pre_node |> Gen.unsome in
+    let post_f = extract_var_f post post_node |> Gen.unsome in
+    let pre_hf = get_hf pre_f in
+    let post_hf = get_hf post_f in
+    match pre_hf, post_hf with
+    | CF.DataNode dn1, CF.DataNode dn2 ->
+      let args1 = dn1.CF.h_formula_data_arguments in
+      let args2 = dn2.CF.h_formula_data_arguments in
+      let var1 = dn1.CF.h_formula_data_node in
+      let var2 = dn2.CF.h_formula_data_node in
+      if CP.mem var1 all_vars && CP.mem var2 all_vars &&
+         List.for_all2 check_eq_var args1 args2 then
+        mk_rule var2 var1
+      else []
+    | CF.ViewNode vn1, CF.ViewNode vn2 ->
+      let args1 = vn1.CF.h_formula_view_arguments in
+      let args2 = vn2.CF.h_formula_view_arguments in
+      let var1 = vn1.CF.h_formula_view_node in
+      let var2 = vn2.CF.h_formula_view_node in
+      if CP.mem var1 all_vars && CP.mem var2 all_vars &&
+         List.for_all2 check_eq_var args1 args2 then
+        mk_rule var2 var1
+      else []
+    | _ -> []
+  else []
+
 let choose_rule_fwrite goal =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
@@ -814,17 +864,18 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_unfold_pre goal) in
     let rs = rs @ (choose_rule_frame_pred goal) in
     let rs = rs @ (choose_rule_assign goal) in
-    (* let rs = rs @ (choose_rule_pre_assign goal) in *)
     let rs = rs @ (choose_rule_fread goal) in
     let rs = rs @ (choose_rule_fwrite goal) in
     let rs = rs @ (choose_rule_numeric goal) in
     let rs = rs @ (choose_rule_unfold_post goal) in
     let rs = rs @ (choose_rule_func_call goal) in
     let rs = rs @ (choose_rule_frame_data goal) in
+    (* let rs = rs @ (choose_rule_pre_assign goal) in *)
     (* let rs = rs @ (choose_rule_post_assign goal) in *)
     let rs = rs @ (choose_rule_allocate goal) in
     let rs = rs @ (choose_rule_mk_null goal) in
     let rs = rs @ (choose_rule_return goal) in
+    let rs = rs @ (choose_rule_heap_assign goal) in
     let rs = eliminate_useless_rules goal rs in
     let rs = reorder_rules goal rs in
     rs
@@ -1064,6 +1115,15 @@ let process_rule_allocate goal rcore =
                           gl_trace = (RlAllocate rcore)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlAllocate rcore) [n_goal]
 
+let process_rule_heap_assign goal rcore =
+  let lhs = rcore.rha_left in
+  let rhs = rcore.rha_right in
+  let n_pf = CP.mkEqVar lhs rhs no_pos in
+  let n_pre = CF.add_pure_formula_to_formula n_pf goal.gl_pre_cond in
+  let n_goal = {goal with gl_trace = (RlHeapAssign rcore)::goal.gl_trace;
+                          gl_pre_cond = n_pre} in
+  mk_derivation_subgoals goal (RlHeapAssign rcore) [n_goal]
+
 (*********************************************************************
  * The search procedure
  *********************************************************************)
@@ -1125,6 +1185,7 @@ and process_one_rule goal rule : derivation =
     | RlExistsRight rcore -> process_rule_exists_right goal rcore
     | RlSkip -> process_rule_skip goal
     | RlMkNull rcore -> process_rule_mk_null goal rcore
+    | RlHeapAssign rcore -> process_rule_heap_assign goal rcore
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =
@@ -1296,19 +1357,12 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
 
 let statement_search (iprog: IA.prog_decl) prog proc (suspicious: I.exp)
     candidates =
-  let ents = !Synthesis.entailments |> List.rev in
-  let triples = !Synthesis.triples |> List.rev in
-  let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
-  let pr_triples = pr_list (pr_triple pr_formula pr_formula pr_formula) in
-  x_tinfo_hp (add_str "entailments" pr_ents) ents no_pos;
-  x_binfo_hp (add_str "triples" pr_triples) triples no_pos;
-  x_binfo_hp (add_str "suspicious stmt" pr_i_exp) suspicious no_pos;
-  x_binfo_hp (add_str "candidates" (pr_list pr_c_exp)) candidates no_pos;
-  let hps = prog.CA.prog_hp_decls @ !unk_hps in
-  let hps = Gen.BList.remove_dups_eq eq_hp_decl hps in
-  x_binfo_hp (add_str "hp decls" pr_hps) hps no_pos;
-  let s_goal = Searcher.mk_search_goal iprog prog proc triples in
-  let _ = Searcher.solve_unknown_hp s_goal candidates in
+  (* let ents = !Synthesis.entailments |> List.rev in *)
+  (* let triples = !Synthesis.triples |> List.rev in *)
+  (* let hps = prog.CA.prog_hp_decls @ !unk_hps in
+   * let hps = Gen.BList.remove_dups_eq eq_hp_decl hps in
+   * let s_goal = Searcher.mk_search_goal iprog prog proc triples in
+   * let _ = Searcher.solve_unknown_hp s_goal candidates in *)
   None
 
 let synthesize_block_statements iprog prog orig_proc proc decl_vars =

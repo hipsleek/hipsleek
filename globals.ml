@@ -1467,6 +1467,8 @@ let enable_i = ref false
 
 let enable_repair_template = ref false
 
+let repair_collect_constraint = ref false
+
 let enable_error_as_exc = ref false (* true *)
 
 let bug_detect = ref false

@@ -19,9 +19,6 @@ module CPR = Cprinter
 module MCP = Mcpure
 module Syn = Synthesis
 
-(* translation of HIP's data structures to Songbird's data structures
-   will be done here *)
-
 let add_str = Gen.Basic.add_str
 let no_pos = VarGen.no_pos
 let report_error = Gen.Basic.report_error
@@ -33,7 +30,6 @@ let pr_struc_f = CPR.string_of_struc_formula
 let pr_svs = CPR.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_entail = SBC.pr_entailment
-let pre_list = ref ([] : CF.formula list)
 let sb_program = ref (None: SBC.program option)
 let pr_ents = pr_list (pr_pair pr_pf pr_pf)
 let pr_pos = string_of_loc
@@ -851,7 +847,7 @@ let solve_entailments_two prog entails =
     let sb_ents = List.map translate_entailment entails in
     let sb_prog = translate_prog prog in
     let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-    let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+    let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
     let start_time = get_time () in
     let ptree = if num = 1 then
         SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 3)
@@ -1004,6 +1000,10 @@ let output_sb_ent sb_prog sb_ent =
   Printf.fprintf oc "%s\n" str;
   close_out oc
 
+let get_reading_nodes (bf: CF.struc_base_formula) =
+  let _, holes = translate_formula bf.CF.formula_struc_base in
+  holes
+
 let check_entail_prog_state prog (es: CF.entail_state)
       (bf:CF.struc_base_formula) =
   let ante = es.CF.es_formula in
@@ -1047,7 +1047,8 @@ let check_entail_prog_state prog (es: CF.entail_state)
         else () in
       let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
       let residue = translate_back_fs residues holes in
-      let () = x_tinfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
+      let () = x_binfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
+      let () = x_binfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
       (true, Some residue)
     else
       let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
@@ -1298,7 +1299,6 @@ and hentail_after_sat_ebase prog ctx es bf =
   if ent_res then
     let residue = Gen.unsome residue in
     let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
-    let () = pre_list := [es.CF.es_formula] @ !pre_list in
     let n_ctx = CF.Ctx {es with CF.es_evars = CF.get_exists es.CF.es_formula;
                                 CF.es_formula = residue} in
     aux_conti n_ctx
@@ -1334,8 +1334,6 @@ and hentail_after_sat_ebase prog ctx es bf =
           let conseq = Syn.add_formula_to_formula residue old_conseq in
           (conseq, residue) in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
-      let triple_residue = CF.mkBase_simp (CF.HEmp) (CP.mkTrue no_pos |> MCP.mix_of_pure) in
-      let () = Syn.triples := [(ante, old_conseq, triple_residue)] @ !Syn.triples in
       let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
       aux_conti n_ctx
     else if Syn.is_emp_conseq bf.CF.formula_struc_base then
@@ -1356,9 +1354,10 @@ and hentail_after_sat_ebase prog ctx es bf =
       let pure_ante = ante |> CF.get_pure in
       let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in
       let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
-      let triple_residue = Syn.mkTrue_pf_formula n_es in
+      (* to add holes here *)
+      let reading_nodes = get_reading_nodes bf in
+      let n_es = Syn.add_h_formula_list_to_formula reading_nodes n_es in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
-      let () = Syn.triples := [(ante, conseq, triple_residue)] @ !Syn.triples in
       let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let n_ctx = CF.Ctx {es with CF.es_formula = n_es;} in
       aux_conti n_ctx

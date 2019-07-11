@@ -14606,24 +14606,24 @@ let mkExpAnnSymb ann pos =
   | PolyAnn v  -> Var(v, pos)
   | NoAnn  -> AConst(Accs, pos)
 
-let isAccs (a : ann) : bool = 
+let isAccs (a : ann) : bool =
   match a with
-  | ConstAnn Accs -> true 
+  | ConstAnn Accs -> true
   | _ -> false
 
-let isLend(a : ann) : bool = 
+let isLend(a : ann) : bool =
   match a with
-  | ConstAnn Lend -> true 
+  | ConstAnn Lend -> true
   | _ -> false
 
-let isMutable(a : ann) : bool = 
+let isMutable(a : ann) : bool =
   match a with
-  | ConstAnn Mutable -> true 
+  | ConstAnn Mutable -> true
   | _ -> false
 
-let isImm(a : ann) : bool = 
+let isImm(a : ann) : bool =
   match a with
-  | ConstAnn Imm -> true 
+  | ConstAnn Imm -> true
   | _ -> false
 
 let isPoly(a : ann) : bool =
@@ -14637,7 +14637,7 @@ let rec apply_one_imm_x (fr,t) a = match a with
   | TempRes (tl,tr) ->  TempRes(apply_one_imm_x (fr,t) tl, apply_one_imm_x (fr,t) tr)
   | PolyAnn sv ->  PolyAnn (if eq_spec_var sv fr then t else sv)
 
-let apply_one_imm (fr,t) a = 
+let apply_one_imm (fr,t) a =
   let pr1 =  (pr_pair !print_sv !print_sv) in
   let pr2 = string_of_imm in
   Debug.no_2 "apply_one_imm" pr1 pr2 pr2 apply_one_imm_x (fr,t) a
@@ -14649,7 +14649,7 @@ let rec subs_imm_par_x sst a = match a with
   | PolyAnn sv ->  (* CP.PolyAnn (CP.subst_var_par sst sv) *)
     PolyAnn (subs_one sst sv)
 
-let subs_imm_par sst a = 
+let subs_imm_par sst a =
  let pr1 =  pr_list (pr_pair !print_sv !print_sv) in
  let pr2 = string_of_imm in
  Debug.no_2 "subs_imm_par" pr1 pr2 pr2 subs_imm_par_x sst a
@@ -14664,7 +14664,6 @@ let subs_imm_par sst a =
 (*   List.for_all (is_const_imm ~emap:em) alst *)
 
 (* end imm utilities *)
-
 
 (* utilities for allowing annotations as view arguments *)
 let eq_annot_arg a1 a2 =

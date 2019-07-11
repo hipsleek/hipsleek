@@ -106,7 +106,9 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     let cprog, _ = Astsimp.trans_prog iprog in
     let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
     try
+      let () = repair_collect_constraint := true in
       let () = Typechecker.check_prog_wrapper iprog cprog in
+      let () = repair_collect_constraint := false in
       let () = x_binfo_pp "start synthesis process" no_pos in
       let iprog = !Syn.syn_iprog |> Gen.unsome in
       let prog = !Syn.syn_cprog |> Gen.unsome in
@@ -251,7 +253,9 @@ let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
     let cprog, _ = Astsimp.trans_prog iprog in
     let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
     try
+      let () = repair_collect_constraint := true in
       let () = Typechecker.check_prog_wrapper iprog cprog in
+      let () = repair_collect_constraint := false in
       let () = x_binfo_pp "start synthesis process" no_pos in
       let iprog = !Syn.syn_iprog |> Gen.unsome in
       let prog = !Syn.syn_cprog |> Gen.unsome in
@@ -365,7 +369,6 @@ let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
     (proc : C.proc_decl) (block: C.exp list) =
   let orig_proc = proc in
   let () = x_binfo_hp (add_str "block" pr_c_exps) block no_pos in
-  (* report_error no_pos "to debug" *)
   let (n_iprog, n_prog, n_proc) = create_tmpl_proc iprog prog proc trace block in
   let () = reset_repair_block() in
   try
@@ -397,7 +400,6 @@ let repair_cproc iprog =
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = get_block_traces cproc in
     let () = x_tinfo_hp (add_str "blocks" pr_bt) blocks no_pos in
-    (* failwith "to debug" *)
     let check_post = !Syn.check_post_list in
     let traces = get_statement_traces blocks in
     let pr_traces = pr_list (pr_list pr_c_exps) in
@@ -414,7 +416,6 @@ let repair_cproc iprog =
           List.exists (eq_loc_ln pos) pos_list in
         let helper2 trace = trace |> List.exists (helper repair_pos) in
         let traces = traces |> List.filter helper2 in
-                     (* |> List.filter (fun x -> x != []) in *)
         traces
       else [] in
     let () = x_binfo_hp (add_str "traces" pr_traces) traces no_pos in
