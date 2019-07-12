@@ -133,6 +133,7 @@ let rec loc_of_iast_exp (e: Iast.exp) : VarGen.loc =
   | Iast.ArrayAlloc e -> e.Iast.exp_aalloc_pos
   | Iast.Assert e -> e.Iast.exp_assert_pos
   | Iast.Assign e -> e.Iast.exp_assign_pos
+  | Iast.Deallocate e -> e.Iast.exp_deallocate_pos
   | Iast.Binary e -> e.Iast.exp_binary_pos
   | Iast.Bind e -> e.Iast.exp_bind_pos
   | Iast.Block e -> e.Iast.exp_block_pos
@@ -219,7 +220,7 @@ let rec typ_of_iast_exp (exp: Iast.exp) : Globals.typ =
   | Iast.Dprint _ | Iast.Empty _
   | Iast.Continue _ | Iast.Finally _
   | Iast.Java _ | Iast.Label _
-  | Iast.Member _ | Iast.New _
+  | Iast.Member _ | Iast.New _ | Iast.Deallocate _
   | Iast.Null _ | Iast.Raise _
   | Iast.Return _ | Iast.This _
   | Iast.Time _ | Iast.Try _

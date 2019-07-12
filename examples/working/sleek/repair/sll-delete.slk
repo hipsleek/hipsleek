@@ -9,10 +9,10 @@ void delete(node x, int a)
 	requires x::ll<n> & n > a & a > 0 
 	ensures (exists k: x::ll<k> & k = n-1);.
 
-// synthesize [node x,int a]
-// x::ll<n> & (1-n)<0 & a-1=0
-// ~>
-// (exists fr54,q_3: x::node<q_3> * q_3::ll<fr54> & a-1=0 & fr54=n-2).
+synthesize [node x,int a]
+x::ll<n> & (1-n)<0 & a-1=0
+~>
+(exists fr54,q_3: x::node<q_3> * q_3::ll<fr54> & a-1=0 & fr54=n-2).
 
 // to synthesize x.next = x.next.next
 // RlUnfoldPre  x::node<q_75> * q_75::ll<flted_6_74>&1<(0+n) & a=0+1 & flted_6_74+1=n
@@ -25,11 +25,11 @@ void delete(node x, int a)
 // [RlSkip
 // []]]]]]]
 
-synthesize [node q_84,node q_75,node x,int a]
-q_75::node<q_84> * x::node<q_75> &
-1<n & a=1 & flted_6_74+1=n & flted_6_83+1=flted_6_74
-~>
-x::node<q_84> & flted_6_83+2=n.
+// synthesize [node q_84,node q_75,node x,int a]
+// q_75::node<q_84> * x::node<q_75> &
+// 1<n & a=1 & flted_6_74+1=n & flted_6_83+1=flted_6_74
+// ~>
+// x::node<q_84> & flted_6_83+2=n.
 
 // synthesize [node x,int a]
 //  x::ll<n> & a-1 !=0 & -a<0 & a-n<0

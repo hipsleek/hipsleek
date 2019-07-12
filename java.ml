@@ -323,9 +323,10 @@ and java_of_exp = function
     "while " ^ (Iprinter.parenthesis (java_of_exp e1)) ^ " \n" ^ "{\n"
     ^ (java_of_exp e2) ^ "\n}"          
   | Return ({exp_return_val = v}) -> 
-    "return " ^ (match v with 
+    "return " ^ (match v with
         | None   -> ""
         | Some e -> (java_of_exp e) ^ ";")
+  | Deallocate d -> (java_of_exp d.Iast.exp_deallocate_exp) ^ ";"
   | Seq ({exp_seq_exp1 = e1;
           exp_seq_exp2 = e2}) -> 
     let e1str = java_of_exp e1 in

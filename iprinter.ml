@@ -945,7 +945,8 @@ let rec string_of_exp_repair = function
     (string_of_exp_repair a) ^ "[" ^ (string_of_exp_list e ",") ^ "]"
 
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
-
+  | Deallocate d -> let d_exp = d.exp_deallocate_exp in
+    "free " ^ (string_of_exp_repair d_exp)
   | Java ({exp_java_code = code}) -> code
 
   | Label ((pid,_),e) -> (string_of_exp_repair e)
@@ -1184,6 +1185,8 @@ let rec string_of_exp = function
         (string_of_exp a) ^ "[" ^ (string_of_exp_list e ",") ^ "]" (* An Hoa *)
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
+  | Deallocate d -> let d_exp = d.exp_deallocate_exp in
+    "free " ^ (string_of_exp d_exp)
   | Label ((pid,_),e) ->
         string_of_control_path_id_opt pid(string_of_exp e)
   | Bind ({exp_bind_bound_var = v;
@@ -1437,11 +1440,11 @@ let string_of_view_decl v =
   (* let pr_baga = pr_list (pr_pair pr_id (pr_opt pr_id)) in *)
   let pr_exp = string_of_formula_exp in
   let pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
-  v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-  (string_of_struc_formula v.view_formula) 
+  v.view_name ^ ho_str ^ "[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^
+  (string_of_struc_formula v.view_formula)
   ^ "\ninv " ^ (string_of_pure_formula v.view_invariant) 
   ^ "\ninv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) 
-  ^ "\nview_data_name: " ^ v.view_data_name 
+  ^ "\nview_data_name: " ^ v.view_data_name
   ^ "\nview_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
   ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
   ^ "\nextends" ^ extn_str

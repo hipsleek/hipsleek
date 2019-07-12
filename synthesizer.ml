@@ -873,7 +873,7 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_frame_data goal) in
     (* let rs = rs @ (choose_rule_pre_assign goal) in *)
     (* let rs = rs @ (choose_rule_post_assign goal) in *)
-    (* let rs = rs @ (choose_rule_allocate goal) in *)
+    let rs = rs @ (choose_rule_allocate goal) in
     let rs = rs @ (choose_rule_mk_null goal) in
     let rs = rs @ (choose_rule_return goal) in
     let rs = rs @ (choose_rule_heap_assign goal) in
@@ -916,7 +916,6 @@ let choose_synthesis_rules_x goal : rule list =
     try
       let _ = choose_rule_exists_right goal |> raise_rules in
       let _ = choose_rule_skip goal |> raise_rules in
-      let _ = choose_rule_allocate goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
       []
     with ERules rs -> rs in

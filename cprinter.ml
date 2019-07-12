@@ -4627,11 +4627,16 @@ let rec string_of_exp = function
   | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
-  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_infer_vars = ivars; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_type = t; exp_assert_path_id = pid}) ->
+  | Assert ({exp_assert_asserted_formula = f1o;
+             exp_assert_infer_vars = ivars;
+             exp_assert_assumed_formula = f2o;
+             exp_assert_pos = l;
+             exp_assert_type = t;
+             exp_assert_path_id = pid}) ->
     let s = (
       let str1 = match (f1o, t) with
         | None, _ -> ""
-        | Some f1, None -> "assert " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
+        | Some f1, None -> "assert " ^ (string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
         | Some f1, Some true -> "assert_exact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
         | Some f1, Some false -> "assert_inexact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1))) in
       let str2 = match f2o with
@@ -4640,7 +4645,9 @@ let rec string_of_exp = function
       str1 ^ " " ^ str2
     ) in
     string_of_formula_label pid s
-  | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) ->
+  | Assign ({exp_assign_lhs = id;
+             exp_assign_rhs = e;
+             exp_assign_pos = l}) ->
     id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) ->
     string_of_bool b
@@ -4657,13 +4664,10 @@ let rec string_of_exp = function
             exp_block_local_vars = _;
             exp_block_pos = _}) -> "{" ^ (string_of_exp e) ^ "}"
   | Barrier b -> "barrier "^(string_of_ident (snd b.exp_barrier_recv))
-  | UnkExp ({
-      unk_exp_name = id;
-      unk_exp_arguments = args;
-      unk_exp_pos = l
-    }) ->
-    id ^ "(" ^ (string_of_ident_list args ",")
-
+  | UnkExp ({ unk_exp_name = id;
+              unk_exp_arguments = args;
+              unk_exp_pos = l
+            }) -> id ^ "(" ^ (string_of_ident_list args ",")
   | ICall ({exp_icall_type = _;
             exp_icall_receiver = r;
             exp_icall_method_name = id;
@@ -4695,8 +4699,6 @@ let rec string_of_exp = function
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _ -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f
-  (*| FieldRead (_, (v, _), (f, _), _) -> v ^ "." ^ f*)
-  (*| FieldWrite ((v, _), (f, _), r, _) -> v ^ "." ^ f ^ " = " ^ r*)
   | IConst ({exp_iconst_val = i; exp_iconst_pos = l}) -> string_of_int i
   | New ({exp_new_class_name = id;
           exp_new_arguments = idl;
@@ -4757,28 +4759,34 @@ let rec string_of_exp = function
               exp_var_decl_pos = _}) ->
     (string_of_typ t) ^" "^ id (*^ (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)*)
   | Unit l -> ""
+  | Deallocate d -> let (typ, name) = d.exp_deallocate_var in
+    "fre e" ^ name
   | While ({exp_while_condition = id;
             exp_while_body = e;
             exp_while_spec = fl;
             exp_while_path_id = pid;
             exp_while_pos = l}) ->
-    string_of_control_path_id_opt pid ("while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n")
-  | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
-  | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
-  | Par ({ exp_par_vperm = vps; exp_par_lend_heap = lh; exp_par_cases = cl }) ->
+    let f_str = string_of_struc_formula fl in
+    let e_str = string_of_exp e in
+    string_of_control_path_id_opt pid ("while " ^ id ^ f_str ^ "\n{\n" ^ e_str ^ "\n}\n")
+  | Unfold {exp_unfold_var = sv} -> "unfold " ^ (string_of_spec_var sv)
+  | Try b -> let e_str = string_of_exp b.exp_try_body in
+    let clause_str = string_of_exp b.exp_catch_clause in
+    string_of_control_path_id b.exp_try_path_id
+               "try \n" ^ e_str ^ clause_str
+  | Par { exp_par_vperm = vps;
+          exp_par_lend_heap = lh;
+          exp_par_cases = cl } ->
     let string_of_par_case c =
       let cond = c.exp_par_case_cond in
       let vps = c.exp_par_case_vperm in
       let vps_str = string_of_vperm_sets vps in
       let cond_str = match cond with
         | None -> "else " ^ vps_str ^ " -> "
-        | Some f -> "case " ^ vps_str ^ " " ^ (string_of_formula f) ^ " -> "
-      in
-      cond_str ^ (string_of_exp c.exp_par_case_body)
-    in
+        | Some f -> "case " ^ vps_str ^ " " ^ (string_of_formula f) ^ " -> " in
+      cond_str ^ (string_of_exp c.exp_par_case_body) in
     "par " ^ (string_of_vperm_sets vps)  ^ " * " ^ (string_of_formula lh) ^
     "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }"
-;;
 
 (*  WN: why not just print ann? Is it too verbose?
     Can't we use None inside fields to control it?

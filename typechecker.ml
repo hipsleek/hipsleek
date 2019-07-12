@@ -2755,7 +2755,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (* Norm ERR *)
         let norm_lem_es es = Solver.normalize_estate_w_coers prog es lem pos in
         VP.norm_list_failesc_context_for_par norm_lem_es res_ctx
-
+    (* | Deallocate {
+     *     exp_deallocate_var = var;
+     *     exp_deallocate_pos = pos;
+     *   } -> *)
+      (* TODO: change context *)
     | _ ->
       failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
 

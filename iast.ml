@@ -447,6 +447,9 @@ and exp_new = { exp_new_class_name : ident;
                 exp_new_arguments : exp list;
                 exp_new_pos : loc }
 
+and exp_deallocate = { exp_deallocate_exp: exp;
+                       exp_deallocate_pos: loc }
+
 and exp_raise = { exp_raise_type : rise_type;
                   exp_raise_val : exp option;
                   exp_raise_from_final :bool; (*if so the result can have any type...*)
@@ -555,6 +558,7 @@ and exp =
   | Null of loc
   | Raise of exp_raise
   | Return of exp_return
+  | Deallocate of exp_deallocate
   | Seq of exp_seq
   | This of exp_this
   | Time of (bool*string*loc)
@@ -761,7 +765,8 @@ let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   fold_proc prog (f_p) (fun _ _ -> ()) ()
 
 
-let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
+let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)
+    (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =
     match (f in_arg e) with
     | Some e1 -> e1
@@ -852,6 +857,9 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
       | New b ->
         let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
         (New {b with exp_new_arguments = el},(comb_f rl))
+      | Deallocate d ->
+        let e1, r1 = helper n_arg d.exp_deallocate_exp in
+        (Deallocate {d with exp_deallocate_exp = e1}, r1)
       | Raise b -> (match b.exp_raise_val with
           | None -> (e,zero)
           | Some body ->
@@ -920,7 +928,8 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
         (Par { b with exp_par_cases = cl }, r)
   in helper init_arg e
 
-let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : 'a =
+let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
+    (comb_f: exp -> 'a list -> 'a) : 'a =
   let rec helper (in_arg:'b) (e:exp) : 'a =
     match (f in_arg e) with
     | Some e1 -> e1
@@ -994,11 +1003,12 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
       | New b ->
         let rl = (List.map (helper n_arg) b.exp_new_arguments) in
         comb_f rl
+      | Deallocate d -> helper n_arg d.exp_deallocate_exp
       | Raise b -> (match b.exp_raise_val with
-          | None -> (zero)
+          | None -> zero
           | Some body -> helper n_arg body)
       | Return b->(match b.exp_return_val with
-          | None -> (zero)
+          | None -> zero
           | Some body -> helper n_arg body)
       | Seq b ->
         let r1 = helper n_arg  b.exp_seq_exp1 in
@@ -1035,10 +1045,7 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
         let br = helper n_arg b.exp_while_body in
         let r = comb_f [r;cr;br] in r
       | Par b ->
-        let trans_par_case c =
-          let cr = helper n_arg c.exp_par_case_body in
-          (cr)
-        in
+        let trans_par_case c = helper n_arg c.exp_par_case_body in
         let rl =(List.map trans_par_case b.exp_par_cases) in
         let r = comb_f rl in r
   in helper init_arg e
@@ -1147,6 +1154,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ConstDecl e -> e.exp_const_decl_pos
   | Continue p -> p.exp_continue_pos
   | Debug e -> e.exp_debug_pos
+  | Deallocate e -> e.exp_deallocate_pos
   | Dprint e -> e.exp_dprint_pos
   | Empty p -> p
   | FloatLit e -> e.exp_float_lit_pos
@@ -2721,8 +2729,13 @@ let rec label_e e =
       let nl = fresh_branch_point_id "" in
       iast_label_table:= (nl,"return",[],e.exp_return_pos) ::!iast_label_table;
       Return{ e with
-              exp_return_val = (match e.exp_return_val with | None -> None | Some s-> Some (label_e s));
+              exp_return_val = (match e.exp_return_val with | None -> None
+                                                            | Some s-> Some (label_e s));
               exp_return_path_id = nl;}
+    | Deallocate e ->
+      let nl = fresh_branch_point_id "" in
+      iast_label_table:=(nl, "malloc", [], e.exp_deallocate_pos)::!iast_label_table;
+      Deallocate {e with exp_deallocate_exp = label_e e.exp_deallocate_exp}
     | Try e ->
       let nl = fresh_branch_point_id "" in
       let rec lbl_list_constr id cclauses = match cclauses with
@@ -3922,6 +3935,7 @@ let rec repair_exp exp exp_decls =
   | ArrayAt _ -> exp
   | ArrayAlloc _ -> exp
   | Assert _ -> exp
+  | Deallocate _ -> report_error no_pos "repair_exp Deallocate: to inspect"
   | Assign e ->
     let r_exp1 = repair_exp e.exp_assign_lhs exp_decls in
     let r_exp2 = repair_exp e.exp_assign_rhs exp_decls in

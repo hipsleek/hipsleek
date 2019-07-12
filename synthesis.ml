@@ -1707,11 +1707,17 @@ and aux_c_subtrees st cur_codes =
       let seq = mkCSeq cur_codes st_code in Some seq
   | _ -> report_error no_pos "aux_c_subtrees: not consider more than one subtree"
 
+let rec mk_exp_list e_list = match e_list with
+  | [] -> I.Null no_pos
+  | [h] -> h
+  | h::tail -> let n_exp = mk_exp_list tail in
+    mkSeq h n_exp
+
 let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
   | RlSkip -> None
   | RlExistsRight _ | RlFramePred _ | RlFrameData _
-  | RlUnfoldPost _ | RlUnfoldPre _ | RlDeallocate _ ->
+  | RlUnfoldPost _ | RlUnfoldPre _ ->
     begin
       let sts = List.map synthesize_st_core st.stc_subtrees in
       match sts with
@@ -1730,6 +1736,16 @@ let rec synthesize_st_core st : Iast.exp option=
         I.exp_assign_pos = no_pos;
       } in
     aux_subtrees st assign
+  | RlDeallocate rc ->
+    let vars = rc.rd_vars in
+    let mk_rule var =
+      I.Deallocate {
+        exp_deallocate_exp = mkVar var;
+        exp_deallocate_pos = no_pos
+      } in
+    let exp_list = List.map mk_rule vars in
+    let d_exp = mk_exp_list exp_list in
+    aux_subtrees st d_exp
   | RlAllocate rc ->
     let r_data = rc.ra_data in
     let r_var = rc.ra_var in

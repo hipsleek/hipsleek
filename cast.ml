@@ -435,6 +435,11 @@ and exp_new = {
   exp_new_arguments : typed_ident list;
   exp_new_pos : loc }
 
+and exp_deallocate = {
+  exp_deallocate_var: typed_ident;
+  exp_deallocate_pos: loc
+}
+
 and exp_return = { exp_return_type : typ;
                    exp_return_val : ident option;
                    exp_return_pos : loc }
@@ -561,6 +566,7 @@ and exp = (* expressions keep their types *)
   | UnkExp of unk_exp
   | IConst of exp_iconst
   | New of exp_new
+  | Deallocate of exp_deallocate
   | Null of loc
   | EmptyArray of exp_emparray
   | Print of (int * loc)
@@ -1058,7 +1064,8 @@ let proc_decls_iter (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   	| ArrayAt t -> t
   	| _ -> failwith "arrayat_of_exp :: input is not case ArrayAt of exp"*)
 
-let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
+let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)
+    (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =
     match (f in_arg e) with
     | Some e1 -> e1
@@ -1077,6 +1084,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
       | IConst _
       (* | ArrayAlloc _ *) (* An Hoa *)
       | New _
+      | Deallocate _
       | Null _
       | EmptyArray _ (* An Hoa *)
       | Print _
@@ -1311,6 +1319,9 @@ let rec type_of_exp (e : exp) = match e with
   | Seq ({exp_seq_type = t; exp_seq_exp1 = _; exp_seq_exp2 = _; exp_seq_pos = _}) -> Some t
   | This ({exp_this_type = t}) -> Some t
   | Var ({exp_var_type = t; exp_var_name = _; exp_var_pos = _}) -> Some t
+  | Deallocate d ->
+    let var = d.exp_deallocate_var in
+    Some (fst var)
   | VarDecl _ -> Some void_type
   | Unit _ -> Some void_type
   | While _ -> Some void_type
@@ -2078,6 +2089,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
                                                       * go down recursively *)
   | IConst _ -> []
   | New _ -> []
+  | Deallocate _ -> []
   | Null _ -> []
   | EmptyArray _ -> [] (* An Hoa : empty array has no callee *)
   | Print _ -> []
@@ -2330,6 +2342,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Var _
   | Null _
   | EmptyArray _ (* An Hoa : NO IDEA *)
+  | Deallocate _ (* Toan: to check *)
   | New _
   | Sharp _
   | SCall _
@@ -2348,6 +2361,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | Dprint b -> b.exp_dprint_pos
   | Assign b -> b.exp_assign_pos
   | FConst b -> b.exp_fconst_pos
+  | Deallocate d -> d.exp_deallocate_pos
   | ICall b -> b.exp_icall_pos
   | IConst b -> b.exp_iconst_pos
   | Print (_,b) -> b
@@ -4498,6 +4512,7 @@ let rec repair_exp exp exp_decls =
   | Label l -> Label {l with exp_label_exp = repair_exp l.exp_label_exp exp_decls}
   | CheckRef _ -> exp
   | Java _ -> exp
+  | Deallocate _ -> report_error no_pos "repair_exp: Deallocate unhandled"
   | Assert _ -> exp
   | Assign a -> Assign {a with exp_assign_rhs = repair_exp a.exp_assign_rhs exp_decls}
   | BConst _ -> exp

@@ -13,76 +13,70 @@ open Iast
 open Gen.Basic
 
 (********************************)
-let transform_exp 
-    (e:exp) 
-    (init_arg:'b)
-    (f:'b->exp->(exp * 'a) option)  
-    (f_args:'b->exp->'b)
-    (comb_f:'a list -> 'a) 
-    (zero:'a) 
-  : (exp * 'a) =
-  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
+let transform_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp * 'a) option)
+    (f_args:'b->exp->'b) (comb_f:'a list -> 'a) (zero:'a) : (exp * 'a) =
+  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =
     match (f in_arg e) with
     | Some e1 -> e1
-    | None  -> 
-      let n_arg = f_args in_arg e in 
-      match e with	
-      | Assert _ 
-      | BoolLit _ 
+    | None  ->
+      let n_arg = f_args in_arg e in
+      match e with
+      | Assert _
+      | BoolLit _
       | Break _
-      | Continue _ 
-      | Debug _ 
-      | Dprint _ 
-      | Empty _ 
-      | FloatLit _ 
+      | Continue _
+      | Debug _
+      | Dprint _
+      | Empty _
+      | FloatLit _
       | IntLit _
-      | Java _ 
-      | Null _ 
-      | This _ 
-      | Time _ 
+      | Java _
+      | Null _
+      | This _
+      | Time _
       | Unfold _
-      | Barrier _ 	  
+      | Barrier _
       | Var _ -> (e,zero)
       | ArrayAt b -> (* An Hoa *)
         let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
-        (ArrayAt { b with exp_arrayat_index = il;},(comb_f rl))
+        (ArrayAt { b with exp_arrayat_index = il;}, comb_f rl)
       | Assign b ->
         let e1,r1 = helper n_arg b.exp_assign_lhs  in
         let e2,r2 = helper n_arg b.exp_assign_rhs  in
-        (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;},(comb_f [r1;r2]))
-      | Binary b -> 
+        (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;},comb_f [r1;r2])
+      | Binary b ->
         let e1,r1 = helper n_arg b.exp_binary_oper1  in
         let e2,r2 = helper n_arg b.exp_binary_oper2  in
-        (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
-      | Bind b -> 
-        let e1,r1 = helper n_arg b.exp_bind_body  in     
+        (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},comb_f [r1;r2])
+      | Bind b ->
+        let e1,r1 = helper n_arg b.exp_bind_body in
         (Bind {b with exp_bind_body = e1; },r1)
-      | Block b -> 
-        let e1,r1 = helper n_arg b.exp_block_body  in     
+      | Block b ->
+        let e1,r1 = helper n_arg b.exp_block_body in
         (Block {b with exp_block_body = e1;},r1)
-      | CallRecv b -> 
-        let e1,r1 = helper n_arg b.exp_call_recv_receiver  in     
-        let ler = List.map (helper n_arg) b.exp_call_recv_arguments in    
+      | CallRecv b ->
+        let e1,r1 = helper n_arg b.exp_call_recv_receiver in
+        let ler = List.map (helper n_arg) b.exp_call_recv_arguments in
         let e2l,r2l = List.split ler in
         let r = comb_f (r1::r2l) in
         (CallRecv {b with exp_call_recv_receiver = e1;exp_call_recv_arguments = e2l;},r)
-      | CallNRecv b -> 
-        let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in    
+      | CallNRecv b ->
+        let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in
         let e2l,r2l = List.split ler in
         let r = comb_f r2l in
         (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
-      | UnkExp b -> 
+      | UnkExp b ->
         let ler = List.map (helper n_arg) b.unk_exp_arguments in
         let e2l,r2l = List.split ler in
         let r = comb_f r2l in
         (UnkExp {b with unk_exp_arguments = e2l;},r)
-      | Cast b -> 
-        let e1,r1 = helper n_arg b.exp_cast_body  in  
+      | Cast b ->
+        let e1,r1 = helper n_arg b.exp_cast_body in
         (Cast {b with exp_cast_body = e1},r1)
-      | Catch b -> 
+      | Catch b ->
         let e1,r1 = helper n_arg b.exp_catch_body in
         (Catch {b with exp_catch_body = e1},r1)
-      | Cond b -> 
+      | Cond b ->
         let e1,r1 = helper n_arg b.exp_cond_condition in
         let e2,r2 = helper n_arg b.exp_cond_then_arm in
         let e3,r3 = helper n_arg b.exp_cond_else_arm in
@@ -95,30 +89,33 @@ let transform_exp
         let e1,r1 = helper n_arg b.exp_finally_body in
 
         (Finally {b with exp_finally_body=e1},r1)
-      | Label (l,b) -> 
+      | Label (l,b) ->
         let e1,r1 = helper n_arg b in
         (Label (l,e1),r1)
       | Member b -> let e1,r1 = helper n_arg b.exp_member_base in
         (Member {b with exp_member_base = e1;},r1)
-      | ArrayAlloc b -> 
+      | ArrayAlloc b ->
         let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
         (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
-      | New b -> 
+      | New b ->
         let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
         (New {b with exp_new_arguments = el},(comb_f rl))
       | Raise b -> (match b.exp_raise_val with
           | None -> (e,zero)
-          | Some body -> 
+          | Some body ->
             let e1,r1 = helper n_arg body in
             (Raise {b with exp_raise_val = Some e1},r1))
       | Return b->(match b.exp_return_val with
           | None -> (e,zero)
-          | Some body -> 
+          | Some body ->
             let e1,r1 = helper n_arg body in
             (Return {b with exp_return_val = Some e1},r1))
-      | Seq b -> 
-        let e1,r1 = helper n_arg  b.exp_seq_exp1 in 
-        let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
+      | Deallocate d ->
+        let el, rl = helper n_arg d.exp_deallocate_exp in
+        (Deallocate {d with exp_deallocate_exp = el}, rl)
+      | Seq b ->
+        let e1,r1 = helper n_arg  b.exp_seq_exp1 in
+        let e2,r2 = helper n_arg  b.exp_seq_exp2 in
         let r = comb_f [r1;r2] in
         (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
       | Try b -> 
@@ -238,37 +235,30 @@ let rec float_var_decl (e:exp) : exp  =
       let e = float_var_decl b.exp_block_body in
       let decl_list = local_var_decl e in
       let ldups = Gen.BList.find_dups_eq (fun (c1,_,_)(c2,_,_)-> (String.compare c1 c2)=0) decl_list in
-      let () = if ldups<>[] then 
-          Error.report_error 
-            {Err.error_loc = b.exp_block_pos; 
-             Err.error_text = 
-               (String.concat "," (List.map (fun (c,_,pos)-> 
-                    c ^ ", line " 
-                    ^ (string_of_int pos.start_pos.Lexing.pos_lnum) 
+      let () = if ldups<>[] then
+          Error.report_error
+            {Err.error_loc = b.exp_block_pos;
+             Err.error_text =
+               (String.concat "," (List.map (fun (c,_,pos)->
+                    c ^ ", line "
+                    ^ (string_of_int pos.start_pos.Lexing.pos_lnum)
                     ^ ", col "
                     ^ (string_of_int (pos.start_pos.Lexing.pos_cnum - pos.start_pos.Lexing.pos_bol))) ldups))
-               ^ " is redefined in the current block"}
-      in
+               ^ " is redefined in the current block"} in
       Some (Block {b with
                    exp_block_body =e;
                    exp_block_local_vars=decl_list;})
-    | _ -> None 
-  in map_exp e f  
-(*
-  let comb_f l = () in
-  let (r,_) = transform_exp e () f idf2 comb_f () in
-  r
-*)
+    | _ -> None
+  in map_exp e f
 
-let float_var_decl_prog prog = 
+let float_var_decl_prog prog =
   {prog with
-   prog_proc_decls = List.map (fun c-> 
+   prog_proc_decls = List.map (fun c->
        {c with
         proc_body = match c.proc_body with
           | None -> None
           | Some bd -> Some (float_var_decl bd)}
      ) prog.prog_proc_decls;}
-
 
 let float_var_decl_prog2 prog = 
   map_proc prog (fun c-> 
@@ -277,14 +267,7 @@ let float_var_decl_prog2 prog =
          | None -> None
          | Some bd -> Some (float_var_decl bd)})
 
-
-
 (*
-
-*)
-
-
-(*   
       let float_var = () in
   let proc_tr = (idf,idf,float_var) in
   transform_program (idf,idf,idf,idf,proc_tr,idf) prog 
@@ -1451,8 +1434,7 @@ let generate_free_fnc iprog=
     match fields with
     | [] -> res
     | [_] -> res ^ "_"
-    | _::rest -> gen_annon_field rest (res^"_,")
-  in
+    | _::rest -> gen_annon_field rest (res^"_,") in
   let gen_one_data acc ddclr=
     if string_eq ddclr.data_name "Object" || string_eq ddclr.data_name "String" then acc else
       let free_proc = (
@@ -1462,7 +1444,6 @@ let generate_free_fnc iprog=
       ) in
       let _ = Debug.ninfo_hprint (add_str "to add free" pr_id) free_proc no_pos in
       let pfree = Parser.parse_c_aux_proc "free" free_proc in
-      acc@[pfree]
-  in
+      acc@[pfree] in
   let free_fncs = List.fold_left gen_one_data [] iprog.prog_data_decls in
-  {iprog with prog_proc_decls = iprog.prog_proc_decls@free_fncs;}
+  {iprog with prog_proc_decls = iprog.prog_proc_decls@free_fncs }

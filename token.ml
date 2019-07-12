@@ -59,13 +59,13 @@ type sleek_token =
   | FALSE | FLOAT | FORALL | FUNC
   | HP | HPPOST
   | HTRUE
-  | IF 
+  | IF
   | IN_T | INT | INFINT_TYPE | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
   | INV_EXACT | INV_SAT | BG
   | ANN_KEY
   | LET
-  | MAX | MIN 
-  | NEW | NOTIN | NULL
+  | MAX | MIN
+  | NEW | MALLOC | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
   | PRED | PRED_PRIM | DPRINT | PRED_EXT 
   | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
@@ -194,10 +194,14 @@ module Token = struct
     | LEMMA TLEM ->"lemma" | LEMMA TLEM_TEST ->"lemma_test" | LEMMA TLEM_TEST_NEW ->"lemma_test_new" | LEMMA TLEM_UNSAFE ->"lemma_unsafe" (* | LEMMA true -> "lemma_exact"  *)
     | LEMMA TLEM_SPLIT ->"lemma_split"
     | LEMMA TLEM_PROP ->"lemma_prop"
-    | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer" | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
-    | PRINT -> "print" 
-    | PRINT_LEMMAS -> "print_lemmas" 
+    | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer"
+    | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max"
+    | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred"
+    | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn"
+    | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint"
+    | PRINT -> "print" | MALLOC -> "malloc"
+    | PRINT_LEMMAS -> "print_lemmas"
     (* | PRINT_VIEW -> "print_view"  *)
     (* | PRINT_VIEW_LONG -> "print_view_long"  *)
     |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 

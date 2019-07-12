@@ -4022,6 +4022,7 @@ while_statement:
 
 jump_statement:
   [[ t=return_statement -> t
+   | t=malloc_statement -> t
    | t=break_statement -> t
    | t=continue_statement -> t
    | t=raise_statement -> t]];
@@ -4061,7 +4062,7 @@ raise_statement:
               exp_raise_from_final = false;
               exp_raise_path_id = None; 
               exp_raise_pos = get_pos_camlp4 _loc 1 }]];
-              
+
 try_statement:
 	[[ `TRY; t=valid_declaration_statement; cl=opt_catch_list; fl=opt_finally->
       Try { exp_try_block = t;
@@ -4071,23 +4072,22 @@ try_statement:
             exp_try_pos = get_pos_camlp4 _loc 1 }]];
 
 opt_catch_list: [[t= LIST0 catch_clause -> t]];
-	
+
 catch_clause:
 	[[ `CATCH; `OPAREN; `IDENTIFIER id1; `IDENTIFIER id2; `CPAREN; vds = valid_declaration_statement ->
 		  Catch { exp_catch_var = Some id2;
               exp_catch_flow_type = id1;
               exp_catch_flow_var = None;
 			  exp_catch_alt_var_type = None;
-              exp_catch_body = vds;																					   
+              exp_catch_body = vds;
               exp_catch_pos = get_pos_camlp4 _loc 1 }]];
 
 opt_finally: [[t =OPT finally_c -> un_option t [] ]];
-	
+
 finally_c: [[`FINALLY; vds=valid_declaration_statement -> [Finally {exp_finally_body = vds;exp_finally_pos = get_pos_camlp4 _loc 1 }]]];
 
 opt_expression: [[t=OPT expression -> t]];
-  
-  
+
 (********** Expressions **********)
 
 object_creation_expression: [[t=object_or_delegate_creation_expression-> t]];
@@ -4102,6 +4102,11 @@ object_or_delegate_creation_expression:
 		ArrayAlloc { exp_aalloc_etype_name = "int";
 					 exp_aalloc_dimensions = al;
 					 exp_aalloc_pos = get_pos_camlp4 _loc 1; } ]];
+
+malloc_statement: [[ `MALLOC; t = expression ->
+                      Deallocate {
+                        exp_deallocate_exp = t;
+                        exp_deallocate_pos = get_pos_camlp4 _loc 1}]];
 
 new_expression: [[t=object_or_delegate_creation_expression -> t]];
 
@@ -4123,7 +4128,7 @@ expression:
    | t=assignment_expression -> t]];
 
 constant_expression: [[t=expression -> t]];
-  
+
 boolean_expression:  [[t=expression -> t]];
 
 assignment_expression:
@@ -4582,9 +4587,9 @@ let create_tnt_prim_proc id : Iast.proc_decl option =
     else None
   in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source
 
-let add_tnt_prim_proc prog id = 
+let add_tnt_prim_proc prog id =
   if String.compare id Globals.nondet_int_proc_name == 0 then
-    let proc_src = 
+    let proc_src =
       "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
       "  requires true\n" ^
       "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n"
@@ -4599,7 +4604,7 @@ let add_tnt_prim_proc prog id =
     { prog with
       Iast.prog_rel_decls = prog.Iast.prog_rel_decls @ [nondet_rel];
       Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ [proc_decl]; }
-  else if String.compare id "__VERIFIER_error" == 0 then 
+  else if String.compare id "__VERIFIER_error" == 0 then
     let proc_src =
       "int __VERIFIER_error()\n" ^
       "  requires true\n" ^
@@ -4614,8 +4619,7 @@ let create_tnt_stdlib_proc () : Iast.proc_decl list =
     "void_star __builtin_alloca(int size)\n" ^
     "  case {\n" ^
     "    size <= 0 -> requires true ensures res = null;\n" ^
-    "    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h; }\n" 
-  in
+    "    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h; }\n" in
   let lt_proc =
     "int lt___(int_star p, int_star q)\n" ^
     "  requires p::int_star<vp, op> * q::int_star<vq, oq>\n" ^
