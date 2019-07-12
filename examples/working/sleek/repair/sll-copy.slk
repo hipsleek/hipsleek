@@ -43,10 +43,28 @@ ensures res::ll<n> * x::ll<n>;.
 // (exists fr02: tmp::ll<fr02> & -n<0 & n22=n-1 & fr02=n-1).
 
 
-synthesize [node x,node tmp,node k]
-k::node<an117,tmp> * x::node<an117,q118> * q118::ll<n121> * tmp::ll<n121> &
--1-n121 < 0 & n-1-n121=0 & n-1-flt16=0
-~>
-(exists an62,q21,an11, q12: res::node<an62,q21> * x::node<an11,q12> *
-q21::ll<n121> * q12::ll<n121>).
+// synthesize [node x,node tmp,node k]
+// k::node<an117,tmp> * x::node<an117,q118> * q118::ll<n121> * tmp::ll<n121> &
+// -1-n121 < 0 & n-1-n121=0 & n-1-flt16=0
+// ~>
+// (exists an62,q21,an11, q12: res::node<an62,q21> * x::node<an11,q12> *
+// q21::ll<n121> * q12::ll<n121>).
 
+
+// synthesize [node x,node tmp,node k]
+//  k::node<Anon_15117,tmp> * x::node<Anon_15117,q_15118> * 
+//  q_15118::ll<n_15121> * tmp::ll<n_15121>&
+// (-1-n_15121)<0 & x=x & n+(-1-n_15121)=0 & (n-1)-flted_7_15116=0
+// ~>
+//  (exists Anon_5549,q_5550,Anon_5740,
+// q_5741: res::node<Anon_5549,q_5550> * x::node<Anon_5740,q_5741> * 
+//         q_5550::ll<n_15121> * q_5741::ll<n_15121>&
+// x=x & n+(-1-n_15121)=0 & (n-1)-flted_7_15116=0).
+
+
+synthesize [node x,node tmp,node k]
+
+tmp::ll<n21> * q18::ll<n21> * x::node<an17,q18> * k::node<an17,tmp> &
+flt16+1=n & 0<n & x!=null & n21=flt16
+~>
+res::ll<n> * x::ll<n>.

@@ -1091,6 +1091,16 @@ let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
 
+(* let simplify_arithmetic_pf (pf: CP.formula) = *)
+
+
+let simplify_arithmetic (formula: CF.formula) =
+  match formula with
+  | CF.Base b ->
+    let pf = b.CF.formula_base_pure in
+    None
+  | _ -> None
+
 let simplify_goal goal =
   let n_pre = remove_exists goal.gl_pre_cond in
   let n_pre = elim_idents n_pre in

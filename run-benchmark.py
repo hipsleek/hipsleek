@@ -16,7 +16,7 @@ os.environ["LC_ALL"] = "C"
 script_dir = sys.path[0]
 current_dir = os.getcwd()
 home_dir = os.path.realpath(script_dir)
-timeout = 120
+timeout = 20
 
 # parse arguments
 def parse_args ():
@@ -170,10 +170,10 @@ def main():
     # statistics
     time_end = time.time()
     total_time = time_end - time_begin
-    msg = ("\nSummary: " + str(total_valid) + " valid, " +
-           str(total_invalid) + " success, " +
-           str(total_unknown) + " fail, " +
-           str(total_timeout) + " timeout\n" +
+    msg = ("\nSummary: " + str(total_valid) + " success, " +
+           str(total_invalid) + " failed, " +
+           str(total_unknown) + " timeout, " +
+           # str(total_timeout) + " timeout\n" +
            "Time: " + "{:0.2f}".format(total_time) + "s\n")
     print(msg)
     # write_to_file(log_file, msg)
