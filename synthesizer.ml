@@ -873,7 +873,7 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_frame_data goal) in
     (* let rs = rs @ (choose_rule_pre_assign goal) in *)
     (* let rs = rs @ (choose_rule_post_assign goal) in *)
-    let rs = rs @ (choose_rule_allocate goal) in
+    (* let rs = rs @ (choose_rule_allocate goal) in *)
     let rs = rs @ (choose_rule_mk_null goal) in
     let rs = rs @ (choose_rule_return goal) in
     let rs = rs @ (choose_rule_heap_assign goal) in
@@ -881,14 +881,32 @@ let choose_main_rules goal =
     let rs = reorder_rules goal rs in
     rs
 
+let mk_rule_deallocate goal residue =
+  let post = goal.gl_post_cond in
+  let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
+  let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
+  let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
+  let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
+  let deallocate_vars = CP.diff_svl pre_node_vars post_node_vars in
+  if List.length deallocate_vars > 0 then
+    let rule = RlDeallocate {
+        rd_vars = deallocate_vars;
+      } in
+    [rule]
+  else []
+
 let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
     let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
     try
       (* to check_residue for the delete case *)
-      let sk,_ = SB.check_entail_residue prog pre post in
-      (* let sk, _ = check_entail_sleek prog pre post in *)
-      if sk then let rule = RlSkip in [rule]
+      let sk, residue = SB.check_entail_residue prog pre post in
+      (* let sk = SB.check_entail_exact prog pre post in *)
+      if sk then
+        let residue = Gen.unsome residue in
+        if CF.is_emp_formula residue then
+          let rule = RlSkip in [rule]
+        else mk_rule_deallocate goal residue
       else []
     with _ -> []
   else []
@@ -898,6 +916,7 @@ let choose_synthesis_rules_x goal : rule list =
     try
       let _ = choose_rule_exists_right goal |> raise_rules in
       let _ = choose_rule_skip goal |> raise_rules in
+      let _ = choose_rule_allocate goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
       []
     with ERules rs -> rs in
@@ -1093,6 +1112,9 @@ let process_rule_skip goal =
     mk_derivation_success goal RlSkip
   else mk_derivation_fail goal RlSkip
 
+let process_rule_deallocate goal rc =
+  mk_derivation_success goal (RlDeallocate rc)
+
 let process_rule_mk_null goal rcore =
   let n_exp = rcore.rmn_null in
   let var = rcore.rmn_var in
@@ -1189,6 +1211,7 @@ and process_one_rule goal rule : derivation =
     | RlSkip -> process_rule_skip goal
     | RlMkNull rcore -> process_rule_mk_null goal rcore
     | RlHeapAssign rcore -> process_rule_heap_assign goal rcore
+    | RlDeallocate rc -> process_rule_deallocate goal rc
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =

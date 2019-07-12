@@ -1916,7 +1916,7 @@ and mkAnd_pure (f1 : formula) (p2 : MCP.mix_formula) (pos : loc):formula =
   Debug.no_2 "mkAnd_pure" !print_formula !print_mix_f !print_formula 
     (fun _ _ -> mkAnd_pure_x f1 p2 pos) f1 p2
 
-and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) 
+and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
     (t : t_formula) (fl:flow_formula) a (pos : loc) lbl=
   let tmp_b = {
     formula_base_heap = h;

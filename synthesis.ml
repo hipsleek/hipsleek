@@ -73,6 +73,7 @@ type rule =
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlAllocate of rule_allocate
+  | RlDeallocate of rule_deallocate
   | RlMkNull of rule_mk_null
   | RlAssign of rule_assign
   | RlReturn of rule_return
@@ -103,6 +104,10 @@ and rule_allocate = {
   ra_data: string;
   ra_var : CP.spec_var;
   ra_params: CP.spec_var list;
+}
+
+and rule_deallocate = {
+  rd_vars: CP.spec_var list;
 }
 
 and rule_post_assign = {
@@ -340,6 +345,7 @@ let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
   | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
+  | RlDeallocate r -> "RlDeallocate " ^ (pr_vars r.rd_vars)
   | RlHeapAssign r -> "RlHeapAssign (" ^ (pr_var r.rha_left) ^ ", " ^ (pr_var r.rha_right)
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
@@ -1705,7 +1711,7 @@ let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
   | RlSkip -> None
   | RlExistsRight _ | RlFramePred _ | RlFrameData _
-  | RlUnfoldPost _ | RlUnfoldPre _ ->
+  | RlUnfoldPost _ | RlUnfoldPre _ | RlDeallocate _ ->
     begin
       let sts = List.map synthesize_st_core st.stc_subtrees in
       match sts with
@@ -1760,7 +1766,6 @@ let rec synthesize_st_core st : Iast.exp option=
     let assign = mkAssign (mkVar var) n_e in
     let seq = mkSeq v_decl assign in
     aux_subtrees st seq
-  (* | RlAllocate rcore -> *)
   | RlAssign rassign ->
     let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
     let c_exp = exp_to_iast rhs in
@@ -2360,7 +2365,7 @@ let is_code_rule_x trace = match trace with
   | [] -> false
   | h::_ ->
     match h with
-    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _
+    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _ | RlDeallocate _
     | RlFuncRes _ | RlFuncCall _ -> true
     | _ -> false
 
