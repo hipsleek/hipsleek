@@ -4022,7 +4022,7 @@ while_statement:
 
 jump_statement:
   [[ t=return_statement -> t
-   | t=malloc_statement -> t
+   | t=freevar_statement -> t
    | t=break_statement -> t
    | t=continue_statement -> t
    | t=raise_statement -> t]];
@@ -4103,10 +4103,10 @@ object_or_delegate_creation_expression:
 					 exp_aalloc_dimensions = al;
 					 exp_aalloc_pos = get_pos_camlp4 _loc 1; } ]];
 
-malloc_statement: [[ `MALLOC; t = expression ->
-                      Deallocate {
-                        exp_deallocate_exp = t;
-                        exp_deallocate_pos = get_pos_camlp4 _loc 1}]];
+freevar_statement: [[ `FREEVAR; t = expression ->
+                      Freevar {
+                        exp_freevar_exp = t;
+                        exp_freevar_pos = get_pos_camlp4 _loc 1}]];
 
 new_expression: [[t=object_or_delegate_creation_expression -> t]];
 

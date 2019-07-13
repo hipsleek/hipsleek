@@ -304,8 +304,8 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
            (vs,fw)
         ) in
       (bvars, fvars, fw)
-    | Deallocate d ->
-      let _, fvars, fw = helper d.exp_deallocate_exp bvars in
+    | Freevar d ->
+      let _, fvars, fw = helper d.exp_freevar_exp bvars in
       (bvars, fvars, fw)
     | Seq s ->
       let bvars1,fvars1,fw1 = helper s.exp_seq_exp1 bvars in
@@ -496,9 +496,9 @@ let subst_exp_x (e:exp) (subst: (ident * ident) list): exp =
          let e1 = helper e0 subst in
          let new_e = Return {r with exp_return_val = Some e1} in
          new_e)
-    | Deallocate d ->
-      let d1 = helper d.exp_deallocate_exp subst in
-      Deallocate {d with exp_deallocate_exp = d1}
+    | Freevar d ->
+      let d1 = helper d.exp_freevar_exp subst in
+      Freevar {d with exp_freevar_exp = d1}
     | Seq s ->
       let e1 = helper s.exp_seq_exp1 subst in
       let e2 = helper s.exp_seq_exp2 subst in
@@ -752,9 +752,9 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
          let e1, _ = helper e0 vars in
          let new_e = Return {r with exp_return_val = Some e1} in
          (new_e, vars))
-    | Deallocate d ->
-      let e1, _ = helper d.exp_deallocate_exp vars in
-      let n_exp = Deallocate {d with exp_deallocate_exp = e1} in
+    | Freevar d ->
+      let e1, _ = helper d.exp_freevar_exp vars in
+      let n_exp = Freevar {d with exp_freevar_exp = e1} in
       (n_exp, vars)
     | Seq s ->
       let e1,vars1 = helper s.exp_seq_exp1 vars in
@@ -1546,9 +1546,9 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
        | None -> e
        | Some e0 -> let e1 = helper e0 vars in
          Return {r with exp_return_val = Some e1})
-    | Deallocate d ->
-      let e1 = helper d.exp_deallocate_exp vars in
-      Deallocate {d with exp_deallocate_exp = e1}
+    | Freevar d ->
+      let e1 = helper d.exp_freevar_exp vars in
+      Freevar {d with exp_freevar_exp = e1}
     | Seq s ->
       let e1 = helper s.exp_seq_exp1 vars in
       let e2 = helper s.exp_seq_exp2 vars in
@@ -1717,7 +1717,7 @@ and find_addr (e:exp) : ident list =
        | Some e0 ->
          let vs = helper e0 in
          vs)
-    | Deallocate d -> helper d.exp_deallocate_exp
+    | Freevar d -> helper d.exp_freevar_exp
     | Seq s ->
       let vs1 = helper s.exp_seq_exp1 in
       let vs2 = helper s.exp_seq_exp2 in
@@ -2290,7 +2290,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
        | Some e0 ->
          let vs = helper e0 vs in
          vs)
-    | Deallocate d -> helper d.exp_deallocate_exp vs
+    | Freevar d -> helper d.exp_freevar_exp vs
     | Seq s ->
       let vs1 = helper s.exp_seq_exp1 vs in
       let vs2 = helper s.exp_seq_exp2 (vs@vs1) in

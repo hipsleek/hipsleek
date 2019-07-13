@@ -73,7 +73,7 @@ type rule =
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlAllocate of rule_allocate
-  | RlDeallocate of rule_deallocate
+  | RlFreevar of rule_freevar
   | RlMkNull of rule_mk_null
   | RlAssign of rule_assign
   | RlReturn of rule_return
@@ -106,7 +106,7 @@ and rule_allocate = {
   ra_params: CP.spec_var list;
 }
 
-and rule_deallocate = {
+and rule_freevar = {
   rd_vars: CP.spec_var list;
 }
 
@@ -345,7 +345,7 @@ let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
   | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
-  | RlDeallocate r -> "RlDeallocate " ^ (pr_vars r.rd_vars)
+  | RlFreevar r -> "RlFreevar " ^ (pr_vars r.rd_vars)
   | RlHeapAssign r -> "RlHeapAssign (" ^ (pr_var r.rha_left) ^ ", " ^ (pr_var r.rha_right)
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
@@ -1736,12 +1736,12 @@ let rec synthesize_st_core st : Iast.exp option=
         I.exp_assign_pos = no_pos;
       } in
     aux_subtrees st assign
-  | RlDeallocate rc ->
+  | RlFreevar rc ->
     let vars = rc.rd_vars in
     let mk_rule var =
-      I.Deallocate {
-        exp_deallocate_exp = mkVar var;
-        exp_deallocate_pos = no_pos
+      I.Freevar {
+        exp_freevar_exp = mkVar var;
+        exp_freevar_pos = no_pos
       } in
     let exp_list = List.map mk_rule vars in
     let d_exp = mk_exp_list exp_list in
@@ -2381,7 +2381,7 @@ let is_code_rule_x trace = match trace with
   | [] -> false
   | h::_ ->
     match h with
-    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _ | RlDeallocate _
+    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _ | RlFreevar _
     | RlFuncRes _ | RlFuncCall _ -> true
     | _ -> false
 

@@ -632,7 +632,7 @@ let rec seq_elim (e: C.exp): C.exp = match e with
   (*| C.ArrayAlloc a -> C.ArrayAlloc {a with (* An Hoa *)
       exp_aalloc_dimension = (seq_elim a.C.exp_aalloc_dimension); }*)
   | C.New _ -> e
-  | C.Deallocate _ -> e
+  | C.Freevar _ -> e
   | C.Null _ -> e
   | C.EmptyArray _ -> e (* An Hoa *)
   | C.Sharp _ -> e
@@ -3818,7 +3818,7 @@ and all_paths_return (e0 : I.exp) : bool =
   | I.Break _ -> false
   | I.CallNRecv _ -> false
   | I.CallRecv _ -> false
-  | I.Deallocate _ -> false
+  | I.Freevar _ -> false
   | I.UnkExp _ -> false
   | I.Cast _ -> false
   | I.Catch b-> all_paths_return b.I.exp_catch_body
@@ -5991,17 +5991,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         end
     (***********<< processing New ********)
     | I.Null pos -> ((C.Null pos), Globals.null_type)
-    | I.Deallocate d ->
-      let d_exp = d.I.exp_deallocate_exp in
-      let d_pos = d.I.exp_deallocate_pos in
+    | I.Freevar d ->
+      let d_exp = d.I.exp_freevar_exp in
+      let d_pos = d.I.exp_freevar_pos in
       let ce, ct = helper d_exp in
       let ce_iv, ce_name = match ce with
         | Cast.Var {Cast.exp_var_name = v} -> (true, v)
         | _ -> (false, "") in
       if ce_iv then
-        let c_exp = C.Deallocate {
-            C.exp_deallocate_var = (ct, ce_name);
-            C.exp_deallocate_pos = d_pos} in
+        let c_exp = C.Freevar {
+            C.exp_freevar_var = (ct, ce_name);
+            C.exp_freevar_pos = d_pos} in
         (c_exp, C.void_type)
       else
         let fn = fresh_ty_var_name ct d_pos.start_pos.Lexing.pos_lnum in
@@ -6014,9 +6014,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             C.exp_assign_rhs = ce;
             C.exp_assign_pos = d_pos;
           } in
-        let deal_e = C.Deallocate {
-            C.exp_deallocate_var = (ct, fn);
-            C.exp_deallocate_pos = d_pos} in
+        let deal_e = C.Freevar {
+            C.exp_freevar_var = (ct, fn);
+            C.exp_freevar_pos = d_pos} in
         let tmp_e1 = C.Seq {
             C.exp_seq_type = C.void_type;
             C.exp_seq_exp1 = init_e;
@@ -9550,9 +9550,9 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Return b ->  Iast.Return {b with Iast.exp_return_val = match b.Iast.exp_return_val with
         | None -> None
         | Some f -> Some (x_add rename_exp ren f)}
-    | I.Deallocate d ->
-      let n_d = rename_exp ren d.I.exp_deallocate_exp in
-      I.Deallocate {d with I.exp_deallocate_exp = n_d}
+    | I.Freevar d ->
+      let n_d = rename_exp ren d.I.exp_freevar_exp in
+      I.Freevar {d with I.exp_freevar_exp = n_d}
     | Iast.Seq b -> Iast.Seq {
         Iast.exp_seq_exp1 = x_add rename_exp ren b.Iast.exp_seq_exp1;
         Iast.exp_seq_exp2 = x_add rename_exp ren b.Iast.exp_seq_exp2;
@@ -9700,9 +9700,9 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =
     (Iast.Return {b with Iast.exp_return_val = match b.Iast.exp_return_val with
          | None -> None
          | Some f -> Some (fst (case_rename_var_decls f))},[])
-  | Iast.Deallocate d ->
-    let n_e, _ = case_rename_var_decls d.Iast.exp_deallocate_exp in
-    (Iast.Deallocate {d with exp_deallocate_exp = n_e}, [])
+  | Iast.Freevar d ->
+    let n_e, _ = case_rename_var_decls d.Iast.exp_freevar_exp in
+    (Iast.Freevar {d with exp_freevar_exp = n_e}, [])
   | Iast.Seq b ->
     let l1,ren = case_rename_var_decls b.Iast.exp_seq_exp1 in
     let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in
@@ -9912,9 +9912,9 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
   | Iast.Return b ->
     (Iast.Return {b with Iast.exp_return_val= match b.Iast.exp_return_val with | None -> None | Some f ->
          let r,_,_ = (case_normalize_exp prog h p f) in Some r},h,p)
-  | I.Deallocate d ->
-    let n_d, _, _ = case_normalize_exp prog h p d.I.exp_deallocate_exp in
-    let n_e = I.Deallocate {d with I.exp_deallocate_exp = n_d} in
+  | I.Freevar d ->
+    let n_d, _, _ = case_normalize_exp prog h p d.I.exp_freevar_exp in
+    let n_e = I.Freevar {d with I.exp_freevar_exp = n_d} in
     (n_e, h, p)
   | Iast.Seq b ->
     let l1,nh,np = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
@@ -10739,7 +10739,7 @@ and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.ex
     let ex, il = irf_traverse_exp cp e.C.exp_while_body scc in
     (C.While {e with C.exp_while_body = ex}, il)
   | C.Sharp _ -> (exp, [])
-  | C.Deallocate _ -> (exp, [])
+  | C.Freevar _ -> (exp, [])
   | C.Try e ->
     let ex1, il1 = irf_traverse_exp cp e.C.exp_try_body scc in
     let ex2, il2 = irf_traverse_exp cp e.C.exp_catch_clause scc in

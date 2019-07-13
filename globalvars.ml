@@ -331,8 +331,8 @@ let rec find_read_write_global_var
         None -> (IdentSet.empty, IdentSet.empty)
       | Some e1 -> find_read_write_global_var global_vars local_vars e1
     end
-  | I.Deallocate d ->
-    let d_e = d.I.exp_deallocate_exp in
+  | I.Freevar d ->
+    let d_e = d.I.exp_freevar_exp in
     find_read_write_global_var global_vars local_vars d_e
   | I.Seq e ->
     begin
@@ -849,10 +849,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         let new_exp = {e with I.exp_return_val = Some new_e1 } in
         I.Return new_exp
     end
-  | I.Deallocate d ->
-    let d_e = d.I.exp_deallocate_exp in
+  | I.Freevar d ->
+    let d_e = d.I.exp_freevar_exp in
     let n_d = extend_body temp_procs d_e in
-    I.Deallocate {d with I.exp_deallocate_exp = n_d}
+    I.Freevar {d with I.exp_freevar_exp = n_d}
   | I.Seq e ->
     begin
       let new_exp1 = extend_body temp_procs e.I.exp_seq_exp1 in
@@ -1047,10 +1047,10 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
         let new_exp = {e with I.exp_return_val = Some new_e1 } in
         I.Return new_exp
     end
-  | I.Deallocate d ->
-    let d_e = d.I.exp_deallocate_exp in
+  | I.Freevar d ->
+    let d_e = d.I.exp_freevar_exp in
     let n_e = check_and_change global_vars d_e in
-    I.Deallocate {d with I.exp_deallocate_exp = n_e}
+    I.Freevar {d with I.exp_freevar_exp = n_e}
   | I.Seq e ->
     begin
       match e.I.exp_seq_exp1 with

@@ -945,7 +945,7 @@ let rec string_of_exp_repair = function
     (string_of_exp_repair a) ^ "[" ^ (string_of_exp_list e ",") ^ "]"
 
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
-  | Deallocate d -> let d_exp = d.exp_deallocate_exp in
+  | Freevar d -> let d_exp = d.exp_freevar_exp in
     "free " ^ (string_of_exp_repair d_exp)
   | Java ({exp_java_code = code}) -> code
 
@@ -1185,7 +1185,7 @@ let rec string_of_exp = function
         (string_of_exp a) ^ "[" ^ (string_of_exp_list e ",") ^ "]" (* An Hoa *)
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
-  | Deallocate d -> let d_exp = d.exp_deallocate_exp in
+  | Freevar d -> let d_exp = d.exp_freevar_exp in
     "free " ^ (string_of_exp d_exp)
   | Label ((pid,_),e) ->
         string_of_control_path_id_opt pid(string_of_exp e)

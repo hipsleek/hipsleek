@@ -4759,8 +4759,8 @@ let rec string_of_exp = function
               exp_var_decl_pos = _}) ->
     (string_of_typ t) ^" "^ id (*^ (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)*)
   | Unit l -> ""
-  | Deallocate d -> let (typ, name) = d.exp_deallocate_var in
-    "fre e" ^ name
+  | Freevar d -> let (typ, name) = d.exp_freevar_var in
+    "free " ^ name
   | While ({exp_while_condition = id;
             exp_while_body = e;
             exp_while_spec = fl;

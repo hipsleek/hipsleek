@@ -110,9 +110,9 @@ let transform_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp * 'a) option)
           | Some body ->
             let e1,r1 = helper n_arg body in
             (Return {b with exp_return_val = Some e1},r1))
-      | Deallocate d ->
-        let el, rl = helper n_arg d.exp_deallocate_exp in
-        (Deallocate {d with exp_deallocate_exp = el}, rl)
+      | Freevar d ->
+        let el, rl = helper n_arg d.exp_freevar_exp in
+        (Freevar {d with exp_freevar_exp = el}, rl)
       | Seq b ->
         let e1,r1 = helper n_arg  b.exp_seq_exp1 in
         let e2,r2 = helper n_arg  b.exp_seq_exp2 in
