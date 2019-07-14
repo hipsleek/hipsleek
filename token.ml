@@ -65,7 +65,7 @@ type sleek_token =
   | ANN_KEY
   | LET
   | MAX | MIN
-  | NEW | FREEVAR | NOTIN | NULL
+  | NEW | FREE | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
   | PRED | PRED_PRIM | DPRINT | PRED_EXT 
   | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
@@ -200,7 +200,7 @@ module Token = struct
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred"
     | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn"
     | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint"
-    | PRINT -> "print" | FREEVAR -> "freevar"
+    | PRINT -> "print" | FREE -> "free"
     | PRINT_LEMMAS -> "print_lemmas"
     (* | PRINT_VIEW -> "print_view"  *)
     (* | PRINT_VIEW_LONG -> "print_view_long"  *)

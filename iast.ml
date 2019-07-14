@@ -447,8 +447,8 @@ and exp_new = { exp_new_class_name : ident;
                 exp_new_arguments : exp list;
                 exp_new_pos : loc }
 
-and exp_freevar = { exp_freevar_exp: exp;
-                       exp_freevar_pos: loc }
+and exp_free = { exp_free_exp: exp;
+                    exp_free_pos: loc }
 
 and exp_raise = { exp_raise_type : rise_type;
                   exp_raise_val : exp option;
@@ -558,7 +558,7 @@ and exp =
   | Null of loc
   | Raise of exp_raise
   | Return of exp_return
-  | Freevar of exp_freevar
+  | Free of exp_free
   | Seq of exp_seq
   | This of exp_this
   | Time of (bool*string*loc)
@@ -857,9 +857,9 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)
       | New b ->
         let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
         (New {b with exp_new_arguments = el},(comb_f rl))
-      | Freevar d ->
-        let e1, r1 = helper n_arg d.exp_freevar_exp in
-        (Freevar {d with exp_freevar_exp = e1}, r1)
+      | Free d ->
+        let e1, r1 = helper n_arg d.exp_free_exp in
+        (Free {d with exp_free_exp = e1}, r1)
       | Raise b -> (match b.exp_raise_val with
           | None -> (e,zero)
           | Some body ->
@@ -1003,7 +1003,7 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
       | New b ->
         let rl = (List.map (helper n_arg) b.exp_new_arguments) in
         comb_f rl
-      | Freevar d -> helper n_arg d.exp_freevar_exp
+      | Free d -> helper n_arg d.exp_free_exp
       | Raise b -> (match b.exp_raise_val with
           | None -> zero
           | Some body -> helper n_arg body)
@@ -1154,7 +1154,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ConstDecl e -> e.exp_const_decl_pos
   | Continue p -> p.exp_continue_pos
   | Debug e -> e.exp_debug_pos
-  | Freevar e -> e.exp_freevar_pos
+  | Free e -> e.exp_free_pos
   | Dprint e -> e.exp_dprint_pos
   | Empty p -> p
   | FloatLit e -> e.exp_float_lit_pos
@@ -2732,10 +2732,10 @@ let rec label_e e =
               exp_return_val = (match e.exp_return_val with | None -> None
                                                             | Some s-> Some (label_e s));
               exp_return_path_id = nl;}
-    | Freevar e ->
+    | Free e ->
       let nl = fresh_branch_point_id "" in
-      iast_label_table:=(nl, "malloc", [], e.exp_freevar_pos)::!iast_label_table;
-      Freevar {e with exp_freevar_exp = label_e e.exp_freevar_exp}
+      iast_label_table:=(nl, "malloc", [], e.exp_free_pos)::!iast_label_table;
+      Free {e with exp_free_exp = label_e e.exp_free_exp}
     | Try e ->
       let nl = fresh_branch_point_id "" in
       let rec lbl_list_constr id cclauses = match cclauses with
@@ -3935,7 +3935,7 @@ let rec repair_exp exp exp_decls =
   | ArrayAt _ -> exp
   | ArrayAlloc _ -> exp
   | Assert _ -> exp
-  | Freevar _ -> report_error no_pos "repair_exp Freevar: to inspect"
+  | Free _ -> report_error no_pos "repair_exp Free: to inspect"
   | Assign e ->
     let r_exp1 = repair_exp e.exp_assign_lhs exp_decls in
     let r_exp2 = repair_exp e.exp_assign_rhs exp_decls in

@@ -121,7 +121,7 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
     | Var _   | VarDecl _
     | Unfold _  | Unit _
     | Par _  | UnkExp _
-    | Sharp _ | Freevar _ -> path_conds
+    | Sharp _ | Free _ -> path_conds
     | Label b ->  helper b.exp_label_exp path_conds
     | Assign b -> begin (*to update aliasing *)
         let svl = List.fold_left (fun r pc -> r@(CP.fv pc.sp_constr)) arg_svl path_conds in
@@ -302,7 +302,7 @@ let find_rel_args_groups_x prog proc e0=
     | Var _   | VarDecl _
     | Unfold _  | Unit _
     | Par _ | UnkExp _
-    | Sharp _  | Freevar _-> neqs
+    | Sharp _  | Free _-> neqs
     | Label b ->  find_must_neq_helper b.exp_label_exp neqs
     | Assign b -> (*to handle alias*) neqs
     | Bind  {exp_bind_bound_var = (_,id);

@@ -25,6 +25,7 @@ let pr_sv = Cprinter.string_of_spec_var
 let pr_hps = pr_list Cprinter.string_of_hp_decl
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_substs = pr_list (pr_pair pr_var pr_var)
+let pr_failesc_list = Cprinter.string_of_list_failesc_context
 
 (*** Reference variable***********)
 let rel_num = ref 0
@@ -73,7 +74,7 @@ type rule =
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlAllocate of rule_allocate
-  | RlFreevar of rule_freevar
+  | RlFree of rule_free
   | RlMkNull of rule_mk_null
   | RlAssign of rule_assign
   | RlReturn of rule_return
@@ -106,7 +107,7 @@ and rule_allocate = {
   ra_params: CP.spec_var list;
 }
 
-and rule_freevar = {
+and rule_free = {
   rd_vars: CP.spec_var list;
 }
 
@@ -345,7 +346,7 @@ let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
   | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
-  | RlFreevar r -> "RlFreevar " ^ (pr_vars r.rd_vars)
+  | RlFree r -> "RlFree " ^ (pr_vars r.rd_vars)
   | RlHeapAssign r -> "RlHeapAssign (" ^ (pr_var r.rha_left) ^ ", " ^ (pr_var r.rha_right)
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
@@ -1162,10 +1163,10 @@ let rec get_unfold_view_hf vars (hf1:CF.h_formula) = match hf1 with
     vn1@vn2
   | _ -> []
 
-let get_unfold_view vars (f1:CF.formula) = match f1 with
+let rec get_unfold_view vars (f1:CF.formula) = match f1 with
   | CF.Base bf1 -> get_unfold_view_hf vars bf1.formula_base_heap
   | CF.Exists bf -> get_unfold_view_hf vars bf.formula_exists_heap
-  | _ -> []
+  | CF.Or bf -> []
 
 let unprime_formula_x (formula:CF.formula) =
   let vars = CF.fv formula |> List.filter CP.is_primed in
@@ -1736,12 +1737,12 @@ let rec synthesize_st_core st : Iast.exp option=
         I.exp_assign_pos = no_pos;
       } in
     aux_subtrees st assign
-  | RlFreevar rc ->
+  | RlFree rc ->
     let vars = rc.rd_vars in
     let mk_rule var =
-      I.Freevar {
-        exp_freevar_exp = mkVar var;
-        exp_freevar_pos = no_pos
+      I.Free {
+        exp_free_exp = mkVar var;
+        exp_free_pos = no_pos
       } in
     let exp_list = List.map mk_rule vars in
     let d_exp = mk_exp_list exp_list in
@@ -2381,7 +2382,7 @@ let is_code_rule_x trace = match trace with
   | [] -> false
   | h::_ ->
     match h with
-    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _ | RlFreevar _
+    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _ | RlFree _
     | RlFuncRes _ | RlFuncCall _ -> true
     | _ -> false
 
@@ -2509,3 +2510,133 @@ let process_rule_exists_right goal rule =
   let n_goal = {goal with gl_post_cond = rule.n_post;
                           gl_trace = (RlExistsRight rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlExistsRight rule) [n_goal]
+
+let free_var_hf (hf:CF.h_formula) var =
+  let rec aux (hf : CF.h_formula) = match hf with
+    | CF.DataNode dn ->
+      let dn_var = dn.CF.h_formula_data_node in
+      if CP.eq_sv dn_var var then
+        (CF.HEmp, true, false)
+      else (hf, false, false)
+    | CF.ViewNode vn ->
+      let vn_var = vn.CF.h_formula_view_node in
+      if CP.eq_sv vn_var var then
+        (hf, false, true)
+      else (hf, false, false)
+    | CF.Star bf ->
+      let (hf1, t1, u1) = aux bf.CF.h_formula_star_h1 in
+      let (hf2, t2, u2) = aux bf.CF.h_formula_star_h2 in
+      let n_hf = CF.Star {bf with CF.h_formula_star_h1 = hf1;
+                                  CF.h_formula_star_h2 = hf2} in
+      (n_hf, t1 || t2, u1 || u2)
+    | _ -> (hf, false, false) in
+  aux hf
+
+let free_var_formula prog formula var =
+  let rec aux formula = match formula with
+    | CF.Base bf ->
+      let hf = bf.CF.formula_base_heap in
+      let (n_hf, is_f, unfold) = free_var_hf hf var in
+      if is_f then
+        let n_f = CF.Base {bf with CF.formula_base_heap = n_hf} in
+        (n_f, is_f, unfold)
+      else if unfold then
+        let vnodes = get_unfold_view [var] formula in
+        if List.length vnodes = 1 then
+          let vnode = List.hd vnodes in
+          let pr_views, args = need_unfold_rhs prog vnode in
+          let nf = do_unfold_view_vnode prog pr_views args formula in
+          let fv_list = List.map aux nf in
+          if List.for_all (fun (_,x,_) -> x) fv_list && List.length fv_list = 2
+          then
+            let f_list = List.map (fun (x,_,_) -> x) fv_list in
+            let fst_f = f_list |> List.hd in
+            let snd_f = f_list |> List.rev |> List.hd in
+            let n_f = CF.Or {CF.formula_or_f1 = fst_f;
+                             CF.formula_or_f2 = snd_f;
+                             CF.formula_or_pos = no_pos} in
+            (n_f, true, false)
+          else (formula, is_f, unfold)
+        else (formula, is_f, unfold)
+      else (formula, is_f, unfold)
+    | CF.Exists bf ->
+      let hf = bf.CF.formula_exists_heap in
+      let (n_hf, is_f, unfold) = free_var_hf hf var in
+      if is_f then
+        let n_f = CF.Exists {bf with CF.formula_exists_heap = n_hf} in
+        (n_f, is_f, unfold)
+      else if unfold then
+        let vnodes = get_unfold_view [var] formula in
+        if List.length vnodes = 1 then
+          let vnode = List.hd vnodes in
+          let pr_views, args = need_unfold_rhs prog vnode in
+          let nf = do_unfold_view_vnode prog pr_views args formula in
+          let fv_list = List.map aux nf in
+          if List.for_all (fun (_,x,_) -> x) fv_list && List.length fv_list = 2
+          then
+            let f_list = List.map (fun (x,_,_) -> x) fv_list in
+            let fst_f = f_list |> List.hd in
+            let snd_f = f_list |> List.rev |> List.hd in
+            let n_f = CF.Or {CF.formula_or_f1 = fst_f;
+                             CF.formula_or_f2 = snd_f;
+                             CF.formula_or_pos = no_pos} in
+            (n_f, true, false)
+          else (formula, is_f, unfold)
+        else (formula, is_f, unfold)
+      else (formula, is_f, unfold)
+    | CF.Or bf ->
+      let (f1, fr1, unfold1) = aux bf.CF.formula_or_f1 in
+      let (f2, fr2, unfold2) = aux bf.CF.formula_or_f2 in
+      let n_f = CF.Or {bf with CF.formula_or_f1 = f1;
+                               CF.formula_or_f2 = f2} in
+      (n_f, fr1 || fr2, unfold1 || unfold2) in
+  let (n_f, fr, unfold) = aux formula in
+  if fr then (n_f, true)
+  else (n_f, false)
+
+let free_entail_state prog (ent_state:CF.entail_state) (typ, name) =
+  let es_f = ent_state.CF.es_formula in
+  let var = CP.mk_typed_sv typ name |> CP.to_primed in
+  let (n_f, fr) = free_var_formula prog es_f var in
+  let n_f = rm_emp_formula n_f in
+  if fr then
+    let n_es = {ent_state with CF.es_formula = n_f} in
+    (n_es, fr)
+  else (ent_state, false)
+
+let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
+  let () = x_binfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
+  let rec aux_contex (ctx: CF.context) = match ctx with
+    | CF.Ctx ent_state ->
+      let n_ent, fr = free_entail_state prog ent_state (typ, name) in
+      (CF.Ctx n_ent, fr)
+    | CF.OCtx (ctx1, ctx2) ->
+      let (n_ctx1, fr1) = aux_contex ctx1 in
+      let (n_ctx2, fr2) = aux_contex ctx2 in
+      let n_ctx = CF.OCtx (n_ctx1, n_ctx2) in
+      (n_ctx, fr1 && fr2) in
+  let aux_branch_ctx (b_ctx: CF.branch_ctx) =
+    let (path, ctx, fail_typ) = b_ctx in
+    let (n_ctx, res) = aux_contex ctx in
+    ((path, n_ctx, fail_typ), res) in
+  let aux_failesc_ctx (failesc_ctx: CF.failesc_context) =
+    let b_fail, stack, b_ctx_list = failesc_ctx in
+    let ctx_list_res = List.map aux_branch_ctx b_ctx_list in
+    let res =
+      let res_list = List.map snd ctx_list_res in
+      List.for_all (fun x -> x) res_list in
+    if res then
+      let n_ctx_list = List.map fst ctx_list_res in
+      let n_failesc_ctx = (b_fail, stack, n_ctx_list) in
+      (n_failesc_ctx, true)
+    else (failesc_ctx, false) in
+  let res_list = List.map aux_failesc_ctx ctx in
+  let res =
+    let res_list = List.map snd res_list in
+    List.for_all (fun x -> x) res_list in
+  if res then
+    let n_failesc_list = List.map fst res_list in
+    let () = x_binfo_hp (add_str "ctx" pr_failesc_list) n_failesc_list no_pos in
+    (n_failesc_list, true)
+  else
+    (ctx, false)

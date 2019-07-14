@@ -110,9 +110,9 @@ let transform_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp * 'a) option)
           | Some body ->
             let e1,r1 = helper n_arg body in
             (Return {b with exp_return_val = Some e1},r1))
-      | Freevar d ->
-        let el, rl = helper n_arg d.exp_freevar_exp in
-        (Freevar {d with exp_freevar_exp = el}, rl)
+      | Free d ->
+        let el, rl = helper n_arg d.exp_free_exp in
+        (Free {d with exp_free_exp = el}, rl)
       | Seq b ->
         let e1,r1 = helper n_arg  b.exp_seq_exp1 in
         let e2,r2 = helper n_arg  b.exp_seq_exp2 in
@@ -1438,7 +1438,7 @@ let generate_free_fnc iprog=
   let gen_one_data acc ddclr=
     if string_eq ddclr.data_name "Object" || string_eq ddclr.data_name "String" then acc else
       let free_proc = (
-        "void free" ^ " (" ^ ddclr.data_name ^ " p)\n" ^
+        "void free_tmp" ^ " (" ^ ddclr.data_name ^ " p)\n" ^
         "  requires p::" ^ ddclr.data_name ^ "<" ^ (gen_annon_field ddclr.data_fields "") ^ ">\n" ^ 
         "  ensures  emp & true; \n"
       ) in

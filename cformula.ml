@@ -9662,7 +9662,7 @@ class infer_acc =
         if sat_flag then 
         let () = pure <- Some np in
         true
-        else 
+        else
           let () = y_dinfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
           let () = y_dinfo_hp (add_str "false contra with" !CP.print_formula) p in
           false
@@ -19991,7 +19991,7 @@ let check_compatible ?(inst_rhs=false) emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
   let cross_lst = cross_prod lhs_lst rhs_lst in
   let pure_both = CP.mkAnd lhs_p rhs_p no_pos in
   (* keep only compatible ones *)
-  let sel_lst = List.filter (fun (l,r) -> is_comp l r pure_both) cross_lst in 
+  let sel_lst = List.filter (fun (l,r) -> is_comp l r pure_both) cross_lst in
   let sel_lst = List.map (fun ((a,p1,_),(b,p2,_)) -> (p1,p2)) sel_lst in
   (* collect unique instantiation *)
   (* how about instantiation from RHS eq and LHS eq *)

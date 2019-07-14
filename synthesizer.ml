@@ -881,16 +881,16 @@ let choose_main_rules goal =
     let rs = reorder_rules goal rs in
     rs
 
-let mk_rule_freevar goal residue =
+let mk_rule_free goal residue =
   let post = goal.gl_post_cond in
   let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
   let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
   let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
   let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
-  let freevar_vars = CP.diff_svl pre_node_vars post_node_vars in
-  if List.length freevar_vars > 0 then
-    let rule = RlFreevar {
-        rd_vars = freevar_vars;
+  let free_vars = CP.diff_svl pre_node_vars post_node_vars in
+  if List.length free_vars > 0 then
+    let rule = RlFree {
+        rd_vars = free_vars;
       } in
     [rule]
   else []
@@ -906,7 +906,7 @@ let choose_rule_skip goal =
         let residue = Gen.unsome residue in
         if CF.is_emp_formula residue then
           let rule = RlSkip in [rule]
-        else mk_rule_freevar goal residue
+        else mk_rule_free goal residue
       else []
     with _ -> []
   else []
@@ -1111,8 +1111,8 @@ let process_rule_skip goal =
     mk_derivation_success goal RlSkip
   else mk_derivation_fail goal RlSkip
 
-let process_rule_freevar goal rc =
-  mk_derivation_success goal (RlFreevar rc)
+let process_rule_free goal rc =
+  mk_derivation_success goal (RlFree rc)
 
 let process_rule_mk_null goal rcore =
   let n_exp = rcore.rmn_null in
@@ -1210,7 +1210,7 @@ and process_one_rule goal rule : derivation =
     | RlSkip -> process_rule_skip goal
     | RlMkNull rcore -> process_rule_mk_null goal rcore
     | RlHeapAssign rcore -> process_rule_heap_assign goal rcore
-    | RlFreevar rc -> process_rule_freevar goal rc
+    | RlFree rc -> process_rule_free goal rc
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =
@@ -1448,3 +1448,4 @@ let infer_block_specs (iprog:IA.prog_decl) prog proc =
       (pre, post) in
     let specs = hps_list |> List.map helper in
     Some specs
+

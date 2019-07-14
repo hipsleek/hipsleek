@@ -326,7 +326,7 @@ and java_of_exp = function
     "return " ^ (match v with
         | None   -> ""
         | Some e -> (java_of_exp e) ^ ";")
-  | Freevar d -> (java_of_exp d.Iast.exp_freevar_exp) ^ ";"
+  | Free d -> (java_of_exp d.Iast.exp_free_exp) ^ ";"
   | Seq ({exp_seq_exp1 = e1;
           exp_seq_exp2 = e2}) -> 
     let e1str = java_of_exp e1 in

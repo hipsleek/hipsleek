@@ -1655,7 +1655,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           res
         with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex
       end
-
+    | Free {
+        exp_free_var = (typ, name);
+        exp_free_pos = pos;
+      } ->
+      let (n_ctx, res) = Synthesis.free_ctx prog ctx (typ, name) in
+      if res then n_ctx
+      else
+        let to_print = "Free variable failedxxx." in
+        raise (Err.Ppf ({
+            Err.error_loc = pos;
+            Err.error_text = to_print}, 1, 0))
     | Bind ({
         exp_bind_type = body_t;
         exp_bind_bound_var = (v_t, v); (* node to bind *)
@@ -1877,7 +1887,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 (* normalize_list_failesc_context_w_lemma prog res *)
                 CF.pop_esc_level_list res pid
               end
-        end  (*end Bind*) in
+        end (*end Bind*) in
       (* bind, efa-exc is turned on by default*)
       let bind_op_wrapper () =
         wrap_err_bind bind_op ()
@@ -2755,11 +2765,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (* Norm ERR *)
         let norm_lem_es es = Solver.normalize_estate_w_coers prog es lem pos in
         VP.norm_list_failesc_context_for_par norm_lem_es res_ctx
-    (* | Deallocate {
-     *     exp_deallocate_var = var;
-     *     exp_deallocate_pos = pos;
-     *   } -> *)
-      (* TODO: change context *)
     | _ ->
       failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
 

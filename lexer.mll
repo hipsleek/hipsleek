@@ -245,7 +245,7 @@ module Make (Token : SleekTokenS)
    ("max", MAX);
    ("min", MIN);
    ("new", NEW);
-   ("freevar", FREEVAR);
+   ("free", FREE);
    ("notin", NOTIN);
    ("notinlist", NOTINLIST);
    ("null", NULL);
