@@ -1482,7 +1482,8 @@ Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)->
         let _,f,_=List.find(fun (a,_,_)-> (String.compare a s1) ==0) hip_arguments in
         let rec process_arg s1 s2 f : unit= match f with
           |	Arg.Unit f -> f ()
-          |   Arg.Rest _
+          | Arg.Expand _
+          | Arg.Rest _
           |	Arg.Bool _-> ()
           |	Arg.Set b -> b:=true
           |	Arg.Clear b -> b:=false

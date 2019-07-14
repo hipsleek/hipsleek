@@ -57,14 +57,14 @@ let print_sv = ref (fun (c:CP.spec_var) -> "cpure printer has not been initializ
  **********************)
 
 let start_with str prefix =
-  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
+  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix)
 
 (* helper for logging *)
 type log_level =
   | ERROR
   | DEBUG
 
-let log level msg = 
+let log level msg =
   let write_msg () = output_string log_file (msg ^ "\n") in
   match level with
   | ERROR -> write_msg ()
@@ -79,13 +79,13 @@ let rec wait_for_ready_prover (channel: in_channel)  =
   else (wait_for_ready_prover channel)
 
 let rec read_output (channel: in_channel) : string =
-  let line = input_line channel in 
+  let line = input_line channel in
   (* let () = print_endline ("== in read_output: line = " ^ line) in *)
   let line = Gen.trim_str line in
   if (((String.length line) > 3) && ((String.sub line 0 4) = "Out[")) then line
   else (read_output channel)
 
-(* 
+(*
  * send cmd to mathematica
  *)
 let send_cmd cmd =
@@ -105,13 +105,13 @@ let start () =
     let () = Procutils.PrvComms.start !is_log_all log_file ("math", "math",  [||] ) set_process prelude in
     print_endline_quiet "Starting mathematica... "; flush stdout;
     wait_for_ready_prover !process.inchannel;
-    print_endline_quiet ("Mathematica started successfully!"); 
+    print_endline_quiet ("Mathematica started successfully!");
   )
 
 (* stop mathematica system *)
-let stop () = 
+let stop () =
   if !is_mathematica_running then (
-    let ending_fnc () = ( 
+    let ending_fnc () = (
       let outchannel = !process.outchannel in
       output_string outchannel "Quit\n"; flush outchannel;
       print_endline_quiet "Halting mathematica... "; flush stdout;
@@ -168,10 +168,10 @@ let send_and_receive (f : string) : string =
 
 let check_formula (f: string) : bool option =
   let output = send_and_receive f in
-  try 
+  try
     (* Output's format has to be "Out[...]= True" or "Out[...]= False" *)
     let result_index = (String.rindex output ' ') + 1 in
-    let length = (String.length output) - result_index in 
+    let length = (String.length output) - result_index in
     let result = String.sub output result_index length in
     if (result = "True") then
       Some true
@@ -191,8 +191,8 @@ let check_formula (f: string) : bool option =
 let check_formula f =
   Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f
 
-(* 
- * run func and return its result together with running time 
+(*
+ * run func and return its result together with running time
  * func must be lazy
  *)
 let time func =
@@ -219,7 +219,7 @@ let call_mathematica func =
   (res, time)
 
 (*
- * run func with timeout checking 
+ * run func with timeout checking
  * return default_val if the running time exceed allowed time
  * also print err_msg when timeout happen
  * func must be lazy
@@ -245,10 +245,11 @@ let rec math_of_var_list (vars : ident list) : string =
   | v :: rest -> v ^ ", " ^ (math_of_var_list rest)
 
 let normalize_var_name (varname : string) : string =
-  for i = 0 to (String.length varname) - 1 do
-    if varname.[i] = '_' then varname.[i] <- 'N'
+  let varname_bytes = Bytes.of_string varname in
+  for i = 0 to (Bytes.length varname_bytes) - 1 do
+    if Bytes.get varname_bytes i = '_' then varname_bytes.[i] <- 'N'
   done;
-  varname
+  Bytes.to_string varname_bytes
 
 
 
@@ -277,10 +278,10 @@ let math_of_spec_var (v: CP.spec_var) =
         to_uppercase := false
       )
     done;
-    if (prime = Primed) then new_sv := !new_sv ^ "P"; 
+    if (prime = Primed) then new_sv := !new_sv ^ "P";
     !new_sv
 
-let rec math_of_exp e0 : string= 
+let rec math_of_exp e0 : string=
   match e0 with
   | CP.Null _ -> "0"
   | CP.Var (v, _) -> math_of_spec_var v
@@ -330,7 +331,7 @@ let rec math_of_exp e0 : string=
   | CP.ArrayAt _ -> failwith ("mathematica.math_of_exp: cannot handle array operator")
   | CP.Func _ -> failwith ("mathematica.math_of_exp: cannot handle func operator")
   | CP.Level _  -> failwith ("mathematica.math_of_exp: cannot handle Level operator")
-  | CP.NegInfConst _ 
+  | CP.NegInfConst _
   | CP.InfConst _  -> failwith ("mathematica.math_of_exp: cannot handle InfConst operator")
   | CP.Template t -> math_of_exp (CP.exp_of_template t)
 
@@ -375,7 +376,7 @@ let rec math_of_b_formula b : string =
     let se1 = math_of_exp e1 in
     let se2 = math_of_exp e2 in
     let se3 = math_of_exp e3 in
-    ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " >= " ^ se3 ^ ") || " 
+    ("((" ^ se1 ^ " == " ^ se2 ^ " && " ^ se2 ^ " >= " ^ se3 ^ ") || "
      ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " <= " ^ se3 ^ "))")
   | CP.EqMin (e1, e2, e3, _) ->
     (* e1 = min(e2,e3) <-> ((e1 = e2 /\ e2 <= e3) \/ (e1 = e3 /\ e2 > e3)) *)
@@ -402,14 +403,14 @@ let rec math_of_b_formula b : string =
 let rec math_of_formula pr_w pr_s f0 : string =
   let rec formula_to_string f0 = (
     match f0 with
-    | CP.BForm ((b,_) as bf,_) -> ( 
+    | CP.BForm ((b,_) as bf,_) -> (
         match (pr_w b) with
         | None -> math_of_b_formula bf
         | Some f -> formula_to_string f
       )
     | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
     | CP.Not (f, _, _) ->
-      let sf = math_of_formula pr_s pr_w f in 
+      let sf = math_of_formula pr_s pr_w f in
       "!( " ^ sf ^ ")"
     | CP.Forall (v, f, _, _) ->
       let sv = math_of_spec_var v in
@@ -433,7 +434,7 @@ let rec math_of_formula pr_w pr_s f0 : string =
 (***********************************
    pretty printer for pure formula
  **********************************)
-let string_of_exp e0 = !print_exp e0 
+let string_of_exp e0 = !print_exp e0
 
 let string_of_b_formula bf = !print_b_formula bf
 
@@ -444,11 +445,11 @@ let simplify_var_name (e: CP.formula) : CP.formula =
     let short_name = (
       try
         Hashtbl.find vnames name
-      with 
+      with
       | Not_found ->
         let fresh_name = "v" ^ (string_of_int (Hashtbl.length vnames)) in
         let () = Hashtbl.add vnames name fresh_name in
-        fresh_name 
+        fresh_name
     ) in
     CP.SpecVar (typ, short_name, prm)
   ) in
@@ -485,15 +486,15 @@ let simplify_var_name (e: CP.formula) : CP.formula =
       CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl) in
   simplify e (Hashtbl.create 100)
 
-let rec is_linear_exp exp = 
+let rec is_linear_exp exp =
   match exp with
   | CP.Null _ | CP.Var _ | CP.IConst _ | CP.AConst _ -> true
   | CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) -> (is_linear_exp e1) && (is_linear_exp e2)
   | CP.Mult (e1, e2, _) -> (
       match e1 with
       | CP.IConst _ -> is_linear_exp e2
-      | _ -> (match e2 with 
-          | CP.IConst _ -> is_linear_exp e1 
+      | _ -> (match e2 with
+          | CP.IConst _ -> is_linear_exp e1
           | _ -> false)
     )
   | CP.Div (e1, e2, _) -> false
@@ -504,7 +505,7 @@ let is_linear_bformula b =
   match pf with
   | CP.BConst _ -> true
   | CP.BVar _ | CP.SubAnn _ -> true
-  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
+  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _)
   | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
   | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _) ->
     (is_linear_exp e1) && (is_linear_exp e2)
@@ -512,7 +513,7 @@ let is_linear_bformula b =
     (is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
   | _ -> false
 
-let rec is_linear_formula f0 = 
+let rec is_linear_formula f0 =
   match f0 with
   | CP.BForm (b,_) -> is_linear_bformula b
   | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
@@ -530,17 +531,17 @@ let has_var_exp e0 =
     match e with
     | CP.Var _ -> Some true
     | _ -> None in
-  CP.fold_exp e0 f or_list 
+  CP.fold_exp e0 f or_list
 
 let is_linear2 f0 =
-  let f_bf bf = 
+  let f_bf bf =
     if CP.is_bag_bform bf || CP.is_list_bform bf then Some false
     else None in
   let rec f_e e = (
     if CP.is_bag e || CP.is_list e then Some false
     else
       match e with
-      | CP.Mult (e1, e2, _) -> 
+      | CP.Mult (e1, e2, _) ->
         if (has_var_exp e1 && has_var_exp e2) then Some false
         else None
       | CP.Div (e1, e2, _) -> Some false
@@ -554,7 +555,7 @@ let is_linear2 f0 =
 (* e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1  *)
 let rec strengthen_formula f0 =
   match f0 with
-  | CP.BForm ((pf,il),lbl) -> ( 
+  | CP.BForm ((pf,il),lbl) -> (
       match pf with
       | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl)
       | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl)
@@ -676,7 +677,7 @@ let rec normalize_formula f0 =
   | CP.Exists (sv, f, lbl, pos) -> CP.Exists (sv, normalize_formula f, lbl, pos)
 
 (**********************
-   Verification works  
+   Verification works
  *********************)
 
 let options_to_bool opts default =
@@ -716,15 +717,15 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
   )
 
 let is_sat_no_cache_ops pr_w pr_s f sat_no =
-  Debug.no_1 "is_sat_no_cache (mathematica)" !print_formula 
+  Debug.no_1 "is_sat_no_cache (mathematica)" !print_formula
     (fun (b,_) -> string_of_bool b)
-    (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f 
+    (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f
 
 let is_sat_ops_x pr_w pr_s f sat_no =
   fst(is_sat_no_cache_ops pr_w pr_s f sat_no)
 
 let is_sat_ops pr_w pr_s f sat_no =
-  Debug.no_2 "[mathematica] is_sat_ops" string_of_formula (fun c -> c) string_of_bool 
+  Debug.no_2 "[mathematica] is_sat_ops" string_of_formula (fun c -> c) string_of_bool
     (fun f sat_no -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 let is_sat_x f sat_no =
@@ -756,11 +757,11 @@ let is_valid_ops pr_w pr_s f imp_no =
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
-  Debug.no_2 "[mathematica] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.no_2 "[mathematica] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair)
     (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
-  let res = 
+  let res =
     if is_linear_formula f then
       call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
       (* (is_valid f imp_no) *)
@@ -772,9 +773,9 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
   res
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
-  Debug.no_2 "[mathematica] imply_no_cache" 
+  Debug.no_2 "[mathematica] imply_no_cache"
     (add_str "formula" string_of_formula)
-    (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+    (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair)
     (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
 
 
@@ -815,21 +816,21 @@ let imply f imp_no =
   imply_ops pr_w pr_s f imp_no
 
 let imply ante conseq imp_no =
-  Debug.no_3 "[mathematica] imply" 
-    (add_str "ante" string_of_formula) 
+  Debug.no_3 "[mathematica] imply"
+    (add_str "ante" string_of_formula)
     (add_str "conseq" string_of_formula)
-    (add_str "imp_no" (fun c -> c)) 
+    (add_str "imp_no" (fun c -> c))
     string_of_bool imply ante conseq imp_no
 
 (* unimplemented *)
 let simplify (f: CP.formula) : CP.formula =
-  if is_linear_formula f then x_add_1 Omega.simplify f 
+  if is_linear_formula f then x_add_1 Omega.simplify f
   else f
 
-let hull (f: CP.formula) : CP.formula = 
-  if is_linear_formula f then Omega.hull f 
+let hull (f: CP.formula) : CP.formula =
+  if is_linear_formula f then Omega.hull f
   else f
 
 let pairwisecheck (f: CP.formula): CP.formula =
-  if is_linear_formula f then x_add_1 Omega.pairwisecheck f 
+  if is_linear_formula f then x_add_1 Omega.pairwisecheck f
   else f

@@ -10,7 +10,7 @@ open VarGen
   val eq : t -> t -> bool
   end;;
 
-  module SV = 
+  module SV =
   functor (Elt:SV_TYPE) ->
   struct
   let compare t1 t2 = String.compare
@@ -27,7 +27,8 @@ let implode (l:char list) : string =
   let rec imp i = function
     | [] -> result
     | c :: l -> result.[i] <- c; imp (i + 1) l in
-  imp 0 l;;
+  imp 0 l
+  |> Bytes.to_string;;
 
 module StrSV =
 struct
@@ -42,7 +43,7 @@ module CoqInfSolver = Infsolver.InfSolverExtract(StrSV)
 
 open CoqInfSolver
 
-type coq_const = 
+type coq_const =
   | CFinConst of (int)
   | CInfConst
   | CNegInfConst
@@ -60,9 +61,9 @@ type coq_b_formula =
   | CLte of (coq_exp * coq_exp)
   | CGt of (coq_exp * coq_exp)
   | CGte of (coq_exp * coq_exp)
-  | CEq of (coq_exp * coq_exp) 
-  | CEqMax of (coq_exp * coq_exp * coq_exp) 
-  | CEqMin of (coq_exp * coq_exp * coq_exp) 
+  | CEq of (coq_exp * coq_exp)
+  | CEqMax of (coq_exp * coq_exp * coq_exp)
+  | CEqMin of (coq_exp * coq_exp * coq_exp)
   | CNeq of (coq_exp * coq_exp)
 
 type coq_formula =
@@ -75,7 +76,7 @@ type coq_formula =
   | CForall of (string * coq_formula)
   | CExists of (string * coq_formula)
 
-let string_of_coq_const c = 
+let string_of_coq_const c =
   match c with
   | CFinConst i -> string_of_int i
   | CInfConst -> "\\inf"
@@ -84,7 +85,7 @@ let string_of_coq_const c =
 let rec string_of_coq_exp e =
   match e with
   | CVar s -> s
-  | Cconst c -> string_of_coq_const c 
+  | Cconst c -> string_of_coq_const c
   | CAdd(e1,e2) -> (string_of_coq_exp e1)^" + "^(string_of_coq_exp e2)
   | CSubtract(e1,e2) -> (string_of_coq_exp e1)^" - "^(string_of_coq_exp e2)
   | CMult(i,e) -> (string_of_int i)^" * "^(string_of_coq_exp e)
@@ -101,7 +102,7 @@ let string_of_coq_b_formula bf =
   | CEqMin(e1,e2,e3) -> (string_of_coq_exp e1)^" = min("^(string_of_coq_exp e2)^","^(string_of_coq_exp e3)^")"
   | CNeq(e1,e2) -> (string_of_coq_exp e1)^" != "^(string_of_coq_exp e2)
 
-let rec string_of_coq_formula cf = 
+let rec string_of_coq_formula cf =
   match cf with
   | CBForm b -> "("^(string_of_coq_b_formula b)^")"
   | CAnd(cf1,cf2) -> (string_of_coq_formula cf1)^" & "^(string_of_coq_formula cf2)
@@ -130,8 +131,8 @@ let is_var_exp e =
 
 let rec find_inf_quant_vars_exp e vl : string list =
   match e with
-  | CAdd(e1,e2) 
-  | CSubtract(e1,e2) -> 
+  | CAdd(e1,e2)
+  | CSubtract(e1,e2) ->
     let vl = find_inf_quant_vars_exp e1 vl in
     let vl = find_inf_quant_vars_exp e2 vl in
     (match e1, e2 with
@@ -142,7 +143,7 @@ let rec find_inf_quant_vars_exp e vl : string list =
   | _ -> vl
 
 let find_inf_quant_vars_bform bf vl : string list =
-  match bf with 
+  match bf with
   | CBConst _ -> vl
   | CLt(e1,e2)
   | CLte(e1,e2)
@@ -155,58 +156,58 @@ let find_inf_quant_vars_bform bf vl : string list =
      | CVar s1,CVar s2 -> if Gen.BList.mem_eq (=) s1 vl then s2::vl else if Gen.BList.mem_eq (=) s2 vl then s1::vl else vl
      | CVar s, Cconst c
      | Cconst c, CVar s -> if is_coqinf_const c then s::vl else vl
-     | CVar s, CAdd(a1,a2) 
+     | CVar s, CAdd(a1,a2)
      | CAdd(a1,a2), CVar s
-     | CVar s, CSubtract(a1,a2) 
+     | CVar s, CSubtract(a1,a2)
      | CSubtract(a1,a2), CVar s -> (match a1,a2 with
          | CVar r, x
-         | x , CVar r -> if Gen.BList.mem_eq (=) r vl then s::vl else if Gen.BList.mem_eq (=) s vl then r::vl 
-           else (match x with 
+         | x , CVar r -> if Gen.BList.mem_eq (=) r vl then s::vl else if Gen.BList.mem_eq (=) s vl then r::vl
+           else (match x with
                | Cconst c -> if is_coqinf_const c then r::s::vl else vl
                | _ -> vl)
          | _,_ -> vl)
      | Cconst c, CAdd(a1,a2)
      | CAdd(a1,a2), Cconst c
-     | Cconst c, CSubtract(a1,a2) 
+     | Cconst c, CSubtract(a1,a2)
      | CSubtract(a1,a2), Cconst c -> (match a1, a2 with
          | CVar s1, CVar s2 -> if is_coqinf_const c then s1::s2::vl else vl
-         | CVar s, _ 
+         | CVar s, _
          | _, CVar s -> if is_coqinf_const c then s::vl else vl
          | _, _ -> vl)
      | _ , _ -> vl )
-  | CEqMax(e1,e2,e3) 
-  | CEqMin(e1,e2,e3) -> 
+  | CEqMax(e1,e2,e3)
+  | CEqMin(e1,e2,e3) ->
     let vl = (find_inf_quant_vars_exp e1 vl) in
     let vl = (find_inf_quant_vars_exp e2 vl) in
     let vl = (find_inf_quant_vars_exp e3 vl) in
     (match e1,e2,e3 with
-     | CVar s1, CVar s2, CVar s3 -> 
-       if Gen.BList.mem_eq (=) s1 vl then s2::s3::vl else 
-       if Gen.BList.mem_eq (=) s2 vl then s1::s3::vl else 
+     | CVar s1, CVar s2, CVar s3 ->
+       if Gen.BList.mem_eq (=) s1 vl then s2::s3::vl else
+       if Gen.BList.mem_eq (=) s2 vl then s1::s3::vl else
        if Gen.BList.mem_eq (=) s3 vl then s1::s2::vl else vl
-     | _ ,_, _ -> vl 
+     | _ ,_, _ -> vl
     )
 
 let rec find_inf_quant_vars f vl : string list =
   let sl = match f with
     | CBForm b -> find_inf_quant_vars_bform b vl
-    | CAnd(f1,f2) 
+    | CAnd(f1,f2)
     | COr(f1,f2) -> let vl = (find_inf_quant_vars f1 vl) in
       (find_inf_quant_vars f2 vl)
     | CNot g -> find_inf_quant_vars g vl
     | CForall_Fin (_,g)
-    | CExists_Fin (_,g) 
-    | CForall(_,g) 
+    | CExists_Fin (_,g)
+    | CForall(_,g)
     | CExists(_,g) -> find_inf_quant_vars g vl
   in Gen.BList.remove_dups_eq (=) sl
 
-let get_inf_vars f = 
+let get_inf_vars f =
   let rec aux ls  = let ls2 = find_inf_quant_vars f ls in
     if Gen.BList.list_equiv_eq (=) ls ls2 then ls2
     else aux ls2
   in aux []
 
-let get_inf_vars f = 
+let get_inf_vars f =
   Debug.no_1 "get_inf_vars" (fun c -> "") (fun l -> "INF Vars:"^(String.concat "," l)) get_inf_vars f
 
 let transform_ZE_to_string f =
@@ -231,28 +232,28 @@ let rec coqpure_to_coqinfsolver_exp (e:coq_exp) : coq_ZE coq_ZExp  =
   | CMult(i,e) -> ZExp_Mult((string_of_int i),(coqpure_to_coqinfsolver_exp e))
 
 let rec coqpure_to_coq_infsolver_bf (bf: coq_b_formula) : coq_ZE coq_ZBF =
-  match bf with 
-  | CBConst b -> ZBF_Const b 
+  match bf with
+  | CBConst b -> ZBF_Const b
   | CLt(e1,e2) -> ZBF_Lt((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
   | CLte(e1,e2) -> ZBF_Lte((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
   | CGt(e1,e2) -> ZBF_Gt((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
   | CGte(e1,e2) -> ZBF_Gte((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
-  | CEq(e1,e2) -> ZBF_Eq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2)) 
-  | CEqMax(e1,e2,e3) -> ZBF_Eq_Max((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3)) 
-  | CEqMin(e1,e2,e3) -> ZBF_Eq_Min((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3)) 
-  | CNeq(e1,e2) -> ZBF_Neq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))  
+  | CEq(e1,e2) -> ZBF_Eq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
+  | CEqMax(e1,e2,e3) -> ZBF_Eq_Max((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3))
+  | CEqMin(e1,e2,e3) -> ZBF_Eq_Min((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3))
+  | CNeq(e1,e2) -> ZBF_Neq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
 (*  | _ ->  failwith "coqinf.ml Max Min shoulbe all eliminated"*)
 
-let rec coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF = 
+let rec coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF =
   match f with
   | CBForm bf -> (*(match bf with
-                   | CEqMax(e1,e2,e3) -> 
+                   | CEqMax(e1,e2,e3) ->
                    let ce1 = coqpure_to_coqinfsolver_exp e1 in
                    let ce2 = coqpure_to_coqinfsolver_exp e2 in
                    let ce3 = coqpure_to_coqinfsolver_exp e3 in
                    ZF_Or(ZF_And(ZF_BF(ZBF_Gte(ce2,ce3)),ZF_BF(ZBF_Eq(ce1,ce2))),
                    ZF_And(ZF_BF(ZBF_Gt(ce3,ce2)),ZF_BF(ZBF_Eq(ce1,ce3))))
-                   | CEqMin(e1,e2,e3) -> 
+                   | CEqMin(e1,e2,e3) ->
                    let ce1 = coqpure_to_coqinfsolver_exp e1 in
                    let ce2 = coqpure_to_coqinfsolver_exp e2 in
                    let ce3 = coqpure_to_coqinfsolver_exp e3 in
@@ -260,7 +261,7 @@ let rec coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF =
                    ZF_And(ZF_BF(ZBF_Gt(ce3,ce2)),ZF_BF(ZBF_Eq(ce1,ce2))))
                    | _ -> *) ZF_BF (coqpure_to_coq_infsolver_bf bf)
   | CAnd(f1,f2) -> ZF_And((coqpure_to_coq_infsolver_form f1 vl),(coqpure_to_coq_infsolver_form f2 vl))
-  | COr(f1,f2) -> ZF_Or ((coqpure_to_coq_infsolver_form f1 vl),(coqpure_to_coq_infsolver_form f2 vl)) 
+  | COr(f1,f2) -> ZF_Or ((coqpure_to_coq_infsolver_form f1 vl),(coqpure_to_coq_infsolver_form f2 vl))
   | CNot f -> ZF_Not (coqpure_to_coq_infsolver_form f vl)
   (*  | CForall_Fin(v,f) -> ZF_Forall_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
       | CExists_Fin(v,f) -> ZF_Exists_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))*)
@@ -283,7 +284,7 @@ let rec coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF =
     else (*let () = print_endline ("Is_not_INFVar:  "^v) in*)
       ZF_Exists_Fin(v,(coqpure_to_coq_infsolver_form f vl))
 
-let coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF = 
+let coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF =
   Debug.no_2 "coqpure_to_coq_inf" string_of_coq_formula (fun c -> "") (fun c -> "") coqpure_to_coq_infsolver_form f vl
 
 (*
@@ -294,7 +295,7 @@ match c with
   | ZE_NegInf -> CNegInfConst
 *)
 
-let rec coq_infsolver_to_coqpure_exp (e: string coq_ZExp) : coq_exp = 
+let rec coq_infsolver_to_coqpure_exp (e: string coq_ZExp) : coq_exp =
   match e with
   (*  | ZExp_Var v -> CVar (implode v)*)
   | ZExp_Var v -> CVar v
@@ -317,7 +318,7 @@ let rec coq_infsolver_to_coqpure_bf (bf: string coq_ZBF) : coq_b_formula =
   | ZBF_Eq_Min(e1,e2,e3) -> CEqMin((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2),(coq_infsolver_to_coqpure_exp e3))
   | ZBF_Neq(e1,e2) -> CNeq((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2))
 
-let rec coq_infsolver_to_coqpure_form (f: string coq_ZF) : coq_formula = 
+let rec coq_infsolver_to_coqpure_form (f: string coq_ZF) : coq_formula =
   match f with
   | ZF_BF bf -> CBForm (coq_infsolver_to_coqpure_bf bf)
   | ZF_And(f1,f2) -> CAnd((coq_infsolver_to_coqpure_form f1),(coq_infsolver_to_coqpure_form f2))
@@ -331,8 +332,8 @@ let rec coq_infsolver_to_coqpure_form (f: string coq_ZF) : coq_formula =
   | ZF_Forall_Fin(s,f) -> CForall_Fin(s,(coq_infsolver_to_coqpure_form f))
   | ZF_Exists_Fin(s,f) -> CExists_Fin(s,(coq_infsolver_to_coqpure_form f))
 
-let coq_infsolver_to_coqpure_form (f: string coq_ZF) : coq_formula = 
-  Debug.no_1 "coq_inf_to_coqpure" (fun c -> "") string_of_coq_formula coq_infsolver_to_coqpure_form f 
+let coq_infsolver_to_coqpure_form (f: string coq_ZF) : coq_formula =
+  Debug.no_1 "coq_inf_to_coqpure" (fun c -> "") string_of_coq_formula coq_infsolver_to_coqpure_form f
 
 let rec cpure_to_coqpure_exp (e: exp) : coq_exp =
   match e with
@@ -343,17 +344,17 @@ let rec cpure_to_coqpure_exp (e: exp) : coq_exp =
   | NegInfConst _ -> Cconst(CNegInfConst)
   | Add(e1,e2,_) -> CAdd((cpure_to_coqpure_exp e1),(cpure_to_coqpure_exp e2))
   | Subtract(e1,e2,_) -> CSubtract((cpure_to_coqpure_exp e1),(cpure_to_coqpure_exp e2))
-  | Mult(e1,e2,_) -> 
+  | Mult(e1,e2,_) ->
     (match e1 with
      | IConst (i, _) -> CMult(i,(cpure_to_coqpure_exp e2))
      | _ -> match e2 with
        | IConst (i, _) -> CMult(i,(cpure_to_coqpure_exp e1))
        | _ -> illegal_format "[coqinf.ml] Non-linear arithmetic is not supported by Omega.")
-  | _ -> illegal_format "Cannot use the expression with CoqInf Solver" 
+  | _ -> illegal_format "Cannot use the expression with CoqInf Solver"
 
 let rec cpure_to_coqpure_vars (vl) (cbf: coq_formula) : coq_formula =
-  match vl with 
-  | sv::vrest -> if not (is_int_var sv) 
+  match vl with
+  | sv::vrest -> if not (is_int_var sv)
     then let add_f = CAnd(CBForm(CNeq((CVar(string_of_spec_var sv),(Cconst(CInfConst))))),
                           CBForm(CNeq((CVar(string_of_spec_var sv),(Cconst(CNegInfConst)))))) in
       let cbf  = CAnd(add_f,cbf) in
@@ -381,14 +382,14 @@ let rec cpure_to_coqpure_bformula (bf: b_formula) : coq_b_formula =
 
 let rec cpure_to_coqpure (f: formula) : coq_formula =
   match f with
-  | BForm(bf,_) ->(*let pf,_ = bf in (match pf with 
-                    | EqMax(e1,e2,e3,_) -> 
+  | BForm(bf,_) ->(*let pf,_ = bf in (match pf with
+                    | EqMax(e1,e2,e3,_) ->
                        let ce1 = cpure_to_coqpure_exp e1 in
                        let ce2 = cpure_to_coqpure_exp e2 in
                        let ce3 = cpure_to_coqpure_exp e3 in
                        COr(CAnd(CBForm(CGte(ce2,ce3)),CBForm(CEq(ce1,ce2))),
                            CAnd(CBForm(CGt(ce3,ce2)),CBForm(CEq(ce1,ce3))))
-                    | EqMin(e1,e2,e3,_) -> 
+                    | EqMin(e1,e2,e3,_) ->
                        let ce1 = cpure_to_coqpure_exp e1 in
                        let ce2 = cpure_to_coqpure_exp e2 in
                        let ce3 = cpure_to_coqpure_exp e3 in
@@ -399,32 +400,32 @@ let rec cpure_to_coqpure (f: formula) : coq_formula =
   | And(f1,f2,_) -> CAnd ((cpure_to_coqpure f1),(cpure_to_coqpure f2))
   | Or(f1,f2,_,_) -> COr ((cpure_to_coqpure f1),(cpure_to_coqpure f2))
   | Not(f,_,_) -> CNot (cpure_to_coqpure f)
-  | Forall(sv,f,_,_) -> 
+  | Forall(sv,f,_,_) ->
     (* type information is not reliable checking it here will lead to diff between sleek and hip output *)
     (*if is_int_var sv then*) CForall((string_of_spec_var sv),(cpure_to_coqpure f))
   (*else (*let () = print_endline ("Is_not_INFVar:  "^(Cprinter.string_of_spec_var sv)) in*)
     CForall_Fin((string_of_spec_var sv),(cpure_to_coqpure f))*)
-  | Exists(sv,f,_,_) -> 
+  | Exists(sv,f,_,_) ->
     (* if is_int_var sv then*) CExists((string_of_spec_var sv),(cpure_to_coqpure f))
   (* else CExists_Fin((string_of_spec_var sv),(cpure_to_coqpure f))*)
   | AndList _ -> illegal_format "Cannot use AndList for CoqInf Solver"
 
-let cpure_to_coqpure (f:formula) :coq_formula = 
+let cpure_to_coqpure (f:formula) :coq_formula =
   Debug.no_1 "cpure_to_coqpure" Cprinter.string_of_pure_formula (fun _ -> "") cpure_to_coqpure f
 
-let string_to_spec_var str_sv = 
-  (* found bug with primed variables and fixed during testing *) 
+let string_to_spec_var str_sv =
+  (* found bug with primed variables and fixed during testing *)
   let len = (String.length str_sv) in
-  if ((String.get str_sv (len-1)) == '\'') 
+  if ((String.get str_sv (len-1)) == '\'')
   then SpecVar(Int,(String.sub str_sv 0 (len-1)),Primed)
   else SpecVar(Int,str_sv,Unprimed)
 
 let rec coqpure_to_cpure_exp (e:coq_exp) : exp =
-  match e with 
+  match e with
   | CVar s -> if s="ZInfinity" then mkInfConst no_pos (* another bug fix with strings *)
     else if s="ZNegInfinity" then NegInfConst(zinf_str, no_pos) (* bug fixed by testing neginfconst mkNegInfConst no_pos*)
     else Var((string_to_spec_var s),no_pos)
-  | Cconst c -> 
+  | Cconst c ->
     (match c with
      | CInfConst -> mkInfConst no_pos
      | CNegInfConst -> NegInfConst(zinf_str, no_pos) (* bug fixed by testing neginfconst*)
@@ -435,7 +436,7 @@ let rec coqpure_to_cpure_exp (e:coq_exp) : exp =
   | CMult(i,e2) -> Mult((IConst(i,no_pos)),(coqpure_to_cpure_exp e2),no_pos)
 
 let rec coqpure_to_cpure_bformula (cbf: coq_b_formula): b_formula =
-  let pf = 
+  let pf =
     match cbf with
     | CBConst b -> BConst(b,no_pos)
     | CLt(e1,e2) -> Lt((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),no_pos)
@@ -463,7 +464,7 @@ let rec coqpure_to_cpure (cf: coq_formula) : formula =
   | CForall_Fin(sv,f) -> mkForall [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos
   | CExists_Fin(sv,f) -> mkExists [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos
 
-let coqpure_to_cpure (f:coq_formula) : formula = 
+let coqpure_to_cpure (f:coq_formula) : formula =
   Debug.no_1 "coqpure_to_cpure" (fun _ -> "")  Cprinter.string_of_pure_formula coqpure_to_cpure f
 
 let rec add_exists (f: formula) vl : formula =
@@ -472,28 +473,28 @@ let rec add_exists (f: formula) vl : formula =
   | x::xs -> Exists(x,(add_exists f xs),None,no_pos)
 
 let rec close_form_cpure (f: formula) : formula =
-  (*if List.length (fv f) > 0 
+  (*if List.length (fv f) > 0
     then (close_form_cpure (Exists((List.hd (fv f)),f,None,no_pos)))
     else f*)
-  mkExists (fv f) f None no_pos 
+  mkExists (fv f) f None no_pos
 
 let rec close_form_cpure_all (f: formula) : formula =
-  (*if List.length (fv f) > 0 
+  (*if List.length (fv f) > 0
     then (close_form_cpure_all (Forall((List.hd (fv f)),f,None,no_pos)))
     else f*)
   mkForall (fv f) f None no_pos
 
 
 
-let rec drop_quantifier (f:formula) vl : formula = 
-  match f with 
+let rec drop_quantifier (f:formula) vl : formula =
+  match f with
   | And(f1,f2,_) -> Cpure.mkAnd (drop_quantifier f1 vl) (drop_quantifier f2 vl) no_pos
   | Or(f1,f2,_,_) -> Cpure.mkOr (drop_quantifier f1 vl) (drop_quantifier f2 vl) None no_pos
   | Not(f,_,_) -> mkNot (drop_quantifier f vl) None no_pos
-  | Forall(sv,g,_,_) -> if (Gen.BList.mem_eq eq_spec_var sv vl) 
+  | Forall(sv,g,_,_) -> if (Gen.BList.mem_eq eq_spec_var sv vl)
     then (drop_quantifier g vl)
     else mkForall [sv] (drop_quantifier g vl) None no_pos
-  | Exists(sv,g,_,_) ->if (Gen.BList.mem_eq eq_spec_var sv vl) 
+  | Exists(sv,g,_,_) ->if (Gen.BList.mem_eq eq_spec_var sv vl)
     then (drop_quantifier g vl)
     else mkExists [sv] (drop_quantifier g vl) None no_pos
   | _ -> f
@@ -502,12 +503,12 @@ let drop_quantifier (f:formula) vl : formula =
   Gen.Profiling.no_1 "drop_quantifier" drop_quantifier f vl
 
 let drop_quantifier (f:formula) vl :formula =
-  let pr = !print_formula in 
-  Debug.no_2 "drop_quant" pr (fun c -> "") pr drop_quantifier f vl 
+  let pr = !print_formula in
+  Debug.no_2 "drop_quant" pr (fun c -> "") pr drop_quantifier f vl
 
-let drop_forall (f:formula) :formula = 
+let drop_forall (f:formula) :formula =
   let rec helper f =
-    let f_f f = 
+    let f_f f =
       match f with
       | Forall(qid,qf,fl,pos) -> let fresh_fr = fresh_spec_vars [qid] in
         let st = List.combine [qid] fresh_fr in
@@ -522,8 +523,8 @@ let drop_forall (f:formula) :formula =
   in helper f
 
 let drop_forall (f:formula) :formula =
-  let pr = !print_formula in 
-  Debug.no_1 "drop_forall_inf" pr pr drop_forall f 
+  let pr = !print_formula in
+  Debug.no_1 "drop_forall_inf" pr pr drop_forall f
 
 let close_form_cpure (f:formula) :formula =
   Debug.no_1 "close_form_cpure" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
@@ -537,7 +538,7 @@ let remove_redundant_after_inf (f:formula):formula =
 let remove_redundant_after_inf (f:formula):formula =
   Gen.Profiling.no_1 "remove_redundant_after_inf" remove_redundant_after_inf f
 
-let check_sat_inf_formula (f: formula) : formula = 
+let check_sat_inf_formula (f: formula) : formula =
   (*let f = drop_exists f in*)
   (*let f = remove_redundant (remove_redundant_after_inf f) in*)
   let var_lst = fv f in
@@ -549,11 +550,11 @@ let check_sat_inf_formula (f: formula) : formula =
   let f = (cpure_to_coqpure f) in
   (*  let f = cpure_to_coqpure_vars var_lst f in *)
   let vl = get_inf_vars f in
-  let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string 
+  let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string
                                                              (coqpure_to_coq_infsolver_form f vl))) in
   let f = drop_quantifier f var_lst in
-  let f = remove_redundant (remove_redundant_after_inf f) in 
-  f 
+  let f = remove_redundant (remove_redundant_after_inf f) in
+  f
 
 let check_sat_inf_formula (f:formula) :formula =
   Debug.no_1 "check_sat_coq" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
@@ -562,7 +563,7 @@ let check_sat_inf_formula (f:formula) :formula =
 let check_sat_inf_formula (f:formula) :formula =
   Gen.Profiling.do_1 "check_sat_coq" check_sat_inf_formula f
 
-let check_imply_inf_formula (a: formula) (c:formula) : formula = 
+let check_imply_inf_formula (a: formula) (c:formula) : formula =
   (*let a = drop_exists a in*)
   let f = Cpure.mkOr (mkNot a None no_pos) c None no_pos in
   (*let f = remove_redundant (remove_redundant_after_inf f) in*)
@@ -577,12 +578,12 @@ let check_imply_inf_formula (a: formula) (c:formula) : formula =
   let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string
                                                              (coqpure_to_coq_infsolver_form f vl))) in
   let f = drop_quantifier f var_lst in
-  let f = remove_redundant (remove_redundant_after_inf f) in 
+  let f = remove_redundant (remove_redundant_after_inf f) in
   f
 
-let check_imply_inf_formula (a: formula) (c:formula) : formula = 
-  Debug.no_2 "check_imply_coq" 
-    Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula 
+let check_imply_inf_formula (a: formula) (c:formula) : formula =
+  Debug.no_2 "check_imply_coq"
+    Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
     check_imply_inf_formula a c
 
 let check_imply_inf_formula (a: formula) (c:formula) :formula =
@@ -593,12 +594,12 @@ let fresh_l_name () = SpecVar(Int,fresh_old_name "l_",Unprimed)
 let fresh_u_name () = SpecVar(Int,fresh_old_name "u_",Unprimed)
 
 let rec generate_oct_inv (svl: spec_var list) : formula list =
-  let mk_inv_1 v = 
+  let mk_inv_1 v =
     let i1 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) (mkVar v no_pos) no_pos),None),None) in
     let i2 = BForm(((mkLte (mkVar v no_pos) (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
-    Cpure.mkAnd i1 i2 no_pos 
+    Cpure.mkAnd i1 i2 no_pos
   in
-  let mk_inv_2_add x y = 
+  let mk_inv_2_add x y =
     let x = mkVar x no_pos in
     let y = mkVar y no_pos in
     let add_xy = mkAdd x y no_pos in
@@ -613,7 +614,7 @@ let rec generate_oct_inv (svl: spec_var list) : formula list =
     let i3 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) sub_xy no_pos),None),None) in
     let i4 = BForm(((mkLte sub_xy (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
     (Cpure.mkAnd i3 i4 no_pos)
-  in 
+  in
   let mk_inv_2_min x y =
     let x = mkVar x no_pos in
     let y = mkVar y no_pos in
@@ -623,7 +624,7 @@ let rec generate_oct_inv (svl: spec_var list) : formula list =
     let i3 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) nv no_pos),None),None) in
     let i4 = BForm(((mkLte nv (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
     mkAnd (Cpure.mkAnd i3 i4 no_pos) min_xy no_pos
-  in 
+  in
   let mk_inv_2_max x y =
     let x = mkVar x no_pos in
     let y = mkVar y no_pos in
@@ -633,7 +634,7 @@ let rec generate_oct_inv (svl: spec_var list) : formula list =
     let i1 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) nv no_pos),None),None) in
     let i2 = BForm(((mkLte nv (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
     mkAnd (Cpure.mkAnd i1 i2 no_pos) max_xy no_pos
-  in 
+  in
   match svl with
   | [] -> []
   | x::xs -> let f1 = mk_inv_1 x in
@@ -650,12 +651,12 @@ let rec generate_oct_inv (svl: spec_var list) : formula list =
   let fx = (Cpure.mkAnd f1 f2 no_pos) in
   Cpure.mkAnd fx (generate_oct_inv xs) no_pos*)
 
-let get_svl relf = 
+let get_svl relf =
   match relf with
   | BForm ((RelForm (name,args,_),_),_) -> List.concat (List.map afv args)
   | _ -> []
 
-let strongest_inv f = 
+let strongest_inv f =
   let f_f f = None in
   let f_bf bf = let pf,l = bf in
     match pf with
@@ -664,21 +665,21 @@ let strongest_inv f =
   let f_e e = Some e
   in map_formula f (f_f,f_bf,f_e)
 
-let qe_fixpoint rel_def = 
+let qe_fixpoint rel_def =
   let svl = get_svl (fst rel_def) in
   let rsv = name_of_rel_form (fst rel_def) in
   let octinv_lst = generate_oct_inv svl in
   (*let flist = list_of_disjs (snd rel_def) in*)
   let flist = ([(snd rel_def)]) in
-  let aux f octinv = 
-    let f_fa f = 
+  let aux f octinv =
+    let f_fa f =
       let rec f_f f = match f with
-        | BForm((RelForm(n,a,_),_),_) -> 
-          if eq_spec_var rsv n                      
+        | BForm((RelForm(n,a,_),_),_) ->
+          if eq_spec_var rsv n
           then let sl = List.combine svl (List.concat (List.map afv a)) in
-            (subst sl octinv)  
+            (subst sl octinv)
           else f
-        | Or(f1,f2,l,p) -> (mkOr (f_f f1) (f_f f2) l p) 
+        | Or(f1,f2,l,p) -> (mkOr (f_f f1) (f_f f2) l p)
         | And(f1,f2,p) ->  (mkAnd (f_f f1) (f_f f2) p)
         | Exists(sv,f,l,p) -> (Exists(sv,(f_f f),l,p))
         | Forall(sv,f,l,p) -> (Forall(sv,(f_f f),l,p))
@@ -699,14 +700,14 @@ let qe_fixpoint rel_def =
     (*Omega.is_valid f !Globals.imply_timeout_limit*)
     let r = (x_add_1 Omega.simplify f) in
     (*let r = mkNot r None no_pos in*)
-    let res = 
-      if (is_False r) && !allow_inf_qe_coq then 
+    let res =
+      if (is_False r) && !allow_inf_qe_coq then
         let f = (close_form_cpure f) in
         let f = (cpure_to_coqpure f) in
         let vl = List.map (fun sv -> string_of_spec_var sv) var_lst in
-        let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string 
+        let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string
                                                                    (coqpure_to_coq_infsolver_form f vl))) in
-        let f = remove_redundant (remove_redundant_after_inf f) in 
+        let f = remove_redundant (remove_redundant_after_inf f) in
         x_add_1 Omega.simplify f
       else if (is_False r) && !allow_inf_qe then
         let inf_inst = Infinity.gen_instantiations var_lst [] in
@@ -719,10 +720,10 @@ let qe_fixpoint rel_def =
   let fl = List.map (fun f -> (join_conjunctions (List.map (fun c ->
       let fa,fu = aux f c in
       if (is_True fu) then fu
-      else 
+      else
         let vl = fv fu in
         (*let fulst = list_of_disjs fu in*)
-        x_add_1 Omega.simplify (add_exists (mkAnd c (strongest_inv fu) no_pos) vl)) 
+        x_add_1 Omega.simplify (add_exists (mkAnd c (strongest_inv fu) no_pos) vl))
       (*x_add_1 Omega.simplify (add_exists (mkOr f1 c None no_pos) vl))*)
       octinv_lst))) flist in
   (* x_add_1 Omega.simplify (mkExists vl (mkOr fa (mkNot fu None no_pos) None no_pos) None no_pos))*)
@@ -731,7 +732,7 @@ let qe_fixpoint rel_def =
 (* let cnsts = (list_of_conjs (Omega.hull f)) in*)
 (*Omega.gist  (join_conjunctions (List.tl fl)) (List.hd fl)*)
 
-let qe_fixpoint rel_def = 
+let qe_fixpoint rel_def =
   let pr0 = !print_formula in
   let pr1 = (pr_pair pr0 pr0) in
   Debug.no_1 "qe_fixpoint" pr1 Cprinter.string_of_pure_formula qe_fixpoint rel_def
