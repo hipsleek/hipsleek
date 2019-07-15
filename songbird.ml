@@ -374,11 +374,6 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
   | SBC.PNeg (pf, pos) -> let loc = translate_back_pos pos in
     let hip_pf = translate_back_pf pf in
     CP.mkNot hip_pf None loc
-  | SBC.PExists (vars, pf, pos) ->
-    let loc = translate_back_pos pos in
-    let hip_pf = translate_back_pf pf in
-    let hip_vars = List.map translate_back_var vars in
-    CP.mkExists hip_vars hip_pf None loc
   | SBC.PDisj (pfs, pos) ->
     let hip_pfs = List.map translate_back_pf pfs in
     let rec list_to_or pfs = match pfs with
@@ -395,6 +390,16 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
       | h::t -> let t_f = list_to_and t in
         CP.mkAnd h t_f no_pos in
     list_to_and hip_pfs
+  | SBC.PForall (vars, pf, pos) ->
+    let h_vars = List.map translate_back_var vars in
+    let h_pf = translate_back_pf pf in
+    let h_pos = translate_back_pos pos in
+    CP.mkForall h_vars h_pf None h_pos
+  | SBC.PExists (vars, pf, pos) ->
+    let loc = translate_back_pos pos in
+    let hip_pf = translate_back_pf pf in
+    let hip_vars = List.map translate_back_var vars in
+    CP.mkExists hip_vars hip_pf None loc
   | _ ->
     let to_print = "translate_back_pf " ^ (SBC.pr_pf pf) ^ " not handled" in
     report_error no_pos to_print

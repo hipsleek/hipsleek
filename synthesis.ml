@@ -68,23 +68,23 @@ exception EPrio of priority
 
 type rule =
   | RlSkip
-  | RlExistsRight of rule_exists_right
-  | RlFrameData of rule_frame_data
-  | RlFramePred of rule_frame_pred
+  | RlReturn of rule_return
+  (* | RlExistsRight of rule_exists_right *)
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
+  | RlFrameData of rule_frame_data
+  | RlFramePred of rule_frame_pred
   | RlAllocate of rule_allocate
   | RlFree of rule_free
   | RlMkNull of rule_mk_null
   | RlAssign of rule_assign
-  | RlReturn of rule_return
+  | RlHeapAssign of rule_heap_assign
   | RlFRead of rule_field_read
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
   | RlFuncRes of rule_func_res
-  | RlPostAssign of rule_post_assign
-  | RlPreAssign of rule_pre_assign
-  | RlHeapAssign of rule_heap_assign
+  (* | RlPostAssign of rule_post_assign *)
+  (* | RlPreAssign of rule_pre_assign *)
 
 and rule_heap_assign = {
   rha_left : CP.spec_var;
@@ -351,16 +351,17 @@ let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlPreAssign rule -> "RlPreAssign" ^ "(" ^ (pr_rule_pre_assign rule) ^ ")"
-  | RlPostAssign rule -> "RlPostAssign" ^ "(" ^ (pr_rule_post_assign rule) ^ ")"
+  (* | RlPreAssign rule -> "RlPreAssign" ^ "(" ^ (pr_rule_pre_assign rule) ^ ")"
+   * | RlPostAssign rule -> "RlPostAssign" ^ "(" ^ (pr_rule_post_assign rule) ^ ")" *)
   | RlReturn rule -> "RlReturn " ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
   | RlFWrite rule -> "RlFWrite " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
   | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
-  | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
+  | RlUnfoldPost rule ->
+    "RlUnfoldPost<" ^ (rule.rp_case_formula |> pr_formula) ^ ">"
   | RlFramePred rule -> "RlFramePred" ^ (pr_instantiate rule)
   | RlFrameData rcore -> "RlFrameData" ^ (pr_frame_data rcore)
-  | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
+  (* | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post) *)
 
 let pr_trace = pr_list pr_rule
 
@@ -1571,7 +1572,8 @@ let mkSeq exp1 exp2 = I.mkSeq exp1 exp2 no_pos
 
 let rec st_core2cast st : Cast.exp option = match st.stc_rule with
   | RlSkip -> None
-  | RlExistsRight _ | RlFramePred _ | RlFrameData _
+  (* | RlExistsRight _ *)
+  | RlFramePred _ | RlFrameData _
   | RlUnfoldPost _ | RlUnfoldPre _ ->
     begin
       let sts = List.map st_core2cast st.stc_subtrees in
@@ -1590,23 +1592,23 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
       C.exp_assign_pos = no_pos
     } in
     aux_c_subtrees st assign
-  | RlPreAssign rule ->
-    let var = rule.rpa_lhs in
-    let rhs = rule.rpa_rhs in
-    let c_rhs = exp2cast rhs in
-    let var_exp = C.VarDecl {
-        C.exp_var_decl_type = CP.type_of_sv var;
-        C.exp_var_decl_name = CP.name_of_sv var;
-        C.exp_var_decl_pos = no_pos;
-      } in
-    (* let seq = mkCSeq var_exp c_rhs in *)
-    let assign = C.Assign {
-      C.exp_assign_lhs = CP.name_of_sv var;
-      C.exp_assign_rhs = c_rhs;
-      C.exp_assign_pos = no_pos
-    } in
-    let seq = mkCSeq var_exp assign in
-    aux_c_subtrees st seq
+  (* | RlPreAssign rule ->
+   *   let var = rule.rpa_lhs in
+   *   let rhs = rule.rpa_rhs in
+   *   let c_rhs = exp2cast rhs in
+   *   let var_exp = C.VarDecl {
+   *       C.exp_var_decl_type = CP.type_of_sv var;
+   *       C.exp_var_decl_name = CP.name_of_sv var;
+   *       C.exp_var_decl_pos = no_pos;
+   *     } in
+   *   (\* let seq = mkCSeq var_exp c_rhs in *\)
+   *   let assign = C.Assign {
+   *     C.exp_assign_lhs = CP.name_of_sv var;
+   *     C.exp_assign_rhs = c_rhs;
+   *     C.exp_assign_pos = no_pos
+   *   } in
+   *   let seq = mkCSeq var_exp assign in
+   *   aux_c_subtrees st seq *)
   | RlFRead rcore ->
     let lhs = rcore.rfr_value in
     let bvar = rcore.rfr_bound_var in
@@ -1761,7 +1763,8 @@ let rec mk_exp_list e_list = match e_list with
 let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
   | RlSkip -> None
-  | RlExistsRight _ | RlFramePred _ | RlFrameData _
+  (* | RlExistsRight _ *)
+  | RlFramePred _ | RlFrameData _
   | RlUnfoldPost _ | RlUnfoldPre _ ->
     begin
       let sts = List.map synthesize_st_core st.stc_subtrees in
@@ -1832,52 +1835,52 @@ let rec synthesize_st_core st : Iast.exp option=
     let c_exp = exp_to_iast rhs in
     let assgn = mkAssign (mkVar lhs) c_exp in
     aux_subtrees st assgn
-  | RlPreAssign rcore ->
-    let lhs = rcore.rpa_lhs in
-    let rhs = rcore.rpa_rhs in
-    let v_decl = I.VarDecl {
-        exp_var_decl_type = CP.type_of_sv lhs;
-        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
-        exp_var_decl_pos = no_pos;
-      } in
-    let lhs_exp = I.Var {
-        I.exp_var_name = CP.name_of_sv lhs;
-        I.exp_var_pos = no_pos;
-      } in
-    let rhs_exp = exp_to_iast rhs in
-    let assign_exp = I.Assign {
-        I.exp_assign_op = I.OpAssign;
-        I.exp_assign_lhs = lhs_exp;
-        I.exp_assign_rhs = rhs_exp;
-        I.exp_assign_path_id = None;
-        I.exp_assign_pos = no_pos;
-      } in
-    let seq = mkSeq v_decl rhs_exp in
-    let seq2 = mkSeq seq assign_exp in
-    aux_subtrees st seq2
-  | RlPostAssign rcore ->
-    let lhs = rcore.rapost_lhs in
-    let rhs = rcore.rapost_rhs in
-    let v_decl = I.VarDecl {
-        exp_var_decl_type = CP.type_of_sv lhs;
-        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
-        exp_var_decl_pos = no_pos;
-      } in
-    let lhs_exp = I.Var {
-        I.exp_var_name = CP.name_of_sv lhs;
-        I.exp_var_pos = no_pos;
-      } in
-    let rhs_exp = exp_to_iast rhs in
-    let assign_exp = I.Assign {
-        I.exp_assign_op = I.OpAssign;
-        I.exp_assign_lhs = lhs_exp;
-        I.exp_assign_rhs = rhs_exp;
-        I.exp_assign_path_id = None;
-        I.exp_assign_pos = no_pos;
-      } in
-    let seq = mkSeq v_decl rhs_exp in
-    let seq2 = mkSeq seq assign_exp in
-    aux_subtrees st seq2
+  (* | RlPreAssign rcore ->
+   *   let lhs = rcore.rpa_lhs in
+   *   let rhs = rcore.rpa_rhs in
+   *   let v_decl = I.VarDecl {
+   *       exp_var_decl_type = CP.type_of_sv lhs;
+   *       exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+   *       exp_var_decl_pos = no_pos;
+   *     } in
+   *   let lhs_exp = I.Var {
+   *       I.exp_var_name = CP.name_of_sv lhs;
+   *       I.exp_var_pos = no_pos;
+   *     } in
+   *   let rhs_exp = exp_to_iast rhs in
+   *   let assign_exp = I.Assign {
+   *       I.exp_assign_op = I.OpAssign;
+   *       I.exp_assign_lhs = lhs_exp;
+   *       I.exp_assign_rhs = rhs_exp;
+   *       I.exp_assign_path_id = None;
+   *       I.exp_assign_pos = no_pos;
+   *     } in
+   *   let seq = mkSeq v_decl rhs_exp in
+   *   let seq2 = mkSeq seq assign_exp in
+   *   aux_subtrees st seq2 *)
+  (* | RlPostAssign rcore ->
+   *   let lhs = rcore.rapost_lhs in
+   *   let rhs = rcore.rapost_rhs in
+   *   let v_decl = I.VarDecl {
+   *       exp_var_decl_type = CP.type_of_sv lhs;
+   *       exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+   *       exp_var_decl_pos = no_pos;
+   *     } in
+   *   let lhs_exp = I.Var {
+   *       I.exp_var_name = CP.name_of_sv lhs;
+   *       I.exp_var_pos = no_pos;
+   *     } in
+   *   let rhs_exp = exp_to_iast rhs in
+   *   let assign_exp = I.Assign {
+   *       I.exp_assign_op = I.OpAssign;
+   *       I.exp_assign_lhs = lhs_exp;
+   *       I.exp_assign_rhs = rhs_exp;
+   *       I.exp_assign_path_id = None;
+   *       I.exp_assign_pos = no_pos;
+   *     } in
+   *   let seq = mkSeq v_decl rhs_exp in
+   *   let seq2 = mkSeq seq assign_exp in
+   *   aux_subtrees st seq2 *)
   | RlReturn rcore ->
     let () = x_binfo_pp "marking" no_pos in
     let c_exp = exp_to_iast rcore.r_exp in
@@ -2319,6 +2322,15 @@ let is_rule_fread_usable goal r =
       | Some arg_f -> if CF.is_emp_formula arg_f then false
         else true
 
+let rule_use_var var rule = match rule with
+  | RlFuncRes rc ->
+    let params = rc.rfr_params in
+    CP.mem var params
+  | RlFuncCall rc ->
+    let params = rc.rfc_params in
+    CP.mem var params
+  | _ -> false
+
 let eliminate_useless_rules goal rules =
   let contain_sym_rules rule = match rule with
     | RlFRead _ -> true
@@ -2355,24 +2367,31 @@ let compare_rule_frame_data_vs_other r1 r2 =
   | RlFramePred _
   | RlFrameData _ -> if CP.is_res_sv r1.rfd_lhs then PriHigh
     else PriLow
+  | RlSkip
   | RlReturn _ -> PriLow
-  | RlMkNull _ -> PriLow
-  | _ -> PriLow
+  (* | RlMkNull _ -> PriLow *)
+  | _ -> PriHigh
 
-let compare_rule_frame_pred_vs_other r1 r2 =
+let compare_two_frame_pred goal r1 r2 =
+  let vars = goal.gl_vars in
+  let var1 = r1.rfp_rhs in
+  let var2 = r2.rfp_rhs in
+  if CP.mem var1 vars then PriHigh
+  else if CP.mem var2 vars then PriLow
+  else PriEqual
+
+let compare_rule_frame_pred_vs_other goal r1 r2 =
   match r2 with
-  | RlFramePred _
+  | RlFramePred r2 -> compare_two_frame_pred goal r1 r2
   | RlFrameData _ -> if CP.is_res_sv r1.rfp_lhs then PriHigh
     else PriLow
-  | RlPreAssign _
-  | RlPostAssign _
-  | RlAllocate _ -> PriHigh
-  | RlMkNull _ -> PriLow
-  | RlUnfoldPost _ -> PriHigh
-  | RlFuncRes _
-  | RlFuncCall _ -> PriLow
   | RlReturn _ -> PriLow
-  | _ -> PriLow
+  (* | RlAllocate _ -> PriHigh *)
+  (* | RlMkNull _ -> PriLow *)
+  (* | RlUnfoldPost _
+   * | RlFuncRes _
+   * | RlFuncCall _ -> PriLow *)
+  | _ -> PriHigh
 
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
@@ -2404,23 +2423,27 @@ let compare_rule_allocate_vs_other r1 r2 = match r2 with
   | RlAllocate _ -> PriEqual
   | _ -> PriLow
 
+let compare_rule_return_vs_other r r2 = match r2 with
+  | RlReturn _ -> PriEqual
+  | _ -> PriHigh
+
 let compare_rule goal r1 r2 =
   match r1 with
+  | RlSkip -> PriHigh
+  | RlReturn r -> compare_rule_return_vs_other r r2
   | RlUnfoldPre _ -> compare_rule_unfold_pre_vs_other r1 r2
-  | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
-  | RlFrameData r -> compare_rule_frame_data_vs_other r r2
-  | RlFramePred r -> compare_rule_frame_pred_vs_other r r2
-  | RlReturn _ -> PriHigh
-  | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2
-  | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
-  | RlPreAssign _ -> PriLow
+  | RlFrameData r -> compare_rule_frame_data_vs_other r r2
+  | RlFramePred r -> compare_rule_frame_pred_vs_other goal r r2
   | RlAllocate r1 -> compare_rule_allocate_vs_other r1 r2
   | RlMkNull _ -> PriHigh
-  | _ ->
-    match r2 with
-    | RlReturn _ -> PriLow
-    | _ -> PriEqual
+  | RlFree _ -> PriHigh
+  | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
+  | RlHeapAssign _ -> PriEqual
+  | RlFRead r -> PriHigh
+  | RlFWrite _ -> PriHigh
+  | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2
+  | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
 
 let is_code_rule_x trace = match trace with
   | [] -> false
@@ -2444,9 +2467,11 @@ let num_of_code_rules trace =
 
 let length_of_trace trace =
   let is_simplify_rule rule = match rule with
-    | RlExistsRight _ | RlUnfoldPre _ | RlUnfoldPost _
+    (* | RlExistsRight _ *)
+    | RlUnfoldPre _ | RlUnfoldPost _
     | RlFrameData _ | RlFramePred _
-    | RlPreAssign _ | RlPostAssign _ -> true
+    (* | RlPreAssign _ | RlPostAssign _ *)
+      -> true
     | _ -> false in
   let trace = trace |> List.filter (fun x -> is_simplify_rule x |> negate) in
   List.length trace
@@ -2550,10 +2575,10 @@ let rm_redundant_constraint (goal: goal) : goal =
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
-let process_rule_exists_right goal rule =
-  let n_goal = {goal with gl_post_cond = rule.n_post;
-                          gl_trace = (RlExistsRight rule)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlExistsRight rule) [n_goal]
+(* let process_rule_exists_right goal rule =
+ *   let n_goal = {goal with gl_post_cond = rule.n_post;
+ *                           gl_trace = (RlExistsRight rule)::goal.gl_trace} in
+ *   mk_derivation_subgoals goal (RlExistsRight rule) [n_goal] *)
 
 let free_var_hf (hf:CF.h_formula) var =
   let rec aux (hf : CF.h_formula) = match hf with

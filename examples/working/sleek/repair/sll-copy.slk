@@ -12,9 +12,13 @@ ensures res::ll<n> * x::ll<n>;.
 
 synthesize [node x,node tmp,node k]
 k::node<ann17, tmp> * x::node<ann17,q18> * 
-q18::ll<n121> * tmp::ll<n121> &
--1-n121<0 & n-1-n121=0 & n-1-flt16=0
+q18::ll<n121> * tmp::ll<n121> & -1-n121<0 & n-1-n121=0
 ~>
 (exists ann51, q52, ann42, q43:
-res::node<ann51,q52> * x::node<ann42,q43> * q52::ll<n121> * q43::ll<n121> &
-n-1-n121=0 & n-1-flt16=0).
+res::node<ann51,q52> * x::node<ann42,q43> * q52::ll<n121> * q43::ll<n121>).
+
+// RlFramePred(node q43_58, node tmp)
+// [RlFramePred(node q52_56, node q18)
+// [RlFrameData(node x, node k)
+// [RlReturn ( x)
+// []]]]

@@ -91,51 +91,51 @@ let rec find_sub_var sv cur_vars pre_pf =
         else res1
   | _ -> None
 
-let choose_rule_pre_assign goal : rule list =
-  let all_vars = goal.gl_vars in
-  let post = goal.gl_post_cond in
-  let pre = goal.gl_pre_cond in
-  let pre_vars = CF.fv pre in
-  let pre_pf = CF.get_pure pre in
-  let pre_conjuncts = CP.split_conjunctions pre_pf in
-  let eq_pairs = List.map (find_exists_substs pre_vars) pre_conjuncts
-                 |> List.concat in
-  let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
-  let filter_fun (x,y) =
-    let vars = CP.afv y in
-    not(CP.mem x all_vars) && vars != [] && CP.subset vars all_vars in
-  let filter_eq = Gen.BList.remove_dups_eq
-      (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
-  let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
-  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
-  let mk_rule (var, exp) =
-    RlPreAssign {
-      rpa_lhs = var;
-      rpa_rhs = exp
-    } in
-  List.map mk_rule eq_pairs
+(* let choose_rule_pre_assign goal : rule list =
+ *   let all_vars = goal.gl_vars in
+ *   let post = goal.gl_post_cond in
+ *   let pre = goal.gl_pre_cond in
+ *   let pre_vars = CF.fv pre in
+ *   let pre_pf = CF.get_pure pre in
+ *   let pre_conjuncts = CP.split_conjunctions pre_pf in
+ *   let eq_pairs = List.map (find_exists_substs pre_vars) pre_conjuncts
+ *                  |> List.concat in
+ *   let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
+ *   let filter_fun (x,y) =
+ *     let vars = CP.afv y in
+ *     not(CP.mem x all_vars) && vars != [] && CP.subset vars all_vars in
+ *   let filter_eq = Gen.BList.remove_dups_eq
+ *       (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
+ *   let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
+ *   let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
+ *   let mk_rule (var, exp) =
+ *     RlPreAssign {
+ *       rpa_lhs = var;
+ *       rpa_rhs = exp
+ *     } in
+ *   List.map mk_rule eq_pairs *)
 
-let choose_rule_post_assign goal : rule list =
-  let all_vars = goal.gl_vars in
-  let post = goal.gl_post_cond in
-  let pre = goal.gl_pre_cond in
-  let e_vars = CF.get_exists post |> List.filter is_node_var in
-  let post_pf = CF.get_pure post |> remove_exists_vars_pf in
-  let post_conjuncts = CP.split_conjunctions post_pf in
-  let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
-                 |> List.concat in
-  let filter_fun (x,y) =
-    let vars = CP.afv y in
-    not(CP.mem x all_vars) && CP.subset vars all_vars in
-  let filter_eq = Gen.BList.remove_dups_eq
-      (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
-  let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
-  let mk_rule (var, exp) =
-    RlPostAssign {
-      rapost_lhs = var;
-      rapost_rhs = exp
-    } in
-  List.map mk_rule eq_pairs
+(* let choose_rule_post_assign goal : rule list =
+ *   let all_vars = goal.gl_vars in
+ *   let post = goal.gl_post_cond in
+ *   let pre = goal.gl_pre_cond in
+ *   let e_vars = CF.get_exists post |> List.filter is_node_var in
+ *   let post_pf = CF.get_pure post |> remove_exists_vars_pf in
+ *   let post_conjuncts = CP.split_conjunctions post_pf in
+ *   let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
+ *                  |> List.concat in
+ *   let filter_fun (x,y) =
+ *     let vars = CP.afv y in
+ *     not(CP.mem x all_vars) && CP.subset vars all_vars in
+ *   let filter_eq = Gen.BList.remove_dups_eq
+ *       (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
+ *   let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
+ *   let mk_rule (var, exp) =
+ *     RlPostAssign {
+ *       rapost_lhs = var;
+ *       rapost_rhs = exp
+ *     } in
+ *   List.map mk_rule eq_pairs *)
 
 let check_allocate pre post =
   let pre_nodes = pre |> get_heap |> get_heap_nodes in
@@ -436,62 +436,6 @@ let choose_rule_func_call goal =
     rules in
   procs |> List.map aux |> List.concat
 
-let choose_rule_fread_x goal =
-  let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
-  let rec helper_hf (hf:CF.h_formula) = match hf with
-    | DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
-      if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
-        let dn_name = dnode.CF.h_formula_data_name in
-        let dn_args = dnode.CF.h_formula_data_arguments in
-        [(dn_var, dn_name, dn_args)]
-      else []
-    | Star sf -> let hf1, hf2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
-      (helper_hf hf1) @ (helper_hf hf2)
-    | _ -> [] in
-  let rec helper_f (f:CF.formula) = match f with
-    | Base bf -> helper_hf bf.CF.formula_base_heap
-    | Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
-      (helper_f f1) @ (helper_f f2)
-    | Exists bf -> helper_hf bf.formula_exists_heap in
-  let triples = helper_f pre_cond in
-  let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
-  let helper_triple (var, data, args) =
-    let prog = goal.gl_prog in
-    let data = List.find (fun x -> x.Cast.data_name = data)
-        prog.Cast.prog_data_decls in
-    let d_args = data.Cast.data_fields |> List.map fst in
-    let d_arg_pairs = List.combine args d_args in
-    let d_arg_pairs = List.filter (fun (x,_) -> not(CP.mem x vars)) d_arg_pairs in
-    (* let args = List.map fst d_arg_pairs |> List.rev in
-     * let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in *)
-    let helper_arg (arg, field) =
-      let rbind = {
-          rfr_bound_var = var;
-          rfr_field = field;
-          rfr_value = arg;
-        } in [rbind] in
-    d_arg_pairs |> List.map helper_arg |> List.concat in
-  List.map helper_triple triples |> List.concat
-  |> List.filter (fun x -> is_fread_called goal.gl_trace x |> negate)
-  |> List.map (fun x -> RlFRead x) |> List.rev
-
-let choose_rule_fread goal =
-  Debug.no_1 "choose_rule_fread" pr_goal pr_rules
-    (fun _ -> choose_rule_fread_x goal) goal
-
-let get_cond_exp prog formula base recursive puref vars =
-  let conjuncs = CP.split_conjunctions puref in
-  let aux pf =
-    let n_bf = CF.add_pure_formula_to_formula pf formula in
-    let n_pf = CP.mkNot_s pf in
-    let n_rc = CF.add_pure_formula_to_formula n_pf formula in
-    let fst = SB.check_entail_exact prog n_bf base in
-    let snd = SB.check_entail_exact prog n_rc recursive in
-    fst && snd in
-  conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
-  |> List.filter aux
-
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let vars, prog = goal.gl_vars, goal.gl_prog in
@@ -510,6 +454,18 @@ let choose_rule_unfold_pre goal =
     else [] in
   vnodes |> List.map helper |> List.concat
 
+let get_cond_exp prog formula base recursive puref vars =
+  let conjuncs = CP.split_conjunctions puref in
+  let aux pf =
+    let n_bf = CF.add_pure_formula_to_formula pf formula in
+    let n_pf = CP.mkNot_s pf in
+    let n_rc = CF.add_pure_formula_to_formula n_pf formula in
+    let fst = SB.check_entail_exact prog n_bf base in
+    let snd = SB.check_entail_exact prog n_rc recursive in
+    fst && snd in
+  conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
+  |> List.filter aux
+
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let prog = goal.gl_prog in
@@ -519,25 +475,28 @@ let choose_rule_unfold_post goal =
   let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
   let vnodes = get_unfold_view vars post in
   let e_vnodes = get_unfold_view e_vars post in
+  let pre_pf = CF.get_pure pre in
   let check_sat_wrapper formula =
     try
-      let formula = formula |> remove_exists in
-      let tmp = SB.check_unsat prog formula in
-      tmp |> negate
+      (* let formula = formula |> remove_exists in *)
+      let n_formula = CF.add_pure_formula_to_formula pre_pf formula in
+      SB.check_sat prog n_formula
+      (* let tmp = SB.check_unsat prog n_formula in
+       * tmp |> negate *)
     with _ -> true in
-  (* let helper_exists vnode =
-   *   let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
-   *   let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-   *   x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
-   *   let nf = nf |> List.filter check_sat_wrapper in
-   *   x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
-   *   if List.length nf = 1 then
-   *     let case_f = List.hd nf in
-   *     let rule =  RlUnfoldPost {
-   *         rp_var = vnode.CF.h_formula_view_node;
-   *         rp_case_formula = case_f} in
-   *     [rule]
-   *   else [] in *)
+  let helper_exists vnode =
+    let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
+    let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
+    x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
+    let nf = nf |> List.filter check_sat_wrapper in
+    x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
+    if List.length nf = 1 then
+      let case_f = List.hd nf in
+      let rule =  RlUnfoldPost {
+          rp_var = vnode.CF.h_formula_view_node;
+          rp_case_formula = case_f} in
+      [rule]
+    else [] in
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
@@ -550,7 +509,7 @@ let choose_rule_unfold_post goal =
   if has_unfold_post goal.gl_trace then []
   else
     let rules1 = vnodes |> List.map helper |> List.concat in
-    let rules2 = e_vnodes |> List.map helper |> List.concat in
+    let rules2 = e_vnodes |> List.map helper_exists |> List.concat in
     rules1@rules2
 
 let choose_rule_numeric_x goal =
@@ -768,22 +727,22 @@ let choose_rule_frame_data goal =
     else [] in
   pairs |> List.map filter |> List.concat
 
-let choose_rule_exists_right goal =
-  let post = goal.gl_post_cond in
-  let exists_vars = CF.get_exists post in
-  if exists_vars = [] then []
-  else
-    let post_pf = CF.get_pure goal.gl_post_cond in
-    let post_conjuncts = CP.split_conjunctions post_pf in
-    let eq_pairs = List.map (find_exists_substs exists_vars) post_conjuncts
-                   |> List.concat in
-    let collected_exists_vars = eq_pairs |> List.map fst |> CP.remove_dups_svl in
-    if collected_exists_vars = [] then []
-    else
-      let n_post = remove_exists_vars post collected_exists_vars in
-      let n_post = subst_term_formula eq_pairs n_post in
-      let rule = RlExistsRight {n_post = n_post} in
-      [rule]
+(* let choose_rule_exists_right goal =
+ *   let post = goal.gl_post_cond in
+ *   let exists_vars = CF.get_exists post in
+ *   if exists_vars = [] then []
+ *   else
+ *     let post_pf = CF.get_pure goal.gl_post_cond in
+ *     let post_conjuncts = CP.split_conjunctions post_pf in
+ *     let eq_pairs = List.map (find_exists_substs exists_vars) post_conjuncts
+ *                    |> List.concat in
+ *     let collected_exists_vars = eq_pairs |> List.map fst |> CP.remove_dups_svl in
+ *     if collected_exists_vars = [] then []
+ *     else
+ *       let n_post = remove_exists_vars post collected_exists_vars in
+ *       let n_post = subst_term_formula eq_pairs n_post in
+ *       let rule = RlExistsRight {n_post = n_post} in
+ *       [rule] *)
 
 let rec choose_rule_interact goal rules =
   if rules = [] then
@@ -792,7 +751,7 @@ let rec choose_rule_interact goal rules =
   else
     let str = pr_list_ln pr_rule rules in
     let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-    let () = x_binfo_hp (add_str "Rules\n" pr_rules) rules no_pos in
+    let () = x_binfo_hp (add_str "Rules" pr_rules) rules no_pos in
     let choose_str = "Please choose from 1 to "
                      ^ (string_of_int (List.length rules)) ^ ": " in
     let () = x_binfo_pp choose_str no_pos in
@@ -855,6 +814,58 @@ let choose_rule_mk_null goal : rule list=
       (* list1 *)
     else []
 
+let choose_rule_fread_x goal =
+  let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
+  let rec helper_hf (hf:CF.h_formula) = match hf with
+    | DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
+      if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
+        let dn_name = dnode.CF.h_formula_data_name in
+        let dn_args = dnode.CF.h_formula_data_arguments in
+        [(dn_var, dn_name, dn_args)]
+      else []
+    | Star sf -> let hf1, hf2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
+      (helper_hf hf1) @ (helper_hf hf2)
+    | _ -> [] in
+  let rec helper_f (f:CF.formula) = match f with
+    | Base bf -> helper_hf bf.CF.formula_base_heap
+    | Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
+      (helper_f f1) @ (helper_f f2)
+    | Exists bf -> helper_hf bf.formula_exists_heap in
+  let triples = helper_f pre_cond in
+  let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
+  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let filter_rule rule =
+    let var = rule.rfr_value in
+    let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
+    let n_goal = {goal with gl_vars = [var]} in
+    let n_goal2 = {goal with gl_vars = var::goal.gl_vars} in
+    let unfold_rules = choose_rule_unfold_pre n_goal in
+    let fcall_rules = choose_rule_func_call n_goal2 in
+    unfold_rules != [] || (List.exists (rule_use_var var) fcall_rules) in
+  let helper_triple (var, data, args) =
+    let prog = goal.gl_prog in
+    let data = List.find (fun x -> x.Cast.data_name = data)
+        prog.Cast.prog_data_decls in
+    let d_args = data.Cast.data_fields |> List.map fst in
+    let d_arg_pairs = List.combine args d_args in
+    let filter_fun (x, _) = CP.mem x vars |> negate in
+    let d_arg_pairs = List.filter filter_fun d_arg_pairs in
+    let helper_arg (arg, field) =
+      let rbind = {
+          rfr_bound_var = var;
+          rfr_field = field;
+          rfr_value = arg;
+        } in [rbind] in
+    d_arg_pairs |> List.map helper_arg |> List.concat in
+  List.map helper_triple triples |> List.concat
+  |> List.filter (fun x -> is_fread_called goal.gl_trace x |> negate)
+  |> List.filter filter_rule
+  |> List.map (fun x -> RlFRead x) |> List.rev
+
+let choose_rule_fread goal =
+  Debug.no_1 "choose_rule_fread" pr_goal pr_rules
+    (fun _ -> choose_rule_fread_x goal) goal
+
 let choose_main_rules goal =
   let cur_time = get_time () in
   let duration = cur_time -. goal.gl_start_time in
@@ -914,7 +925,7 @@ let choose_rule_skip goal =
 let choose_synthesis_rules_x goal : rule list =
   let rules =
     try
-      let _ = choose_rule_exists_right goal |> raise_rules in
+      (* let _ = choose_rule_exists_right goal |> raise_rules in *)
       let _ = choose_rule_skip goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
       []
@@ -939,26 +950,26 @@ let process_rule_assign goal rcore =
                             gl_trace = (RlAssign rcore)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlAssign rcore) [sub_goal]
 
-let process_rule_pre_assign goal rcore =
-  let lhs = rcore.rpa_lhs in
-  let n_vars = lhs::goal.gl_vars in
-  let sub_goal = {goal with gl_vars = n_vars;
-                            gl_trace = (RlPreAssign rcore)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlPreAssign rcore) [sub_goal]
+(* let process_rule_pre_assign goal rcore =
+ *   let lhs = rcore.rpa_lhs in
+ *   let n_vars = lhs::goal.gl_vars in
+ *   let sub_goal = {goal with gl_vars = n_vars;
+ *                             gl_trace = (RlPreAssign rcore)::goal.gl_trace} in
+ *   mk_derivation_subgoals goal (RlPreAssign rcore) [sub_goal] *)
 
-let process_rule_post_assign goal rcore =
-  let lhs = rcore.rapost_lhs in
-  let rhs = rcore.rapost_rhs in
-  let n_vars = lhs::goal.gl_vars in
-  let n_post = remove_exists_vars goal.gl_post_cond [lhs] in
-  let e_var = CP.mkVar lhs no_pos in
-  let n_pf = CP.mkEqExp e_var rhs no_pos in
-  let n_pre = CF.add_pure_formula_to_formula n_pf goal.gl_pre_cond in
-  let sub_goal = {goal with gl_vars = n_vars;
-                            gl_post_cond = n_post;
-                            gl_pre_cond = n_pre;
-                            gl_trace = (RlPostAssign rcore)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlPostAssign rcore) [sub_goal]
+(* let process_rule_post_assign goal rcore =
+ *   let lhs = rcore.rapost_lhs in
+ *   let rhs = rcore.rapost_rhs in
+ *   let n_vars = lhs::goal.gl_vars in
+ *   let n_post = remove_exists_vars goal.gl_post_cond [lhs] in
+ *   let e_var = CP.mkVar lhs no_pos in
+ *   let n_pf = CP.mkEqExp e_var rhs no_pos in
+ *   let n_pre = CF.add_pure_formula_to_formula n_pf goal.gl_pre_cond in
+ *   let sub_goal = {goal with gl_vars = n_vars;
+ *                             gl_post_cond = n_post;
+ *                             gl_pre_cond = n_pre;
+ *                             gl_trace = (RlPostAssign rcore)::goal.gl_trace} in
+ *   mk_derivation_subgoals goal (RlPostAssign rcore) [sub_goal] *)
 
 let process_rule_return goal rcore =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -1196,8 +1207,8 @@ and process_one_rule goal rule : derivation =
     | RlFuncCall rcore -> process_rule_func_call goal rcore
     | RlAllocate rcore -> process_rule_allocate goal rcore
     | RlFuncRes rcore -> process_rule_func_res goal rcore
-    | RlPreAssign rcore -> process_rule_pre_assign goal rcore
-    | RlPostAssign rcore -> process_rule_post_assign goal rcore
+    (* | RlPreAssign rcore -> process_rule_pre_assign goal rcore *)
+    (* | RlPostAssign rcore -> process_rule_post_assign goal rcore *)
     | RlAssign rcore -> process_rule_assign goal rcore
     | RlReturn rcore -> process_rule_return goal rcore
     | RlFWrite rcore -> process_rule_fwrite goal rcore
@@ -1206,7 +1217,7 @@ and process_one_rule goal rule : derivation =
     | RlFRead rcore -> process_rule_fread goal rcore
     | RlFramePred rcore -> process_rule_frame_pred goal rcore
     | RlFrameData rcore -> process_rule_frame_data goal rcore
-    | RlExistsRight rcore -> process_rule_exists_right goal rcore
+    (* | RlExistsRight rcore -> process_rule_exists_right goal rcore *)
     | RlSkip -> process_rule_skip goal
     | RlMkNull rcore -> process_rule_mk_null goal rcore
     | RlHeapAssign rcore -> process_rule_heap_assign goal rcore
