@@ -3631,16 +3631,15 @@ and equalFormula_f_x (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula
     | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula_f eq  b1 b2
     | ((Not (b1,_,_)),(Not (b2,_,_))) -> helper b1 b2
     | (Or(f1, f2, _,_), Or(f3, f4, _,_))
-    | (And(f1, f2, _), And(f3, f4, _)) -> ((helper f1 f3) && (helper f2 f4))
-                                          || ((helper f1 f4) && (helper f2 f3))
+    | (And(f1, f2, _), And(f3, f4, _)) ->
+      (helper f1 f3) && (helper f2 f4) || (helper f1 f4) && (helper f2 f3)
     | AndList b1, AndList b2 ->
       if (List.length b1)= List.length b2
       then List.for_all2 (fun (l1,c1)(l2,c2)-> LO.compare l1 l2 = 0 && helper c1 c2) b1 b2
       else false
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
     | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) && (helper f1 f2)
-    | _ -> false
-  in
+    | _ -> false in
   let ps1 = list_of_conjs f01 in
   let ps2 = list_of_conjs f02 in
   let l1 = List.length ps1 in
@@ -5982,7 +5981,7 @@ let eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool =  equalBFormula_
 
 let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula EMapSV.mkEmpty b1 b2
 
-let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2 
+let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2
 
 
 (**************************************************************)

@@ -385,8 +385,7 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
       | [] -> report_error no_pos "empty"
       | [h] -> h
       | h::t -> let t_f = list_to_or t in
-        CP.mkOr h t_f None no_pos
-    in
+        CP.mkOr h t_f None no_pos in
     list_to_or hip_pfs
   | SBC.PConj (pfs, pos) ->
     let hip_pfs = List.map translate_back_pf pfs in
@@ -394,10 +393,11 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
       | [] -> report_error no_pos "empty"
       | [h] -> h
       | h::t -> let t_f = list_to_and t in
-        CP.mkAnd h t_f no_pos
-    in
+        CP.mkAnd h t_f no_pos in
     list_to_and hip_pfs
-  | _ -> report_error no_pos "translate_back_pf: this type of lhs not handled"
+  | _ ->
+    let to_print = "translate_back_pf " ^ (SBC.pr_pf pf) ^ " not handled" in
+    report_error no_pos to_print
 
 let rec translate_hf hf = match hf with
   | CF.HTrue | CF.HEmp -> (SBC.HEmp (translate_loc no_pos), [], [])

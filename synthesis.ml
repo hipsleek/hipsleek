@@ -440,18 +440,6 @@ let elim_bool_constraint (pf:CP.formula) =
     | _ -> (false, pf) in
   aux pf |> snd
 
-let rec elim_idents (f:CF.formula) = match f with
-  | CF.Base bf ->
-    let pf = bf.CF.formula_base_pure |> pure_of_mix in
-    let n_pf = pf |> CP.elim_idents_node (* |> elim_bool_constraint *) in
-    CF.Base {bf with formula_base_pure = mix_of_pure n_pf}
-  | CF.Exists bf ->
-    let pf = bf.CF.formula_exists_pure |> pure_of_mix in
-    let n_pf = pf |> CP.elim_idents_node (* |> elim_bool_constraint *) in
-    CF.Exists {bf with formula_exists_pure = mix_of_pure n_pf}
-  | CF.Or bf -> CF.Or {bf with formula_or_f1 = elim_idents bf.CF.formula_or_f1;
-                               formula_or_f2 = elim_idents bf.CF.formula_or_f2}
-
 let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
   | Base _ -> formula
@@ -491,6 +479,18 @@ let is_equality_pair (formula: CP.formula) =
 let rec remove_exists_pf pf = match pf with
   | CP.Exists (_, exists_f, _ , _) -> remove_exists_pf exists_f
   | _ -> pf
+
+let rec elim_idents (f:CF.formula) = match f with
+  | CF.Base bf ->
+    let pf = bf.CF.formula_base_pure |> pure_of_mix in
+    let n_pf = pf |> CP.elim_idents_node in
+    CF.Base {bf with formula_base_pure = mix_of_pure n_pf}
+  | CF.Exists bf ->
+    let pf = bf.CF.formula_exists_pure |> pure_of_mix in
+    let n_pf = pf |> CP.elim_idents_node (* |> elim_bool_constraint *) in
+    CF.Exists {bf with formula_exists_pure = mix_of_pure n_pf}
+  | CF.Or bf -> CF.Or {bf with formula_or_f1 = elim_idents bf.CF.formula_or_f1;
+                               formula_or_f2 = elim_idents bf.CF.formula_or_f2}
 
 let get_equality_pairs (formula: CP.formula) =
   let conjuncts = formula |> remove_exists_pf |> CP.split_conjunctions in
@@ -1098,9 +1098,6 @@ let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
 
-(* let simplify_arithmetic_pf (pf: CP.formula) = *)
-
-
 let simplify_arithmetic (formula: CF.formula) =
   match formula with
   | CF.Base b ->
@@ -1108,12 +1105,44 @@ let simplify_arithmetic (formula: CF.formula) =
     None
   | _ -> None
 
+let rm_ident_constraint_pf_x pre_pf post_pf =
+  let pre_constraints = pre_pf |> remove_exists_pf |> CP.split_conjunctions in
+  let post_constraints = post_pf |> remove_exists_pf |> CP.split_conjunctions in
+  x_tinfo_hp (add_str "pre conjuncts" (pr_list pr_pf)) pre_constraints no_pos;
+  x_tinfo_hp (add_str "post conjuncts" (pr_list pr_pf)) post_constraints no_pos;
+  let filter_fun pf =
+    List.exists (CP.equalFormula pf) pre_constraints |> negate in
+  let post_constraints = post_constraints |> List.filter filter_fun in
+  x_tinfo_hp (add_str "post conjuncts" (pr_list pr_pf)) post_constraints no_pos;
+  CP.join_conjunctions post_constraints
+
+let rm_ident_constraint_pf pre_pf post_pf =
+  Debug.no_2 "rm_ident_constraint_pf" pr_pf pr_pf pr_pf
+    (fun _ _ -> rm_ident_constraint_pf_x pre_pf post_pf) pre_pf post_pf
+
+let rm_ident_constraints pre post =
+  let aux pre post = match pre, post with
+    | CF.Base bf1, CF.Exists bf2 ->
+      let pf1 = bf1.CF.formula_base_pure |> MCP.pure_of_mix in
+      let pf2 = bf2.CF.formula_exists_pure |> MCP.pure_of_mix in
+      let n_pf2 = rm_ident_constraint_pf pf1 pf2 in
+      CF.Exists {bf2 with CF.formula_exists_pure = MCP.mix_of_pure n_pf2}
+    | CF.Base bf1, CF.Base bf2 ->
+      let pf1 = bf1.CF.formula_base_pure |> MCP.pure_of_mix in
+      let pf2 = bf2.CF.formula_base_pure |> MCP.pure_of_mix in
+      let n_pf2 = rm_ident_constraint_pf pf1 pf2 in
+      CF.Base {bf2 with CF.formula_base_pure = MCP.mix_of_pure n_pf2}
+    | _ -> post in
+  let n_post = aux pre post in
+  n_post
+
 let simplify_goal goal =
   let n_pre = remove_exists goal.gl_pre_cond in
   let n_pre = elim_idents n_pre in
   let n_post = elim_idents goal.gl_post_cond in
   let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
   let n_post = simplify_post n_post in
+  let n_post = rm_ident_constraints n_pre n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 

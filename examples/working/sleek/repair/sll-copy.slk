@@ -10,101 +10,11 @@ node copy(node x)
 requires x::ll<n>
 ensures res::ll<n> * x::ll<n>;.
 
-// synthesize [node x,node tmp]
-// x::ll<n>&x!=null
-// ~>
-// (exists fr35,fr36,v747,nxt8,an97,q_98:
-// x::node<an97,q_98> * x::node<v747,nxt8> * q_98::ll<fr35> * tmp::ll<fr36> &
-// fr35=n-1 & fr36=n-1).
-
-// synthesize [node q_65,node x,node tmp,node rs0]
-// x::node<ann64,q_65> * rs0::ll<flt63> * q_65::ll<flt63> &
-// x!=null & flt63+1=n & 0<n
-// ~>
-// (exists fr43, fr44, v45, nxt46, an47, q_48:
-// x::node<an47,q_48> * x::node<v45,nxt46> * q_48::ll<fr43> * tmp::ll<fr44> &
-// fr43+1=n & fr44+1=n).
-
-// synthesize [node x,node tmp]
-// x::ll<n> & x!=null
-// ~>
-// (exists fr01, fr02, vl73, nxt74: x::node<vl73,nxt74> * nxt74::ll<fr01> * tmp::ll<fr02>
-// & -n<0 & fr01=n-1 & fr02=n-1).
-
-// synthesize [node q_65,node x,node tmp]
-// x::node<Anon_64,q_65> * q_65::ll<flt63>&x!=null & flt63+1=n & 0<n
-// ~>
-// (exists fr01_43,fr02_44,vl73_45, nxt74_46:
-// x::node<vl73_45,nxt74_46> * nxt74_46::ll<fr01_43> * tmp::ll<fr02_44> & fr01_43+1=n & fr02_44+1=n).
-
-// synthesize [node q_4405,node x,node tmp,node rs0]
-// rs0::ll<n_2019> & 0<n & flt03+1=n & x!=null & n_2019=flt03 & n22=flt03
-// ~>
-// (exists fr02: tmp::ll<fr02> & -n<0 & n22=n-1 & fr02=n-1).
-
-
-// synthesize [node x,node tmp,node k]
-// k::node<an117,tmp> * x::node<an117,q118> * q118::ll<n121> * tmp::ll<n121> &
-// -1-n121 < 0 & n-1-n121=0 & n-1-flt16=0
-// ~>
-// (exists an62,q21,an11, q12: res::node<an62,q21> * x::node<an11,q12> *
-// q21::ll<n121> * q12::ll<n121>).
-
-
-// synthesize [node x,node tmp,node k]
-//  k::node<Anon_15117,tmp> * x::node<Anon_15117,q_15118> * 
-//  q_15118::ll<n_15121> * tmp::ll<n_15121>&
-// (-1-n_15121)<0 & x=x & n+(-1-n_15121)=0 & (n-1)-flted_7_15116=0
-// ~>
-//  (exists Anon_5549,q_5550,Anon_5740,
-// q_5741: res::node<Anon_5549,q_5550> * x::node<Anon_5740,q_5741> * 
-//         q_5550::ll<n_15121> * q_5741::ll<n_15121>&
-// x=x & n+(-1-n_15121)=0 & (n-1)-flted_7_15116=0).
-
-
-// synthesize [node x,node tmp,node k]
-// tmp::ll<n21> * q18::ll<n21> * x::node<an17,q18> * k::node<an17,tmp> &
-// flt16+1=n & 0<n & x!=null & n21=flt16
-// ~>
-// res::ll<n> * x::ll<n>.
-
 synthesize [node x,node tmp,node k]
-k::node<an17,tmp> * x::node<an17,q18> * q18::ll<n121> * tmp::ll<n121> &
--1-n121<0 & n-1-n121=0 & n-1-flted_7_15116=0
+k::node<ann17, tmp> * x::node<ann17,q18> * 
+q18::ll<n121> * tmp::ll<n121> &
+-1-n121<0 & n-1-n121=0 & n-1-flt16=0
 ~>
-
-(exists Anon_1998,q99,Anon_2189,q90:
-res::node<Anon_1998,q99> * x::node<Anon_2189,q90>
-* q99::ll<n121> * q90::ll<n121>).
-
-// synthesize [node x,node tmp,node k]
-// k::node<an17,tmp> * x::node<an17,q18> * tmp::ll<n_15121>&
-// -1-n21<0 & n-1-n21=0 & n-1-flted_7_15116=0
-// ~>
-// (exists Anon_1998,Anon_2189,q90:
-// res::node<Anon_1998,q18> * x::node<Anon_2189,q_2190> * q90::ll<n21>).
-
-// synthesize [node x,node tmp,node k]
-//  k::node<an17,tmp> * q18::ll<n21> * tmp::ll<n21>&
-// -1-n21<0 & n-1-n21=0 & n-1-flted_7_15116=0
-// ~>
-// (exists Anon_1998, q_1999:
-// res::node<Anon_1998,q_1999> * q_1999::ll<n21> * q18::ll<n21>).
-
-// RlFRead(node x.next, node q18)
-// [RlFuncRes copy$node([q18])
-// [RlFramePred(node q90_64, node rs1)
-// [RlFramePred(node q99_62, node tmp)
-// [RlFrameData(node res, node k)
-// [RlFWrite x, next, rs1
-// [RlSkip
-// []]]]]]]
-
-// synthesize [node q18,node x,node tmp,node k,node rs1]
-//  k::node<an17,tmp> * x::node<an17,q18> * tmp::ll<n121> * rs1::ll<n121> * 
-//  q18::ll<n121>&
-// n=0+flted_7_15116+1 & n=0+n121+1 & 0<(0+n121+1)
-// ~>
-//  (exists Anon_61,q99_62,Anon_63,
-// q90_64: res::node<Anon_61,q99_62> * x::node<Anon_63,q90_64> * 
-//         q99_62::ll<n121> * q90_64::ll<n121>).
+(exists ann51, q52, ann42, q43:
+res::node<ann51,q52> * x::node<ann42,q43> * q52::ll<n121> * q43::ll<n121> &
+n-1-n121=0 & n-1-flt16=0).
