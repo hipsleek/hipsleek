@@ -7341,7 +7341,6 @@ and arith_simplify (i:int) (pf : formula) :  formula =
   Debug.no_1 ("arith_simplify LHS") !print_formula !print_formula
     arith_simplify_x pf
 
-
 and arith_simplify_x (pf : formula) :  formula =
   (* temporarily do not prevent this simplification because it helps
      convert proofs into normal form such as those of Mona (e.g. Mona
@@ -7359,15 +7358,15 @@ and arith_simplify_x (pf : formula) :  formula =
     in helper pf
 
 let get_pure_label n =  match n with
-  | And _ 
+  | And _
   | AndList _ ->  None
-  | BForm (_,l) 
-  | Or (_,_,l,_) 
-  | Not (_,l,_) 
-  | Forall (_,_,l,_) 
+  | BForm (_,l)
+  | Or (_,_,l,_)
+  | Not (_,l,_)
+  | Forall (_,_,l,_)
   | Exists (_,_,l,_) -> l
 
-let select zs n = 
+let select zs n =
   let l = List.length zs in
   (List.nth zs (n mod l))
 
@@ -7375,7 +7374,7 @@ let select zs n =
 let rename_labels  e=
   let f_b e = Some e in
   let f_e e = Some e in
-  let f_f e = 
+  let f_f e =
     let n_l_f n_l = match n_l with
       | None -> (fresh_branch_point_id "")
       | Some (_,s) -> (fresh_branch_point_id s) in	
@@ -8904,16 +8903,15 @@ module ArithNormalizer = struct
     if (is_float_formula f || not !Globals.allow_norm) then f else
       map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
-
 end (* of ArithNormalizer module's definition *)
 
 let norm_form f =
   if (not !Globals.allow_norm) then f else
-    ArithNormalizer.norm_formula f 
+    ArithNormalizer.norm_formula f
 
 let norm_form f =
   let pr = !print_formula in
-  Debug.no_1 "cpure::norm_formula" 
+  Debug.no_1 "cpure::norm_formula"
     pr pr
     norm_form f
 

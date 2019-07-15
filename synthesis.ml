@@ -1098,12 +1098,25 @@ let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
 
-let simplify_arithmetic (formula: CF.formula) =
+let rec simplify_arithmetic_x (formula: CF.formula) =
   match formula with
   | CF.Base b ->
-    let pf = b.CF.formula_base_pure in
-    None
-  | _ -> None
+    let pf = b.CF.formula_base_pure |> MCP.pure_of_mix in
+    let n_pf = CP.norm_form pf in
+    CF.Base {b with CF.formula_base_pure = MCP.mix_of_pure n_pf}
+  | CF.Exists bf ->
+    let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+    let n_pf = CP.norm_form pf in
+    CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure n_pf}
+  | CF.Or bf ->
+    let n_f1 = simplify_arithmetic_x bf.CF.formula_or_f1 in
+    let n_f2 = simplify_arithmetic_x bf.CF.formula_or_f2 in
+    CF.Or {bf with CF.formula_or_f1 = n_f1;
+                   CF.formula_or_f2 = n_f2}
+
+let simplify_arithmetic formula =
+  Debug.no_1 "simplify_arithmetic" pr_formula pr_formula
+    (fun _ -> simplify_arithmetic_x formula) formula
 
 let rm_ident_constraint_pf_x pre_pf post_pf =
   let pre_constraints = pre_pf |> remove_exists_pf |> CP.split_conjunctions in
@@ -1143,6 +1156,8 @@ let simplify_goal goal =
   let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
   let n_post = simplify_post n_post in
   let n_post = rm_ident_constraints n_pre n_post in
+  let n_pre = simplify_arithmetic n_pre in
+  let n_post = simplify_arithmetic n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
