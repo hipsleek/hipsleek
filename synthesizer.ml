@@ -1250,6 +1250,7 @@ and process_one_derivation drv : synthesis_tree =
  * The main synthesis algorithm
  *********************************************************************)
 let synthesize_program goal =
+  let goal = simplify_goal goal in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in

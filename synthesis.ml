@@ -1102,12 +1102,14 @@ let remove_exists (formula:CF.formula) =
 let rec simplify_arithmetic_x (formula: CF.formula) =
   match formula with
   | CF.Base b ->
-    let pf = b.CF.formula_base_pure |> MCP.pure_of_mix in
-    let n_pf = CP.norm_form pf in
+    let n_pf = b.CF.formula_base_pure |> MCP.pure_of_mix in
+    let n_pf = CP.arith_simplify_new n_pf in
+    let n_pf = CP.norm_form n_pf in
     CF.Base {b with CF.formula_base_pure = MCP.mix_of_pure n_pf}
   | CF.Exists bf ->
-    let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
-    let n_pf = CP.norm_form pf in
+    let n_pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+    let n_pf = CP.arith_simplify_new n_pf in
+    let n_pf = CP.norm_form n_pf in
     CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure n_pf}
   | CF.Or bf ->
     let n_f1 = simplify_arithmetic_x bf.CF.formula_or_f1 in
@@ -1150,6 +1152,29 @@ let rm_ident_constraints pre post =
   let n_post = aux pre post in
   n_post
 
+let rm_duplicate_constraint_pf (pf: CP.formula) : CP.formula =
+  let pf = remove_exists_pf pf in
+  let constraints = CP.split_conjunctions pf in
+  let constraints = constraints |> Gen.BList.remove_dups_eq CP.equalFormula in
+  CP.join_conjunctions constraints
+
+let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
+  let rec aux (formula: CF.formula) = match formula with
+    | CF.Base bf ->
+      let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+      let pf = rm_duplicate_constraint_pf pf in
+      CF.Base  {bf with CF.formula_base_pure = MCP.mix_of_pure pf}
+    | CF.Exists bf ->
+      let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+      let pf = rm_duplicate_constraint_pf pf in
+      CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure pf}
+    | CF.Or bf ->
+      let n_f1 = aux bf.CF.formula_or_f1 in
+      let n_f2 = aux bf.CF.formula_or_f2 in
+      CF.Or {bf with CF.formula_or_f1 = n_f1;
+                     CF.formula_or_f2 = n_f2} in
+  aux formula
+
 let simplify_goal goal =
   let n_pre = remove_exists goal.gl_pre_cond in
   let n_pre = elim_idents n_pre in
@@ -1159,6 +1184,8 @@ let simplify_goal goal =
   let n_post = rm_ident_constraints n_pre n_post in
   let n_pre = simplify_arithmetic n_pre in
   let n_post = simplify_arithmetic n_post in
+  let n_pre = rm_duplicate_constraints n_pre in
+  let n_post = rm_duplicate_constraints n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 

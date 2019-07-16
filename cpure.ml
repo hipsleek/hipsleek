@@ -8655,17 +8655,14 @@ and drop_xpure f0 =
  **********************************)
 module ArithNormalizer = struct
 
-  (* 
-   * Printing functions, mainly here for debugging purposes
-   *)
+  (* Printing functions, mainly here for debugging purposes *)
   let rec string_of_exp e0 =
     let need_parentheses e = match e with
       | Add _ | Subtract _ -> true
-      | _ -> false
-    in let wrap e =
+      | _ -> false in
+    let wrap e =
       if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-      else (string_of_exp e)
-    in
+      else string_of_exp e in
     match e0 with
     | Null _ -> "null"
     | Var (v, _) -> string_of_spec_var v
@@ -8681,14 +8678,12 @@ module ArithNormalizer = struct
     | Min (e1, e2, _) -> "min(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
     | TypeCast (ty, e1, _) -> "(" ^ (Globals.string_of_typ ty) ^ ") " ^ string_of_exp e1
     | ArrayAt (sv,elst,_)->
-      let string_of_index_list
-          (elst:exp list):string=
-        List.fold_left (fun s e -> s ^"["^(string_of_exp e)^"]") "" elst
-      in
-      (string_of_spec_var sv)^(string_of_index_list elst) 
+      let string_of_index_list (elst:exp list): string =
+        List.fold_left (fun s e -> s ^"["^(string_of_exp e)^"]") "" elst in
+      (string_of_spec_var sv) ^ (string_of_index_list elst)
     | _ -> "???"
 
-  let string_of_b_formula bf = 
+  let string_of_b_formula bf =
     let build_exp e1 e2 op =
       (string_of_exp e1) ^ op ^ (string_of_exp e2) in
     let (pf,il) = bf in
@@ -8710,8 +8705,8 @@ module ArithNormalizer = struct
       | _ -> "???" in
     let sil = match il with
       | None -> ""
-      | _ -> "$[]"
-    in sil ^ spf
+      | _ -> "$[]" in
+    sil ^ spf
 
   type add_term = int * mult_term_list
 
@@ -8745,7 +8740,7 @@ module ArithNormalizer = struct
     | IConst (i, _) -> [1, [C i, 1]]
     | _ -> [1, [E e, 1]]
 
-  (* convert a m_add_term to corresponding exp form 
+  (* convert a m_add_term to corresponding exp form
    * also simplify the case coeff = 0 or 1 and empty mult_terms list
   *)
   let add_term_to_exp (term: add_term) : exp =
@@ -8789,8 +8784,8 @@ module ArithNormalizer = struct
     let normalized_mult_terms = norm_mult (sort_mult_term mlist) in
     let res = match normalized_mult_terms with
       | (C c, _)::r -> (i*c, r)
-      | _ -> (i, normalized_mult_terms)
-    in res
+      | _ -> (i, normalized_mult_terms) in
+    res
 
   (* sort the list of add_terms after normalizing each m_add_term
   *)
@@ -8812,8 +8807,7 @@ module ArithNormalizer = struct
           if (cmp_list mtl1 mtl2 cmp_mult_term) = 0 then
             insert (i1+i2, mtl1) tail
           else
-            term::termlist
-    in
+            term::termlist in
     match terms with
     | [] -> []
     | head::tail -> insert head (norm_add_term_list tail)
@@ -8845,17 +8839,17 @@ module ArithNormalizer = struct
   let norm_bform_leq e1 e2 l =
     norm_bform_relation (<=) e1 e2 l (fun x -> Lte x)
 
-  let norm_bform_eq e1 e2 l = 
+  let norm_bform_eq e1 e2 l =
     norm_bform_relation (=) e1 e2 l (fun x -> Eq x)
 
-  let norm_bform_neq e1 e2 l = 
+  let norm_bform_neq e1 e2 l =
     norm_bform_relation (<>) e1 e2 l (fun x -> Neq x)
 
   let test_null e1 e2 =
     match e1 with
     | Null _ -> Some (e2,e1)
     | _ -> (match e2 with
-        | Null _ -> Some (e1,e2) 
+        | Null _ -> Some (e1,e2)
         | _ -> None
       )
 
@@ -8894,8 +8888,8 @@ module ArithNormalizer = struct
             Some (norm_bform_neq lhs rhs l)
           | Some (e1,e2) -> Some (Neq (e1,e2,l))
         end
-      | _ -> None
-    in match npf with
+      | _ -> None in
+    match npf with
     | None -> None
     | Some pf -> Some (pf,il)
 
@@ -8923,7 +8917,7 @@ let has_var_exp e0 =
   fold_exp e0 f or_list 
 
 let is_linear_formula f0 =
-  let f_bf bf = 
+  let f_bf bf =
     if is_bag_bform bf || is_list_bform bf then
       Some false
     else None
