@@ -1070,54 +1070,6 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl)
   let () = Syn.syn_res_vars := res_vars in
   (n_iprog, n_prog, n_proc)
 
-
-let buggy_num_strategy body =
-  let rec aux exp changed =
-    if changed then exp, true
-    else
-      match exp with
-      | I.Block block ->
-        let n_block, res = aux block.I.exp_block_body changed in
-        (I.Block {block with exp_block_body = n_block}, res)
-      | I.Label (a, l) ->
-        let n_l, res = aux l changed in
-        (I.Label (a, n_l), res)
-      | I.Seq seq ->
-        let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
-        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
-        (I.Seq {seq with exp_seq_exp1 = n_e1;
-                         exp_seq_exp2 = n_e2}, r2)
-      | I.Cond cond ->
-        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
-        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
-        let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
-        let n_e = I.Cond {cond with exp_cond_condition = n_e1;
-                                    exp_cond_then_arm = n_e2;
-                                    exp_cond_else_arm = n_e3} in
-        (n_e, r3)
-      | I.Assign e ->
-        let n_e1, r1 = aux e.I.exp_assign_lhs changed in
-        let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
-        (I.Assign {e with exp_assign_lhs = n_e1;
-                          exp_assign_rhs = n_e2}, r2)
-      | I.IntLit num ->
-        let n_num = num.I.exp_int_lit_val + 3 in
-        (I.IntLit {num with exp_int_lit_val = n_num}, true)
-      | I.Return e ->
-        let n_e, res = match e.I.exp_return_val with
-          | None -> None, false
-          | Some r_e ->
-            let n_r, res = aux r_e changed in
-            (Some n_r, res) in
-        (I.Return {e with exp_return_val = n_e}, res)
-      | I.Binary bin ->
-        let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
-        let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
-        (I.Binary {bin with exp_binary_oper1 = n_e1;
-                            exp_binary_oper2 = n_e2}, r2)
-      | _ -> (exp, false) in
-  aux body false
-
 let get_infest_level (body: I.exp) f_exp =
   let f_pos = I.get_exp_pos f_exp in
   let rec aux (exp : I.exp) = match exp with
@@ -1577,6 +1529,34 @@ let add_field_infestor body dif_num var_decls data_decls =
             } in
           (n_member, 0)
         else (exp, changed - 1)
+      | I.Var v ->
+        let v_name = v.I.exp_var_name in
+        begin
+          try
+            let typed_v = List.find (fun (y, x) -> eq_str x v_name &&
+                                                   is_node_type y) var_decls in
+            let (typ, name) = typed_v in
+            let typ_name = match typ with
+              | Named str -> str
+              | _ -> "" in
+            let data = List.find (fun x -> eq_str x.I.data_name typ_name) data_decls in
+            let fields = data.I.data_fields |> List.map (fun (x,_,_,_) -> x) in
+            let fields = fields |> List.filter (fun (x, _) -> is_node_type x) in
+            if fields != [] then
+              if changed = 1 then
+                let field = List.hd fields |> snd in
+                let n_exp = I.Member {
+                    I.exp_member_base = exp;
+                    I.exp_member_fields = [field];
+                    I.exp_member_path_id = None;
+                    I.exp_member_pos = v.I.exp_var_pos;
+                  } in
+                let () = pos_list := (v.I.exp_var_pos)::(!pos_list) in
+                (n_exp, 0)
+              else (exp, changed - 1)
+            else (exp, changed)
+          with _ -> (exp, changed)
+        end
       | I.Return e ->
         let n_e, res = match e.I.exp_return_val with
           | None -> None, changed

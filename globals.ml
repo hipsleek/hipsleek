@@ -738,6 +738,11 @@ let is_null_type t  =
   | Named "" -> true
   | _ -> false
 
+let is_node_type t  =
+  match t with
+  | Named _ -> true
+  | _ -> false
+
 let inline_field_expand = "_"
 
 (*use error type in the error msg*)

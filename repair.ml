@@ -48,7 +48,6 @@ let rec helper args = match args with
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
   let n_iproc, args = mk_candidate_proc iproc args candidate num in
   let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
-  (* report_error no_pos "to debug template proc" *)
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
   let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
   let () = Syn.block_var_decls := decl_vars in
@@ -459,7 +458,8 @@ let buggy_level_one body var_decls data_decls =
     else list in
   let n_body_list = n_body_list @ (aux1 body 1 []) in
   let rec aux2 body num list =
-    let n_body, r_num, pos_list = remove_field_infestor body num var_decls data_decls in
+    let n_body, r_num, pos_list = remove_field_infestor body num var_decls
+        data_decls in
     if r_num = 0 then
       let () = x_tinfo_hp (add_str "body" pr_exp) body no_pos in
       let () = x_tinfo_hp (add_str "n_body" pr_exp) n_body no_pos in
@@ -470,7 +470,8 @@ let buggy_level_one body var_decls data_decls =
     else list in
   let n_body_list = n_body_list @ (aux2 body 1 []) in
   let rec aux3 body num list =
-    let n_body, r_num, pos_list = add_field_infestor body num var_decls data_decls in
+    let n_body, r_num, pos_list = add_field_infestor body num var_decls
+        data_decls in
     if r_num = 0 then
       let level = find_infest_level n_body pos_list in
       let n_list = (n_body, level)::list in
