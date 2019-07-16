@@ -121,9 +121,25 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     with _ -> None
 
 let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
-  let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
-  let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-  let cands, others = List.partition (filter_cand !repair_loc) cands (* |> List.rev *) in
+  let i_tree = get_ast_traces (Gen.unsome r_iproc.proc_body) in
+  let () = x_tinfo_hp (add_str "traces" pr_bck) i_tree no_pos in
+  let i_traces = get_iast_traces i_tree in
+  let check_post = !Syn.check_post_list in
+  let pr_traces = pr_list (pr_list (pr_list pr_exp)) in
+  let traces =
+    if List.length check_post = List.length i_traces then
+      let pairs = List.combine check_post i_traces in
+      let traces = pairs |> List.filter (fun (x, _) -> x) |> List.map snd in
+      traces |> List.filter (fun x -> x != [])
+    else i_traces in
+  let () = x_tinfo_hp (add_str "traces" pr_traces) traces no_pos in
+  let stmts = traces |> List.concat |> List.concat in
+  let eq_stmt s1 s2 = VarGen.eq_loc (I.get_exp_pos s1) (I.get_exp_pos s2) in
+  let cands = stmts |> Gen.BList.remove_dups_eq eq_stmt in
+  (* let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
+   * let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in *)
+  let cands, others = List.partition (filter_cand !repair_loc) cands in
+  let cands = cands |> List.rev in
   let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let locs = cands |> List.map I.get_exp_pos in
   let () = x_tinfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
@@ -147,7 +163,7 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
     else
       true
 
-let map_stmt_with_level traces =
+let map_stmt_with_level (bck_tree : bck_tree) =
   let calculate_level traces =
     let rec aux_node traces = match traces with
     | BckEmp -> 0
@@ -156,14 +172,21 @@ let map_stmt_with_level traces =
       let l2 = aux_node node.bck_right in
       if l1 > l2 then l1 + 1 else l2 + 1 in
     aux_node traces in
-  let rec aux (traces) bck_list = match traces with
+  let rec aux traces bck_list = match traces with
     | BckEmp -> bck_list
     | BckNode node ->
       let level = calculate_level traces in
       let bck_list = (node.bck_statements, level)::bck_list in
       let bck_list = aux node.bck_left bck_list in
       aux node.bck_right bck_list in
-  aux traces []
+  let aux_bck (bck_tree: bck_tree) bck_list =
+    let level_l = calculate_level bck_tree.bck_left in
+    let level_r = calculate_level bck_tree.bck_right in
+    let level = 1 + max level_l level_r in
+    let bck_list = (bck_tree.bck_statements, level)::bck_list in
+    let bck_list = aux bck_tree.bck_left bck_list in
+    aux bck_tree.bck_right bck_list in
+  aux_bck bck_tree []
 
 let get_candidate_pairs pairs level =
   let pairs = pairs |> List.filter (fun (_, x) -> x = 1) in
@@ -272,7 +295,7 @@ let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
 let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let body = r_iproc.I.proc_body |> Gen.unsome in
   let traces = get_ast_traces body in
-  let () = x_binfo_hp (add_str "traces" pr_bck_node) traces no_pos in
+  let () = x_binfo_hp (add_str "traces" pr_bck) traces no_pos in
   let blocks = map_stmt_with_level traces in
   let candidates = get_level_two_cand blocks in
   let aux_pair (fst,snd) =

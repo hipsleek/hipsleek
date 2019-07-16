@@ -1882,7 +1882,6 @@ let rec synthesize_st_core st : Iast.exp option=
    *   let seq2 = mkSeq seq assign_exp in
    *   aux_subtrees st seq2 *)
   | RlReturn rcore ->
-    let () = x_binfo_pp "marking" no_pos in
     let c_exp = exp_to_iast rcore.r_exp in
     Some (I.Return {
       exp_return_val = Some c_exp;

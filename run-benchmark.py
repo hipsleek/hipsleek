@@ -1,5 +1,9 @@
 #!/usr/bin/env python2
 
+# Usage: ./run-benchmark.py directory-name
+# e.g. ./run-benchmark.py examples/working/hip/repair/benchmark/
+
+
 import os
 import time
 import sys

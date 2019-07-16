@@ -70,7 +70,7 @@ let sum_list list =
     | h :: t -> aux t (sum + h) in
   aux list 0
 
-let get_bck_trace_stmts (bt:bck_tree_node) =
+let get_bck_trace_stmts (bt:bck_tree) =
   let rec aux (bt:bck_tree) =
     match bt.bck_left, bt.bck_right with
     | BckEmp, BckEmp -> [[bt.bck_statements]]
@@ -87,9 +87,7 @@ let get_bck_trace_stmts (bt:bck_tree_node) =
       let l_traces = List.map (fun x -> stmts::x) left in
       let r_traces = List.map (fun x -> stmts::x) right in
       l_traces @ r_traces in
-  match bt with
-  | BckEmp -> report_error no_pos "body cannot be empty"
-  | BckNode node -> aux node
+  aux bt
 
 let rec pr_bt (bt: block_tree) =
   let stmts = bt.bt_statements in
@@ -129,6 +127,25 @@ let get_statement_traces (bt:block_tree) =
       List.map (fun x -> bt.bt_statements::x) l_trace
     | BtNode left, BtNode right ->
       let stmts = bt.bt_statements in
+      let left = aux left in
+      let right = aux right in
+      let l_traces = List.map (fun x -> stmts::x) left in
+      let r_traces = List.map (fun x -> stmts::x) right in
+      l_traces @ r_traces in
+  aux bt
+
+let get_iast_traces (bt: bck_tree) =
+  let rec aux (bt: bck_tree) =
+    match bt.bck_left, bt.bck_right with
+    | BckEmp, BckEmp -> [[bt.bck_statements]]
+    | BckEmp, BckNode right ->
+      let r_traces = aux right in
+      List.map (fun x -> bt.bck_statements::x) r_traces
+    | BckNode left, BckEmp ->
+      let l_trace = aux left in
+      List.map (fun x -> bt.bck_statements::x) l_trace
+    | BckNode left, BckNode right ->
+      let stmts = bt.bck_statements in
       let left = aux left in
       let right = aux right in
       let l_traces = List.map (fun x -> stmts::x) left in
@@ -213,7 +230,7 @@ let get_ast_traces (exp: I.exp) =
                        bck_right = BckNode r_tree}
     | _ -> block_tree in
   let tree = aux exp input_tree in
-  BckNode tree
+  tree
 
 let get_stmt_candidates (exp: I.exp) =
   let rec aux (exp:I.exp) list =
@@ -481,7 +498,7 @@ let replace_assign_exp exp vars heuristic =
   let rec replace exp vars =
     let exp_vars = I.collect_vars_exp exp in
     let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos in
-    if (sublist exp_vars vars & not (is_cond exp)) then
+    if sublist exp_vars vars && not (is_cond exp) then
       (I.mk_unk_exp exp_vars (I.get_exp_pos exp), exp_vars, [I.get_exp_pos exp])
     else match exp with
       | Binary b ->
@@ -1839,7 +1856,7 @@ let get_all_func iproc =
 
 let get_var_decls_x pos (exp:I.exp) =
   let traces = get_ast_traces exp in
-  let () = x_tinfo_hp (add_str "traces" pr_bck_node) traces no_pos in
+  let () = x_tinfo_hp (add_str "traces" pr_bck) traces no_pos in
   let traces = get_bck_trace_stmts traces in
   let aux_list list =
     let list = list |> List.concat in

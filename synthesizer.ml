@@ -1258,7 +1258,7 @@ let synthesize_program goal =
     (* let st_core = rm_useless_stc st_core in *)
     let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
-    let () = x_binfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
+    let () = x_tinfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
     i_exp
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     let () = x_binfo_hp (add_str "fail branches" pr_int) (!fail_branch_num) no_pos in
