@@ -268,44 +268,44 @@ and mkUimmAnn is_pre cond =
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
-and mkLt a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
+and mkLt a1 a2 pos =
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then 
     failwith ("max/min can only be used in equality")  
-  else 
+  else
     Lt (a1, a2, pos)
 
 and mkLte a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")  
   else 
     Lte (a1, a2, pos)
 
-and mkGt a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
+and mkGt a1 a2 pos =
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")  
   else 
     Gt (a1, a2, pos)
 
 and mkGte a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")  
   else 
     Gte (a1, a2, pos)
 
 and mkSubAnn a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")  
   else 
     SubAnn (a1, a2, pos)
 
 and mkNeq a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")  
   else 
     Neq (a1, a2, pos)
 
 and mkEq a1 a2 pos = 
-  if is_max_min a1 && is_max_min a2 then
+  if not(!enable_repair) && is_max_min a1 && is_max_min a2 then
     failwith ("max/min can only appear in one side of an equation")
   else if is_max_min a1 then
     match a1 with

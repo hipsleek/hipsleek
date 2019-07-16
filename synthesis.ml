@@ -83,7 +83,7 @@ type rule =
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
   | RlFuncRes of rule_func_res
-  (* | RlPostAssign of rule_post_assign *)
+  | RlPostAssign of rule_post_assign
   (* | RlPreAssign of rule_pre_assign *)
 
 and rule_heap_assign = {
@@ -132,11 +132,6 @@ and rule_exists_left = {
 
 and rule_exists_right = {
   n_post: CF.formula;
-}
-
-and rule_vinit = {
-  rvi_var: CP.spec_var;
-  rvi_rhs: CP.exp;
 }
 
 and rule_frame_pred = {
@@ -328,9 +323,6 @@ let pr_instantiate rule =
 let pr_frame_data rcore =
   "(" ^ (pr_var rcore.rfd_lhs) ^ ", " ^ (pr_var rcore.rfd_rhs) ^ ")"
 
-let pr_var_init rule =
-  "(" ^ (pr_var rule.rvi_var) ^ ", " ^ (pr_exp rule.rvi_rhs) ^ ")"
-
 let pr_rule_alloc r =
   let data = r.ra_data in
   let params = r.ra_params in
@@ -351,8 +343,8 @@ let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  (* | RlPreAssign rule -> "RlPreAssign" ^ "(" ^ (pr_rule_pre_assign rule) ^ ")"
-   * | RlPostAssign rule -> "RlPostAssign" ^ "(" ^ (pr_rule_post_assign rule) ^ ")" *)
+  (* | RlPreAssign rule -> "RlPreAssign" ^ "(" ^ (pr_rule_pre_assign rule) ^ ")" *)
+  | RlPostAssign rule -> "RlPostAssign" ^ "(" ^ (pr_rule_post_assign rule) ^ ")"
   | RlReturn rule -> "RlReturn " ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
   | RlFWrite rule -> "RlFWrite " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
@@ -1885,29 +1877,29 @@ let rec synthesize_st_core st : Iast.exp option=
    *   let seq = mkSeq v_decl rhs_exp in
    *   let seq2 = mkSeq seq assign_exp in
    *   aux_subtrees st seq2 *)
-  (* | RlPostAssign rcore ->
-   *   let lhs = rcore.rapost_lhs in
-   *   let rhs = rcore.rapost_rhs in
-   *   let v_decl = I.VarDecl {
-   *       exp_var_decl_type = CP.type_of_sv lhs;
-   *       exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
-   *       exp_var_decl_pos = no_pos;
-   *     } in
-   *   let lhs_exp = I.Var {
-   *       I.exp_var_name = CP.name_of_sv lhs;
-   *       I.exp_var_pos = no_pos;
-   *     } in
-   *   let rhs_exp = exp_to_iast rhs in
-   *   let assign_exp = I.Assign {
-   *       I.exp_assign_op = I.OpAssign;
-   *       I.exp_assign_lhs = lhs_exp;
-   *       I.exp_assign_rhs = rhs_exp;
-   *       I.exp_assign_path_id = None;
-   *       I.exp_assign_pos = no_pos;
-   *     } in
-   *   let seq = mkSeq v_decl rhs_exp in
-   *   let seq2 = mkSeq seq assign_exp in
-   *   aux_subtrees st seq2 *)
+  | RlPostAssign rcore ->
+    let lhs = rcore.rapost_lhs in
+    let rhs = rcore.rapost_rhs in
+    let v_decl = I.VarDecl {
+        exp_var_decl_type = CP.type_of_sv lhs;
+        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+        exp_var_decl_pos = no_pos;
+      } in
+    let lhs_exp = I.Var {
+        I.exp_var_name = CP.name_of_sv lhs;
+        I.exp_var_pos = no_pos;
+      } in
+    let rhs_exp = exp_to_iast rhs in
+    let assign_exp = I.Assign {
+        I.exp_assign_op = I.OpAssign;
+        I.exp_assign_lhs = lhs_exp;
+        I.exp_assign_rhs = rhs_exp;
+        I.exp_assign_path_id = None;
+        I.exp_assign_pos = no_pos;
+      } in
+    let seq = mkSeq v_decl rhs_exp in
+    let seq2 = mkSeq seq assign_exp in
+    aux_subtrees st seq2
   | RlReturn rcore ->
     let c_exp = exp_to_iast rcore.r_exp in
     Some (I.Return {
@@ -2120,6 +2112,18 @@ let get_heap_nodes (hf:CF.h_formula) =
       let args = dn.CF.h_formula_data_arguments in
       let data_name = dn.CF.h_formula_data_name in
       [(var, data_name, args)]
+    | _ -> [] in
+  aux hf
+
+let get_heap_vars (hf:CF.h_formula) : CP.spec_var list =
+  let rec aux hf = match hf with
+    | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
+    | CF.DataNode dn ->
+      let var = dn.CF.h_formula_data_node in
+      [var]
+    | CF.ViewNode vn ->
+      let var = vn.CF.h_formula_view_node in
+      [var]
     | _ -> [] in
   aux hf
 
@@ -2355,6 +2359,10 @@ let rule_use_var var rule = match rule with
   | RlFuncCall rc ->
     let params = rc.rfc_params in
     CP.mem var params
+  | RlFWrite rc ->
+    let var1 = rc.rfw_bound_var in
+    let var2 = rc.rfw_value in
+    CP.eq_sv var1 var || CP.eq_sv var2 var
   | _ -> false
 
 let eliminate_useless_rules goal rules =
@@ -2453,6 +2461,10 @@ let compare_rule_return_vs_other r r2 = match r2 with
   | RlReturn _ -> PriEqual
   | _ -> PriHigh
 
+let compare_rule_post_assign_vs_other r1 r2 = match r2 with
+  | RlSkip | RlReturn _ | RlFramePred _ | RlFrameData _ -> PriLow
+  |_ -> PriLow
+
 let compare_rule goal r1 r2 =
   match r1 with
   | RlSkip -> PriHigh
@@ -2470,6 +2482,7 @@ let compare_rule goal r1 r2 =
   | RlFWrite _ -> PriHigh
   | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
+  | RlPostAssign r1 -> compare_rule_post_assign_vs_other r1 r2
 
 let is_code_rule_x trace = match trace with
   | [] -> false
@@ -2496,7 +2509,7 @@ let length_of_trace trace =
     (* | RlExistsRight _ *)
     | RlUnfoldPre _ | RlUnfoldPost _
     | RlFrameData _ | RlFramePred _
-    (* | RlPreAssign _ | RlPostAssign _ *)
+    (* | RlPreAssign _ *) | RlPostAssign _
       -> true
     | _ -> false in
   let trace = trace |> List.filter (fun x -> is_simplify_rule x |> negate) in

@@ -2437,19 +2437,19 @@ and mklsPtrNeqEqn vs pos =
   else None
 
 and mkLt a1 a2 pos =
-  if is_max_min a1 || is_max_min a2 then
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Lt (a1, a2, pos)
 
 and mkLte a1 a2 pos =
-  if is_max_min a1 || is_max_min a2 then
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Lte (a1, a2, pos)
 
 and mkGt a1 a2 pos =
-  if is_max_min a1 || is_max_min a2 then
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Gt (a1, a2, pos)
@@ -2461,7 +2461,7 @@ and mkRel rel args pos=
   BForm ((RelForm (rel,args,pos), None) , None)
 
 and mkGte a1 a2 pos =
-  if is_max_min a1 || is_max_min a2 then
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Gte (a1, a2, pos)
@@ -2470,7 +2470,7 @@ and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
 and mkNeqNull (v : spec_var) pos = mkNeqExp (mkVar v pos) (Null pos) pos
 
 and mkNeq a1 a2 pos =
-  if is_max_min a1 || is_max_min a2 then
+  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Neq (a1, a2, pos)
@@ -2479,7 +2479,7 @@ and mkEq_b a1 a2 pos : b_formula=
   (mkEq a1 a2 pos, None)
 
 and mkEq a1 a2 pos : p_formula=
-  if is_max_min a1 && is_max_min a2 then
+  if not(!enable_repair) && is_max_min a1 && is_max_min a2 then
     failwith ("max/min can only appear in one side of an equation")
   else if is_max_min a1 then
     match a1 with
