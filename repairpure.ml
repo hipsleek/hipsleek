@@ -30,7 +30,8 @@ let pr_int = string_of_int
 let pr_float = string_of_float
 let pr_bool = string_of_bool
 let pr_vars = Cprinter.string_of_typed_spec_var_list
-let pr_pos = string_of_loc
+let pr_loc = string_of_loc
+let pr_pos = Cprinter.string_of_pos
 
 let next_proc = ref false
 let stop = ref false
@@ -1312,14 +1313,14 @@ let contain_infest_pos exp pos_list =
   aux exp
 
 let find_infest_level body pos_list =
-  let () = x_tinfo_hp (add_str "all pos" (pr_list pr_pos)) pos_list no_pos in
+  let () = x_tinfo_hp (add_str "all pos" (pr_list pr_loc)) pos_list no_pos in
   let rec helper list = match list with
     | [] -> 0
     | h::t -> let tmp = helper t in
       if h > tmp then h else tmp in
   let rec aux exp =
     let () = x_tinfo_hp (add_str "exp" pr_exp) exp no_pos in
-    let () = x_tinfo_hp (add_str "exp post" pr_pos) (I.get_exp_pos exp) no_pos in
+    let () = x_tinfo_hp (add_str "exp post" pr_loc) (I.get_exp_pos exp) no_pos in
     match exp with
     | I.Block block ->
       aux block.I.exp_block_body

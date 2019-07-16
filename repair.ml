@@ -16,10 +16,8 @@ let filter_cand buggy_loc cand =
   match buggy_loc with
   | Some b_loc ->
     let cand_pos = Iast.get_exp_pos cand in
-    let () = x_tinfo_hp (add_str "buggy pos" (Cprinter.string_of_pos)) b_loc
-        no_pos in
-    let () = x_tinfo_hp (add_str "cand pos" (Cprinter.string_of_pos)) cand_pos
-        no_pos in
+    let () = x_tinfo_hp (add_str "buggy pos" pr_pos) b_loc no_pos in
+    let () = x_tinfo_hp (add_str "cand pos" pr_pos) cand_pos no_pos in
     let b_lnum = b_loc.start_pos.Lexing.pos_lnum in
     let cand_lnum = cand_pos.start_pos.Lexing.pos_lnum in
     b_lnum = cand_lnum
@@ -136,11 +134,10 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let stmts = traces |> List.concat |> List.concat in
   let eq_stmt s1 s2 = VarGen.eq_loc (I.get_exp_pos s1) (I.get_exp_pos s2) in
   let cands = stmts |> Gen.BList.remove_dups_eq eq_stmt in
-  (* let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
-   * let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in *)
+  let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let cands, others = List.partition (filter_cand !repair_loc) cands in
   let cands = cands |> List.rev in
-  let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+  let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let locs = cands |> List.map I.get_exp_pos in
   let () = x_tinfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
   let cproc = !Syn.repair_proc |> Gen.unsome in
@@ -602,12 +599,17 @@ let infest_and_repair src (iprog : I.prog_decl) =
     let cprog, _ = Astsimp.trans_prog buggy_prog in
     try
       let _ = Typechecker.check_prog_wrapper buggy_prog cprog in
+      let () = Syn.check_post_list := [] in
+      let () = Z3.stop () in
       let () = x_binfo_pp "INFESTED PROGRAM IS NOT BUGGY W.R.T THE SPECIFICATION" no_pos in
       (0, 0)
     with _ ->
       let start_time = get_time () in
       let r_iprog = start_repair_wrapper buggy_prog level in
+      let () = Syn.check_post_list := [] in
       let duration = get_time () -. start_time in
+      (* to kill process *)
+      let () = Z3.stop () in
       let () = repair_time := (!repair_time) +. duration in
       let s_file = output_infestor_prog src buggy_prog level in
       if r_iprog then

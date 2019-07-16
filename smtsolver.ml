@@ -643,7 +643,7 @@ let z3_restart_interval = ref (-1)
 let log_all = open_log_out ("allinput.z3")
 
 
-let set_process (proc: prover_process_t) = 
+let set_process (proc: prover_process_t) =
   prover_process := proc
 
 (*for z3-2.19*)

@@ -706,10 +706,12 @@ let process_source_full source =
   then print_string (Cprinter.string_of_program cprog)
   else (try
           Typechecker.check_prog_wrapper intermediate_prog cprog;
+          let () = Z3.stop () in
           if (!enable_repair_template) then
             Repair.repair_heap_template();
         with _ as e ->
           begin
+            let () = Z3.stop () in
             if (!Globals.enable_repair) then
               let () = x_binfo_pp "START REPAIR" no_pos in
               let r_iprog = Repair.start_repair_wrapper intermediate_prog 1 in
