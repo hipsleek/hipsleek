@@ -2396,6 +2396,14 @@ let compare_rule_assign_vs_other goal r1 r2 = match r2 with
     if CP.is_res_spec_var r1.ra_lhs then PriHigh
     else PriEqual
 
+let compare_two_frame_pred goal r1 r2 =
+  let vars = goal.gl_vars in
+  let var1 = r1.rfp_rhs in
+  let var2 = r2.rfp_rhs in
+  if CP.mem var1 vars then PriHigh
+  else if CP.mem var2 vars then PriLow
+  else PriEqual
+
 let compare_rule_frame_data_vs_other r1 r2 =
   match r2 with
   | RlFramePred _
@@ -2405,14 +2413,6 @@ let compare_rule_frame_data_vs_other r1 r2 =
   | RlReturn _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   | _ -> PriHigh
-
-let compare_two_frame_pred goal r1 r2 =
-  let vars = goal.gl_vars in
-  let var1 = r1.rfp_rhs in
-  let var2 = r2.rfp_rhs in
-  if CP.mem var1 vars then PriHigh
-  else if CP.mem var2 vars then PriLow
-  else PriEqual
 
 let compare_rule_frame_pred_vs_other goal r1 r2 =
   match r2 with

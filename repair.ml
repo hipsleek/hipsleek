@@ -117,6 +117,30 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       !Synthesis.repair_res
     with _ -> None
 
+let compare_exp_return_vs_other e1 exp2 =
+  match e1.I.exp_return_val with
+  | None -> Syn.PriLow
+  | Some r_e ->
+    begin
+      match r_e with
+      | I.VarDecl _ -> Syn.PriLow
+      | _ -> Syn.PriHigh
+    end
+
+let compare_exp (exp1: I.exp) (exp2: I.exp) =
+  match exp1 with
+  | I.Return e1 -> compare_exp_return_vs_other e1 exp2
+  | _ -> Syn.PriEqual
+
+let ranking_suspicious_exp (candidates: I.exp list) =
+  let cmp_exp exp1 exp2 =
+    let prio = compare_exp exp1 exp2 in
+    match prio with
+    | Syn.PriEqual -> 0
+    | Syn.PriLow -> +1
+    | Syn.PriHigh -> -1 in
+  List.sort cmp_exp candidates
+
 let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let i_tree = get_ast_traces (Gen.unsome r_iproc.proc_body) in
   let () = x_tinfo_hp (add_str "traces" pr_bck) i_tree no_pos in
@@ -135,8 +159,9 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let cands = stmts |> Gen.BList.remove_dups_eq eq_stmt in
   let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let cands, others = List.partition (filter_cand !repair_loc) cands in
-  let cands = cands |> List.rev in
-  let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+  let cands = ranking_suspicious_exp cands in
+  (* let cands = cands |> List.rev in *)
+  let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let locs = cands |> List.map I.get_exp_pos in
   let () = x_tinfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
   let cproc = !Syn.repair_proc |> Gen.unsome in
