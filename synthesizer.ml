@@ -939,8 +939,7 @@ let choose_synthesis_rules_x goal : rule list =
       let _ = choose_main_rules goal |> raise_rules in
       []
     with ERules rs -> rs in
-  if !enable_i then choose_rule_interact goal rules
-  else rules
+  rules
 
 let choose_synthesis_rules goal =
   Debug.no_1 "choose_synthesis_rules" pr_goal pr_rules
@@ -1190,6 +1189,8 @@ let rec synthesize_one_goal goal : synthesis_tree =
 
 and process_all_rules goal rules : synthesis_tree =
   let rec process atrees rules =
+    let rules = if !enable_i then choose_rule_interact goal rules
+      else rules in
     match rules with
     | rule::other_rules ->
       let drv = process_one_rule goal rule in
