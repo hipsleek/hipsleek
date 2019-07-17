@@ -3028,6 +3028,8 @@ let process_synthesize typed_vars pre post =
   let duration = get_time() -. start_time in
   let () = x_binfo_hp (add_str "SYNTHESIS TIME: " string_of_float)
       duration no_pos in
+  let () = x_binfo_hp (add_str "failed branches" string_of_int) !Synthesis.fail_branch_num
+      no_pos in
   let () = match res with
     | None -> let () = x_binfo_pp "SYNTHESIS: FAIL" no_pos in ()
     | _ -> let () = x_binfo_pp "SYNTHESIS RESULT: SUCCESS" no_pos in

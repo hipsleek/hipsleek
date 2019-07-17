@@ -753,24 +753,30 @@ let rec choose_rule_interact goal rules =
     let str = pr_list_ln pr_rule rules in
     let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
     let () = x_binfo_hp (add_str "Rules" pr_rules) rules no_pos in
-    let choose_str = "Please choose from 1 to "
+    let choose_str = "Please choose a/q or from 1 to "
                      ^ (string_of_int (List.length rules)) ^ ": " in
     let () = x_binfo_pp choose_str no_pos in
     let choice = String.uppercase_ascii (String.trim (read_line ())) in
-    let rule_id = int_of_string (choice) in
-    let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
-    let chosen_rules, other_rules =
-      List.partition (fun (x, _) -> x + 1 = rule_id) rules_w_ids in
-    if chosen_rules = [] then
-      let err_str = "Wrong choose, please choose again" in
-      let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
-      choose_rule_interact goal rules
+    if eq_str choice "A" then
+      let () = enable_i := false in
+      rules
+    else if eq_str choice "Q" then
+      []
     else
-      let chosen_rules = List.map snd chosen_rules in
-      let other_rules = List.map snd other_rules in
-      let () = x_binfo_hp (add_str "You chose" (pr_list_ln pr_rule))
-          chosen_rules no_pos in
-      chosen_rules @ other_rules
+      let rule_id = int_of_string (choice) in
+      let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
+      let chosen_rules, other_rules =
+        List.partition (fun (x, _) -> x + 1 = rule_id) rules_w_ids in
+      if chosen_rules = [] then
+        let err_str = "Wrong choose, please choose again" in
+        let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
+        choose_rule_interact goal rules
+      else
+        let chosen_rules = List.map snd chosen_rules in
+        let other_rules = List.map snd other_rules in
+        let () = x_binfo_hp (add_str "You chose" (pr_list_ln pr_rule))
+            chosen_rules no_pos in
+        chosen_rules @ other_rules
 
 let choose_rule_mk_null goal : rule list=
   if has_mk_null goal.gl_trace then []
@@ -1257,6 +1263,7 @@ let synthesize_program goal =
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
+  let () = x_tinfo_hp (add_str "synthesis tree " pr_st) st no_pos in
   match st_status with
   | StValid st_core ->
     (* let st_core = rm_useless_stc st_core in *)
