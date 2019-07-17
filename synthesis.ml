@@ -1144,22 +1144,39 @@ let rm_ident_constraints pre post =
   let n_post = aux pre post in
   n_post
 
-let rm_duplicate_constraint_pf (pf: CP.formula) : CP.formula =
+let rm_duplicate_constraint_pf (pf: CP.formula) : (CP.spec_var list * CP.formula) =
+  let rec get_exists (pf: CP.formula) = match pf with
+    | CP.Exists (e_vars, e_pf, _, _) ->
+      let (e2, pf2) = get_exists e_pf in
+      (e_vars::e2, pf2)
+    | CP.And (f1, f2, loc) ->
+      let e1, n_f1 = get_exists f1 in
+      let e2, n_f2 = get_exists f2 in
+      (e1@e2, CP.And (n_f1, n_f2, loc))
+    | _ -> ([], pf) in
   let pf = remove_exists_pf pf in
   let constraints = CP.split_conjunctions pf in
   let constraints = constraints |> Gen.BList.remove_dups_eq CP.equalFormula in
-  CP.join_conjunctions constraints
+  x_tinfo_hp (add_str "constraints" (pr_list pr_pf)) constraints no_pos;
+  let e_constraints = List.map get_exists constraints in
+  let f_constraints = List.map snd e_constraints in
+  x_tinfo_hp (add_str "constraints" (pr_list pr_pf)) f_constraints no_pos;
+  let n_pf = CP.join_conjunctions f_constraints in
+  let e_vars = e_constraints |> List.map fst |> List.concat in
+  (e_vars, n_pf)
 
 let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
   let rec aux (formula: CF.formula) = match formula with
     | CF.Base bf ->
       let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
-      let pf = rm_duplicate_constraint_pf pf in
-      CF.Base  {bf with CF.formula_base_pure = MCP.mix_of_pure pf}
+      let e_vars, pf = rm_duplicate_constraint_pf pf in
+      let base = CF.Base  {bf with CF.formula_base_pure = MCP.mix_of_pure pf} in
+      add_exists_vars base e_vars
     | CF.Exists bf ->
       let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
-      let pf = rm_duplicate_constraint_pf pf in
-      CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure pf}
+      let e_vars, pf = rm_duplicate_constraint_pf pf in
+      let base = CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure pf} in
+      add_exists_vars base e_vars
     | CF.Or bf ->
       let n_f1 = aux bf.CF.formula_or_f1 in
       let n_f2 = aux bf.CF.formula_or_f2 in
