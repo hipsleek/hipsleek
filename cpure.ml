@@ -6842,20 +6842,20 @@ and simp_mult_x (e : exp) :  exp =
                l))
     | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
     | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
-    |  Max (e1, e2, l) ->
-      Error.report_error
-        {
+    | Max (e1, e2, l) ->
+      if !enable_repair then e0
+      else Error.report_error {
           Error.error_loc = l;
           Error.error_text =
-            "got Max !! (Should have already been simplified )";
+            "got Max !! (Should have already been simplified) xxxx";
         }
-    |  Min (e1, e2, l) ->
-      Error.report_error
-        {
-          Error.error_loc = l;
-          Error.error_text =
-            "got Min !! (Should have already been simplified )";
-        }
+    | Min (e1, e2, l) ->
+      if !enable_repair then e0
+      else Error.report_error{
+            Error.error_loc = l;
+            Error.error_text =
+              "got Min !! (Should have already been simplified )";
+          }
     | TypeCast (ty, e1, l) -> TypeCast (ty, acc_mult m e1, l)
     |  Bag (el, l) ->  Bag (List.map (acc_mult m) el, l)
     |  BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
@@ -6956,13 +6956,15 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
       | _ -> Some e, None
     in r
   |  Max (e1, e2, l) ->
-    Error.report_error
-      {
+    if !enable_repair then (Some e, None)
+    else Error.report_error{
         Error.error_loc = l;
         Error.error_text =
           "got Max !! (Should have already been simplified )";
       }
-  |  Min (e1, e2, l) ->
+  | Min (e1, e2, l) ->
+    if !enable_repair then (Some e, None)
+    else
     Error.report_error
       {
         Error.error_loc = l;

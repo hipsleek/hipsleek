@@ -950,7 +950,10 @@ let check_entail_exact_x prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntail sb_ante sb_conseq in
     let () = x_tinfo_hp (add_str "ENT EXACT: " SBC.pr_ent) ent no_pos in
-    let ptree = SBPH.check_entailment ~timeout:5 sb_prog ent in
+    let start_time = get_time() in
+    let ptree = SBPH.check_entailment ~timeout:1 sb_prog ent in
+    let () = Syn.sb_ent_time := !Syn.sb_ent_time +. (get_time() -. start_time) in
+    let () = Syn.sb_ent_num := !Syn.sb_ent_num + 1 in
     let res = ptree.SBPA.enr_validity in
     let () = export_songbird_entailments_results sb_prog [ent] [res] in
     match res with
@@ -973,7 +976,10 @@ let check_entail_residue_x prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
     let () = x_tinfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
-    let ptree = SBPH.check_entailment ~timeout:5 ~interact:false sb_prog ent in
+    let start_time = get_time() in
+    let ptree = SBPH.check_entailment ~timeout:1 ~interact:false sb_prog ent in
+    let () = Syn.sb_ent_time := !Syn.sb_ent_time +. (get_time() -. start_time) in
+    let () = Syn.sb_ent_num := !Syn.sb_ent_num + 1 in
     let res = ptree.SBPA.enr_validity in
     (* let () = export_songbird_entailments_results sb_prog [ent] [res] in *)
     let () = x_tinfo_hp (add_str "sb_ents" pr_validity) res no_pos in

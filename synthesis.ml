@@ -31,6 +31,8 @@ let pr_failesc_list = Cprinter.string_of_list_failesc_context
 let rel_num = ref 0
 let res_num = ref 0
 let sb_num = ref 0
+let sb_ent_num = ref 0
+let sb_ent_time = ref 0.0
 let fail_branch_num = ref 0
 let check_entail_num = ref 0
 let r_pre = ref 0
@@ -163,6 +165,7 @@ and rule_func_call = {
   rfc_fname : string;
   rfc_params : CP.spec_var list;
   rfc_substs : (CP.spec_var * CP.spec_var) list;
+  rfc_residue : CF.formula
 }
 
 and rule_func_res = {
@@ -170,6 +173,7 @@ and rule_func_res = {
   rfr_params : CP.spec_var list;
   rfr_substs : (CP.spec_var * CP.spec_var) list;
   rfr_return : CP.spec_var;
+  rfr_residue: CF.formula;
 }
 
 and rule_field_write = {
