@@ -105,6 +105,7 @@ and rule_pre_assign = {
 
 and rule_allocate = {
   ra_data: string;
+  ra_pre : CF.formula;
   ra_var : CP.spec_var;
   ra_params: CP.spec_var list;
 }
@@ -2384,6 +2385,13 @@ let rule_use_var var rule = match rule with
     let var1 = rc.rfw_bound_var in
     let var2 = rc.rfw_value in
     CP.eq_sv var1 var || CP.eq_sv var2 var
+  | RlAssign rc ->
+    let var1 = rc.ra_lhs in
+    let vars2 = CP.afv rc.ra_rhs in
+    CP.eq_sv var var1 || CP.mem var vars2
+  | RlReturn rc ->
+    let vars = rc.r_exp |> CP.afv in
+    CP.mem var vars
   | _ -> false
 
 let eliminate_useless_rules goal rules =

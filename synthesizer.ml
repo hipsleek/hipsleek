@@ -83,13 +83,12 @@ let rec find_sub_var sv cur_vars pre_pf =
          begin
            match e1, e2 with
            | Var (sv1, _), Var (sv2, _) ->
-             if CP.eq_spec_var sv1 sv
-             && List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
+             if CP.eq_spec_var sv1 sv &&
+                List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
              then Some sv2
-             else if CP.eq_spec_var sv2 sv
-                  && List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
-             then Some sv1
-             else None
+             else if CP.eq_spec_var sv2 sv &&
+                     List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
+             then Some sv1 else None
            | _ -> None
          end
        | _ -> None
@@ -98,7 +97,7 @@ let rec find_sub_var sv cur_vars pre_pf =
   | CP.And (f1, f2, _) ->
     let res1 = find_sub_var sv cur_vars f1 in
     if res1 = None then find_sub_var sv cur_vars f2
-        else res1
+    else res1
   | _ -> None
 
 (* let choose_rule_pre_assign goal : rule list =
@@ -152,49 +151,6 @@ let check_allocate pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
   let post_vars = post |> get_heap |> get_heap_nodes in
   List.length post_vars - List.length pre_vars = 1
-
-let choose_rule_allocate goal : rule list =
-  let prog = goal.gl_prog in
-  let all_vars = goal.gl_vars in
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
-  let () = x_tinfo_hp (add_str "pre" pr_formula) goal.gl_pre_cond no_pos in
-  let rec mk_args_input args = match args with
-    | [] -> []
-    | [h] -> List.map (fun x -> [x]) h
-    | h::t -> let tmp = mk_args_input t in
-      let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
-      List.concat head_added in
-  let data_decls = prog.C.prog_data_decls in
-  let others = ["__Exc"; "thrd"; "Object"; "int_ptr"; "barrier"] in
-  let filter_fun x = not(List.mem x.C.data_name others) in
-  let data_decls = data_decls |> List.filter filter_fun in
-  let mk_rule data_decl args =
-    let data = data_decl.C.data_name in
-    let var_name = fresh_name () in
-    let var = CP.mk_typed_sv (Named data) var_name in
-    RlAllocate {
-      ra_var = var;
-      ra_data = data;
-      ra_params = args;
-    } in
-  let aux data_decl =
-    let args = data_decl.C.data_fields |> List.map fst
-               |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
-    let arg_types = List.map CP.type_of_sv args in
-    let helper_typ typ =
-      all_vars |> List.filter (fun x -> CP.type_of_sv x = typ) in
-    let args_list = arg_types |> List.map helper_typ in
-    let args_groups = args_list |> mk_args_input in
-    let filter_fun list = has_allocate goal.gl_trace list |> negate in
-    let args_groups = args_groups |> List.filter filter_fun in
-    let rules = args_groups |> List.map (mk_rule data_decl) in
-    rules in
-  if check_allocate pre post then
-    data_decls |> List.map aux |> List.concat
-  else []
 
 let choose_rule_assign_x goal : rule list =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
@@ -465,8 +421,6 @@ let unify_fcall proc_decl pre_proc post_proc goal =
 let choose_rule_func_call goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let procs = goal.gl_proc_decls in
-  (* let proc_names = List.map (fun x -> x.C.proc_name) procs in
-   * let () = x_tinfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in *)
   let aux proc_decl =
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
     let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
@@ -913,6 +867,64 @@ let choose_rule_fread goal =
   Debug.no_1 "choose_rule_fread" pr_goal pr_rules
     (fun _ -> choose_rule_fread_x goal) goal
 
+let choose_rule_allocate goal : rule list =
+  let prog = goal.gl_prog in
+  let all_vars = goal.gl_vars in
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
+  let () = x_tinfo_hp (add_str "pre" pr_formula) goal.gl_pre_cond no_pos in
+  let rec mk_args_input args = match args with
+    | [] -> []
+    | [h] -> List.map (fun x -> [x]) h
+    | h::t -> let tmp = mk_args_input t in
+      let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
+      List.concat head_added in
+  let data_decls = prog.C.prog_data_decls in
+  let others = ["__Exc"; "thrd"; "Object"; "int_ptr"; "barrier"] in
+  let filter_fun x = not(List.mem x.C.data_name others) in
+  let data_decls = data_decls |> List.filter filter_fun in
+  let filter_rule rule =
+    let n_pre = rule.ra_pre in
+    let n_vars = rule.ra_var::goal.gl_vars in
+    let n_goal = {goal with gl_vars = n_vars;
+                            gl_pre_cond = n_pre;
+                            gl_trace = (RlAllocate rule)::goal.gl_trace} in
+    let n_rules = [] in
+    let n_rules = (choose_rule_assign n_goal) @ n_rules in
+    let n_rules = (choose_rule_return n_goal) @ n_rules in
+    List.exists (rule_use_var rule.ra_var) n_rules in
+  let mk_rule data_decl args =
+    let data = data_decl.C.data_name in
+    let var_name = fresh_name () in
+    let var = CP.mk_typed_sv (Named data) var_name in
+    let hf = CF.mkDataNode var data args no_pos in
+    let n_pre = add_h_formula_to_formula hf goal.gl_pre_cond in
+    {
+      ra_var = var;
+      ra_data = data;
+      ra_params = args;
+      ra_pre = n_pre
+    } in
+  let aux data_decl =
+    let args = data_decl.C.data_fields |> List.map fst
+               |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
+    let arg_types = List.map CP.type_of_sv args in
+    let helper_typ typ =
+      all_vars |> List.filter (fun x -> CP.type_of_sv x = typ) in
+    let args_list = arg_types |> List.map helper_typ in
+    let args_groups = args_list |> mk_args_input in
+    let filter_fun list = has_allocate goal.gl_trace list |> negate in
+    let args_groups = args_groups |> List.filter filter_fun in
+    let rules = args_groups |> List.map (mk_rule data_decl) in
+    rules in
+  if check_allocate pre post then
+    let rules = data_decls |> List.map aux |> List.concat in
+  (* let rules = List.filter filter_rule rules in *)
+    rules |> List.map (fun x -> RlAllocate x)
+  else []
+
 let choose_main_rules goal =
   let cur_time = get_time () in
   let duration = cur_time -. goal.gl_start_time in
@@ -1063,29 +1075,19 @@ let process_rule_fread goal rcore =
     mk_derivation_subgoals goal (RlFRead rcore) [n_goal]
 
 let aux_func_call goal rule fname params subst res_var residue =
+  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let proc_decl = goal.gl_proc_decls
                   |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
   let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
   let post_proc = specs |> get_post_cond |> rm_emp_formula in
-  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let fun_args = proc_decl.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let substs = (List.combine fun_args params) @ subst in
-  (* let params_pre = CF.subst substs pre_proc in
-   * let exists_vars = CF.fv params_pre |> List.filter (fun x -> CP.not_mem x params) in
-   * let fresh_evars = List.map CP.mk_fresh_sv exists_vars in
-   * let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in *)
-  (* let params_pre = CF.wrap_exists fresh_evars params_pre in *)
-  (* let ent_check, residue =
-   *   SB.check_entail_residue goal.gl_prog pre_cond params_pre in
-   * match ent_check, residue with
-   * | true, Some red -> *)
-  let red = residue in
   let params_post = CF.subst substs post_proc in
   let () = x_tinfo_hp (add_str "param_post" pr_formula) params_post no_pos in
   let evars = CF.get_exists params_post in
-  let post_state = add_formula_to_formula red params_post in
+  let post_state = add_formula_to_formula residue params_post in
   let np_vars = CF.fv post_state in
   let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
                     |> List.exists (fun x -> x = res_name) in
@@ -1101,7 +1103,6 @@ let aux_func_call goal rule fname params subst res_var residue =
                             gl_trace = rule::goal.gl_trace;
                             gl_pre_cond = post_state} in
   mk_derivation_subgoals goal rule [sub_goal]
-(* | _ -> mk_derivation_fail goal rule *)
 
 let process_rule_func_call goal rc : derivation =
   let fname, params = rc.rfc_fname, rc.rfc_params in

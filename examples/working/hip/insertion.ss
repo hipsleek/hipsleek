@@ -18,7 +18,7 @@ sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
 /* function to insert an element in a sorted list */
 node insert(node x, int v)
 	requires x::sll<n, xs, xl> & n > 0 
-    ensures res::sll<n+1, sres, lres> & sres = min(v, xs) & lres = max(v,xl);
+  ensures res::sll<n+1, sres, lres> & sres = min(v, xs) & lres = max(v,xl);
 
 {
         node tmp_null = null;
