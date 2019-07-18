@@ -888,7 +888,6 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_fread goal) in
     let rs = rs @ (choose_rule_fwrite goal) in
     let rs = rs @ (choose_rule_numeric goal) in
-    let rs = rs @ (choose_rule_unfold_post goal) in
     let rs = rs @ (choose_rule_func_call goal) in
     let rs = rs @ (choose_rule_frame_data goal) in
     (* let rs = rs @ (choose_rule_pre_assign goal) in *)
@@ -898,6 +897,9 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_return goal) in
     let rs = rs @ (choose_rule_heap_assign goal) in
     let rs = eliminate_useless_rules goal rs in
+    let rs = if rs = [] then
+        choose_rule_unfold_post goal
+    else rs in
     let rs = reorder_rules goal rs in
     rs
 

@@ -6,33 +6,17 @@ data node2 {
 pred dll<p,n> == self = null & n = 0 
   or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
 
-void append2(node2 a, node2 b)
-	requires a::dll<q, m> * b::dll<p, n> & m>0 & n > 0
-	ensures (exists k2: a::dll<q, k2> & k2 = m + n);.
-
-// synthesize [node2 x,node2 y]
-// x::node2<a,f42> * y::dll<b,n>&
-// f42=null & 0<n & x=s93 & p92=a & q95=null & fl94=0 & m=1
-// ~>
-
-// (exists fr92,p93,n94,
-// q_95: x::node2<a,q_95> * y::node2<p93,n94> * 
-// n94::dll<q_95,fr92>& x=s93 & p92=a & q95=null & fl94=0 & m=1 & fr92+1=n).
-
-// synthesize [node2 x,node2 y]
-// x::node2<a,null> * y::dll<b,n> & 0<n
-// ~>
-// (exists f92, p93, n94, q95:
-//    x::node2<a,q95> * y::node2<p93,n94> * n94::dll<q95,f92> & f92+1=n).
-
-// synthesize [node2 x,node2 y]
-// x::node2<q,y> * y::dll<p,n>& y!=null & m-1=0
-// ~>
-// (exists fr97: x::dll<q,fr97>& fr97=n+1).
+void append2(node2 x, node2 y)
+	requires x::dll<q, m> * y::dll<p, n> & m>0
+	ensures (exists k2: x::dll<q, k2> & k2 = m + n);.
 
 synthesize [node2 x,node2 y]
-
-x::node2<q,q73> * q73::dll<x,flt72> * y::dll<p,n> &
-(-1-flt72)<0 & q73!=null & m-1-flt72=0
+x::node2<q70, q73> * q73::dll<x, flt72> * y::dll<p,n> &
+0<=flt72 & q73!=null & m=1+flt72
 ~>
-(exists fr16: x::dll<q,fr16> & fr16=flt72+n+1).
+(exists fr16: x::dll<q70,fr16> & fr16=1+flt72+n).
+
+// RlFRead(node2 x.next, node2 q_4573)
+// [RlFuncCall append2$node2~node2([q_4573,y])
+// [RlSkip
+// failed branch 20
