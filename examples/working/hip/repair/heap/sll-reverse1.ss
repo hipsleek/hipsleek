@@ -3,30 +3,19 @@ data node {
 }
 
 ll<n> == self = null & n = 0 
-	or self::node<q> * q::ll<n-1>  & n > 0
-  inv n >= 0;
+	or self::node<q> * q::ll<n-1>  & n > 0;
 
-node reverse(node xs)
-  requires xs = null ensures res = null;
-  requires xs::ll<n> & xs != null
-  ensures xs::ll<n-1> & res::node<null> & xs.next = res;
+node reverse(node xs, node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures res::ll<n+m>;
 {
-  if (xs == null) return null;
+	if (xs == null)
+     return ys;
   else {
-     // node tmp;
-     // tmp = reverse(xs.next);
-     // if (tmp != null) tmp.next = xs;
-     // xs.next = null;
-     // return tmp;
-     if (xs.next == null) return xs;
-     else {
-         node tmp;
-         // dprint;
-         tmp = reverse(xs.next);
-         // dprint;
-         tmp.next = xs;
-         xs.next = null;
-         return xs;
-     }
-  }
+		node tmp;
+		// tmp = xs.next;
+    tmp = xs;
+		xs.next = ys;
+		return reverse(tmp, xs);
+	}
 }

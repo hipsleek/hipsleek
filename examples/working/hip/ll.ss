@@ -297,10 +297,10 @@ void reverse6(node@R xs, node@R ys)
 		tmp = xs.next;
     //dprint;
 		xs.next = ys;
-		ys = xs;
-		xs = tmp;
+		// ys = xs;
+		// xs = tmp;
     //dprint;
-		reverse(xs, ys);
+		reverse(tmp, xs);
 	}
 }
 

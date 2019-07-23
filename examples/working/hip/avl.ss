@@ -182,12 +182,10 @@ node insert(node x, int a)
 				{
 					if (height(x.left.left) == (height(x.left.right) - 1))
 						return rotate_double_left(x.left.left, x.left.right.left, x.left.right.right, x.right, 1, 1, 1);
-					else
-						return node_error();
+					else return node_error();
 				}
 			}
-			else
-			        return node_error();
+			else  return node_error();
 		}
 		else
 		{
