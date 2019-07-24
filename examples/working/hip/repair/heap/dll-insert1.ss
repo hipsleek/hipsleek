@@ -1,6 +1,3 @@
-/* doubly linked lists */
-
-/* representation of a node */
 data node2 {
 	int val; 
 	node2 prev;
@@ -16,6 +13,7 @@ void insert(node2 x, int a)
   ensures x::dll<p, n+1>; 
 {
   if (x.next == null)
-  x.next = new node2(a, x, null);
-	else insert(x.next.next, a);
+         x.next = new node2(a, x, null);
+	else
+      insert(x.next.next, a);
 }

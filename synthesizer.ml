@@ -128,11 +128,16 @@ let choose_rule_post_assign goal : rule list =
   let all_vars = goal.gl_vars in
   let post = goal.gl_post_cond in
   let pre = goal.gl_pre_cond in
-  let e_vars = CF.get_exists post |> List.filter is_node_var in
+  let e_vars = CF.get_exists post in
+  (* let e_vars = e_vars |> List.filter (fun x -> not(is_int_var x)) in *)
+  let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
   let post_pf = CF.get_pure post |> remove_exists_vars_pf in
   let post_conjuncts = CP.split_conjunctions post_pf in
+  let () = x_tinfo_hp (add_str "conjuncts" (pr_list pr_pf)) post_conjuncts no_pos in
   let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
                  |> List.concat in
+  let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
+  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
   let filter_fun (x,y) =
     let vars = CP.afv y in
     vars = [] in
@@ -140,6 +145,7 @@ let choose_rule_post_assign goal : rule list =
   let filter_eq = Gen.BList.remove_dups_eq
       (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
   let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
+  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
   let mk_rule (var, exp) =
     RlPostAssign {
       rapost_lhs = var;
@@ -813,6 +819,28 @@ let choose_rule_mk_null goal : rule list=
       (* list1 *)
     else []
 
+let choose_rule_free goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let sk, residue = check_entail_wrapper goal.gl_prog pre post in
+  if sk then
+    let residue = Gen.unsome residue in
+    if not(CF.is_emp_formula residue) then
+      let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
+      let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
+      let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
+      let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
+      let free_vars = CP.diff_svl pre_node_vars post_node_vars in
+      let in_vars x = CP.mem x goal.gl_vars in
+      if free_vars != [] && List.for_all in_vars free_vars then
+        let rule = RlFree {
+            rd_vars = free_vars;
+          } in
+        [rule]
+      else []
+    else []
+  else []
+
 let choose_rule_fread_x goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
   let rec helper_hf (hf:CF.h_formula) = match hf with
@@ -955,12 +983,13 @@ let choose_main_rules goal =
 
 let mk_rule_free goal residue =
   let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
   let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
   let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
   let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
   let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
   let free_vars = CP.diff_svl pre_node_vars post_node_vars in
-  if List.length free_vars > 0 then
+  if free_vars != [] then
     let rule = RlFree {
         rd_vars = free_vars;
       } in
@@ -971,12 +1000,12 @@ let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
     let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
     try
-      (* to check_residue for the delete case *)
       let sk, residue = check_entail_wrapper prog pre post in
       if sk then
         let residue = Gen.unsome residue in
         if CF.is_emp_formula residue then
-          let rule = RlSkip in [rule]
+          let rule = RlSkip in
+          [rule]
         else mk_rule_free goal residue
       else []
     with _ -> []
@@ -1331,7 +1360,7 @@ let synthesize_cast_stmts goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = mk_goal_w_procs prog called_procs pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let start_time = get_time () in
   let iast_exp = synthesize_program goal in
   let duration = get_time () -. start_time in
@@ -1381,6 +1410,8 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
         let post = post_hp.Cast.hp_formula in
         let pre = pre_hp.Cast.hp_formula |> remove_exists in
+        let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
+        let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
         if isHFalse post then
           let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
           ()

@@ -13,9 +13,10 @@ node reverse(node xs, node ys)
      return ys;
   else {
 		node tmp;
-		// tmp = xs.next;
-    tmp = xs;
+		tmp = xs.next;
+    // tmp = xs;
 		xs.next = ys;
 		return reverse(tmp, xs);
 	}
 }
+  

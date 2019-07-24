@@ -33,7 +33,9 @@ let mk_candidate_proc (iproc:I.proc_decl) args candidate num =
   let loc = I.get_exp_pos candidate in
   let helper sv = (CP.type_of_sv sv, CP.name_of_sv sv) in
   let decl_vars = get_var_decls loc body |> List.map helper in
-  let args = args @ decl_vars in
+  let args = args @ decl_vars |> List.map (fun (x, y) -> CP.mk_typed_sv x y) in
+  let args = args |> CP.remove_dups_svl
+             |> List.map (fun x -> (CP.type_of_sv x, CP.name_of_sv x)) in
   let fcode = create_fcode_exp args num in
   let n_body = Some (replace_exp body fcode candidate) in
   ({iproc with proc_body = n_body}, args)
@@ -46,6 +48,7 @@ let rec helper args = match args with
     head ^ "," ^ tail
 
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
+  let () = x_binfo_hp (add_str "candidate" pr_exp) candidate no_pos in
   let n_iproc, args = mk_candidate_proc iproc args candidate num in
   let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
@@ -157,6 +160,10 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let stmts = traces |> List.concat |> List.concat in
   let eq_stmt s1 s2 = VarGen.eq_loc (I.get_exp_pos s1) (I.get_exp_pos s2) in
   let cands = stmts |> Gen.BList.remove_dups_eq eq_stmt in
+  let not_var_decl (exp: I.exp) = match (exp:I.exp) with
+    | I.VarDecl _ -> false
+    | _ -> true in
+  let cands = cands |> List.filter not_var_decl in
   let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let cands, others = List.partition (filter_cand !repair_loc) cands in
   let cands = ranking_suspicious_exp cands in

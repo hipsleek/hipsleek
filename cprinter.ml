@@ -2566,7 +2566,7 @@ and pr_formula_guard_list (es0: formula_guard list)=
   in
   recf es0
 
-and string_of_formula (e:Cformula.formula) : string =  poly_string_of_pr pr_formula e
+and string_of_formula (e:Cformula.formula): string = poly_string_of_pr pr_formula e
 
 and string_of_rflow_formula f = poly_string_of_pr pr_rflow_formula f
 

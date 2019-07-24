@@ -1805,7 +1805,7 @@ let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
   | RlSkip -> None
   (* | RlExistsRight _ *)
-  | RlFramePred _ | RlFrameData _
+  | RlFramePred _ | RlFrameData _ | RlFree _
   | RlUnfoldPost _ | RlUnfoldPre _ ->
     begin
       let sts = List.map synthesize_st_core st.stc_subtrees in
@@ -1825,16 +1825,16 @@ let rec synthesize_st_core st : Iast.exp option=
         I.exp_assign_pos = no_pos;
       } in
     aux_subtrees st assign
-  | RlFree rc ->
-    let vars = rc.rd_vars in
-    let mk_rule var =
-      I.Free {
-        exp_free_exp = mkVar var;
-        exp_free_pos = no_pos
-      } in
-    let exp_list = List.map mk_rule vars in
-    let d_exp = mk_exp_list exp_list in
-    aux_subtrees st d_exp
+  (* | RlFree rc ->
+   *   let vars = rc.rd_vars in
+   *   let mk_rule var =
+   *     I.Free {
+   *       exp_free_exp = mkVar var;
+   *       exp_free_pos = no_pos
+   *     } in
+   *   let exp_list = List.map mk_rule vars in
+   *   let d_exp = mk_exp_list exp_list in
+   *   aux_subtrees st d_exp *)
   | RlAllocate rc ->
     let r_data = rc.ra_data in
     let r_var = rc.ra_var in
@@ -1919,8 +1919,9 @@ let rec synthesize_st_core st : Iast.exp option=
         I.exp_assign_path_id = None;
         I.exp_assign_pos = no_pos;
       } in
-    let seq = mkSeq v_decl rhs_exp in
-    let seq2 = mkSeq seq assign_exp in
+    (* let seq = mkSeq v_decl rhs_exp in
+     * let seq2 = mkSeq seq assign_exp in *)
+    let seq2 = mkSeq v_decl assign_exp in
     aux_subtrees st seq2
   | RlReturn rcore ->
     let c_exp = exp_to_iast rcore.r_exp in
@@ -2074,9 +2075,8 @@ let rec replace_cexp_aux nexp exp : C.exp =
   | _ -> exp
 
 let replace_exp_proc n_exp proc num =
-  let n_body = match proc.Iast.proc_body with
-    | None -> None
-    | Some exp -> Some (replace_exp_aux n_exp exp num) in
+  let body = proc.I.proc_body |> Gen.unsome in
+  let n_body = Some (replace_exp_aux n_exp body num) in
   x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos;
   x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos;
   {proc with I.proc_body = n_body}
@@ -2378,6 +2378,9 @@ let rule_use_var var rule = match rule with
   | RlFuncRes rc ->
     let params = rc.rfr_params in
     CP.mem var params
+  | RlFree rc ->
+    let params = rc.rd_vars in
+    CP.mem var params
   | RlFuncCall rc ->
     let params = rc.rfc_params in
     CP.mem var params
@@ -2439,7 +2442,10 @@ let compare_rule_frame_data_vs_other r1 r2 =
   | RlFrameData _ -> if CP.is_res_sv r1.rfd_lhs then PriHigh
     else PriLow
   | RlSkip
+  | RlAllocate _ -> PriLow
+  | RlMkNull _ -> PriLow
   | RlReturn _ -> PriLow
+  | RlFree _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   | _ -> PriHigh
 
@@ -2448,6 +2454,8 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | RlFramePred r2 -> compare_two_frame_pred goal r1 r2
   | RlFrameData _ -> if CP.is_res_sv r1.rfp_lhs then PriHigh
     else PriLow
+  | RlAllocate _ -> PriLow
+  | RlFree _ -> PriLow
   | RlReturn _ -> PriLow
   (* | RlAllocate _ -> PriHigh *)
   (* | RlMkNull _ -> PriLow *)
@@ -2742,7 +2750,7 @@ let free_entail_state prog (ent_state:CF.entail_state) (typ, name) =
   else (ent_state, false)
 
 let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
-  let () = x_binfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
+  let () = x_tinfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
   let rec aux_contex (ctx: CF.context) = match ctx with
     | CF.Ctx ent_state ->
       let n_ent, fr = free_entail_state prog ent_state (typ, name) in
@@ -2773,7 +2781,7 @@ let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
     List.for_all (fun x -> x) res_list in
   if res then
     let n_failesc_list = List.map fst res_list in
-    let () = x_binfo_hp (add_str "ctx" pr_failesc_list) n_failesc_list no_pos in
+    let () = x_tinfo_hp (add_str "ctx" pr_failesc_list) n_failesc_list no_pos in
     (n_failesc_list, true)
   else
     (ctx, false)

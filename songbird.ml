@@ -454,8 +454,9 @@ let rec translate_hf hf = match hf with
 let exp_to_var exp = match exp with
   | CP.Var (sv, _) -> (sv, [], [])
   | _ ->
+    let typ = CP.get_exp_type exp in
     let name = fresh_name() in
-    let var = CP.mk_typed_sv Int name in
+    let var = CP.mk_typed_sv typ name in
     let var_exp = CP.mkVar var no_pos in
     let pf = CP.mkEqExp var_exp exp no_pos in
     (var, [pf], [var])
@@ -664,7 +665,7 @@ let translate_hp hp =
 let translate_back_vdefns prog (vdefns: SBC.view_defn list) =
   let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps
             |> Gen.BList.remove_dups_eq Synthesis.eq_hp_decl in
-  let hp_names = hps |> List.map (fun x ->  x.CA.hp_name) in
+  let hp_names = hps |> List.map (fun x -> x.CA.hp_name) in
   let rec helper_f formulas = match formulas with
     | [] -> report_error no_pos "could not be applied"
     | [h] -> h
@@ -816,8 +817,8 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 1) sb_prog sb_ents in
   let duration = get_time () -. start_time in
@@ -1076,8 +1077,8 @@ let check_entail_prog_state prog (es: CF.entail_state)
             ()) invalid_ents in
       let () = if unkn_ents != [] then
           List.iter (fun ent ->
-              let _ = x_binfo_hp (add_str "Program: " SBC.pr_program) n_prog no_pos in
-              let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+              let _ = x_tinfo_hp (add_str "Program: " SBC.pr_program) n_prog no_pos in
+              let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
               (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
               ()) unkn_ents in
       let () = if !songbird_export_invalid_entails then
