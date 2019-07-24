@@ -417,6 +417,10 @@ let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
     let n_f2 = add_exists_vars bf.formula_or_f2 vars in
     CF.Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
 
+let contains_lseg prog =
+  let view_decls = prog.C.prog_view_decls in
+  List.exists (fun x -> eq_str x.C.view_name "lseg") view_decls
+
 let elim_bool_constraint_pf (pf:CP.p_formula) = match pf with
   | CP.BVar (_, loc) -> (true, CP.BConst (true, loc))
   | _ -> (false, pf)
@@ -758,27 +762,28 @@ let not_identity_assign_rule rule = match rule with
     end
   | _ -> true
 
-let rec rm_emp_formula formula:CF.formula =
-  let rec aux_heap hf = match hf with
+let rec rm_emp_hf hf = match hf with
     | CF.Star sf ->
-      let n_f1 = aux_heap sf.CF.h_formula_star_h1 in
-      let n_f2 = aux_heap sf.CF.h_formula_star_h2 in
-      if CF.is_empty_heap n_f1 then aux_heap n_f2
-      else if CF.is_empty_heap n_f2 then aux_heap n_f1
-      else Star {sf with h_formula_star_h1 = aux_heap n_f1;
-                         h_formula_star_h2 = aux_heap n_f2}
+      let n_f1 = rm_emp_hf sf.CF.h_formula_star_h1 in
+      let n_f2 = rm_emp_hf sf.CF.h_formula_star_h2 in
+      if CF.is_empty_heap n_f1 then rm_emp_hf n_f2
+      else if CF.is_empty_heap n_f2 then rm_emp_hf n_f1
+      else Star {sf with h_formula_star_h1 = rm_emp_hf n_f1;
+                         h_formula_star_h2 = rm_emp_hf n_f2}
     | CF.Phase pf ->
-      let n_f1 = aux_heap pf.CF.h_formula_phase_rd in
-      let n_f2 = aux_heap pf.CF.h_formula_phase_rw in
+      let n_f1 = rm_emp_hf pf.CF.h_formula_phase_rd in
+      let n_f2 = rm_emp_hf pf.CF.h_formula_phase_rw in
       if CF.is_empty_heap n_f1 then n_f2
       else if CF.is_empty_heap n_f2 then n_f1
       else hf
-    | _ -> hf in
+    | _ -> hf
+
+let rec rm_emp_formula formula:CF.formula =
   match formula with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
     let () = x_tinfo_hp (add_str "hf" pr_hf) hf no_pos in
-    let n_hf = aux_heap hf in
+    let n_hf = rm_emp_hf hf in
     let () = x_tinfo_hp (add_str "n_hf" pr_hf) n_hf no_pos in
     CF.Base {bf with formula_base_heap = n_hf}
   | CF.Or disjs ->
@@ -788,7 +793,7 @@ let rec rm_emp_formula formula:CF.formula =
                       formula_or_f2 = n_f2; }
   | CF.Exists exists_f ->
     let hf = exists_f.CF.formula_exists_heap in
-    Exists {exists_f with formula_exists_heap = aux_heap hf}
+    Exists {exists_f with formula_exists_heap = rm_emp_hf hf}
 
 let do_unfold_view_hf_vn_x cprog pr_views args (hf:CF.h_formula) =
   let rec look_up_vdef ls_pr_views vname =
@@ -891,29 +896,35 @@ let do_unfold_view_vnode cprog pr_views args (f0: CF.formula) =
   Debug.no_2 "do_unfold_view_vnode" pr1 pr_vars (pr_list pr1)
     (fun _ _ -> do_unfold_view_vnode_x cprog pr_views args f0) f0 args
 
-let get_pre_cond (struc_f: CF.struc_formula) = match struc_f with
-  | CF.EBase bf ->
-    let pre_cond = bf.CF.formula_struc_base in
-    pre_cond
-  | _ -> report_error no_pos "Synthesis.get_pre_cond unhandled cases"
-
-let get_post_cond (struc_f: CF.struc_formula) =
-  let rec helper sf = match sf with
+let get_pre_post_x (struc_f: CF.struc_formula) =
+  let rec get_post struc_f = match struc_f with
     | CF.EBase bf ->
-      let f = bf.formula_struc_base in
+      let f = bf.CF.formula_struc_base in
       if CF.is_emp_formula f then
-        match bf.CF.formula_struc_continuation with
-        | None -> CF.mkBase_simp CF.HEmp (mix_of_pure (CP.mkTrue no_pos))
-        | Some conti_f -> conti_f |> helper
+        bf.CF.formula_struc_continuation |> Gen.unsome |> get_post
       else f
-    | EAssume assume_f ->
-      assume_f.formula_assume_struc |> helper
-    | _ -> report_error no_pos
-             "Synthesis.get_post_cond.helper unhandled cases" in
-  match struc_f with
-  | CF.EBase bf ->
-    bf.formula_struc_continuation |> Gen.unsome |> helper
-  | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
+    | CF.EAssume assume_f ->
+      assume_f.CF.formula_assume_simpl
+    | _ -> report_error no_pos ("get_post unhandled " ^ (pr_struc_f struc_f)) in
+  let rec aux struc_f = match struc_f with
+    | CF.EBase bf ->
+      let pre = bf.CF.formula_struc_base in
+      let post = bf.CF.formula_struc_continuation |> Gen.unsome |> get_post in
+      [(pre, post)]
+    | CF.ECase cases ->
+      let branches = cases.CF.formula_case_branches in
+      let aux (pf, case) =
+        let pairs = aux case in
+        List.map (fun (x,y) ->
+            let n_x = CF.add_pure_formula_to_formula pf x in
+          (n_x, y)) pairs in
+      branches |> List.map aux |> List.concat
+    | _ -> report_error no_pos ("get_specs unhandled " ^ (pr_struc_f struc_f)) in
+  aux struc_f
+
+let get_pre_post (struc_f: CF.struc_formula) =
+  Debug.no_1 "get_pre_post" pr_struc_f (pr_list (pr_pair pr_formula pr_formula))
+    (fun _ -> get_pre_post_x struc_f) struc_f
 
 let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
   let collect_pred (f2:CF.formula) = match f2 with
@@ -2078,7 +2089,7 @@ let replace_exp_proc n_exp proc num =
   let body = proc.I.proc_body |> Gen.unsome in
   let n_body = Some (replace_exp_aux n_exp body num) in
   x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos;
-  x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos;
+  let () = x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
 
 let replace_exp_cproc n_exp proc =
@@ -2188,17 +2199,23 @@ let get_hf (f:CF.formula) = match f with
 let is_res_sv_syn sv = match sv with
   | CP.SpecVar (_,n,_) -> is_substr "rs" n
 
-let rec check_hp_hf_x hp_names hf = match hf with
+let rec check_hp_hf_x hp_names hf =
+  let hf = rm_emp_hf hf in
+  match hf with
   | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
   | CF.HFalse -> false
+  | CF.Phase phase ->
+    check_hp_hf_x hp_names phase.CF.h_formula_phase_rd ||
+    check_hp_hf_x hp_names phase.CF.h_formula_phase_rw
   | CF.HRel (sv, args, _) -> let sv_name = CP.name_of_sv sv in
     if List.exists (fun x -> eq_str x sv_name) hp_names
     then true else false
   | CF.Star sf -> (check_hp_hf_x hp_names sf.CF.h_formula_star_h1) ||
                (check_hp_hf_x hp_names sf.CF.h_formula_star_h2)
-  | _ -> report_error no_pos "unhandled case of check_conseq_hp"
+  | _ -> report_error no_pos ("unhandled case of check_conseq_hp" ^ (pr_hf hf))
 
 let rec get_hp_hf hp_names hf =
+  let hf = rm_emp_hf hf in
   match hf with
   | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
   | CF.HFalse -> []
@@ -2208,7 +2225,7 @@ let rec get_hp_hf hp_names hf =
     then [sv_name] else []
   | CF.Star sf -> (get_hp_hf hp_names sf.CF.h_formula_star_h1) @
                (get_hp_hf hp_names sf.CF.h_formula_star_h2)
-  | _ -> report_error no_pos "unhandled case of get_conseq_hp"
+  | _ -> report_error no_pos ("unhandled case of get_conseq_hp" ^ (pr_hf hf))
 
 let rec get_all_hp_hf hf =
   match hf with
@@ -2388,6 +2405,10 @@ let rule_use_var var rule = match rule with
     let var1 = rc.rfw_bound_var in
     let var2 = rc.rfw_value in
     CP.eq_sv var1 var || CP.eq_sv var2 var
+  | RlAllocate rc ->
+    let r_var = rc.ra_var in
+    let r_params = rc.ra_params in
+    CP.eq_sv var r_var || CP.mem var r_params
   | RlAssign rc ->
     let var1 = rc.ra_lhs in
     let vars2 = CP.afv rc.ra_rhs in

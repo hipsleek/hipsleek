@@ -120,7 +120,7 @@ and struc_infer_formula =  {
 }
 
 and struc_case_formula = {
-  formula_case_branches : (Cpure.formula * struc_formula ) list;
+  formula_case_branches : (Cpure.formula * struc_formula) list;
   formula_case_pos : loc
 }
 

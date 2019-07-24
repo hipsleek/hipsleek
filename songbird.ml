@@ -404,7 +404,9 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
     let to_print = "translate_back_pf " ^ (SBC.pr_pf pf) ^ " not handled" in
     report_error no_pos to_print
 
-let rec translate_hf hf = match hf with
+let rec translate_hf hf =
+  let hf = Syn.rm_emp_hf hf in
+  match hf with
   | CF.HTrue | CF.HEmp -> (SBC.HEmp (translate_loc no_pos), [], [])
   | CF.DataNode dnode -> let ann = dnode.CF.h_formula_data_imm in
     let holes = match ann with
@@ -817,17 +819,17 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 1) sb_prog sb_ents in
   let duration = get_time () -. start_time in
   let () = Syn.inference_time := (!Syn.inference_time) +. duration in
   let res = SBPFU.get_ptree_validity ptree in
-  let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
+  let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+    let () = x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -977,13 +979,14 @@ let check_entail_residue_x prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
     let () = x_tinfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
+    let () = x_tinfo_hp (add_str "ENT PROGRAM" SBC.pr_program) sb_prog no_pos in
     let start_time = get_time() in
-    let ptree = SBPH.check_entailment ~timeout:1 ~interact:false sb_prog ent in
+    let ptree = SBPH.check_entailment ~timeout:3 ~interact:false sb_prog ent in
     let () = Syn.sb_ent_time := !Syn.sb_ent_time +. (get_time() -. start_time) in
     let () = Syn.sb_ent_num := !Syn.sb_ent_num + 1 in
     let res = ptree.SBPA.enr_validity in
     (* let () = export_songbird_entailments_results sb_prog [ent] [res] in *)
-    let () = x_tinfo_hp (add_str "sb_ents" pr_validity) res no_pos in
+    let () = x_tinfo_hp (add_str "validity" pr_validity) res no_pos in
     match res with
     | SBG.MvlTrue ->
       let residue_fs = ptree.SBPA.enr_residues in
@@ -1288,12 +1291,13 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
                           |> List.filter (fun x -> not(CP.mem_svl x n_args))
                           |> List.map CP.to_primed in
           let n_args = n_args @ var_decls |> CP.remove_dups_svl in
+          let n_args = n_args |> CP.remove_dups_svl in
+          let () = x_binfo_hp (add_str "n_args" pr_vars) n_args no_pos in
           let n_pred_f = Syn.create_spec_pred n_args pred_name in
-          (* let n_pred_f = Syn.create_spec_pred n_args "QQ" in *)
           n_pred_f
         else assume_f in
       let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
-      let () = x_tinfo_hp (add_str "new_f" CPR.string_of_formula) new_f no_pos in
+      let () = x_tinfo_hp (add_str "new_f" pr_formula) new_f no_pos in
       let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
       (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
     | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq)))

@@ -1064,9 +1064,9 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl)
       Syn.is_return_cand := true
     else Syn.is_return_cand := false in
   let specs = (n_proc.Cast.proc_stk_of_static_specs # top) in
-  let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
-  let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
-                 |> CP.remove_dups_svl in
+  let res_vars = Syn.get_pre_post specs
+                 |> List.map snd |> List.map CF.fv |> List.concat
+                 |> List.filter CP.is_res_sv |> CP.remove_dups_svl in
   let () = Syn.syn_res_vars := res_vars in
   (n_iprog, n_prog, n_proc)
 

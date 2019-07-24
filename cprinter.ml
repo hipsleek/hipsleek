@@ -2212,7 +2212,7 @@ and printer_of_pure_formula (crt_fmt: Format.formatter) (e:P.formula) : unit =
   poly_printer_of_pr crt_fmt pr_pure_formula e
 
 (** convert h_formula  to a string via pr_h_formula *)
-and string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  pr_h_formula e
+and string_of_h_formula (e:h_formula) : string =  poly_string_of_pr pr_h_formula e
 
 and string_of_h_formula_for_spec (e:h_formula): string = poly_string_of_pr pr_h_formula_for_spec e
 

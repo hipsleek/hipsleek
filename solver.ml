@@ -2631,7 +2631,8 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
   else
     let () = Debug.tinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
     let result, prf =
-      if (SB.contains_hps prog ctx conseq) then       (* unknown predicate *)
+      if Synthesis.contains_lseg prog ||            (* SLEEK does not handle lseg well *)
+        SB.contains_hps prog ctx conseq then (* unknown predicate *)
         SB.heap_entail_after_sat_struc prog ctx conseq
       else if !songbird || !songbird_disproof then
         Songbird.heap_entail_after_sat_struc prog ctx conseq
@@ -11080,8 +11081,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a
                                           prog pos) lhs_h_list) in
               let init_pure = CP.conj_of_list init_pures pos in
               {estate with es_formula = CF.normalize 1 estate.es_formula
-                               (CF.formula_of_pure_formula init_pure pos) pos}
-          in
+                               (CF.formula_of_pure_formula init_pure pos) pos} in
           let ans = do_base_case_unfold_only prog estate.es_formula conseq
               estate lhs_node rhs_node is_folding pos rhs_b in
           (match ans with

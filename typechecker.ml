@@ -2880,8 +2880,7 @@ and check_post (prog : prog_decl) (proc : proc_decl)
   (* WN : why do we have wrap_ad_flow here *)
   let () = Globals.check_post := true in
   let post_op_wrapper f a =
-    wrap_err_post f a
-  in
+    wrap_err_post f a in
   let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST (
       post_op_wrapper (check_post_x prog proc ctx posts pos) pid) )) in
   Debug.no_2 "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts
