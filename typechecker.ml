@@ -2972,6 +2972,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
   let pr = Cprinter.string_of_list_partial_context in
   let () = x_tinfo_hp (add_str "rs" pr) rs no_pos in
+  let () = Globals.check_post := false in
   if (is_reachable_succ) then
     rs
   else

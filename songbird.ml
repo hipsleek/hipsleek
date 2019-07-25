@@ -1364,12 +1364,14 @@ and hentail_after_sat_ebase prog ctx es bf =
       let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
       let vars = vars @ exists_vars |> List.filter filter_var in
       let conseq = bf.CF.formula_struc_base in
-      x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos;
+      x_binfo_hp (add_str "conseq" pr_formula) conseq no_pos;
       let conseq = Syn.add_exists_vars conseq exists_vars in
       let n_es, n_conseq = Syn.create_residue vars prog conseq in
+      let () = x_binfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let pure_ante = ante |> CF.get_pure in
       let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in
       let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
+      let () = x_binfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       (* to add holes here *)
       let reading_nodes = get_reading_nodes bf in
       let n_es = Syn.add_h_formula_list_to_formula reading_nodes n_es in

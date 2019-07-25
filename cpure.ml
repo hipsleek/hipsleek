@@ -785,7 +785,6 @@ let is_int_str (s:string) : bool =
 let is_null_str (s:string) : bool = 
   (s==Globals.null_name)
 
-
 (* is string a constant?  *)
 let is_const (s:spec_var) : bool =
   let n = name_of_spec_var s in

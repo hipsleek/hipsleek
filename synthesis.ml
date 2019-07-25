@@ -953,6 +953,7 @@ let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
 
 let create_residue vars prog conseq =
   if !Globals.check_post then
+    let () = x_binfo_hp (add_str "check_post" string_of_bool) (!check_post) no_pos in
     let residue = CF.mkBase_simp (CF.HEmp) (Mcpure.mkMTrue no_pos) in
     residue, conseq
   else
@@ -1400,7 +1401,11 @@ let num_to_cast num loc =
   }
 
 let rec exp_to_iast (exp: CP.exp) = match exp with
-  | CP.Var (sv, loc) ->  var_to_iast sv loc
+  | CP.Var (sv, loc) ->
+    let () = x_binfo_hp (add_str "var" pr_var) sv no_pos in
+    let typ = CP.type_of_sv sv in
+    if is_null_type typ then I.Null loc
+    else var_to_iast sv loc
   | CP.Null loc -> I.Null loc
   | CP.IConst (num, loc) -> num_to_iast num loc
   | CP.Add (e1, e2, loc) ->
@@ -1812,19 +1817,18 @@ let rec mk_exp_list e_list = match e_list with
   | h::tail -> let n_exp = mk_exp_list tail in
     mkSeq h n_exp
 
-let rec synthesize_st_core st : Iast.exp option=
+let rec synthesize_st_core st : Iast.exp option =
+  let helper st =
+    let sts = List.map synthesize_st_core st.stc_subtrees in
+    match sts with
+    | [] -> None
+    | [h] -> h
+    | _ -> report_error no_pos "syn_st_core: no more than one st" in
   match st.stc_rule with
   | RlSkip -> None
   (* | RlExistsRight _ *)
   | RlFramePred _ | RlFrameData _ | RlFree _
-  | RlUnfoldPost _ | RlUnfoldPre _ ->
-    begin
-      let sts = List.map synthesize_st_core st.stc_subtrees in
-      match sts with
-      | [] -> None
-      | [h] -> h
-      | _ -> report_error no_pos "syn_st_core: no more than one st"
-    end
+  | RlUnfoldPost _ | RlUnfoldPre _ -> helper st
   | RlHeapAssign rc ->
     let lhs = rc.rha_left in
     let rhs = rc.rha_right in
@@ -1912,38 +1916,46 @@ let rec synthesize_st_core st : Iast.exp option=
    *   aux_subtrees st seq2 *)
   | RlPostAssign rcore ->
     let lhs = rcore.rapost_lhs in
-    let rhs = rcore.rapost_rhs in
-    let v_decl = I.VarDecl {
-        exp_var_decl_type = CP.type_of_sv lhs;
-        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
-        exp_var_decl_pos = no_pos;
-      } in
-    let lhs_exp = I.Var {
-        I.exp_var_name = CP.name_of_sv lhs;
-        I.exp_var_pos = no_pos;
-      } in
-    let rhs_exp = exp_to_iast rhs in
-    let assign_exp = I.Assign {
-        I.exp_assign_op = I.OpAssign;
-        I.exp_assign_lhs = lhs_exp;
-        I.exp_assign_rhs = rhs_exp;
-        I.exp_assign_path_id = None;
-        I.exp_assign_pos = no_pos;
-      } in
-    (* let seq = mkSeq v_decl rhs_exp in
-     * let seq2 = mkSeq seq assign_exp in *)
-    let seq2 = mkSeq v_decl assign_exp in
-    aux_subtrees st seq2
+    let lhs_typ = CP.type_of_sv lhs in
+    if is_null_type lhs_typ then helper st
+    else
+      let rhs = rcore.rapost_rhs in
+      let v_decl = I.VarDecl {
+          exp_var_decl_type = CP.type_of_sv lhs;
+          exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+          exp_var_decl_pos = no_pos;
+        } in
+      let lhs_exp = I.Var {
+          I.exp_var_name = CP.name_of_sv lhs;
+          I.exp_var_pos = no_pos;
+        } in
+      let rhs_exp = exp_to_iast rhs in
+      let assign_exp = I.Assign {
+          I.exp_assign_op = I.OpAssign;
+          I.exp_assign_lhs = lhs_exp;
+          I.exp_assign_rhs = rhs_exp;
+          I.exp_assign_path_id = None;
+          I.exp_assign_pos = no_pos;
+        } in
+      (* let seq = mkSeq v_decl rhs_exp in
+       * let seq2 = mkSeq seq assign_exp in *)
+      let seq2 = mkSeq v_decl assign_exp in
+      aux_subtrees st seq2
   | RlReturn rcore ->
     let c_exp = exp_to_iast rcore.r_exp in
     Some (I.Return {
-      exp_return_val = Some c_exp;
-      exp_return_path_id = None;
-      exp_return_pos = no_pos})
+        exp_return_val = Some c_exp;
+        exp_return_path_id = None;
+        exp_return_pos = no_pos})
   | RlFWrite rbind ->
     let bvar, (typ, f_name) = rbind.rfw_bound_var, rbind.rfw_field in
     let rhs = rbind.rfw_value in
-    let rhs_var, mem_var = mkVar rhs,  mkVar bvar in
+    let rhs_var =
+      let () = x_binfo_hp (add_str "var" pr_var) rhs no_pos in
+      let rhs_typ = CP.type_of_sv rhs in
+      if is_null_type rhs_typ then I.Null no_pos
+      else mkVar rhs in
+    let mem_var = mkVar bvar in
     let exp_mem = I.Member {
         exp_member_base = mem_var;
         exp_member_fields = [f_name];
