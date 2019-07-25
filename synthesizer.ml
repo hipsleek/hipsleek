@@ -594,6 +594,7 @@ let choose_rule_numeric goal =
 
 let find_instantiate_var_x goal var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let post_vars = CF.fv post in
   let all_vars = CF.fv pre |> List.filter is_node_var in
   let pf1, pf2 = CF.get_pure pre, CF.get_pure post in
   let ante = CP.mkAnd pf1 pf2 no_pos |> remove_exists_vars_pf in
@@ -605,6 +606,8 @@ let find_instantiate_var_x goal var =
     | CF.Exists bf1, CF.Base bf2 ->
       let hf1 = bf1.CF.formula_exists_heap in
       let hf2 = bf2.CF.formula_base_heap in
+      let () = x_binfo_hp (add_str "f1" pr_formula) f1 no_pos in
+      let () = x_binfo_hp (add_str "f2" pr_formula) f2 no_pos in
       begin
         match hf1, hf2 with
         | CF.ViewNode vnode1, CF.ViewNode vnode2 ->
@@ -615,11 +618,13 @@ let find_instantiate_var_x goal var =
       end
     | _ -> false in
   let compare_two_vars var1 var2 =
-    let var1_f = extract_var_f post var1 in
-    let var2_f = extract_var_f pre var2 in
-    match var1_f, var2_f with
-    | Some f1, Some f2 -> helper f1 f2
-    | _ -> false in
+    if CP.mem var2 post_vars then false
+    else
+      let var1_f = extract_var_f post var1 in
+      let var2_f = extract_var_f pre var2 in
+      match var1_f, var2_f with
+      | Some f1, Some f2 -> helper f1 f2
+      | _ -> false in
   let equal_vars = List.filter (fun x -> compare_two_vars var x) all_vars in
   equal_vars
 
@@ -1404,7 +1409,7 @@ let synthesize_cast_stmts goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = mk_goal_w_procs prog called_procs pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let start_time = get_time () in
   let iast_exp = synthesize_program goal in
   let duration = get_time () -. start_time in

@@ -819,8 +819,8 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 1) sb_prog sb_ents in
   let duration = get_time () -. start_time in
@@ -1364,14 +1364,14 @@ and hentail_after_sat_ebase prog ctx es bf =
       let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
       let vars = vars @ exists_vars |> List.filter filter_var in
       let conseq = bf.CF.formula_struc_base in
-      x_binfo_hp (add_str "conseq" pr_formula) conseq no_pos;
+      x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos;
       let conseq = Syn.add_exists_vars conseq exists_vars in
       let n_es, n_conseq = Syn.create_residue vars prog conseq in
-      let () = x_binfo_hp (add_str "n_es" pr_formula) n_es no_pos in
+      let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let pure_ante = ante |> CF.get_pure in
       let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in
       let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
-      let () = x_binfo_hp (add_str "n_es" pr_formula) n_es no_pos in
+      let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       (* to add holes here *)
       let reading_nodes = get_reading_nodes bf in
       let n_es = Syn.add_h_formula_list_to_formula reading_nodes n_es in

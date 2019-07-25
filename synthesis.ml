@@ -953,7 +953,7 @@ let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
 
 let create_residue vars prog conseq =
   if !Globals.check_post then
-    let () = x_binfo_hp (add_str "check_post" string_of_bool) (!check_post) no_pos in
+    let () = x_tinfo_hp (add_str "check_post" string_of_bool) (!check_post) no_pos in
     let residue = CF.mkBase_simp (CF.HEmp) (Mcpure.mkMTrue no_pos) in
     residue, conseq
   else
