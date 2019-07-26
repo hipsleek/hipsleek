@@ -503,7 +503,11 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx :
       if already_unsat then set_unsat_flag res true
       else res
     else
-      let unfolded_f,_ = unfold_nth 7 prog es.es_formula v already_unsat 0 pos in
+      let formula = es.es_formula in
+      let e_vars = CF.get_exists formula in
+      let n_f = Synthesis.remove_exists_vars formula e_vars in
+      let unfolded_f,_ = unfold_nth 7 prog n_f v already_unsat 0 pos in
+      let unfolded_f = Synthesis.add_exists_vars unfolded_f e_vars in
       let res = build_context (Ctx es) unfolded_f pos in
       if already_unsat then set_unsat_flag res true
       else res in

@@ -606,8 +606,6 @@ let find_instantiate_var_x goal var =
     | CF.Exists bf1, CF.Base bf2 ->
       let hf1 = bf1.CF.formula_exists_heap in
       let hf2 = bf2.CF.formula_base_heap in
-      let () = x_binfo_hp (add_str "f1" pr_formula) f1 no_pos in
-      let () = x_binfo_hp (add_str "f2" pr_formula) f2 no_pos in
       begin
         match hf1, hf2 with
         | CF.ViewNode vnode1, CF.ViewNode vnode2 ->

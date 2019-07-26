@@ -79,6 +79,9 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
 
 let repair_heap_template () =
   let () = x_binfo_pp "start synthesis process in template" no_pos in
+  let ents = !Synthesis.entailments |> List.rev in
+  let pr_ents = pr_list_mln (pr_pair pr_formula pr_formula) in
+  let () = x_binfo_hp (add_str "ents" pr_ents) ents no_pos in
   let iprog = !Syn.syn_iprog |> Gen.unsome in
   let prog = !Syn.syn_cprog |> Gen.unsome in
   let proc_name = !Syn.tmpl_proc_name |> Gen.unsome in
