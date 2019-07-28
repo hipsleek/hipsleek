@@ -2226,6 +2226,19 @@ let rec check_hp_hf_x hp_names hf =
                (check_hp_hf_x hp_names sf.CF.h_formula_star_h2)
   | _ -> report_error no_pos ("unhandled case of check_conseq_hp" ^ (pr_hf hf))
 
+let rec rm_hp_hf hf =
+  let hf = rm_emp_hf hf in
+  match hf with
+  | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
+  | CF.HFalse -> hf
+  | CF.HRel (sv, args, _) -> CF.HEmp
+  | CF.Star sf ->
+    let n_sf1 = rm_hp_hf sf.CF.h_formula_star_h1 in
+    let n_sf2 = rm_hp_hf sf.CF.h_formula_star_h2 in
+    CF.Star {sf with CF.h_formula_star_h1 = n_sf1;
+                     CF.h_formula_star_h2 = n_sf2}
+  | _ -> report_error no_pos ("unhandled case of rm_conseq_hp" ^ (pr_hf hf))
+
 let rec get_hp_hf hp_names hf =
   let hf = rm_emp_hf hf in
   match hf with
@@ -2244,7 +2257,7 @@ let rec get_all_hp_hf hf =
   | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
   | CF.HFalse -> []
   | CF.HRel (sv, args, _) -> [CP.name_of_sv sv]
-  | CF.Star sf -> (get_all_hp_hf sf.CF.h_formula_star_h1) @
+  | CF.Star sf  -> (get_all_hp_hf sf.CF.h_formula_star_h1) @
                (get_all_hp_hf sf.CF.h_formula_star_h2)
   | _ -> report_error no_pos "unhandled case of get_conseq_hp"
 
@@ -2257,6 +2270,21 @@ let rec check_hp_formula_x hp_names formula = match (formula:CF.formula) with
   | CF.Exists ef -> check_hp_hf hp_names ef.CF.formula_exists_heap
   | CF.Or f -> (check_hp_formula_x hp_names f.CF.formula_or_f1) ||
                (check_hp_formula_x hp_names f.CF.formula_or_f2)
+
+let rec rm_hp_formula formula = match (formula:CF.formula) with
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    let n_hf = rm_hp_hf hf |> rm_emp_hf in
+    CF.Base {bf with CF.formula_base_heap = n_hf}
+  | CF.Exists ef ->
+    let hf = ef.CF.formula_exists_heap in
+    let n_hf = rm_hp_hf hf |> rm_emp_hf in
+    CF.Exists {ef with CF.formula_exists_heap = n_hf}
+  | CF.Or f ->
+    let n_f1 = rm_hp_formula f.CF.formula_or_f1 in
+    let n_f2 = rm_hp_formula f.CF.formula_or_f2 in
+    CF.Or {f with CF.formula_or_f1 = n_f1;
+                  CF.formula_or_f2 = n_f2}
 
 let rec get_hp_formula hp_names formula = match (formula:CF.formula) with
   | CF.Base bf -> get_hp_hf hp_names bf.CF.formula_base_heap
@@ -2793,7 +2821,7 @@ let free_entail_state prog (ent_state:CF.entail_state) (typ, name) =
   else (ent_state, false)
 
 let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
-  let () = x_binfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
+  let () = x_tinfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
   let rec aux_contex (ctx: CF.context) = match ctx with
     | CF.Ctx ent_state ->
       let n_ent, fr = free_entail_state prog ent_state (typ, name) in

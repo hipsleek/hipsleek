@@ -1326,6 +1326,7 @@ and hentail_after_sat_ebase prog ctx es bf =
     if conseq_hps != [] then
       let ante = es.CF.es_formula |> Syn.remove_exists in
       let pure_ante = CF.get_pure ante |> Syn.remove_exists_pf in
+      let ante_wo_pred = Syn.rm_hp_formula ante in
       let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv
                       |> List.filter (fun x ->
@@ -1348,6 +1349,7 @@ and hentail_after_sat_ebase prog ctx es bf =
         x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos;
         x_tinfo_hp (add_str "pure ante" pr_pf) pure_ante no_pos;
         let residue = Syn.add_pure_formula_to_formula pure_ante residue in
+        (* let residue = Syn.add_formula_to_formula ante_wo_pred residue in *)
         let conseq = Syn.add_formula_to_formula residue old_conseq in
         (conseq, residue) in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
@@ -1357,6 +1359,7 @@ and hentail_after_sat_ebase prog ctx es bf =
       aux_conti ctx
     else if ante_hps then
       let ante = es.CF.es_formula |> Syn.remove_exists in
+      let ante_wo_pred = Syn.rm_hp_formula ante in
       let vars = ante |> CF.fv |> CP.remove_dups_svl in
       let exists_vars = bf.CF.formula_struc_exists
                         @ bf.CF.formula_struc_explicit_inst
@@ -1370,7 +1373,11 @@ and hentail_after_sat_ebase prog ctx es bf =
       let n_es, n_conseq = Syn.create_residue vars prog conseq in
       let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let pure_ante = ante |> CF.get_pure in
-      let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in
+      (* let ante_wo_pred = ante |> Syn. *)
+      (* let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in *)
+      let n_conseq = if !check_post then
+          CF.add_pure_formula_to_formula pure_ante n_conseq
+        else Syn.add_formula_to_formula ante_wo_pred n_conseq in
       let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
       let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       (* to add holes here *)
