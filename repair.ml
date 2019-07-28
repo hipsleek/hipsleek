@@ -152,6 +152,7 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let () = x_tinfo_hp (add_str "traces" pr_bck) i_tree no_pos in
   let i_traces = get_iast_traces i_tree in
   let check_post = !Syn.check_post_list in
+  let () = x_binfo_hp (add_str "check_post" (pr_list string_of_bool)) check_post no_pos in
   let pr_traces = pr_list (pr_list (pr_list pr_exp)) in
   let traces =
     if List.length check_post = List.length i_traces then

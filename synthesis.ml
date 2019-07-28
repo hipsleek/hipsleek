@@ -2689,16 +2689,16 @@ let rm_redundant_constraint (goal: goal) : goal =
  *                           gl_trace = (RlExistsRight rule)::goal.gl_trace} in
  *   mk_derivation_subgoals goal (RlExistsRight rule) [n_goal] *)
 
-let free_var_hf (hf:CF.h_formula) var =
+let free_var_hf (hf:CF.h_formula) vars =
   let rec aux (hf : CF.h_formula) = match hf with
     | CF.DataNode dn ->
       let dn_var = dn.CF.h_formula_data_node in
-      if CP.eq_sv dn_var var then
+      if CP.mem dn_var vars then
         (CF.HEmp, true, false)
       else (hf, false, false)
     | CF.ViewNode vn ->
       let vn_var = vn.CF.h_formula_view_node in
-      if CP.eq_sv vn_var var then
+      if CP.mem vn_var vars then
         (hf, false, true)
       else (hf, false, false)
     | CF.Star bf ->
@@ -2711,10 +2711,18 @@ let free_var_hf (hf:CF.h_formula) var =
   aux hf
 
 let free_var_formula prog formula var =
+  let get_eq_vars var pf =
+    let eq_pairs = get_equality_pairs pf in
+    let eq_pairs = eq_pairs |> List.filter (fun (x,y) -> CP.eq_sv x var ||
+                                                         CP.eq_sv y var) in
+    let eq_vars = (List.map fst eq_pairs) @ (List.map snd eq_pairs) in
+    CP.remove_dups_svl eq_vars in
   let rec aux formula = match formula with
     | CF.Base bf ->
       let hf = bf.CF.formula_base_heap in
-      let (n_hf, is_f, unfold) = free_var_hf hf var in
+      let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+      let eq_vars = get_eq_vars var pf in
+      let (n_hf, is_f, unfold) = free_var_hf hf eq_vars in
       if is_f then
         let n_f = CF.Base {bf with CF.formula_base_heap = n_hf} in
         (n_f, is_f, unfold)
@@ -2739,7 +2747,9 @@ let free_var_formula prog formula var =
       else (formula, is_f, unfold)
     | CF.Exists bf ->
       let hf = bf.CF.formula_exists_heap in
-      let (n_hf, is_f, unfold) = free_var_hf hf var in
+      let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+      let eq_vars = get_eq_vars var pf in
+      let (n_hf, is_f, unfold) = free_var_hf hf eq_vars in
       if is_f then
         let n_f = CF.Exists {bf with CF.formula_exists_heap = n_hf} in
         (n_f, is_f, unfold)
@@ -2783,7 +2793,7 @@ let free_entail_state prog (ent_state:CF.entail_state) (typ, name) =
   else (ent_state, false)
 
 let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
-  let () = x_tinfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
+  let () = x_binfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
   let rec aux_contex (ctx: CF.context) = match ctx with
     | CF.Ctx ent_state ->
       let n_ent, fr = free_entail_state prog ent_state (typ, name) in

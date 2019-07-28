@@ -1659,13 +1659,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_free_var = (typ, name);
         exp_free_pos = pos;
       } ->
-      let (n_ctx, res) = Synthesis.free_ctx prog ctx (typ, name) in
-      if res then n_ctx
+      if (!enable_repair) then ctx
       else
-        let to_print = "Free variable failedxxx." in
-        raise (Err.Ppf ({
-            Err.error_loc = pos;
-            Err.error_text = to_print}, 1, 0))
+        let (n_ctx, res) = Synthesis.free_ctx prog ctx (typ, name) in
+        if res then n_ctx
+        else
+          let to_print = "Free variable failedxxx." in
+          raise (Err.Ppf ({
+              Err.error_loc = pos;
+              Err.error_text = to_print}, 1, 0))
     | Bind ({
         exp_bind_type = body_t;
         exp_bind_bound_var = (v_t, v); (* node to bind *)

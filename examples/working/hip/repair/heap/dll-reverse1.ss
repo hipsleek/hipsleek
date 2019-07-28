@@ -1,24 +1,35 @@
-data node2 {
-	node2 prev;
-	node2 next;	
+data node {
+	node prev;
+	node next;	
 }
 
-/* view for a doubly linked list with size */
 dll<p,n> == self = null & n = 0 
-  or self::node2<p , q> * q::dll<self, n-1> & n > 0;
+  or (exists q: self::node<p , q> * q::dll<self, n-1> & n > 0);
 
-node2 reverse(node2 xs, node2 ys)
-	requires xs::dll<p, n> * ys::dll<q, m>
-	ensures res::dll<_, n+m>;
+lseg<p, q, n> == self = q & n = 0 
+or self::node<p, u> * u::lseg<self, q,n-1> & n > 0;
+
+node reverse(node x)
+case {
+   x= null -> ensures res = null;
+   x != null -> requires x::lseg<p, y, n> * y::node<_,null> & p = null
+   ensures y::lseg<q, x, n> * x::node<_,null> & res = y & q = null;
+}
 {
-	if (xs != null) {
-		node2 tmp;
-		tmp = xs.next;
-    if (tmp != null)  tmp.prev = null;
-		// xs.next = ys;
-		xs = ys;
-    if (ys != null) ys.prev = xs;
-		return reverse(tmp, xs);
-	}
-  else return ys;
+  if (x==null){
+     return null;
+   }
+  else if (x.next == null){
+     return x;
+  }
+  else {
+     node k;
+     // dprint;
+     k = reverse(x.next);
+     x.next.next = x;
+     x.prev = x.next;
+     x.next = null;
+     // return k.next;
+     return k;
+  }
 }
