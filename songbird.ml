@@ -1016,7 +1016,8 @@ let output_sb_ent sb_prog sb_ent =
   close_out oc
 
 let get_reading_nodes (bf: CF.struc_base_formula) =
-  let _, holes = translate_formula bf.CF.formula_struc_base in
+  let formula = bf.CF.formula_struc_base in
+  let _, holes = translate_formula formula in
   holes
 
 let check_entail_prog_state prog (es: CF.entail_state)
@@ -1375,16 +1376,19 @@ and hentail_after_sat_ebase prog ctx es bf =
       let pure_ante = ante |> CF.get_pure in
       (* let ante_wo_pred = ante |> Syn. *)
       (* let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in *)
-      let n_conseq = if !check_post then
-          CF.add_pure_formula_to_formula pure_ante n_conseq
-        else Syn.add_formula_to_formula ante_wo_pred n_conseq in
-      let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
+      let n_conseq, n_es = if !check_post then
+          CF.add_pure_formula_to_formula pure_ante n_conseq,
+          CF.add_pure_formula_to_formula pure_ante n_es
+        else Syn.add_formula_to_formula ante_wo_pred n_conseq,
+             Syn.add_formula_to_formula ante_wo_pred n_es in
       let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       (* to add holes here *)
       let reading_nodes = get_reading_nodes bf in
+      x_tinfo_hp (add_str "es before" pr_formula) n_es no_pos;
+      x_tinfo_hp (add_str "holes" (pr_list pr_hf)) reading_nodes no_pos;
       let n_es = Syn.add_h_formula_list_to_formula reading_nodes n_es in
+      x_tinfo_hp (add_str "es after" pr_formula) n_es no_pos;
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
-      let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let n_ctx = CF.Ctx {es with CF.es_formula = n_es;} in
       aux_conti n_ctx
     else
