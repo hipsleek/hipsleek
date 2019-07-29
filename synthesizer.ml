@@ -385,11 +385,10 @@ let unify_fcall proc_decl pre_proc post_proc goal =
       List.length n_list = List.length list
     ) ss_args in
   let check_residue (fname, params, is_res, subst) =
+    let () = x_tinfo_hp (add_str "params" pr_vars) params no_pos in
     let proc_decl = goal.gl_proc_decls
                     |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-    (* let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
-     * let post_proc = specs |> get_post_cond |> rm_emp_formula in *)
     let spec_pairs = get_pre_post specs in
     (* to check a list of pre/post *)
     let (pre_proc, post_proc) = List.hd spec_pairs in
@@ -402,7 +401,7 @@ let unify_fcall proc_decl pre_proc post_proc goal =
     let exists_vars = CF.fv params_pre |> List.filter (fun x -> CP.not_mem x params) in
     let fresh_evars = List.map CP.mk_fresh_sv exists_vars in
     let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
-    let params_pre = CF.wrap_exists fresh_evars params_pre in
+    let params_pre = CF.wrap_exists fresh_evars params_pre |> rm_emp_formula in
     let ent_check, residue = check_entail_wrapper goal.gl_prog pre_cond
         params_pre in
     (ent_check, fname, params, is_res, subst, residue) in
@@ -535,7 +534,7 @@ let choose_rule_unfold_post goal =
   if has_unfold_post goal.gl_trace then []
   else
     let rules1 = vnodes |> List.map helper |> List.concat in
-    let rules2 = e_vnodes |> List.map helper_exists |> List.concat in
+    let rules2 = e_vnodes |> List.map helper |> List.concat in
     rules1@rules2
 
 let choose_rule_numeric_x goal =
@@ -830,21 +829,23 @@ let choose_rule_free goal =
 
 let choose_rule_fread_x goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
+  let pre_node_vars = pre_cond |> get_heap |> get_heap_nodes
+                      |> List.map (fun (x, _,_) -> x) in
   let rec helper_hf (hf:CF.h_formula) = match hf with
-    | DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
+    | CF.DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
       if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
         let dn_name = dnode.CF.h_formula_data_name in
         let dn_args = dnode.CF.h_formula_data_arguments in
         [(dn_var, dn_name, dn_args)]
       else []
-    | Star sf -> let hf1, hf2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
+    | CF.Star sf -> let hf1, hf2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
       (helper_hf hf1) @ (helper_hf hf2)
     | _ -> [] in
   let rec helper_f (f:CF.formula) = match f with
-    | Base bf -> helper_hf bf.CF.formula_base_heap
-    | Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
+    | CF.Base bf -> helper_hf bf.CF.formula_base_heap
+    | CF.Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
       (helper_f f1) @ (helper_f f2)
-    | Exists bf -> helper_hf bf.formula_exists_heap in
+    | CF.Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
   let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
@@ -856,6 +857,7 @@ let choose_rule_fread_x goal =
     let unfold_rules = choose_rule_unfold_pre n_goal in
     let fcall_rules = choose_rule_func_call n_goal2 in
     let fwrite_rules = choose_rule_fwrite n_goal2 in
+    List.mem var pre_node_vars ||
     List.exists (rule_use_var var) fwrite_rules ||
     unfold_rules != [] || (List.exists (rule_use_var var) fcall_rules) in
   let helper_triple (var, data, args) =
@@ -936,7 +938,7 @@ let choose_rule_allocate goal : rule list =
     rules in
   if check_allocate pre post then
     let rules = data_decls |> List.map aux |> List.concat in
-  (* let rules = List.filter filter_rule rules in *)
+    let rules = List.filter filter_rule rules in
     rules |> List.map (fun x -> RlAllocate x)
   else []
 
@@ -1012,16 +1014,16 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_numeric goal) in
     let rs = rs @ (choose_rule_func_call goal) in
     let rs = rs @ (choose_rule_frame_data goal) in
-    (* let rs = rs @ (choose_rule_pre_assign goal) in *)
     let rs = rs @ (choose_rule_post_assign goal) in
     let rs = rs @ (choose_rule_allocate goal) in
     let rs = rs @ (choose_rule_mk_null goal) in
     let rs = rs @ (choose_rule_return goal) in
     let rs = rs @ (choose_rule_heap_assign goal) in
+    let rs = rs @ (choose_rule_unfold_post goal) in
     let rs = eliminate_useless_rules goal rs in
-    let rs = if rs = [] then
-        choose_rule_unfold_post goal
-    else rs in
+    (* let rs = if rs = [] then
+     *     choose_rule_unfold_post goal
+     * else rs in *)
     let rs = reorder_rules goal rs in
     rs
 
@@ -1288,7 +1290,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
   let trace = goal.gl_trace in
   if num_of_code_rules trace > 2 || length_of_trace trace > 3
-     || List.length trace > 6
+     || List.length trace > 8
      (*current wrong with 5*)
   then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in

@@ -2507,15 +2507,17 @@ let compare_rule_frame_data_vs_other r1 r2 =
   | RlMkNull _ -> PriLow
   | RlReturn _ -> PriLow
   | RlFree _ -> PriLow
+  | RlFRead _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   | _ -> PriHigh
 
 let compare_rule_frame_pred_vs_other goal r1 r2 =
   match r2 with
   | RlFramePred r2 -> compare_two_frame_pred goal r1 r2
-  | RlFrameData _ -> if CP.is_res_sv r1.rfp_lhs then PriHigh
-    else PriLow
+  | RlFrameData r2 -> if CP.is_res_sv r2.rfd_lhs then PriLow
+    else PriHigh
   | RlAllocate _ -> PriLow
+  | RlFRead _ -> PriLow
   | RlFree _ -> PriLow
   | RlReturn _ -> PriLow
   (* | RlAllocate _ -> PriHigh *)
@@ -2549,6 +2551,9 @@ let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
 
 let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
+  | RlMkNull _ -> PriLow
+  | RlFuncCall _
+  | RlFuncRes _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_allocate_vs_other r1 r2 = match r2 with
@@ -2739,17 +2744,19 @@ let free_var_hf (hf:CF.h_formula) vars =
   aux hf
 
 let free_var_formula prog formula var =
-  let get_eq_vars var pf =
+  let rec get_eq_vars vars pf =
     let eq_pairs = get_equality_pairs pf in
-    let eq_pairs = eq_pairs |> List.filter (fun (x,y) -> CP.eq_sv x var ||
-                                                         CP.eq_sv y var) in
+    let eq_pairs = eq_pairs |> List.filter (fun (x,y) -> CP.mem x vars ||
+                                                         CP.mem y vars) in
     let eq_vars = (List.map fst eq_pairs) @ (List.map snd eq_pairs) in
-    CP.remove_dups_svl eq_vars in
+    let n_vars = CP.remove_dups_svl eq_vars in
+    if CP.diff_svl n_vars vars = [] then n_vars
+    else get_eq_vars n_vars pf in
   let rec aux formula = match formula with
     | CF.Base bf ->
       let hf = bf.CF.formula_base_heap in
       let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
-      let eq_vars = get_eq_vars var pf in
+      let eq_vars = get_eq_vars [var] pf in
       let (n_hf, is_f, unfold) = free_var_hf hf eq_vars in
       if is_f then
         let n_f = CF.Base {bf with CF.formula_base_heap = n_hf} in
@@ -2776,7 +2783,7 @@ let free_var_formula prog formula var =
     | CF.Exists bf ->
       let hf = bf.CF.formula_exists_heap in
       let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
-      let eq_vars = get_eq_vars var pf in
+      let eq_vars = get_eq_vars [var] pf in
       let (n_hf, is_f, unfold) = free_var_hf hf eq_vars in
       if is_f then
         let n_f = CF.Exists {bf with CF.formula_exists_heap = n_hf} in
@@ -2821,7 +2828,8 @@ let free_entail_state prog (ent_state:CF.entail_state) (typ, name) =
   else (ent_state, false)
 
 let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
-  let () = x_tinfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
+  let () = x_binfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
+  let () = x_binfo_hp (add_str "var" pr_id) name no_pos in
   let rec aux_contex (ctx: CF.context) = match ctx with
     | CF.Ctx ent_state ->
       let n_ent, fr = free_entail_state prog ent_state (typ, name) in

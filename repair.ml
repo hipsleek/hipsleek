@@ -116,6 +116,7 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       let iprog = !Syn.syn_iprog |> Gen.unsome in
       let prog = !Syn.syn_cprog |> Gen.unsome in
       let proc = C.find_proc prog proc_name in
+      let () = x_tinfo_hp (add_str "procs" pr_cproc) proc no_pos in
       let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
       let proc_names = get_all_func r_iproc in
       let () = x_binfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in
