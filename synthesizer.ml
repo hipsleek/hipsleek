@@ -1323,7 +1323,6 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let trace = goal.gl_trace in
   if num_of_code_rules trace > 2 || length_of_trace trace > 3
      || List.length trace > 8
-     (*current wrong with 5*)
   then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
