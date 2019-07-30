@@ -2456,6 +2456,8 @@ let rule_use_var var rule = match rule with
   | RlReturn rc ->
     let vars = rc.r_exp |> CP.afv in
     CP.mem var vars
+  | RlFrameData rc ->
+    CP.eq_sv rc.rfd_rhs var
   | _ -> false
 
 let eliminate_useless_rules goal rules =
@@ -2469,6 +2471,16 @@ let eliminate_useless_rules goal rules =
   let n_rules = List.filter (fun rule -> match rule with
       | RlFRead r -> is_rule_fread_usable goal r
       | _ -> true) rules in
+  let filter_mk_null all_rules rule = match rule with
+    | RlMkNull r ->
+      let rhs = r.rmn_null in
+      if CP.is_int_type (CP.get_exp_type rhs) then true
+      else if List.exists (fun x -> match x with | RlPostAssign _ -> true
+                                            | _ -> false) all_rules
+      then false
+      else true
+    | _ -> true in
+  let n_rules = n_rules |> List.filter (filter_mk_null n_rules) in
   (* let n_rules = List.filter (fun rule -> match rule with
    *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
    *     | _ -> true) n_rules in *)
@@ -2484,6 +2496,7 @@ let compare_rule_unfold_post_vs_mk_null r1 r2 =
 
 let compare_rule_assign_vs_other goal r1 r2 = match r2 with
   | RlAssign r2 -> compare_rule_assign_vs_assign goal r1 r2
+  | RlPostAssign _ -> PriLow
   | RlReturn _ -> PriLow
   | _ ->
     if CP.is_res_spec_var r1.ra_lhs then PriHigh
@@ -2508,6 +2521,7 @@ let compare_rule_frame_data_vs_other r1 r2 =
   | RlReturn _ -> PriLow
   | RlFree _ -> PriLow
   | RlFRead _ -> PriLow
+  | RlPostAssign _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   | _ -> PriHigh
 
@@ -2516,6 +2530,7 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | RlFramePred r2 -> compare_two_frame_pred goal r1 r2
   | RlFrameData r2 -> if CP.is_res_sv r2.rfd_lhs then PriLow
     else PriHigh
+  | RlPostAssign _ -> PriLow
   | RlAllocate _ -> PriLow
   | RlFRead _ -> PriLow
   | RlFree _ -> PriLow
@@ -2530,11 +2545,13 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
+  | RlPostAssign _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
+  | RlPostAssign _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_unfold_post_vs_unfold_post r1 r2 =
@@ -2545,6 +2562,7 @@ let compare_rule_unfold_post_vs_unfold_post r1 r2 =
 let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
   | RlUnfoldPost r2 -> compare_rule_unfold_post_vs_unfold_post r1 r2
   | RlMkNull r2 -> compare_rule_unfold_post_vs_mk_null r1 r2
+  | RlPostAssign _ -> PriLow
   | RlReturn _ -> PriLow
   | RlAllocate _ -> PriHigh
   | _ -> PriLow
@@ -2553,6 +2571,7 @@ let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
   | RlFuncCall _
+  | RlPostAssign _
   | RlFuncRes _ -> PriLow
   | _ -> PriHigh
 
@@ -2565,8 +2584,21 @@ let compare_rule_return_vs_other r r2 = match r2 with
   | _ -> PriHigh
 
 let compare_rule_post_assign_vs_other r1 r2 = match r2 with
-  | RlSkip | RlReturn _ | RlFramePred _ | RlFrameData _ -> PriLow
-  |_ -> PriLow
+  | RlSkip | RlReturn _ -> PriLow
+  | RlFramePred _ | RlFrameData _
+  | _ -> PriHigh
+
+let compare_rule_fread_vs_other r1 r2 = match r2 with
+  | RlSkip | RlReturn _ -> PriLow
+  | RlPostAssign _ -> PriLow
+  | _ -> PriHigh
+
+let compare_rule_mk_null_vs_other r1 r2 = match r2 with
+  | RlMkNull r2 ->
+    if CP.is_int_type (CP.get_exp_type r1.rmn_null) then PriHigh
+    else if CP.is_int_type (CP.get_exp_type r2.rmn_null) then PriLow
+    else PriEqual
+  | _ -> PriHigh
 
 let compare_rule goal r1 r2 =
   match r1 with
@@ -2577,11 +2609,11 @@ let compare_rule goal r1 r2 =
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2
   | RlFramePred r -> compare_rule_frame_pred_vs_other goal r r2
   | RlAllocate r1 -> compare_rule_allocate_vs_other r1 r2
-  | RlMkNull _ -> PriHigh
+  | RlMkNull r1 -> compare_rule_mk_null_vs_other r1 r2
   | RlFree _ -> PriHigh
   | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
   | RlHeapAssign _ -> PriEqual
-  | RlFRead r -> PriHigh
+  | RlFRead r -> compare_rule_fread_vs_other r r2
   | RlFWrite _ -> PriHigh
   | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2

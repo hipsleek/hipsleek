@@ -63,22 +63,27 @@ let check_entail_exact_sleek prog ante conseq =
     (fun _ _ -> check_entail_exact_sleek_x prog ante conseq) ante conseq
 
 let check_entail_exact_wrapper prog ante conseq =
+  let ante = rm_emp_formula ante in
+  let conseq = rm_emp_formula conseq in
   if contains_lseg prog then
     let () = x_tinfo_pp "marking" no_pos in
     SB.check_entail_exact prog ante conseq
   else
     try
       check_entail_exact_sleek prog ante conseq
-    with _ -> SB.check_entail_exact prog ante conseq
+    with _ ->
+      SB.check_entail_exact prog ante conseq
 
 let check_entail_wrapper_x prog ante conseq =
+  let ante = rm_emp_formula ante in
+  let conseq = rm_emp_formula conseq in
   if contains_lseg prog then
     let () = x_tinfo_pp "marking" no_pos in
     SB.check_entail_residue prog ante conseq
   else
     try
       check_entail_sleek prog ante conseq
-    with _ -> SB.check_entail_residue prog ante conseq
+    with _ ->  SB.check_entail_residue prog ante conseq
 
 let check_entail_wrapper prog ante conseq =
   Debug.no_2 "check_entail_wrapper" pr_formula pr_formula
@@ -142,11 +147,10 @@ let choose_rule_post_assign goal : rule list =
   let post = goal.gl_post_cond in
   let pre = goal.gl_pre_cond in
   let e_vars = CF.get_exists post in
-  (* let e_vars = e_vars |> List.filter (fun x -> not(is_int_var x)) in *)
   let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
   let post_pf = CF.get_pure post |> remove_exists_vars_pf in
   let post_conjuncts = CP.split_conjunctions post_pf in
-  let () = x_tinfo_hp (add_str "conjuncts" (pr_list pr_pf)) post_conjuncts no_pos in
+  x_tinfo_hp (add_str "conjuncts" (pr_list pr_pf)) post_conjuncts no_pos;
   let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
                  |> List.concat in
   let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
@@ -154,7 +158,7 @@ let choose_rule_post_assign goal : rule list =
   let filter_fun (x,y) =
     let vars = CP.afv y in
     vars = [] in
-    (* not(CP.mem x all_vars) && CP.subset vars all_vars in *)
+    (* not(is_null_type (CP.type_of_sv x)) && *)
   let filter_eq = Gen.BList.remove_dups_eq
       (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
   let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
@@ -167,6 +171,11 @@ let choose_rule_post_assign goal : rule list =
   List.map mk_rule eq_pairs
 
 let check_allocate pre post =
+  let pre_vars = pre |> get_heap |> get_heap_nodes in
+  let post_vars = post |> get_heap |> get_heap_nodes in
+  List.length post_vars = 2 && List.length pre_vars = 1
+
+let check_mk_null pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
   let post_vars = post |> get_heap |> get_heap_nodes in
   List.length post_vars - List.length pre_vars = 1
@@ -473,7 +482,7 @@ let choose_rule_unfold_pre goal =
                                          |> negate) nf in
     if pre_list = [] then []
     else if List.length pre_list = 1 then
-      let n_pre = pre_list |> List.hd |> remove_exists in
+      let n_pre = pre_list |> List.hd |> remove_exists |> rm_emp_formula in
       let rule = RlUnfoldPre {n_pre = n_pre} in
       [rule]
     else [] in
@@ -909,8 +918,20 @@ let choose_rule_allocate goal : rule list =
                             gl_trace = (RlAllocate rule)::goal.gl_trace} in
     let n_rules = [] in
     let n_rules = (choose_rule_assign n_goal) @ n_rules in
+    let n_rules = (choose_rule_fwrite n_goal) @ n_rules in
     let n_rules = (choose_rule_return n_goal) @ n_rules in
+    let n_rules = (choose_rule_frame_data n_goal) @ n_rules in
+    let () = x_tinfo_hp (add_str "arg" pr_var) rule.ra_var no_pos in
+    let () = x_tinfo_hp (add_str "pre" pr_formula) n_pre no_pos in
+    let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
     List.exists (rule_use_var rule.ra_var) n_rules in
+  let filter_eq_var rule =
+    let params = rule.ra_params in
+    let rec aux params = match params with
+      | [] -> false
+      | h :: tail -> if CP.mem h tail then true
+        else aux tail in
+    if aux params then false else true in
   let mk_rule data_decl args =
     let data = data_decl.C.data_name in
     let var_name = fresh_name () in
@@ -939,10 +960,11 @@ let choose_rule_allocate goal : rule list =
   if check_allocate pre post then
     let rules = data_decls |> List.map aux |> List.concat in
     let rules = List.filter filter_rule rules in
+    let rules = rules |> List.filter filter_eq_var in
     rules |> List.map (fun x -> RlAllocate x)
   else []
 
-let choose_rule_mk_null goal : rule list=
+let choose_rule_mk_null goal : rule list =
   if has_mk_null goal.gl_trace then []
   else
     let pre = goal.gl_pre_cond in
@@ -988,16 +1010,19 @@ let choose_rule_mk_null goal : rule list=
       let n_goal = {goal with gl_vars = all_vars;
                               gl_pre_cond = n_pre;
                               gl_trace = (RlMkNull rule)::goal.gl_trace} in
+      let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
       let n_rules = choose_rule_allocate n_goal in
       let n_rules = n_rules @ (choose_rule_func_call n_goal) in
+      let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
+      let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
       List.exists (rule_use_var var) n_rules in
-    if check_allocate pre post then
-      let list1 = data_decls |> List.map aux in
-      let list2 = int_vars |> List.map aux_int in
-      let list = list1 @ list2 in
-      let list = list |> List.filter filter_rule in
-      list |> List.map (fun x -> RlMkNull x)
-    else []
+    (* if check_allocate pre post then *)
+    let list1 = data_decls |> List.map aux in
+    let list2 = int_vars |> List.map aux_int in
+    let list = list1 @ list2 in
+    let list = list |> List.filter filter_rule in
+    list |> List.map (fun x -> RlMkNull x)
+(* else [] *)
 
 let choose_main_rules goal =
   let cur_time = get_time () in
