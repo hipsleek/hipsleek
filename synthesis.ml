@@ -2631,13 +2631,49 @@ let is_code_rule trace =
   Debug.no_1 "is_code_rule" pr_trace string_of_bool
     (fun _ -> is_code_rule_x trace) trace
 
-let num_of_code_rules trace =
-  let is_code_rule rule = match rule with
+let is_generate_code_rule rule = match rule with
     | RlAssign _ | RlReturn _ | RlFWrite _ | RlFuncRes _
     | RlFuncCall _ -> true
-    | _ -> false in
-  let trace = List.filter is_code_rule trace in
+    | _ -> false
+
+let get_rule_vars rule = match rule with
+  | RlAssign rc ->
+    let lhs = rc.ra_lhs in
+    let rhs = CP.afv rc.ra_rhs in
+    lhs::rhs
+  | RlFWrite rc ->
+    let bv = rc.rfw_bound_var in
+    let value = rc.rfw_value in
+    [bv; value]
+  | RlReturn rc ->
+    let rhs = CP.afv rc.r_exp in
+    rhs
+  | RlFuncRes rc -> rc.rfr_return::rc.rfr_params
+  | RlFuncCall rc -> rc.rfc_params
+  | _ -> []
+
+let num_of_code_rules trace =
+  let trace = List.filter is_generate_code_rule trace in
   List.length trace
+
+let check_trace_consistence_x trace =
+  let rec aux trace vars = match trace with
+    | [] -> true
+    | h::tail ->
+      if is_generate_code_rule h then
+        let rule_vars = get_rule_vars h in
+        if vars = [] then aux tail rule_vars
+        else if CP.intersect vars rule_vars = [] then false
+        else
+          let n_vars = rule_vars@vars |> CP.remove_dups_svl in
+          aux tail n_vars
+      else aux tail vars in
+  let trace = List.rev trace in
+  aux trace []
+
+let check_trace_consistence trace =
+  Debug.no_1 "check_trace_consistence" pr_rules string_of_bool
+    (fun _ -> check_trace_consistence_x trace) trace
 
 let length_of_trace trace =
   let is_simplify_rule rule = match rule with

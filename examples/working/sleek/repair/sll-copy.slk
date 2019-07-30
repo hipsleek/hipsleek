@@ -10,15 +10,33 @@ node copy(node x)
 requires x::ll<n>
 ensures res::ll<n> * x::ll<n>;.
 
-synthesize [node x,node tmp,node k]
-k::node<ann17, tmp> * x::node<ann17,q18> * 
-q18::ll<n121> * tmp::ll<n121> & -1-n121<0 & n-1-n121=0
-~>
-(exists ann51, q52, ann42, q43:
-res::node<ann51,q52> * x::node<ann42,q43> * q52::ll<n121> * q43::ll<n121>).
+// synthesize [node x,node tmp,node k]
+// k::node<ann17, tmp> * x::node<ann17,q18> * 
+// q18::ll<n121> * tmp::ll<n121> & -1-n121<0 & n-1-n121=0
+// ~>
+// (exists ann51, q52, ann42, q43:
+// res::node<ann51,q52> * x::node<ann42,q43> * q52::ll<n121> * q43::ll<n121>).
 
-// RlFramePred(node q43_58, node tmp)
-// [RlFramePred(node q52_56, node q18)
+synthesize [node x,node tmp,node k]
+k::node<an95,tmp> * x::node<an95,q96> * q96::ll<n99> * tmp::ll<n99> & 
+0<=n99 & n=1+n99 & n=1+fl94
+~>
+(exists an33,q34, an24, q_4625: res::node<an33,q34> * x::node<an24,q_4625> * 
+        q34::ll<n99> * q_4625::ll<n99>).
+
+
+// RlFRead(node x.next, node q96)
+// [RlFramePred(node q34_51, node tmp)
+// [RlFramePred(node q_53, node q96)
+// [RlFrameData(node x, node x)
+// [RlReturn ( k)
+// []]]]]
+
+
+// RlFRead(node x.next, node q96)
+// [RlFramePred(node q34_51, node q96)
+// [RlFramePred(node q_53, node tmp)
+// [RlFWrite x, next, tmp
 // [RlFrameData(node x, node k)
 // [RlReturn ( x)
-// []]]]
+// []]]]]]

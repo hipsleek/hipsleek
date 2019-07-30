@@ -752,15 +752,18 @@ let choose_rule_frame_data goal =
     let () = x_tinfo_hp (add_str "pre_vars" pr_vars) pre_vars no_pos in
     let () = x_tinfo_hp (add_str "post_vars" pr_vars) post_vars no_pos in
     if (List.length pre_vars = List.length post_vars) then
-      let pre_vars = rhs::pre_vars in
-      let post_vars = lhs::post_vars in
-      let rule = RlFrameData {
-          rfd_lhs = lhs;
-          rfd_rhs = rhs;
-          rfd_pairs = List.combine pre_vars post_vars;
-          rfd_pre = n_pre;
-          rfd_post = n_post;
-        } in [rule]
+      let pre_cond_vars = pre |> CF.fv in
+      if CP.mem lhs pre_cond_vars && not(CP.eq_sv lhs rhs) then []
+      else
+        let pre_vars = rhs::pre_vars in
+        let post_vars = lhs::post_vars in
+        let rule = RlFrameData {
+            rfd_lhs = lhs;
+            rfd_rhs = rhs;
+            rfd_pairs = List.combine pre_vars post_vars;
+            rfd_pre = n_pre;
+            rfd_post = n_post;
+          } in [rule]
     else [] in
   pairs |> List.map filter |> List.concat
 
@@ -1137,8 +1140,12 @@ let process_rule_return goal rcore =
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
   let ent_check = check_entail_exact_wrapper goal.gl_prog n_pre post in
   match ent_check with
-  | true -> mk_derivation_success goal (RlReturn rcore)
-  | false -> mk_derivation_fail goal (RlReturn rcore)
+  | true ->
+    let n_trace = (RlReturn rcore)::goal.gl_trace in
+    if check_trace_consistence n_trace then
+      mk_derivation_success goal (RlReturn rcore)
+    else mk_derivation_fail goal (RlReturn rcore)
+  | false ->  mk_derivation_fail goal (RlReturn rcore)
 
 let subs_fwrite formula var field new_val data_decls =
   match (formula:CF.formula) with
