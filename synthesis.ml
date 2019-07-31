@@ -2576,6 +2576,7 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | _ -> PriHigh
 
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
+  | RlNewNum _ -> PriLow
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
   | RlPostAssign _ -> PriLow
@@ -2931,7 +2932,7 @@ let free_entail_state prog (ent_state:CF.entail_state) (typ, name) =
   else (ent_state, false)
 
 let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
-  let () = x_binfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
+  let () = x_tinfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
   let () = x_binfo_hp (add_str "var" pr_id) name no_pos in
   let rec aux_contex (ctx: CF.context) = match ctx with
     | CF.Ctx ent_state ->

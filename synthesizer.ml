@@ -627,7 +627,8 @@ let find_instantiate_var_x goal var =
         | CF.ViewNode vnode1, CF.ViewNode vnode2 ->
           let args1 = vnode1.CF.h_formula_view_arguments in
           let args2 = vnode2.CF.h_formula_view_arguments in
-          List.exists2 (fun x y -> helper_pure x y) args1 args2
+          List.length args1 = List.length args2
+          (* List.exists2 (fun x y -> helper_pure x y) args1 args2 *)
         | _ -> false
       end
     | _ -> false in
@@ -686,7 +687,8 @@ let choose_rule_frame_pred goal =
      *   | _ -> true in
      * let check_pre = List.for_all (check_field pre) pre_vars in
      * let check_post = List.for_all (check_field post) post_vars in *)
-    if (List.length pre_vars = List.length post_vars) (* &&
+    if SB.check_unsat goal.gl_prog n_post then []
+    else if (List.length pre_vars = List.length post_vars) (* &&
         * check_pre && check_post *) then
       let pre_vars = rhs::pre_vars in
       let post_vars = lhs::post_vars in
@@ -978,6 +980,8 @@ let choose_rule_allocate goal : rule list =
 
 let choose_rule_mk_null goal : rule list =
   if has_mk_null goal.gl_trace then []
+  else let trace = goal.gl_trace in
+  if List.length trace > 2 then []
   else
     let pre = goal.gl_pre_cond in
     let post = goal.gl_post_cond in
@@ -1271,6 +1275,9 @@ let process_rule_frame_pred goal rcore =
   let n_post = CF.subst eq_pairs n_post in
   let n_exists_vars = CP.diff_svl exists_vars e_vars in
   let n_post = add_exists_vars n_post n_exists_vars in
+  (* if SB.check_unsat goal.gl_prog n_post then
+   *   mk_derivation_fail goal (RlFramePred rcore)
+   * else *)
   let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlFramePred rcore)::goal.gl_trace;

@@ -20,3 +20,10 @@ Anon_107: q_30::node<Anon_107,f_r_4433> * x::node<Anon_29,q_30>&
 f_r_4433=null).
 
 // x.next = new node(a, null)
+
+// [RlMkNull node f_r_82,  null
+// [RlAllocate node([[int a,node f_r_82]])
+// [RlFrameData(node q_62, node f_r_95)
+// [RlFWrite x, next, f_r_95
+// [RlSkip
+// []]]]]]
