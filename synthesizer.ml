@@ -143,37 +143,45 @@ let rec find_sub_var sv cur_vars pre_pf =
  *   List.map mk_rule eq_pairs *)
 
 let choose_rule_post_assign goal : rule list =
-  let all_vars = goal.gl_vars in
-  let post = goal.gl_post_cond in
-  let pre = goal.gl_pre_cond in
-  let e_vars = CF.get_exists post in
-  let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
-  let post_pf = CF.get_pure post |> remove_exists_vars_pf in
-  let post_conjuncts = CP.split_conjunctions post_pf in
-  x_tinfo_hp (add_str "conjuncts" (pr_list pr_pf)) post_conjuncts no_pos;
-  let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
-                 |> List.concat in
-  let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
-  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
-  let filter_fun (x,y) =
-    let vars = CP.afv y in
-    vars = [] in
+  let trace = goal.gl_trace in
+  if List.length trace > 2 then []
+  else
+    let all_vars = goal.gl_vars in
+    let post = goal.gl_post_cond in
+    let pre = goal.gl_pre_cond in
+    let e_vars = CF.get_exists post in
+    let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
+    let post_pf = CF.get_pure post |> remove_exists_vars_pf in
+    let post_conjuncts = CP.split_conjunctions post_pf in
+    x_tinfo_hp (add_str "conjuncts" (pr_list pr_pf)) post_conjuncts no_pos;
+    let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
+                   |> List.concat in
+    let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
+    let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
+    let filter_fun (x,y) =
+      let vars = CP.afv y in
+      vars = [] in
     (* not(is_null_type (CP.type_of_sv x)) && *)
-  let filter_eq = Gen.BList.remove_dups_eq
-      (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
-  let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
-  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
-  let mk_rule (var, exp) =
-    RlPostAssign {
-      rapost_lhs = var;
-      rapost_rhs = exp
-    } in
-  List.map mk_rule eq_pairs
+    let filter_eq = Gen.BList.remove_dups_eq
+        (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
+    let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
+    let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
+    let mk_rule (var, exp) =
+      RlPostAssign {
+        rapost_lhs = var;
+        rapost_rhs = exp
+      } in
+    List.map mk_rule eq_pairs
 
-let check_allocate pre post =
+let check_allocate goal pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
   let post_vars = post |> get_heap |> get_heap_nodes in
-  List.length post_vars = 2 && List.length pre_vars = 1
+  let all_vars = goal.gl_vars |> List.filter is_node_var in
+  let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
+  let pre_node_vars = pre |> CF.fv |> List.filter is_node_var in
+  let () = x_tinfo_hp (add_str "pre nodes" pr_vars) pre_node_vars no_pos in
+  (CP.diff_svl all_vars pre_node_vars != []) ||
+  (List.length post_vars = 2 && List.length pre_vars = 1)
 
 let check_mk_null pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
@@ -960,8 +968,9 @@ let choose_rule_allocate goal : rule list =
     let args_groups = args_groups |> List.filter filter_fun in
     let rules = args_groups |> List.map (mk_rule data_decl) in
     rules in
-  if check_allocate pre post then
+  if check_allocate goal pre post then
     let rules = data_decls |> List.map aux |> List.concat in
+    let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule_alloc)) rules no_pos in
     let rules = List.filter filter_rule rules in
     let rules = rules |> List.filter filter_eq_var in
     rules |> List.map (fun x -> RlAllocate x)
@@ -979,23 +988,6 @@ let choose_rule_mk_null goal : rule list =
                   "__RET"; "__ArrBoundErr"; "__DivByZeroErr"; "String"] in
     let filter_fun x = not(List.mem x.C.data_name others) in
     let data_decls = data_decls |> List.filter filter_fun in
-    let procs = goal.gl_proc_decls in
-    let aux_proc_args proc =
-      let args = proc.C.proc_args in
-      args |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-    let all_args = procs |> List.map aux_proc_args |> List.concat
-                   |> CP.remove_dups_svl in
-    let int_vars = goal.gl_vars |> List.filter is_int_var
-                 |> List.filter (fun x -> CP.mem x all_args) in
-    let aux_int var =
-      let n_var = CP.fresh_spec_var var in
-      let one = CP.mkIConst 1 no_pos in
-      let n_var_e = CP.mkVar var no_pos in
-      let minus_one = CP.mkSubtract n_var_e one no_pos in
-      {
-        rmn_var = n_var;
-        rmn_null = minus_one;
-      } in
     let aux data_decl =
       let data_name = data_decl.C.data_name in
       let typ = Globals.Named data_name in
@@ -1019,13 +1011,53 @@ let choose_rule_mk_null goal : rule list =
       let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
       let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
       List.exists (rule_use_var var) n_rules in
-    (* if check_allocate pre post then *)
-    let list1 = data_decls |> List.map aux in
-    let list2 = int_vars |> List.map aux_int in
-    let list = list1 @ list2 in
+    let list = data_decls |> List.map aux in
+    let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule_mk_null)) list no_pos in
     let list = list |> List.filter filter_rule in
     list |> List.map (fun x -> RlMkNull x)
-(* else [] *)
+
+let choose_rule_new_num goal : rule list =
+  if has_new_num goal.gl_trace then []
+  else
+    let pre = goal.gl_pre_cond in
+    let post = goal.gl_post_cond in
+    let prog = goal.gl_prog in
+    let int_vars = goal.gl_vars |> List.filter is_int_var in
+    let aux_int var =
+      let n_var = CP.fresh_spec_var var in
+      let one = CP.mkIConst 1 no_pos in
+      let n_var_e = CP.mkVar var no_pos in
+      let minus_one = CP.mkSubtract n_var_e one no_pos in
+      let plus_one = CP.mkAdd n_var_e one no_pos in
+      let minus_rule = {
+        rnn_var = n_var;
+        rnn_num = minus_one;
+      } in
+      let plus_rule = {
+        rnn_var = n_var;
+        rnn_num = plus_one;
+      } in
+      [minus_rule; plus_rule] in
+    let filter_rule rule =
+      let n_exp = rule.rnn_num in
+      let var = rule.rnn_var in
+      let all_vars = var::goal.gl_vars in
+      let var_e = CP.mkVar var no_pos in
+      let pf = CP.mkEqExp var_e n_exp no_pos in
+      let n_pre = CF.add_pure_formula_to_formula pf goal.gl_pre_cond in
+      let n_goal = {goal with gl_vars = all_vars;
+                              gl_pre_cond = n_pre;
+                              gl_trace = (RlNewNum rule)::goal.gl_trace} in
+      let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
+      let n_rules = choose_rule_allocate n_goal in
+      let n_rules = n_rules @ (choose_rule_func_call n_goal) in
+      let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
+      let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
+      List.exists (rule_use_var var) n_rules in
+    let list = int_vars |> List.map aux_int |> List.concat in
+    let list = list |> List.filter filter_rule in
+    list |> List.map (fun x -> RlNewNum x)
+
 
 let choose_main_rules goal =
   let cur_time = get_time () in
@@ -1045,13 +1077,11 @@ let choose_main_rules goal =
     let rs = rs @ (choose_rule_post_assign goal) in
     let rs = rs @ (choose_rule_allocate goal) in
     let rs = rs @ (choose_rule_mk_null goal) in
+    let rs = rs @ (choose_rule_new_num goal) in
     let rs = rs @ (choose_rule_return goal) in
     let rs = rs @ (choose_rule_heap_assign goal) in
     let rs = rs @ (choose_rule_unfold_post goal) in
     let rs = eliminate_useless_rules goal rs in
-    (* let rs = if rs = [] then
-     *     choose_rule_unfold_post goal
-     * else rs in *)
     let rs = reorder_rules goal rs in
     rs
 
@@ -1182,22 +1212,21 @@ let process_rule_fread goal rcore =
     mk_derivation_subgoals goal (RlFRead rcore) [n_goal]
 
 let aux_func_call goal rule fname params subst res_var residue =
+  let residue = residue |> rm_emp_formula in
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let proc_decl = goal.gl_proc_decls
                   |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-  (* let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
-   * let post_proc = specs |> get_post_cond |> rm_emp_formula in *)
   (* TODO: fix this one *)
   let spec_pairs = get_pre_post specs in
-  let pre_proc, post_proc = List.hd spec_pairs in
+  let post_proc = List.hd spec_pairs |> snd in
   let fun_args = proc_decl.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let substs = (List.combine fun_args params) @ subst in
   let params_post = CF.subst substs post_proc in
   let () = x_tinfo_hp (add_str "param_post" pr_formula) params_post no_pos in
   let evars = CF.get_exists params_post in
-  let post_state = add_formula_to_formula residue params_post in
+  let post_state = add_formula_to_formula residue params_post |> rm_emp_formula in
   let np_vars = CF.fv post_state in
   let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
                     |> List.exists (fun x -> x = res_name) in
@@ -1216,13 +1245,13 @@ let aux_func_call goal rule fname params subst res_var residue =
 
 let process_rule_func_call goal rc : derivation =
   let fname, params = rc.rfc_fname, rc.rfc_params in
-  let residue = rc.rfc_residue in
+  let residue = rc.rfc_residue |> rm_emp_formula in
   aux_func_call goal (RlFuncCall rc) fname params rc.rfc_substs None residue
 
 let process_rule_func_res goal rcore : derivation =
   let fname, params = rcore.rfr_fname, rcore.rfr_params in
   let res_var = Some rcore.rfr_return in
-  let residue = rcore.rfr_residue in
+  let residue = rcore.rfr_residue |> rm_emp_formula in
   aux_func_call goal (RlFuncRes rcore) fname params rcore.rfr_substs res_var residue
 
 let process_rule_unfold_pre goal rcore =
@@ -1295,25 +1324,37 @@ let process_rule_mk_null goal rcore =
                           gl_trace = (RlMkNull rcore)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlMkNull rcore) [n_goal]
 
-let process_rule_allocate goal rcore =
-  let data = rcore.ra_data in
-  let params = rcore.ra_params in
-  let var = rcore.ra_var in
+let process_rule_new_num goal rc =
+  let n_exp = rc.rnn_num in
+  let var = rc.rnn_var in
+  let all_vars = var::goal.gl_vars in
+  let var_e = CP.mkVar var no_pos in
+  let pf = CP.mkEqExp var_e n_exp no_pos in
+  let n_pre = CF.add_pure_formula_to_formula pf goal.gl_pre_cond in
+  let n_goal = {goal with gl_vars = all_vars;
+                          gl_pre_cond = n_pre;
+                          gl_trace = (RlNewNum rc)::goal.gl_trace} in
+  mk_derivation_subgoals goal (RlNewNum rc) [n_goal]
+
+let process_rule_allocate goal rc =
+  let data = rc.ra_data in
+  let params = rc.ra_params in
+  let var = rc.ra_var in
   let hf = CF.mkDataNode var data params no_pos in
   let n_pre = add_h_formula_to_formula hf goal.gl_pre_cond in
   let n_goal = {goal with gl_vars = var::goal.gl_vars;
                           gl_pre_cond = n_pre;
-                          gl_trace = (RlAllocate rcore)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlAllocate rcore) [n_goal]
+                          gl_trace = (RlAllocate rc)::goal.gl_trace} in
+  mk_derivation_subgoals goal (RlAllocate rc) [n_goal]
 
-let process_rule_heap_assign goal rcore =
-  let lhs = rcore.rha_left in
-  let rhs = rcore.rha_right in
+let process_rule_heap_assign goal rc =
+  let lhs = rc.rha_left in
+  let rhs = rc.rha_right in
   let n_pf = CP.mkEqVar lhs rhs no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf goal.gl_pre_cond in
-  let n_goal = {goal with gl_trace = (RlHeapAssign rcore)::goal.gl_trace;
+  let n_goal = {goal with gl_trace = (RlHeapAssign rc)::goal.gl_trace;
                           gl_pre_cond = n_pre} in
-  mk_derivation_subgoals goal (RlHeapAssign rcore) [n_goal]
+  mk_derivation_subgoals goal (RlHeapAssign rc) [n_goal]
 
 (*********************************************************************
  * The search procedure
@@ -1378,7 +1419,8 @@ and process_one_rule goal rule : derivation =
     | RlFrameData rcore -> process_rule_frame_data goal rcore
     (* | RlExistsRight rcore -> process_rule_exists_right goal rcore *)
     | RlSkip -> process_rule_skip goal
-    | RlMkNull rcore -> process_rule_mk_null goal rcore
+    | RlMkNull rc -> process_rule_mk_null goal rc
+    | RlNewNum rc -> process_rule_new_num goal rc
     | RlHeapAssign rcore -> process_rule_heap_assign goal rcore
     | RlFree rc -> process_rule_free goal rc
 

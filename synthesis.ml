@@ -79,6 +79,7 @@ type rule =
   | RlAllocate of rule_allocate
   | RlFree of rule_free
   | RlMkNull of rule_mk_null
+  | RlNewNum of rule_new_num
   | RlAssign of rule_assign
   | RlHeapAssign of rule_heap_assign
   | RlFRead of rule_field_read
@@ -96,6 +97,11 @@ and rule_heap_assign = {
 and rule_mk_null ={
   rmn_null: CP.exp;
   rmn_var : CP.spec_var;
+}
+
+and rule_new_num = {
+  rnn_num: CP.exp;
+  rnn_var : CP.spec_var;
 }
 
 and rule_pre_assign = {
@@ -338,10 +344,16 @@ let pr_rule_mk_null r =
   let e = r.rmn_null in
   (pr_var var) ^ ", " ^ (pr_exp e)
 
+let pr_rule_new_num r =
+  let var = r.rnn_var in
+  let e = r.rnn_num in
+  (pr_var var) ^ ", " ^ (pr_exp e)
+
 
 let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
+  | RlNewNum r -> "RlNewNum " ^ (pr_rule_new_num r)
   | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
   | RlFree r -> "RlFree " ^ (pr_vars r.rd_vars)
   | RlHeapAssign r -> "RlHeapAssign (" ^ (pr_var r.rha_left) ^ ", " ^ (pr_var r.rha_right)
@@ -384,7 +396,7 @@ and pr_st_core st =
   (pr_rule st.stc_rule) ^ "\n" ^
   ((pr_list pr_st_core) sub_trees)
 
-let pr_rules = pr_list_ln pr_rule
+let pr_rules = pr_list_mln pr_rule
 
 (* Basic functions  *)
 
@@ -1306,6 +1318,14 @@ let simplify_ante ante =
   Debug.no_1 "simplify_ante" pr_formula pr_formula
     (fun _ -> simplify_ante_x ante) ante
 
+let rec has_new_num trace = match trace with
+  | [] -> false
+  | h::t -> begin
+      match h with
+      | RlNewNum _ -> true
+      | _ -> has_new_num t
+    end
+
 let rec has_mk_null trace = match trace with
   | [] -> false
   | h::t -> begin
@@ -1873,6 +1893,18 @@ let rec synthesize_st_core st : Iast.exp option =
         I.exp_var_decl_pos = no_pos;
       } in
     let seq = mkSeq lhs assign in
+    aux_subtrees st seq
+  | RlNewNum rc ->
+    let var = rc.rnn_var in
+    let null_e = rc.rnn_num in
+    let n_e = exp_to_iast null_e in
+    let v_decl = I.VarDecl {
+        exp_var_decl_type = CP.type_of_sv var;
+        exp_var_decl_decls = [(CP.name_of_sv var, None, no_pos)];
+        exp_var_decl_pos = no_pos;
+      } in
+    let assign = mkAssign (mkVar var) n_e in
+    let seq = mkSeq v_decl assign in
     aux_subtrees st seq
   | RlMkNull rc ->
     let var = rc.rmn_var in
@@ -2473,9 +2505,10 @@ let eliminate_useless_rules goal rules =
       | _ -> true) rules in
   let filter_mk_null all_rules rule = match rule with
     | RlMkNull r ->
-      let rhs = r.rmn_null in
-      if CP.is_int_type (CP.get_exp_type rhs) then true
-      else if List.exists (fun x -> match x with | RlPostAssign _ -> true
+      (* let rhs = r.rmn_null in
+       * if CP.is_int_type (CP.get_exp_type rhs) then true
+       * else *)
+      if List.exists (fun x -> match x with | RlPostAssign _ -> true
                                             | _ -> false) all_rules
       then false
       else true
@@ -2570,6 +2603,7 @@ let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
 let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
+  | RlNewNum _ -> PriLow
   | RlFuncCall _
   | RlPostAssign _
   | RlFuncRes _ -> PriLow
@@ -2618,6 +2652,7 @@ let compare_rule goal r1 r2 =
   | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlPostAssign r1 -> compare_rule_post_assign_vs_other r1 r2
+  | RlNewNum _ -> PriHigh
 
 let is_code_rule_x trace = match trace with
   | [] -> false

@@ -12,6 +12,7 @@ void insert(node x, int a)
 	ensures x::ll<n+1>;
 {
   if (x.next == null)
+ 		// x.next = new node(a, null);
  		x = new node(a, null);
 	else
   insert(x.next, a);

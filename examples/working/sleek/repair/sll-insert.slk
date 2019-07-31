@@ -10,8 +10,13 @@ void insert(node x, int a)
 	requires x::ll<n> & n > 0 
 	ensures exists k: x::ll<k> & k = n+1;.
 
+
 synthesize [node x,int a]
-x::node<an01,fr32> & n-1=0 & fr32=null
+ x::node<Anon_4401,f_r_4432>&
+q_4402=null & flted_7_4400=0 & n=1 & f_r_4432=null
 ~>
-(exists fr33,an5,q_6,an83:
-q_6::node<an83,fr33> * x::node<an5,q_6> & fr33=null).
+ (exists f_r_4433,Anon_29,q_30,
+Anon_107: q_30::node<Anon_107,f_r_4433> * x::node<Anon_29,q_30>&
+f_r_4433=null).
+
+// x.next = new node(a, null)
