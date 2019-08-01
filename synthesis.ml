@@ -2514,6 +2514,60 @@ let eliminate_useless_rules goal rules =
       else true
     | _ -> true in
   let n_rules = n_rules |> List.filter (filter_mk_null n_rules) in
+  let get_func_calls rules =
+    let rec aux rules set = match rules with
+      | [] -> set
+      | h::tail ->
+        begin
+          match h with
+          | RlFuncCall rc -> aux tail (rc::set)
+          | _ -> aux tail set
+        end in
+    aux rules [] in
+  let call_rules = get_func_calls n_rules in
+  let get_useless_calls rules =
+    let rec aux rules set = match rules with
+      | [] -> set
+      | [h] -> set
+      | h::tail ->
+        let params = h.rfc_params in
+        let other_params = List.map (fun x -> x.rfc_params) tail |> List.concat in
+        if List.for_all (fun x -> not(CP.mem x other_params)) params then
+          aux tail (h::set)
+        else aux tail set in
+    let fc_rules = aux rules [] in
+    fc_rules |> List.map (fun x -> RlFuncCall x) in
+  let () = x_tinfo_hp (add_str "funcall rules" (pr_list pr_func_call)) call_rules no_pos in
+  let useless_calls = get_useless_calls call_rules in
+  let () = x_tinfo_hp (add_str "useless func" pr_rules) useless_calls no_pos in
+  let n_rules = List.filter (fun x -> not(List.mem x useless_calls)) n_rules in
+  let get_funres_calls rules =
+    let rec aux rules set = match rules with
+      | [] -> set
+      | h::tail ->
+        begin
+          match h with
+          | RlFuncRes rc -> aux tail (rc::set)
+          | _ -> aux tail set
+        end in
+    aux rules [] in
+  let callres_rules = get_funres_calls n_rules in
+  let () = x_tinfo_hp (add_str "funres rules" (pr_list pr_func_res)) callres_rules no_pos in
+  let get_useless_funres rules =
+    let rec aux rules set = match rules with
+      | [] -> set
+      | [h] -> set
+      | h::tail ->
+        let params = h.rfr_params in
+        let other_params = List.map (fun x -> x.rfr_params) tail |> List.concat in
+        if List.for_all (fun x -> not(CP.mem x other_params)) params then
+          aux tail (h::set)
+        else aux tail set in
+    let fc_rules = aux rules [] in
+    fc_rules |> List.map (fun x -> RlFuncRes x) in
+  let useless_funres = get_useless_funres callres_rules in
+  let () = x_tinfo_hp (add_str "useless funres" pr_rules) useless_funres no_pos in
+  let n_rules = List.filter (fun x -> not(List.mem x useless_funres)) n_rules in
   (* let n_rules = List.filter (fun rule -> match rule with
    *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
    *     | _ -> true) n_rules in *)
