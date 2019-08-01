@@ -114,6 +114,7 @@ and rule_allocate = {
   ra_pre : CF.formula;
   ra_var : CP.spec_var;
   ra_params: CP.spec_var list;
+  ra_end : bool;
 }
 
 and rule_free = {
@@ -2622,7 +2623,6 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | RlFRead _ -> PriLow
   | RlFree _ -> PriLow
   | RlReturn _ -> PriLow
-  (* | RlAllocate _ -> PriHigh *)
   (* | RlMkNull _ -> PriLow *)
   (* | RlUnfoldPost _
    * | RlFuncRes _
@@ -2633,6 +2633,7 @@ let compare_rule_fun_res_vs_other r1 r2 = match r2 with
   | RlNewNum _ -> PriLow
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
+  | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | RlPostAssign _ -> PriLow
   | _ -> PriHigh
 
@@ -2652,7 +2653,7 @@ let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
   | RlMkNull r2 -> compare_rule_unfold_post_vs_mk_null r1 r2
   | RlPostAssign _ -> PriLow
   | RlReturn _ -> PriLow
-  | RlAllocate _ -> PriHigh
+  | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | _ -> PriLow
 
 let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
@@ -2662,10 +2663,12 @@ let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlFuncCall _
   | RlPostAssign _
   | RlFuncRes _ -> PriLow
+  | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | _ -> PriHigh
 
 let compare_rule_allocate_vs_other r1 r2 = match r2 with
-  | RlAllocate _ -> PriEqual
+  | RlAllocate r2 ->
+    if r2.ra_end then PriLow else PriEqual
   | _ -> PriLow
 
 let compare_rule_return_vs_other r r2 = match r2 with
@@ -2697,7 +2700,9 @@ let compare_rule goal r1 r2 =
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2
   | RlFramePred r -> compare_rule_frame_pred_vs_other goal r r2
-  | RlAllocate r1 -> compare_rule_allocate_vs_other r1 r2
+  | RlAllocate r1 ->
+    if r1.ra_end then PriHigh
+    else compare_rule_allocate_vs_other r1 r2
   | RlMkNull r1 -> compare_rule_mk_null_vs_other r1 r2
   | RlFree _ -> PriHigh
   | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2

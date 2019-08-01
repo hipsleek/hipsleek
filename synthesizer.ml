@@ -62,7 +62,7 @@ let check_entail_exact_sleek prog ante conseq =
   Debug.no_2 "check_entail_exact_sleek" pr_formula pr_formula string_of_bool
     (fun _ _ -> check_entail_exact_sleek_x prog ante conseq) ante conseq
 
-let check_entail_exact_wrapper prog ante conseq =
+let check_entail_exact_wrapper_x prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
   if contains_lseg prog then
@@ -74,6 +74,11 @@ let check_entail_exact_wrapper prog ante conseq =
     with _ ->
       SB.check_entail_exact prog ante conseq
 
+let check_entail_exact_wrapper prog ante conseq =
+  Debug.no_2 "check_entail_exact_wrapper" pr_formula pr_formula
+    string_of_bool
+    (fun _ _ -> check_entail_exact_wrapper_x prog ante conseq) ante conseq
+    
 let check_entail_wrapper_x prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
@@ -182,6 +187,12 @@ let check_allocate goal pre post =
   let () = x_tinfo_hp (add_str "pre nodes" pr_vars) pre_node_vars no_pos in
   (CP.diff_svl all_vars pre_node_vars != []) ||
   (List.length post_vars = 2 && List.length pre_vars = 1)
+
+let check_head_allocate goal pre post =
+  let pre_vars = pre |> CF.fv in
+  let post_vars = post |> CF.fv in
+  let all_vars = goal.gl_vars in
+  List.filter (fun x -> CP.mem x post_vars && not (CP.mem x pre_vars)) all_vars
 
 let check_mk_null pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
@@ -945,6 +956,24 @@ let choose_rule_allocate goal : rule list =
       | h :: tail -> if CP.mem h tail then true
         else aux tail in
     if aux params then false else true in
+  let rec check_eq_params args = match args with
+    | [] -> false
+    | h::tail -> if CP.mem h tail then true
+      else check_eq_params tail in
+  let check_params_end args =
+    if check_eq_params args then false
+    else
+      let args = List.filter is_node_var args in
+      let pre_vars = pre |> get_heap |> get_heap_nodes in
+      let pre_nodes = pre_vars |> List.map (fun (x,_,y) -> (x,y)) in
+      let pre_nodes = pre_nodes |> List.filter (fun (x,_) -> CP.mem x args) in
+      let pre_vars = pre_nodes |> List.map fst in
+      let other_args = List.filter (fun x -> not(CP.mem x pre_vars)) args in
+      let all_vars = pre_nodes |> List.map (fun (x,y) -> x::y) |> List.concat in
+      let all_vars = other_args@all_vars in
+      let rm_duplicate_vars = CP.remove_dups_svl all_vars in
+      if List.length all_vars != List.length rm_duplicate_vars then false
+      else true in
   let mk_rule data_decl args =
     let data = data_decl.C.data_name in
     let var_name = fresh_name () in
@@ -955,8 +984,19 @@ let choose_rule_allocate goal : rule list =
       ra_var = var;
       ra_data = data;
       ra_params = args;
-      ra_pre = n_pre
+      ra_pre = n_pre;
+      ra_end = false;
     } in
+  let eq_tuple tuple1 tuple2 =
+    let commutative_int tuple1 tuple2 =
+      let int_args1 = tuple1 |> List.filter is_int_var in
+      let int_args2 = tuple2 |> List.filter is_int_var in
+      CP.subset int_args1 int_args2 && CP.subset int_args2 int_args1 in
+    let commutative_node tuple1 tuple2 =
+      let node_args1 = tuple1 |> List.filter is_node_var in
+      let node_args2 = tuple2 |> List.filter is_node_var in
+      CP.subset node_args1 node_args2 && CP.subset node_args2 node_args1 in
+    commutative_int tuple1 tuple2 && commutative_node tuple1 tuple2 in
   let aux data_decl =
     let args = data_decl.C.data_fields |> List.map fst
                |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
@@ -968,15 +1008,58 @@ let choose_rule_allocate goal : rule list =
     let args_groups = args_list |> mk_args_input in
     let filter_fun list = has_allocate goal.gl_trace list |> negate in
     let args_groups = args_groups |> List.filter filter_fun in
+    (* let args_groups = args_groups |> Gen.BList.remove_dups_eq eq_tuple in *)
     let rules = args_groups |> List.map (mk_rule data_decl) in
     rules in
-  if check_allocate goal pre post then
-    let rules = data_decls |> List.map aux |> List.concat in
-    let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule_alloc)) rules no_pos in
-    let rules = List.filter filter_rule rules in
-    let rules = rules |> List.filter filter_eq_var in
-    rules |> List.map (fun x -> RlAllocate x)
-  else []
+  let mk_rule_end data_decl allocate_var args =
+    if check_params_end args then
+      let data = data_decl.C.data_name in
+      let hf = CF.mkDataNode allocate_var data args no_pos in
+      let n_pre = add_h_formula_to_formula hf goal.gl_pre_cond in
+      if check_entail_exact_wrapper prog n_pre post then
+        let rule = {
+          ra_var = allocate_var;
+          ra_data = data;
+          ra_params = args;
+          ra_pre = n_pre;
+          ra_end = true;
+        } in
+        [rule]
+      else []
+    else [] in
+  let aux_end allocate_var data_decl =
+    let n_eq_var al_var x = CP.eq_sv al_var x |> negate in
+    let all_vars = List.filter (n_eq_var allocate_var) all_vars in
+    let args = data_decl.C.data_fields |> List.map fst
+               |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
+    let arg_types = List.map CP.type_of_sv args in
+    let helper_typ typ =
+      all_vars |> List.filter (fun x -> CP.type_of_sv x = typ) in
+    let args_list = arg_types |> List.map helper_typ in
+    let args_groups = args_list |> mk_args_input in
+    let filter_fun list = has_allocate goal.gl_trace list |> negate in
+    let args_groups = args_groups |> List.filter filter_fun in
+    let args_groups = args_groups |> Gen.BList.remove_dups_eq eq_tuple in
+    let rules = args_groups |> List.map (mk_rule_end data_decl allocate_var)
+              |> List.concat in
+    rules in
+  let allocate1 = if check_allocate goal pre post then
+      let rules = data_decls |> List.map aux |> List.concat in
+      let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule_alloc)) rules no_pos in
+      let rules = List.filter filter_rule rules in
+      let rules = rules |> List.filter filter_eq_var in
+      rules |> List.map (fun x -> RlAllocate x)
+    else [] in
+  let allocate_vars = check_head_allocate goal pre post in
+  let allocate2 = if List.length allocate_vars = 1 then
+      let allocate_var = List.hd allocate_vars in
+      let () = x_binfo_hp (add_str "var" pr_var) allocate_var no_pos in
+      let rules = data_decls |> List.map (aux_end allocate_var) |> List.concat in
+      let rules = rules |> List.map (fun x -> RlAllocate x) in
+      rules
+    else [] in
+  allocate1 @ allocate2
 
 let choose_rule_mk_null goal : rule list =
   if has_mk_null goal.gl_trace then []
@@ -1010,6 +1093,7 @@ let choose_rule_mk_null goal : rule list =
                               gl_pre_cond = n_pre;
                               gl_trace = (RlMkNull rule)::goal.gl_trace} in
       let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
+      let n_rules = [] in
       let n_rules = choose_rule_allocate n_goal in
       let n_rules = n_rules @ (choose_rule_func_call n_goal) in
       let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
@@ -1061,7 +1145,6 @@ let choose_rule_new_num goal : rule list =
     let list = int_vars |> List.map aux_int |> List.concat in
     let list = list |> List.filter filter_rule in
     list |> List.map (fun x -> RlNewNum x)
-
 
 let choose_main_rules goal =
   let cur_time = get_time () in
@@ -1344,15 +1427,18 @@ let process_rule_new_num goal rc =
   mk_derivation_subgoals goal (RlNewNum rc) [n_goal]
 
 let process_rule_allocate goal rc =
-  let data = rc.ra_data in
-  let params = rc.ra_params in
-  let var = rc.ra_var in
-  let hf = CF.mkDataNode var data params no_pos in
-  let n_pre = add_h_formula_to_formula hf goal.gl_pre_cond in
-  let n_goal = {goal with gl_vars = var::goal.gl_vars;
-                          gl_pre_cond = n_pre;
-                          gl_trace = (RlAllocate rc)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlAllocate rc) [n_goal]
+  if rc.ra_end then
+    mk_derivation_success goal (RlAllocate rc)
+  else
+    let data = rc.ra_data in
+    let params = rc.ra_params in
+    let var = rc.ra_var in
+    let hf = CF.mkDataNode var data params no_pos in
+    let n_pre = add_h_formula_to_formula hf goal.gl_pre_cond in
+    let n_goal = {goal with gl_vars = var::goal.gl_vars;
+                            gl_pre_cond = n_pre;
+                            gl_trace = (RlAllocate rc)::goal.gl_trace} in
+    mk_derivation_subgoals goal (RlAllocate rc) [n_goal]
 
 let process_rule_heap_assign goal rc =
   let lhs = rc.rha_left in
