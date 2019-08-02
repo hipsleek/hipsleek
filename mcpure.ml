@@ -2369,7 +2369,7 @@ let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
   | OnePF f -> OnePF ( x_add arith_simplify 6 f)
 
-let memo_arith_simplify f = 
+let memo_arith_simplify f =
   Debug.no_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 
 
 let memo_is_member_pure sp f = match f with

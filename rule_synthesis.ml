@@ -54,14 +54,15 @@ let check_entail_exact_sleek prog ante conseq =
 let check_entail_exact_wrapper_x prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
-  if contains_lseg prog then
-    let () = x_tinfo_pp "marking" no_pos in
-    SB.check_entail_exact prog ante conseq
-  else
-    try
+  let conseq = rm_unk_type_formula prog conseq in
+  (* if contains_lseg prog then
+   *   let () = x_tinfo_pp "marking" no_pos in
+   *   SB.check_entail_exact prog ante conseq
+   * else
+   *   try *)
       check_entail_exact_sleek prog ante conseq
-    with _ ->
-      SB.check_entail_exact prog ante conseq
+    (* with _ ->
+     *   SB.check_entail_exact prog ante conseq *)
 
 let check_entail_exact_wrapper prog ante conseq =
   Debug.no_2 "check_entail_exact_wrapper" pr_formula pr_formula
@@ -71,6 +72,7 @@ let check_entail_exact_wrapper prog ante conseq =
 let check_entail_wrapper_x prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
+  let conseq = rm_unk_type_formula prog conseq in
   if contains_lseg prog then
     let () = x_tinfo_pp "marking" no_pos in
     SB.check_entail_residue prog ante conseq

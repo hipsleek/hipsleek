@@ -7178,7 +7178,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
 and b_form_simplify (pf : b_formula) :  b_formula =
-  Debug.no_1 "b_form_simplify " !print_b_formula !print_b_formula 
+  Debug.no_1 "b_form_simplify" !print_b_formula !print_b_formula 
     b_form_simplify_x pf
 
 and b_form_simplify_x (b:b_formula) :b_formula =
@@ -7229,7 +7229,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
       Debug.no_3 "do_all3_eq" pr pr pr (pr_quad pr pr pr string_of_bool) (fun _ _ _ -> do_all3 e1 e2 e3 l) e1 e2 e3
   in
   let (pf,il) = b in
-  let npf = let rec helper pf = 
+  let npf = let rec helper pf =
               match pf with
               | Frm _
               |  BConst _ 
@@ -7285,7 +7285,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
               (*    		| _ ->  *)
               (*    			  EqMax (ne1, ne2, ne3, l) *)
               (*    	end *)
-              (*else 
+              (*else
                      EqMax (ne1, ne2, ne3, l)*)
               |  EqMin (e1, e2, e3, l) ->
                 let lh,rh,qh,flag = x_add do_all3_eq e1 e2 e3 l in

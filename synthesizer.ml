@@ -580,12 +580,12 @@ let choose_all_rules rs goal =
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
   let rs = rs @ (choose_rule_post_assign goal) in
-  let rs = rs @ (choose_rule_allocate goal) in
+  (* let rs = rs @ (choose_rule_allocate goal) in *)
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
   let rs = rs @ (choose_rule_return goal) in
   let rs = rs @ (choose_rule_heap_assign goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
   rs
 
 let choose_rules_after_mk_null rs goal =
@@ -600,7 +600,7 @@ let choose_rules_after_mk_null rs goal =
   let rs = rs @ (choose_rule_new_num goal) in
   let rs = rs @ (choose_rule_return goal) in
   let rs = rs @ (choose_rule_heap_assign goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
   rs
 
 let choose_rules_after_new_num rs goal =
@@ -615,7 +615,7 @@ let choose_rules_after_new_num rs goal =
   let rs = rs @ (choose_rule_new_num goal) in
   let rs = rs @ (choose_rule_return goal) in
   let rs = rs @ (choose_rule_heap_assign goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
   rs
 
 let choose_rules_after_allocate rs goal =
@@ -626,11 +626,11 @@ let choose_rules_after_allocate rs goal =
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
   let rs = rs @ (choose_rule_post_assign goal) in
-  let rs = rs @ (choose_rule_allocate goal) in
+  (* let rs = rs @ (choose_rule_allocate goal) in *)
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
   let rs = rs @ (choose_rule_heap_assign goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
   rs
 
 let choose_main_rules goal =
@@ -1091,11 +1091,12 @@ let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
     let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
     Some n_body
 
-let get_spec_from_hps hps =
+let get_spec_from_hps prog hps =
   let post_hp = List.find (fun x -> x.Cast.hp_name = "N_Q1") hps in
   let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
   let post = post_hp.Cast.hp_formula in
   let pre = pre_hp.Cast.hp_formula |> remove_exists in
+  let post = rm_unk_type_formula prog post in
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   (pre,post)
@@ -1150,7 +1151,7 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
     else
       (* let hps = List.hd hps_list in
        * helper hps *)
-      let spec_list = List.map get_spec_from_hps hps_list in
+      let spec_list = List.map (get_spec_from_hps prog) hps_list in
       let ranking_specs specs =
         let cmp_spec spec1 spec2 =
           let prio = compare_spec spec1 spec2 in
@@ -1183,6 +1184,7 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
         List.find (fun x -> x.Cast.hp_name = "N_P1") hps
       else List.find (fun x -> x.Cast.hp_name = "N_P2") hps in
     let post = post_hp.Cast.hp_formula in
+    let post = rm_unk_type_formula prog post in
     let pre = pre_hp.Cast.hp_formula |> remove_exists in
     let all_procs = CA.list_of_procs prog in
     let filter_fun proc =

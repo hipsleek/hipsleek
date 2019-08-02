@@ -1414,7 +1414,7 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
-let print_type = ref false
+let print_type = ref true
 let print_extra = ref false
 
 let enforce_type_error = ref true (* strictly enforce type error *)

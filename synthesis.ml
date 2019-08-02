@@ -1063,6 +1063,10 @@ let is_node_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Named _ -> true
   | _ -> false
 
+let is_unk_type_var (var: CP.spec_var) = match CP.type_of_sv var with
+  | UNK -> true
+  | _ -> false
+
 let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Int -> true
   | _ -> false
@@ -1221,17 +1225,17 @@ let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
 let simplify_min_max_pf pf =
   let conjuncts = pf |> remove_exists_pf |> CP.split_conjunctions in
   let aux_exp e = match e with
-    | CP.Min (_,_,loc) ->
+    | CP.Min (e1,e2,loc) ->
       let n_name = fresh_any_name "min" in
       let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
       let n_e = CP.Var (n_var, loc) in
-      let add_formula = CP.Eq (n_e, e, no_pos) in
+      let add_formula = CP.EqMin (n_e, e1, e2, no_pos) in
       (n_e, [n_var], [add_formula])
-    | CP.Max (_,_,loc) ->
+    | CP.Max (e1,e2,loc) ->
       let n_name = fresh_any_name "max" in
       let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
       let n_e = CP.Var (n_var, loc) in
-      let add_formula = CP.Eq (n_e, e, no_pos) in
+      let add_formula = CP.EqMax (n_e, e1, e2, no_pos) in
       (n_e, [n_var], [add_formula])
     | _ -> (e, [], []) in
   let aux_pf pf = match pf with
@@ -1239,6 +1243,11 @@ let simplify_min_max_pf pf =
       let n_e1, var1, orig1 = aux_exp e1 in
       let n_e2, var2, orig2 = aux_exp e2 in
       let n_pf = CP.Lt (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Eq (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Eq (n_e1, n_e2, loc) in
       (n_pf, var1@var2, orig1@orig2)
     | CP.Lte (e1, e2, loc) ->
       let n_e1, var1, orig1 = aux_exp e1 in
@@ -1285,7 +1294,7 @@ let simplify_min_max_pf pf =
   let n_pf = CP.join_conjunctions n_list in
   (n_pf, e_vars)
 
-let simplify_min_max formula =
+let simplify_min_max_x formula =
   let rec aux formula = match formula with
   | CF.Base bf ->
     let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
@@ -1303,6 +1312,10 @@ let simplify_min_max formula =
     CF.Or {bf with CF.formula_or_f1 = n_f1;
                    CF.formula_or_f2 = n_f2} in
   aux formula
+
+let simplify_min_max formula =
+  Debug.no_1 "simplify_min_max" pr_formula pr_formula
+    (fun _ -> simplify_min_max_x formula) formula
 
 let simplify_goal goal =
   let n_pre = goal.gl_pre_cond in
@@ -3125,3 +3138,64 @@ let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
     (n_failesc_list, true)
   else
     (ctx, false)
+
+let get_hf_type prog hf =
+  let rec aux hf = match hf with
+    | CF.DataNode dn ->
+      let d_name = dn.CF.h_formula_data_name in
+      let data = List.find (fun x -> eq_str d_name x.C.data_name) prog.C.prog_data_decls in
+      let d_args = data.C.data_fields |> List.map (fun (x,_) -> x) in
+      let c_args = dn.CF.h_formula_data_arguments in
+      List.map2 (fun x y ->
+          let CP.SpecVar (t, name, primed) = x in
+          let (n_t, _) = y in
+          CP.SpecVar (n_t, name, primed)) c_args d_args
+    | CF.ViewNode vn ->
+      let v_name = vn.CF.h_formula_view_name in
+      let view = List.find (fun x -> eq_str v_name x.C.view_name) prog.C.prog_view_decls in
+      let v_args = view.C.view_vars in
+      let c_args = vn.CF.h_formula_view_arguments in
+      List.map2 (fun x y ->
+          let CP.SpecVar (t, name, primed) = x in
+          let CP.SpecVar (n_t, _, _) = y in
+          CP.SpecVar (n_t, name, primed)) c_args v_args
+    | CF.Star hf ->
+      let hf1 = hf.CF.h_formula_star_h1 in
+      let hf2 = hf.CF.h_formula_star_h2 in
+      (aux hf1) @ (aux hf2)
+    | _ -> [] in
+  aux hf
+
+let rm_unk_type_formula_x prog formula =
+  let rec collect_type formula = match formula with
+    | CF.Base bf ->
+      let hf = bf.CF.formula_base_heap in
+      get_hf_type prog hf
+    | CF.Exists bf ->
+      let hf = bf.CF.formula_exists_heap in
+      get_hf_type prog hf
+    | CF.Or bf ->
+      (collect_type bf.CF.formula_or_f1) @ (collect_type bf.CF.formula_or_f2) in
+  let e_vars = CF.get_exists formula  in
+  let e_vars, others = e_vars |> List.partition is_unk_type_var in
+  if e_vars = [] then formula
+  else
+    let all_vars = collect_type formula in
+    let create_subst all_vars var =
+      begin
+        try
+          let n_var = List.find (fun x ->
+              eq_str (CP.name_of_sv x) (CP.name_of_sv var)) all_vars in
+          (var, n_var)
+        with _ -> (var, var)
+      end in
+    let subst = e_vars |> List.map (create_subst all_vars) in
+    let n_formula = remove_exists formula in
+    let n_formula = CF.subst subst n_formula in
+    let n_exists = e_vars |> List.map (CP.subs_one subst) in
+    let n_exists = n_exists @ others in
+    add_exists_vars n_formula n_exists
+
+let rm_unk_type_formula prog formula =
+  Debug.no_1 "rm_unk_type_formula" pr_formula pr_formula
+    (fun _ -> rm_unk_type_formula_x prog formula) formula
