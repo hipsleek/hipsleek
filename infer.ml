@@ -2147,7 +2147,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         end
       else
         let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p in
-        
+
         (*let ranks = List.filter CP.has_func rel_rhs in*)
 
         (* Eliminate relations whose recursive calls are not defined *)

@@ -97,11 +97,13 @@ and rule_heap_assign = {
 and rule_mk_null ={
   rmn_null: CP.exp;
   rmn_var : CP.spec_var;
+  rmn_lookahead : goal option;
 }
 
 and rule_new_num = {
   rnn_num: CP.exp;
   rnn_var : CP.spec_var;
+  rnn_lookahead : goal option;
 }
 
 and rule_pre_assign = {
@@ -115,6 +117,7 @@ and rule_allocate = {
   ra_var : CP.spec_var;
   ra_params: CP.spec_var list;
   ra_end : bool;
+  ra_lookahead : goal option;
 }
 
 and rule_free = {
@@ -206,7 +209,7 @@ and rule_return = {
   r_checked: bool;
 }
 
-type goal = {
+and goal = {
   gl_prog : Cast.prog_decl;
   gl_proc_decls: Cast.proc_decl list;
   gl_pre_cond : CF.formula;
@@ -214,6 +217,7 @@ type goal = {
   gl_start_time : float;
   gl_vars: CP.spec_var list;
   gl_trace: rule list;
+  gl_lookahead: rule list;
 }
 
 type derivation = {
@@ -1214,10 +1218,98 @@ let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
                      CF.formula_or_f2 = n_f2} in
   aux formula
 
+let simplify_min_max_pf pf =
+  let conjuncts = pf |> remove_exists_pf |> CP.split_conjunctions in
+  let aux_exp e = match e with
+    | CP.Min (_,_,loc) ->
+      let n_name = fresh_any_name "min" in
+      let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+      let n_e = CP.Var (n_var, loc) in
+      let add_formula = CP.Eq (n_e, e, no_pos) in
+      (n_e, [n_var], [add_formula])
+    | CP.Max (_,_,loc) ->
+      let n_name = fresh_any_name "max" in
+      let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+      let n_e = CP.Var (n_var, loc) in
+      let add_formula = CP.Eq (n_e, e, no_pos) in
+      (n_e, [n_var], [add_formula])
+    | _ -> (e, [], []) in
+  let aux_pf pf = match pf with
+    | CP.Lt (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Lt (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Lte (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Lte (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Gt (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Gt (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Gte (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Gte (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Neq (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Neq (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | _ -> (pf, [], []) in
+  let aux_bf bf =
+    let (pf, lbl) = bf in
+    let n_pf, vars, added = aux_pf pf in
+    let added = List.map (fun x -> (x, None)) added in
+    ((n_pf, lbl), vars, added) in
+  let rec aux pf = match pf with
+    | CP.BForm (bf, lbl) ->
+      let n_bf, vars, added = aux_bf bf in
+      let added = added |> List.map (fun x -> CP.BForm (x, None)) in
+      let n_f = CP.BForm (n_bf, lbl) in
+      let added = mkAndList added in
+      let n_f = CP.mkAnd n_f added no_pos in
+      n_f, vars
+    | CP.Exists (sv, e_formula, opt, loc) ->
+      let n_f, vars = aux e_formula in
+      let n_f = CP.Exists (sv, e_formula, opt, loc) in
+      (n_f, vars)
+    | _ -> pf, [] in
+  let n_conjuncts = conjuncts |> List.map aux in
+  let n_list = List.map fst n_conjuncts in
+  let e_vars = List.map snd n_conjuncts |> List.concat in
+  let n_pf = CP.join_conjunctions n_list in
+  (n_pf, e_vars)
+
+let simplify_min_max formula =
+  let rec aux formula = match formula with
+  | CF.Base bf ->
+    let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+    let n_pf, e_vars = simplify_min_max_pf pf in
+    let n_formula = CF.Base {bf with CF.formula_base_pure = MCP.mix_of_pure n_pf} in
+    add_exists_vars n_formula e_vars
+  | CF.Exists bf ->
+    let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+    let n_pf, e_vars = simplify_min_max_pf pf in
+    let n_formula = CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure n_pf} in
+    add_exists_vars n_formula e_vars
+  | CF.Or bf ->
+    let n_f1 = aux bf.CF.formula_or_f1 in
+    let n_f2 = aux bf.CF.formula_or_f2 in
+    CF.Or {bf with CF.formula_or_f1 = n_f1;
+                   CF.formula_or_f2 = n_f2} in
+  aux formula
+
 let simplify_goal goal =
-  let n_pre = remove_exists goal.gl_pre_cond in
+  let n_pre = goal.gl_pre_cond in
+  let n_post = goal.gl_post_cond in
+  let n_pre = remove_exists n_pre in
   let n_pre = elim_idents n_pre in
-  let n_post = elim_idents goal.gl_post_cond in
+  let n_post = elim_idents n_post in
   let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
   let n_post = simplify_post n_post in
   let n_post = rm_ident_constraints n_pre n_post in
@@ -1225,6 +1317,8 @@ let simplify_goal goal =
   let n_post = simplify_arithmetic n_post in
   let n_pre = rm_duplicate_constraints n_pre in
   let n_post = rm_duplicate_constraints n_post in
+  let n_pre = simplify_min_max n_pre in
+  let n_post = simplify_min_max n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
@@ -1888,12 +1982,14 @@ let rec synthesize_st_core st : Iast.exp option =
         I.exp_assign_rhs = e_new;
         I.exp_assign_pos = no_pos;
       } in
-    let lhs = I.VarDecl {
-        I.exp_var_decl_type = CP.type_of_sv r_var;
-        I.exp_var_decl_decls = [(CP.name_of_sv r_var, None, no_pos)];
-        I.exp_var_decl_pos = no_pos;
-      } in
-    let seq = mkSeq lhs assign in
+    let seq = if rc.ra_end then assign
+      else
+        let lhs = I.VarDecl {
+            I.exp_var_decl_type = CP.type_of_sv r_var;
+            I.exp_var_decl_decls = [(CP.name_of_sv r_var, None, no_pos)];
+            I.exp_var_decl_pos = no_pos;
+          } in
+        mkSeq lhs assign in
     aux_subtrees st seq
   | RlNewNum rc ->
     let var = rc.rnn_var in
@@ -2803,6 +2899,7 @@ let negate_priority prio = match prio with
 let mk_goal cprog pre post vars =
   { gl_prog = cprog;
     gl_start_time = get_time ();
+    gl_lookahead = [];
     gl_proc_decls = [];
     gl_pre_cond = pre;
     gl_post_cond = post;
@@ -2814,6 +2911,7 @@ let mk_goal_w_procs cprog proc_decls pre post vars =
   let pre = unprime_formula pre in
   let post = unprime_formula post in
   { gl_prog = cprog;
+    gl_lookahead = [];
     gl_proc_decls = proc_decls;
     gl_start_time = get_time ();
     gl_pre_cond = pre;

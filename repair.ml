@@ -137,7 +137,17 @@ let compare_exp_return_vs_other e1 exp2 =
 let compare_exp (exp1: I.exp) (exp2: I.exp) =
   match exp1 with
   | I.Return e1 -> compare_exp_return_vs_other e1 exp2
-  | _ -> Syn.PriEqual
+  | _ ->
+    let pos1 = I.get_exp_pos exp1 in
+    let pos1 = pos1.start_pos in
+    (* let (l1, c1) = (pos1.Lexing.pos_lnum, pos1.Lexing.pos_num) in *)
+    let l1 = pos1.Lexing.pos_lnum in
+    let pos2 = I.get_exp_pos exp2 in
+    let pos2 = pos2.start_pos in
+    let l2 = pos2.Lexing.pos_lnum in
+    if l1 < l2 then Syn.PriLow
+    else if l1 > l2 then Syn.PriHigh
+    else Syn.PriEqual
 
 let ranking_suspicious_exp (candidates: I.exp list) =
   let cmp_exp exp1 exp2 =

@@ -408,7 +408,8 @@ let rec translate_hf hf =
   let hf = Syn.rm_emp_hf hf in
   match hf with
   | CF.HTrue | CF.HEmp -> (SBC.HEmp (translate_loc no_pos), [], [])
-  | CF.DataNode dnode -> let ann = dnode.CF.h_formula_data_imm in
+  | CF.DataNode dnode ->
+    let ann = dnode.CF.h_formula_data_imm in
     let holes = match ann with
       | CP.ConstAnn Lend -> [hf]
       | _ -> [] in
@@ -492,7 +493,8 @@ let translate_back_vf vf =
     if List.exists (fun x -> match x with SBC.Null _ -> true
                                         | _ -> false) vargs
     then (CF.HEmp, [], [])
-    else let h_triples = List.map translate_back_exp vargs
+    else
+      let h_triples = List.map translate_back_exp vargs
                          |> List.map exp_to_var in
       let h_all_args = h_triples |> List.map (fun (x,_,_) -> x) in
       let e_vars = h_triples |> List.map (fun (_,_,x) -> x) |> List.concat in
@@ -816,7 +818,7 @@ let export_songbird_satisfiability_results prog fs results =
 let solve_entailments_one prog entails =
   let entails = List.map (fun (x, y) -> (Syn.remove_exists x, y)) entails in
   let pr_ents = pr_list_ln (pr_pair pr_formula pr_formula) in
-  let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
+  let () = x_binfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
   let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
@@ -829,7 +831,7 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list

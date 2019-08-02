@@ -1294,13 +1294,23 @@ let rec get_exp_type (e : exp) : typ =
   | Bptriple  _ -> Bptyp
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
-    begin
+    if !enable_repair then
+      begin
+        match get_exp_type e1, get_exp_type e2 with
+        | Int, Int -> Int
+        | Int, UNK -> Int
+        | UNK, Int -> Int
+        | AnnT, AnnT -> AnnT
+        | _ -> Float
+      end
+    else
+      begin
       match get_exp_type e1, get_exp_type e2 with
       | Int, Int -> Int
       | AnnT, AnnT -> AnnT
       | _ -> Float
     end
-  | Div _ -> Float
+| Div _ -> Float
   | TypeCast (t, _, _) -> t
   | ListHead _ | ListLength _ -> Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
@@ -2436,19 +2446,19 @@ and mklsPtrNeqEqn vs pos =
   else None
 
 and mkLt a1 a2 pos =
-  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
+  if (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Lt (a1, a2, pos)
 
 and mkLte a1 a2 pos =
-  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
+  if (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Lte (a1, a2, pos)
 
 and mkGt a1 a2 pos =
-  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
+  if (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Gt (a1, a2, pos)
@@ -2460,7 +2470,7 @@ and mkRel rel args pos=
   BForm ((RelForm (rel,args,pos), None) , None)
 
 and mkGte a1 a2 pos =
-  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
+  if (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Gte (a1, a2, pos)
@@ -2469,7 +2479,7 @@ and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
 and mkNeqNull (v : spec_var) pos = mkNeqExp (mkVar v pos) (Null pos) pos
 
 and mkNeq a1 a2 pos =
-  if not(!enable_repair) && (is_max_min a1 || is_max_min a2) then
+  if (is_max_min a1 || is_max_min a2) then
     failwith ("max/min can only be used in equality")
   else
     Neq (a1, a2, pos)
@@ -2478,7 +2488,7 @@ and mkEq_b a1 a2 pos : b_formula=
   (mkEq a1 a2 pos, None)
 
 and mkEq a1 a2 pos : p_formula=
-  if not(!enable_repair) && is_max_min a1 && is_max_min a2 then
+  if is_max_min a1 && is_max_min a2 then
     failwith ("max/min can only appear in one side of an equation")
   else if is_max_min a1 then
     match a1 with
@@ -2836,8 +2846,7 @@ and mkExists vs f lbel pos =
   let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
   let () = x_tinfo_hp (add_str "vs(mkExists)" !print_svl) vs no_pos in
   let () = x_tinfo_hp (add_str "vs(filtered rel type)" !print_svl) vs1 no_pos in
-  let fn = if !Globals.adhoc_flag_2 then mkExists_x else mkExists_naive
-  in
+  let fn = if !Globals.adhoc_flag_2 then mkExists_x else mkExists_naive in
   Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> fn vs1 f lbel pos) vs1 f
 
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
@@ -6842,19 +6851,17 @@ and simp_mult_x (e : exp) :  exp =
     | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
     | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
     | Max (e1, e2, l) ->
-      if !enable_repair then e0
-      else Error.report_error {
-          Error.error_loc = l;
-          Error.error_text =
-            "got Max !! (Should have already been simplified) xxxx";
-        }
+      Error.report_error {
+        Error.error_loc = l;
+        Error.error_text =
+          "got Max !! (Should have already been simplified) xxxx";
+      }
     | Min (e1, e2, l) ->
-      if !enable_repair then e0
-      else Error.report_error{
-            Error.error_loc = l;
-            Error.error_text =
-              "got Min !! (Should have already been simplified )";
-          }
+      Error.report_error{
+        Error.error_loc = l;
+        Error.error_text =
+          "got Min !! (Should have already been simplified )";
+      }
     | TypeCast (ty, e1, l) -> TypeCast (ty, acc_mult m e1, l)
     |  Bag (el, l) ->  Bag (List.map (acc_mult m) el, l)
     |  BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
@@ -6955,21 +6962,17 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
       | _ -> Some e, None
     in r
   |  Max (e1, e2, l) ->
-    if !enable_repair then (Some e, None)
-    else Error.report_error{
-        Error.error_loc = l;
-        Error.error_text =
-          "got Max !! (Should have already been simplified )";
-      }
+    Error.report_error{
+      Error.error_loc = l;
+      Error.error_text =
+        "got Max !! (Should have already been simplified )";
+    }
   | Min (e1, e2, l) ->
-    if !enable_repair then (Some e, None)
-    else
-    Error.report_error
-      {
-        Error.error_loc = l;
-        Error.error_text =
-          "got Min !! (Should have already been simplified )";
-      }
+    Error.report_error {
+      Error.error_loc = l;
+      Error.error_text =
+        "got Min !! (Should have already been simplified )";
+    }
   |  TypeCast _ -> ((Some e), None)
   |  Bag (e1, l) -> ((Some e), None)
   |  BagUnion (e1, l) -> ((Some e), None)
@@ -7326,7 +7329,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
               |  BagMin _ -> pf
               |  BagMax _ -> pf
               (* |  VarPerm _ -> pf *)
-              |  RelForm (v,exs,p) ->  
+              |  RelForm (v,exs,p) ->
                 let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
                 RelForm (v,new_exs,p)
               |  ImmRel (v,cond,p) ->  let new_v = helper v in ImmRel (new_v,cond,p)

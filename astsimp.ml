@@ -7632,7 +7632,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_base_and = a;
         IF.formula_base_pos = pos} as fb) ->(
         let (n_tl,rl) = res_retrieve tl clean_res fl in
-        let n_tl = 
+        let n_tl =
           if sep_collect then
             let n_tl = x_add gather_type_info_pure prog p n_tl in
             x_add gather_type_info_heap prog hh n_tl
@@ -7664,7 +7664,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
               n_tl
             ) else n_tl
           else n_tl
-        ) in 
+        ) in
         (x_add res_replace n_tlist rl clean_res fl, ch))
     | IF.Exists   {
         IF.formula_exists_qvars = qvars;

@@ -1152,7 +1152,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
     (* let () = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
     (n_tl,r)
   | MetaVar mvar -> begin
-      try 
+      try
         let mf = get_var mvar in
         meta_to_formula_not_rename mf quant fv_idents tlist
       with
@@ -3011,14 +3011,16 @@ let process_simplify (f : meta_formula) =
   with _ -> print_exc num_id
 
 let process_synthesize typed_vars pre post =
+  let () = x_tinfo_hp (add_str "post: " string_of_meta_formula) post no_pos in
   let vars_env = List.map (fun (typ, id) ->
     (id, Typeinfer.mk_spec_var_info typ)) typed_vars in
   let pre_env, pre_f = meta_to_formula_not_rename pre false [] vars_env in
   let pre_f = Synthesis.rm_emp_formula pre_f in
   let post_env, post_f =
     meta_to_formula_not_rename post false [] (vars_env @ pre_env) in
-  let post_f = Synthesis.rm_emp_formula post_f in
   let pr_formula = Cprinter.string_of_formula in
+  let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
+  let post_f = Synthesis.rm_emp_formula post_f in
   let () = x_tinfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
   let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in

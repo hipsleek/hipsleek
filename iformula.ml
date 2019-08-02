@@ -1047,9 +1047,9 @@ and subst_pointer sst (f : formula) vars =
   in helper sst f
 
 and subst_var (fr, t) (o : (ident*primed)) = if (Ipure.eq_var fr o) then t else o
-and subst_var_list ft (o : (ident*primed)) = 
+and subst_var_list ft (o : (ident*primed)) =
   let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
-  match r with 
+  match r with
   | [] -> o
   | _ -> snd (List.hd r)
 
