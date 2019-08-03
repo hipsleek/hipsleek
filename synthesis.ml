@@ -202,6 +202,7 @@ and rule_field_read = {
 and rule_assign = {
   ra_lhs : CP.spec_var;
   ra_rhs : CP.exp;
+  ra_numeric : bool;
 }
 
 and rule_return = {

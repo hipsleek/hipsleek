@@ -60,9 +60,9 @@ let check_entail_exact_wrapper_x prog ante conseq =
    *   SB.check_entail_exact prog ante conseq
    * else
    *   try *)
-      check_entail_exact_sleek prog ante conseq
-    (* with _ ->
-     *   SB.check_entail_exact prog ante conseq *)
+  check_entail_exact_sleek prog ante conseq
+(* with _ ->
+ *   SB.check_entail_exact prog ante conseq *)
 
 let check_entail_exact_wrapper prog ante conseq =
   Debug.no_2 "check_entail_exact_wrapper" pr_formula pr_formula
@@ -146,7 +146,8 @@ let choose_rule_assign_x goal : rule list =
     else
       RlAssign {
         ra_lhs = var;
-        ra_rhs = exp
+        ra_rhs = exp;
+        ra_numeric = false;
       } in
   List.map mk_rule eq_pairs
 
@@ -288,7 +289,7 @@ let unify_pair goal proc_decl arg pre_var =
       is_same_shape apre_f lpre_f
     | _ -> false, [] in
   let res = proc_pre_list |> List.map aux
-          |> List.filter (fun (x, _) -> x) in
+            |> List.filter (fun (x, _) -> x) in
   if res != [] then List.hd res
   else (false, [])
 
@@ -296,7 +297,7 @@ let unify_arg_x goal proc_decl arg =
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "arg" pr_var) arg no_pos in
   let candidate_vars = goal.gl_vars |> List.filter (equal_type arg)
-               |> List.filter (fun x -> CP.mem x goal.gl_vars) in
+                       |> List.filter (fun x -> CP.mem x goal.gl_vars) in
   let () = x_tinfo_hp (add_str "cand vars" pr_vars) candidate_vars no_pos in
   let ss_vars = List.map (fun candidate_var ->
       let (x,y) = unify_pair goal proc_decl arg candidate_var in
@@ -314,7 +315,7 @@ let unify_arg goal proc_decl arg =
 
 let unify_fcall proc_decl pre_proc post_proc goal =
   let proc_args = proc_decl.Cast.proc_args |>
-             List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+                  List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let ss_args = proc_args |> List.map (unify_arg goal proc_decl) in
   let rec mk_args_input args = match args with
     | [] -> []
@@ -324,7 +325,7 @@ let unify_fcall proc_decl pre_proc post_proc goal =
       List.concat head_added in
   let ss_args = mk_args_input ss_args in
   let contain_res = CF.fv post_proc |> List.map CP.name_of_sv
-                     |> List.exists (eq_str res_name) in
+                    |> List.exists (eq_str res_name) in
   let ss_args = List.filter(fun list_and_subst ->
       let list = List.map fst list_and_subst in
       let n_list = CP.remove_dups_svl list in
@@ -390,7 +391,7 @@ let unify_fcall proc_decl pre_proc post_proc goal =
   let list = ss_args |> List.map aux |> List.concat in
   let rules = list |> List.map check_residue in
   let rules = rules |> List.filter (fun (x,_,_,_,_,_) -> x)
-            |> List.map (fun (_,a,b,c,d,e) -> (a,b,c,d,e)) in
+              |> List.map (fun (_,a,b,c,d,e) -> (a,b,c,d,e)) in
   rules |> List.map mk_rule
 
 let choose_rule_func_call goal =
@@ -461,8 +462,8 @@ let choose_rule_unfold_post goal =
       (* let formula = formula |> remove_exists in *)
       let n_formula = CF.add_pure_formula_to_formula pre_pf formula in
       SB.check_sat prog n_formula
-      (* let tmp = SB.check_unsat prog n_formula in
-       * tmp |> negate *)
+    (* let tmp = SB.check_unsat prog n_formula in
+     * tmp |> negate *)
     with _ -> true in
   let helper_exists vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
@@ -532,6 +533,7 @@ let choose_rule_numeric_x goal =
                     RlAssign {
                       ra_lhs = cur_var;
                       ra_rhs = def;
+                      ra_numeric = true;
                     } in [rule]
               else []
             | _ -> []
@@ -542,9 +544,48 @@ let choose_rule_numeric_x goal =
   let rules = vars_lhs |> List.map (fun x -> create_templ vars x) in
   rules |> List.concat
 
+let choose_rule_numeric_end goal =
+  let vars = goal.gl_vars |> List.filter is_int_var in
+  x_tinfo_hp (add_str "vars" pr_vars) vars no_pos;
+  let post_vars = CF.fv goal.gl_post_cond in
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let pre_vars, post_vars = CF.fv pre, CF.fv post in
+  let post_vars = List.filter is_int_var post_vars in
+  let vars_lhs = List.filter (fun x -> CP.mem x vars || CP.is_res_sv x)
+      post_vars in
+  let vars_lhs = List.filter (fun x -> CP.mem x pre_vars |> negate) vars_lhs in
+  let () = x_tinfo_hp (add_str "vars_lhs" pr_vars) vars_lhs no_pos in
+  let rec vars2exp vars = match vars with
+    | [] -> CP.mkIConst 0 no_pos
+    | h::tail ->
+      let e2 = vars2exp tail in
+      CP.Add ((CP.Var (h, no_pos)), e2, no_pos) in
+  let create_templ all_vars cur_var =
+    let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
+    let rhs_e = vars2exp other_vars in
+    let rules = [] in
+    let rhs_one = CP.Add (rhs_e, CP.mkIConst 1 no_pos, no_pos) in
+    let added_pf = CP.mkEqExp (CP.Var (cur_var, no_pos)) rhs_one no_pos in
+    let n_pre = CF.add_pure_formula_to_formula added_pf pre in
+    let rules = if check_entail_exact_wrapper goal.gl_prog n_pre post then
+        let rule = if CP.is_res_sv cur_var then
+            RlReturn { r_exp = rhs_one;
+                       r_checked = true;
+                     }
+          else RlAssign {
+              ra_lhs = cur_var;
+              ra_rhs = rhs_one;
+              ra_numeric = true;
+            } in
+        rule::rules
+      else rules in
+    rules in
+  let rules = vars_lhs |> List.map (fun x -> create_templ vars x) in
+  rules |> List.concat
+
 let choose_rule_numeric goal =
   Debug.no_1 "choose_rule_numeric" pr_goal pr_rules
-    (fun _ -> choose_rule_numeric_x goal) goal
+    (fun _ -> choose_rule_numeric_end goal) goal
 
 let find_instantiate_var_x goal var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -566,7 +607,7 @@ let find_instantiate_var_x goal var =
           let args1 = vnode1.CF.h_formula_view_arguments in
           let args2 = vnode2.CF.h_formula_view_arguments in
           List.length args1 = List.length args2
-          (* List.exists2 (fun x y -> helper_pure x y) args1 args2 *)
+        (* List.exists2 (fun x y -> helper_pure x y) args1 args2 *)
         | _ -> false
       end
     | _ -> false in
@@ -604,13 +645,100 @@ let choose_rule_return goal =
                      |> List.filter (fun x -> CP.mem x all_vars && not(CP.is_res_sv x)) in
       let pre_vars = List.filter (check_return p_var) pre_vars in
       let aux pre_var =
-          let rule = RlReturn {
-              r_exp = CP.mkVar pre_var no_pos;
-              r_checked = true;
-            } in
-          [rule] in
+        let rule = RlReturn {
+            r_exp = CP.mkVar pre_var no_pos;
+            r_checked = true;
+          } in
+        [rule] in
       pre_vars |> List.map aux |> List.concat
     else []
   else []
 
+
+let choose_rule_allocate_return goal : rule list =
+  let prog = goal.gl_prog in
+  let all_vars = goal.gl_vars in
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let () = x_tinfo_hp (add_str "pre" pr_formula) goal.gl_pre_cond no_pos in
+  let rec mk_args_input args = match args with
+    | [] -> []
+    | [h] -> List.map (fun x -> [x]) h
+    | h::t -> let tmp = mk_args_input t in
+      let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
+      List.concat head_added in
+  let data_decls = prog.C.prog_data_decls in
+  let others = ["__Exc"; "thrd"; "Object"; "int_ptr"; "barrier"] in
+  let filter_fun x = not(List.mem x.C.data_name others) in
+  let data_decls = data_decls |> List.filter filter_fun in
+  let rec check_eq_params args = match args with
+    | [] -> false
+    | h::tail -> if CP.mem h tail then true
+      else check_eq_params tail in
+  let check_params_end args =
+    if check_eq_params args then false
+    else
+      let args = List.filter is_node_var args in
+      let pre_vars = pre |> get_heap |> get_heap_nodes in
+      let pre_nodes = pre_vars |> List.map (fun (x,_,y) -> (x,y)) in
+      let pre_nodes = pre_nodes |> List.filter (fun (x,_) -> CP.mem x args) in
+      let pre_vars = pre_nodes |> List.map fst in
+      let other_args = List.filter (fun x -> not(CP.mem x pre_vars)) args in
+      let all_vars = pre_nodes |> List.map (fun (x,y) -> x::y) |> List.concat in
+      let all_vars = other_args@all_vars in
+      let rm_duplicate_vars = CP.remove_dups_svl all_vars in
+      if List.length all_vars != List.length rm_duplicate_vars then false
+      else true in
+  let eq_tuple tuple1 tuple2 =
+    let commutative_int tuple1 tuple2 =
+      let int_args1 = tuple1 |> List.filter is_int_var in
+      let int_args2 = tuple2 |> List.filter is_int_var in
+      CP.subset int_args1 int_args2 && CP.subset int_args2 int_args1 in
+    let commutative_node tuple1 tuple2 =
+      let node_args1 = tuple1 |> List.filter is_node_var in
+      let node_args2 = tuple2 |> List.filter is_node_var in
+      CP.subset node_args1 node_args2 && CP.subset node_args2 node_args1 in
+    commutative_int tuple1 tuple2 && commutative_node tuple1 tuple2 in
+  let mk_rule_end data_decl allocate_var args =
+    if check_params_end args then
+      let data = data_decl.C.data_name in
+      let hf = CF.mkDataNode allocate_var data args no_pos in
+      let n_pre = add_h_formula_to_formula hf goal.gl_pre_cond in
+      if check_entail_exact_wrapper prog n_pre post then
+        let rule = {
+          ra_var = allocate_var;
+          ra_data = data;
+          ra_params = args;
+          ra_pre = n_pre;
+          ra_end = true;
+          ra_lookahead = None;
+        } in
+        [rule]
+      else []
+    else [] in
+  let aux_end allocate_var data_decl =
+    let n_eq_var al_var x = CP.eq_sv al_var x |> negate in
+    let all_vars = List.filter (n_eq_var allocate_var) all_vars in
+    let args = data_decl.C.data_fields |> List.map fst
+               |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
+    let arg_types = List.map CP.type_of_sv args in
+    let helper_typ typ =
+      all_vars |> List.filter (fun x -> CP.type_of_sv x = typ) in
+    let args_list = arg_types |> List.map helper_typ in
+    let args_groups = args_list |> mk_args_input in
+    let filter_fun list = has_allocate goal.gl_trace list |> negate in
+    let args_groups = args_groups |> List.filter filter_fun in
+    let args_groups = args_groups |> Gen.BList.remove_dups_eq eq_tuple in
+    let rules = args_groups |> List.map (mk_rule_end data_decl allocate_var)
+                |> List.concat in
+    rules in
+  let allocate_vars = check_head_allocate goal pre post in
+  if List.length allocate_vars = 1 then
+    let allocate_var = List.hd allocate_vars in
+    let () = x_tinfo_hp (add_str "var" pr_var) allocate_var no_pos in
+    let rules = data_decls |> List.map (aux_end allocate_var) |> List.concat in
+    let rules = rules |> List.map (fun x -> RlAllocate x) in
+    rules
+  else []
 

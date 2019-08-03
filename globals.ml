@@ -1414,7 +1414,7 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
-let print_type = ref true
+let print_type = ref false
 let print_extra = ref false
 
 let enforce_type_error = ref true (* strictly enforce type error *)
@@ -2163,7 +2163,7 @@ let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 5.
-let synthesis_timeout = ref 35.
+let synthesis_timeout = ref 25.
 
 let dis_inv_baga () =
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen ..";

@@ -18,4 +18,4 @@ int length(node x)
 synthesize [node x]
  x::ll<n>&x!=null & x=x
 ~>
- (exists fr56,r_3: x::node<r_3> * r_3::ll<fr56> & x=x & n=res & fr56=n-1).
+(exists fr56,r_3: x::node<r_3> * r_3::ll<fr56> & x=x & n=res & fr56=n-1).
