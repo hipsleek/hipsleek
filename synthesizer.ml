@@ -516,14 +516,12 @@ let choose_all_rules rs goal =
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_fwrite goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
   let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_allocate goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_heap_assign goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
   rs
 
@@ -532,12 +530,10 @@ let choose_rules_after_mk_null rs goal =
   let rs = rs @ (choose_rule_frame_pred goal) in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
   let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_heap_assign goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
   rs
 
@@ -546,12 +542,10 @@ let choose_rules_after_new_num rs goal =
   let rs = rs @ (choose_rule_frame_pred goal) in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
   let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_heap_assign goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
   rs
 
@@ -559,22 +553,24 @@ let choose_rules_after_allocate rs goal =
   let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_rule_frame_pred goal) in
   let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
   let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_allocate goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_heap_assign goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
   rs
 
 let choose_main_rules goal =
   let cur_time = get_time () in
   let duration = cur_time -. goal.gl_start_time in
-  if duration > !synthesis_timeout && not(!enable_i) then
-    []
+  let a_vars = check_head_allocate goal in
+  let () = x_tinfo_hp (add_str "a_vars" pr_vars) a_vars no_pos in
+  if (a_vars != []) && not (check_goal_procs goal) then []
+  else
+  if duration > !synthesis_timeout && not(!enable_i)
+  then []
   else
     let rs = goal.gl_lookahead in
     let rs = if goal.gl_trace = [] then
@@ -627,6 +623,8 @@ let choose_synthesis_rules_x goal : rule list =
       let _ = choose_rule_skip goal |> raise_rules in
       let _ = choose_rule_return goal |> raise_rules in
       let _ = choose_rule_allocate_return goal |> raise_rules in
+      let _ = choose_rule_numeric goal |> raise_rules in
+      let _ = choose_rule_heap_assign goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
       []
     with ERules rs -> rs in
@@ -874,6 +872,7 @@ let process_rule_heap_assign goal rc =
 (*********************************************************************
  * The search procedure
  *********************************************************************)
+
 let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
   let trace = goal.gl_trace in

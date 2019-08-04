@@ -418,11 +418,39 @@ let check_allocate goal pre post =
   (CP.diff_svl all_vars pre_node_vars != []) ||
   (List.length post_vars = 2 && List.length pre_vars = 1)
 
-let check_head_allocate goal pre post =
+let check_goal_procs goal =
+  let procs = goal.gl_proc_decls in
+  let aux proc_decl =
+    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+    let specs = get_pre_post specs in
+    let aux_pre_post (pre, post) =
+      let post_nodes = post |> get_heap |> get_heap_nodes
+                       |> List.map (fun (x,_,_) -> x) in
+      let post_views = post |> get_heap |> get_heap_views
+                       |> List.map (fun (x,_,_) -> x) in
+      let pre_nodes = pre |> get_heap |> get_heap_nodes
+                       |> List.map (fun (x,_,_) -> x) in
+      let pre_views = pre |> get_heap |> get_heap_views
+                     |> List.map (fun (x,_,_) -> x) in
+      let post_vars = post_nodes @ post_views in
+      let pre_vars = pre_nodes @ pre_views in
+      List.length post_vars > List.length pre_vars in
+    List.exists aux_pre_post specs in
+  List.exists aux procs
+
+let check_head_allocate goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
   let pre_vars = pre |> CF.fv in
-  let post_vars = post |> CF.fv in
-  let all_vars = goal.gl_vars in
-  List.filter (fun x -> CP.mem x post_vars && not (CP.mem x pre_vars)) all_vars
+  let post_nodes = post |> get_heap |> get_heap_nodes
+                  |> List.map (fun (x,_,_) -> x) in
+  let post_views = post |> get_heap |> get_heap_views
+                   |> List.map (fun (x,_,_) -> x) in
+  let post_vars = post_nodes @ post_views in
+  let all_vars = goal.gl_vars |> List.filter is_node_var in
+  let () = x_tinfo_hp (add_str "post node" pr_vars) post_vars no_pos in
+  post_vars |> List.filter (fun x -> CP.mem x all_vars)
+  |> List.filter (fun x -> not(CP.mem x pre_vars))
 
 let check_mk_null pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
@@ -733,7 +761,7 @@ let choose_rule_allocate_return goal : rule list =
     let rules = args_groups |> List.map (mk_rule_end data_decl allocate_var)
                 |> List.concat in
     rules in
-  let allocate_vars = check_head_allocate goal pre post in
+  let allocate_vars = check_head_allocate goal in
   if List.length allocate_vars = 1 then
     let allocate_var = List.hd allocate_vars in
     let () = x_tinfo_hp (add_str "var" pr_var) allocate_var no_pos in

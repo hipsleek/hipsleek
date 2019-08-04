@@ -1225,30 +1225,49 @@ let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
 
 let simplify_min_max_pf pf =
   let conjuncts = pf |> remove_exists_pf |> CP.split_conjunctions in
-  let aux_exp e = match e with
+  let rec aux_exp e = match e with
     | CP.Min (e1,e2,loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
       let n_name = fresh_any_name "min" in
       let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
       let n_e = CP.Var (n_var, loc) in
-      let add_formula = CP.EqMin (n_e, e1, e2, no_pos) in
-      (n_e, [n_var], [add_formula])
+      let add_formula = CP.EqMin (n_e, n_e1, n_e2, no_pos) in
+      (n_e, n_var::var1@var2, add_formula::orig1@orig2)
     | CP.Max (e1,e2,loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
       let n_name = fresh_any_name "max" in
       let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
       let n_e = CP.Var (n_var, loc) in
-      let add_formula = CP.EqMax (n_e, e1, e2, no_pos) in
-      (n_e, [n_var], [add_formula])
+      let add_formula = CP.EqMax (n_e, n_e1, n_e2, no_pos) in
+      (n_e, n_var::var1@var2, add_formula::orig1@orig2)
+    | CP.Add (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Add (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
+    | CP.Subtract (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Subtract (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
+    | CP.Mult (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Mult (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
+    | CP.Div (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Div (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
     | _ -> (e, [], []) in
   let aux_pf pf = match pf with
     | CP.Lt (e1, e2, loc) ->
       let n_e1, var1, orig1 = aux_exp e1 in
       let n_e2, var2, orig2 = aux_exp e2 in
       let n_pf = CP.Lt (n_e1, n_e2, loc) in
-      (n_pf, var1@var2, orig1@orig2)
-    | CP.Eq (e1, e2, loc) ->
-      let n_e1, var1, orig1 = aux_exp e1 in
-      let n_e2, var2, orig2 = aux_exp e2 in
-      let n_pf = CP.Eq (n_e1, n_e2, loc) in
       (n_pf, var1@var2, orig1@orig2)
     | CP.Lte (e1, e2, loc) ->
       let n_e1, var1, orig1 = aux_exp e1 in
@@ -1264,6 +1283,11 @@ let simplify_min_max_pf pf =
       let n_e1, var1, orig1 = aux_exp e1 in
       let n_e2, var2, orig2 = aux_exp e2 in
       let n_pf = CP.Gte (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Eq (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Eq (n_e1, n_e2, loc) in
       (n_pf, var1@var2, orig1@orig2)
     | CP.Neq (e1, e2, loc) ->
       let n_e1, var1, orig1 = aux_exp e1 in
@@ -1321,6 +1345,8 @@ let simplify_min_max formula =
 let simplify_goal goal =
   let n_pre = goal.gl_pre_cond in
   let n_post = goal.gl_post_cond in
+  let n_pre = simplify_min_max n_pre in
+  let n_post = simplify_min_max n_post in
   let n_pre = remove_exists n_pre in
   let n_pre = elim_idents n_pre in
   let n_post = elim_idents n_post in
@@ -1331,8 +1357,6 @@ let simplify_goal goal =
   let n_post = simplify_arithmetic n_post in
   let n_pre = rm_duplicate_constraints n_pre in
   let n_post = rm_duplicate_constraints n_post in
-  let n_pre = simplify_min_max n_pre in
-  let n_post = simplify_min_max n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
@@ -2300,6 +2324,17 @@ let get_heap_nodes (hf:CF.h_formula) =
       let args = dn.CF.h_formula_data_arguments in
       let data_name = dn.CF.h_formula_data_name in
       [(var, data_name, args)]
+    | _ -> [] in
+  aux hf
+
+let get_heap_views (hf:CF.h_formula) =
+  let rec aux hf = match hf with
+    | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
+    | CF.ViewNode vn ->
+      let var = vn.CF.h_formula_view_node in
+      let args = vn.CF.h_formula_view_arguments in
+      let view_name = vn.CF.h_formula_view_name in
+      [(var, view_name, args)]
     | _ -> [] in
   aux hf
 
