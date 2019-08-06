@@ -128,7 +128,8 @@ let rec smt_of_exp a =
   | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(/ " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Max _
-  | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
+  | CP.Min _ -> illegal_format ("smtsolver.smt_of_exp: min/max should not appear here"
+                                ^ (!CP.print_exp a))
   | CP.TypeCast (_, e1, _) -> smt_of_exp e1
   | CP.Bag ([], _)
   | CP.Tup2 _
@@ -221,7 +222,112 @@ let rec smt_of_b_formula b =
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
 
-let rec smt_of_formula pr_w pr_s f =
+let mkAndList pf_list =
+  let rec aux pf_list = match pf_list with
+  | [] -> CP.mkTrue no_pos
+  | h :: t -> let pf2 = aux t in
+    CP.mkAnd h pf2 no_pos in
+  let pf = aux pf_list in
+  CP.remove_redundant_constraints pf
+
+let simplify_min_max_pf pf =
+  let conjuncts = pf |> CP.split_conjunctions in
+  let rec aux_exp e = match e with
+    | CP.Min (e1,e2,loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_name = fresh_any_name "min" in
+      let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+      let n_e = CP.Var (n_var, loc) in
+      let add_formula = CP.EqMin (n_e, n_e1, n_e2, no_pos) in
+      (n_e, n_var::var1@var2, add_formula::orig1@orig2)
+    | CP.Max (e1,e2,loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_name = fresh_any_name "max" in
+      let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+      let n_e = CP.Var (n_var, loc) in
+      let add_formula = CP.EqMax (n_e, n_e1, n_e2, no_pos) in
+      (n_e, n_var::var1@var2, add_formula::orig1@orig2)
+    | CP.Add (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Add (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
+    | CP.Subtract (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Subtract (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
+    | CP.Mult (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Mult (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
+    | CP.Div (e1, e2, pos) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e = CP.Div (n_e1, n_e2, pos) in
+      (n_e, var1@var2, orig1@orig2)
+    | _ -> (e, [], []) in
+  let aux_pf pf = match pf with
+    | CP.Lt (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Lt (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Lte (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Lte (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Gt (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Gt (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Gte (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Gte (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Eq (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Eq (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.Neq (e1, e2, loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_pf = CP.Neq (n_e1, n_e2, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | _ -> (pf, [], []) in
+  let aux_bf bf =
+    let (pf, lbl) = bf in
+    let n_pf, vars, added = aux_pf pf in
+    let added = List.map (fun x -> (x, None)) added in
+    ((n_pf, lbl), vars, added) in
+  let rec aux pf = match pf with
+    | CP.BForm (bf, lbl) ->
+      let n_bf, vars, added = aux_bf bf in
+      let added = added |> List.map (fun x -> CP.BForm (x, None)) in
+      let n_f = CP.BForm (n_bf, lbl) in
+      let added = mkAndList added in
+      let n_f = CP.mkAnd n_f added no_pos in
+      n_f, vars
+    | CP.Exists (sv, e_formula, opt, loc) ->
+      let n_f, vars = aux e_formula in
+      let n_f = CP.Exists (sv, e_formula, opt, loc) in
+      (n_f, vars)
+    | _ -> pf, [] in
+  let n_conjuncts = conjuncts |> List.map aux in
+  let n_list = List.map fst n_conjuncts in
+  let e_vars = List.map snd n_conjuncts |> List.concat in
+  let n_pf = CP.join_conjunctions n_list in
+  n_pf
+
+let smt_of_formula pr_w pr_s f =
+  let f = simplify_min_max_pf f in
   let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
@@ -233,7 +339,7 @@ let rec smt_of_formula pr_w pr_s f =
     | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
     | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
+    | CP.Not (p,_, _) -> "(not " ^ (helper p) ^ ")"
     | CP.Forall (sv, p, _,_) ->
       "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
     | CP.Exists (sv, p, _,_) ->

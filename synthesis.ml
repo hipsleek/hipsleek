@@ -460,9 +460,56 @@ let elim_bool_constraint (pf:CP.formula) =
     | _ -> (false, pf) in
   aux pf |> snd
 
+let remove_exists_pf_x pf =
+  let rec aux pf = match pf with
+    | CP.BForm _ -> pf
+    | CP.And (f1, f2, loc) ->
+      let n_f1 = aux f1 in
+      let n_f2 = aux f2 in
+      CP.And (n_f1, n_f2, loc)
+    | CP.AndList list ->
+      let n_list = list |> List.map (fun (x, y) -> (x, aux y)) in
+      CP.AndList n_list
+    | CP.Or (f1, f2, lbl, loc) ->
+      let n_f1 = aux f1 in
+      let n_f2 = aux f2 in
+      CP.Or (n_f1, n_f2, lbl, loc)
+    | CP.Not (pf, lbl, loc) ->
+      let n_pf = aux pf in
+      CP.Not (n_pf, lbl, loc)
+    | CP.Exists (_, exists_f, _ , _) -> aux exists_f
+    | CP.Forall _ -> pf in
+  aux pf
+
+let remove_exists_pf pf =
+  Debug.no_1 "remove_exists_pf" pr_pf pr_pf
+    (fun _ -> remove_exists_pf_x pf) pf
+
+let remove_exists_vars_pf vars pf =
+  let rec aux pf = match pf with
+    | CP.Exists (var, exists_f, _, _) ->
+      if CP.mem var vars then aux exists_f
+      else pf
+    | CP.And (f1, f2, loc) ->
+      let n_f1 = aux f1 in
+      let n_f2 = aux f2 in
+      CP.And (f1, f2, loc)
+    | CP.AndList list ->
+      let n_list = list |> List.map (fun (x, y) -> (x, aux y)) in
+      CP.AndList n_list
+    | CP.Or (f1, f2, lbl, loc) ->
+      let n_f1 = aux f1 in
+      let n_f2 = aux f2 in
+      CP.Or (n_f1, n_f2, lbl, loc)
+    | _ -> pf in
+  aux pf
+
 let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
-  | Base _ -> formula
+  | Base bf ->
+    let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+    let n_pf = remove_exists_vars_pf vars pf in
+    CF.Base {bf with CF.formula_base_pure = MCP.mix_of_pure n_pf}
   | Exists ({formula_exists_qvars = qvars;
              formula_exists_heap =  h;
              formula_exists_vperm = vp;
@@ -473,11 +520,43 @@ let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
              formula_exists_label = lbl;
              formula_exists_pos = pos } as bf) ->
     let n_qvars = List.filter (fun x -> not(CP.mem_svl x vars)) qvars in
-    if n_qvars = [] then CF.mkBase_w_lbl h p vp t fl a pos lbl
-    else Exists {bf with CF.formula_exists_qvars = n_qvars}
+    let n_pf = remove_exists_vars_pf vars (MCP.pure_of_mix p) in
+    let n_pf = MCP.mix_of_pure n_pf in
+    if n_qvars = [] then CF.mkBase_w_lbl h n_pf vp t fl a pos lbl
+    else CF.Exists {bf with CF.formula_exists_qvars = n_qvars;
+                            CF.formula_exists_pure = n_pf}
   | Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
     let n_f2 = remove_exists_vars bf.formula_or_f2 vars in
     Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+
+let remove_exists_x formula =
+  let rec aux formula = match formula with
+    | CF.Base bf ->
+      let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+      let n_pf = remove_exists_pf pf in
+      CF.Base {bf with CF.formula_base_pure = MCP.mix_of_pure n_pf}
+    | CF.Exists ({formula_exists_qvars = qvars;
+                  formula_exists_heap =  h;
+                  formula_exists_vperm = vp;
+                  formula_exists_pure = p;
+                  formula_exists_type = t;
+                  formula_exists_and = a;
+                  formula_exists_flow = fl;
+                  formula_exists_label = lbl;
+                  formula_exists_pos = pos } as bf) ->
+      let n_pf = remove_exists_pf (MCP.pure_of_mix p) in
+      let n_pf = MCP.mix_of_pure n_pf in
+      CF.mkBase_w_lbl h n_pf vp t fl a pos lbl
+    | CF.Or bf ->
+      let n_f1 = aux bf.CF.formula_or_f1 in
+      let n_f2 = aux bf.CF.formula_or_f2 in
+      CF.Or {bf with CF.formula_or_f1 = n_f1;
+                     CF.formula_or_f2 = n_f2} in
+  aux formula
+
+let remove_exists formula =
+  Debug.no_1 "remove_exists" pr_formula pr_formula
+    (fun _ -> remove_exists_x formula) formula
 
 let is_equality_pair (formula: CP.formula) =
   let aux_pf (pf:CP.p_formula) = match pf with
@@ -495,10 +574,6 @@ let is_equality_pair (formula: CP.formula) =
     | CP.Exists (_, exists_f, _, _) -> aux exists_f
     | _ -> None in
   aux formula
-
-let rec remove_exists_pf pf = match pf with
-  | CP.Exists (_, exists_f, _ , _) -> remove_exists_pf exists_f
-  | _ -> pf
 
 let rec elim_idents (f:CF.formula) = match f with
   | CF.Base bf ->
@@ -1126,10 +1201,6 @@ let add_formula_to_formula f1 f2 =
   if evars = [] then bf
     else add_exists_vars bf evars
 
-let remove_exists (formula:CF.formula) =
-  let vars = CF.get_exists formula in
-  remove_exists_vars formula vars
-
 let rec simplify_arithmetic_x (formula: CF.formula) =
   match formula with
   | CF.Base b ->
@@ -1264,6 +1335,16 @@ let simplify_min_max_pf pf =
       (n_e, var1@var2, orig1@orig2)
     | _ -> (e, [], []) in
   let aux_pf pf = match pf with
+    | CP.EqMin (exp1, exp2, exp3, loc) ->
+      let n_e2, var1, orig1 = aux_exp exp2 in
+      let n_e3, var2, orig2 = aux_exp exp3 in
+      let n_pf = CP.EqMin (exp1, n_e2, n_e3, loc) in
+      (n_pf, var1@var2, orig1@orig2)
+    | CP.EqMax (exp1, exp2, exp3, loc) ->
+      let n_e2, var1, orig1 = aux_exp exp2 in
+      let n_e3, var2, orig2 = aux_exp exp3 in
+      let n_pf = CP.EqMax (exp1, n_e2, n_e3, loc) in
+      (n_pf, var1@var2, orig1@orig2)
     | CP.Lt (e1, e2, loc) ->
       let n_e1, var1, orig1 = aux_exp e1 in
       let n_e2, var2, orig2 = aux_exp e2 in
@@ -2768,6 +2849,7 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | RlFRead _ -> PriLow
   | RlFree _ -> PriLow
   | RlReturn _ -> PriLow
+  | RlNewNum _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   (* | RlUnfoldPost _
    * | RlFuncRes _
@@ -2841,10 +2923,10 @@ let compare_rule goal r1 r2 =
   match r1 with
   | RlSkip -> PriHigh
   | RlReturn r -> compare_rule_return_vs_other r r2
-  | RlUnfoldPre _ -> compare_rule_unfold_pre_vs_other r1 r2
+  | RlUnfoldPre r1 -> compare_rule_unfold_pre_vs_other r1 r2
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2
-  | RlFramePred r -> compare_rule_frame_pred_vs_other goal r r2
+  | RlFramePred r1 -> compare_rule_frame_pred_vs_other goal r1 r2
   | RlAllocate r1 ->
     if r1.ra_end then PriHigh
     else compare_rule_allocate_vs_other r1 r2

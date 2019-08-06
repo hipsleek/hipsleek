@@ -1279,7 +1279,8 @@ let pr_aliasing_scenario (al :aliasing_scenario) =
 (* ;; *)
 
 (** convert formula exp to a string via pr_formula_exp *)
-let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
+let string_of_formula_exp (e:P.exp) : string =
+  poly_string_of_pr pr_formula_exp e
 
 let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
   poly_printer_of_pr crt_fmt pr_formula_exp e

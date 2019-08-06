@@ -54,15 +54,16 @@ let check_entail_exact_sleek prog ante conseq =
 let check_entail_exact_wrapper_x prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
-  let conseq = rm_unk_type_formula prog conseq in
-  (* if contains_lseg prog then
-   *   let () = x_tinfo_pp "marking" no_pos in
-   *   SB.check_entail_exact prog ante conseq
-   * else
-   *   try *)
-  check_entail_exact_sleek prog ante conseq
-(* with _ ->
- *   SB.check_entail_exact prog ante conseq *)
+  (* let ante = simplify_min_max ante in
+   * let conseq = simplify_min_max conseq in *)
+  if contains_lseg prog then
+    let () = x_tinfo_pp "marking" no_pos in
+    SB.check_entail_exact prog ante conseq
+  else
+    try
+      check_entail_exact_sleek prog ante conseq
+    with _ ->
+      SB.check_entail_exact prog ante conseq
 
 let check_entail_exact_wrapper prog ante conseq =
   Debug.no_2 "check_entail_exact_wrapper" pr_formula pr_formula
@@ -682,7 +683,6 @@ let choose_rule_return goal =
     else []
   else []
 
-
 let choose_rule_allocate_return goal : rule list =
   let prog = goal.gl_prog in
   let all_vars = goal.gl_vars in
@@ -747,6 +747,15 @@ let choose_rule_allocate_return goal : rule list =
   let aux_end allocate_var data_decl =
     let n_eq_var al_var x = CP.eq_sv al_var x |> negate in
     let all_vars = List.filter (n_eq_var allocate_var) all_vars in
+    let pre_nodes = pre |> get_heap |> get_heap_nodes
+                   |> List.map (fun (x,_,_) -> x) in
+    let pre_views = pre |> get_heap |> get_heap_views
+                    |> List.map (fun (x,_,_) -> x) in
+    let pre_vars = pre_nodes @ pre_views in
+    let all_vars = all_vars |> List.filter (fun x ->
+        if is_node_var x then CP.mem x pre_vars else true) in
+    let () = x_tinfo_hp (add_str "pre vars" pr_vars) pre_vars no_pos in
+    let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
     let args = data_decl.C.data_fields |> List.map fst
                |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in

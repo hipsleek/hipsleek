@@ -460,7 +460,7 @@ let choose_rule_mk_null goal : rule list =
                |> List.map snd in
     list |> List.map (fun x -> RlMkNull x)
 
-let choose_rule_new_num goal : rule list =
+let choose_rule_new_num_x goal : rule list =
   if has_new_num goal.gl_trace then []
   else
     let pre = goal.gl_pre_cond in
@@ -494,8 +494,8 @@ let choose_rule_new_num goal : rule list =
       let n_goal = {goal with gl_vars = all_vars;
                               gl_pre_cond = n_pre;
                               gl_trace = (RlNewNum rule)::goal.gl_trace} in
-      let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
-      let n_rules = choose_rule_allocate n_goal in
+      let () = x_binfo_hp (add_str "var" pr_var) var no_pos in
+      let n_rules = choose_rule_allocate_return n_goal in
       let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
       let n_rules = n_rules @ (choose_rule_func_call n_goal) in
       let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
@@ -509,6 +509,10 @@ let choose_rule_new_num goal : rule list =
     let list = list |> List.map filter_rule |> List.filter (fun (x,_) -> x)
                |> List.map snd in
     list |> List.map (fun x -> RlNewNum x)
+
+let choose_rule_new_num goal =
+  Debug.no_1 "choose_rule_new_num" pr_goal pr_rules
+    (fun _ -> choose_rule_new_num_x goal) goal
 
 let choose_all_rules rs goal =
   let rs = rs @ (choose_rule_unfold_pre goal) in
@@ -567,7 +571,8 @@ let choose_main_rules goal =
   let duration = cur_time -. goal.gl_start_time in
   let a_vars = check_head_allocate goal in
   let () = x_tinfo_hp (add_str "a_vars" pr_vars) a_vars no_pos in
-  if (a_vars != []) && not (check_goal_procs goal) then []
+  if (a_vars != []) && not (check_goal_procs goal)
+     && List.length goal.gl_trace > 2 then []
   else
   if duration > !synthesis_timeout && not(!enable_i)
   then []
@@ -1028,7 +1033,6 @@ let get_spec_from_hps prog hps =
   let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
   let post = post_hp.Cast.hp_formula in
   let pre = pre_hp.Cast.hp_formula |> remove_exists in
-  let post = rm_unk_type_formula prog post in
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   (pre,post)

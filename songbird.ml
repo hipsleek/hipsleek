@@ -33,6 +33,7 @@ let pr_entail = SBC.pr_entailment
 let sb_program = ref (None: SBC.program option)
 let pr_ents = pr_list (pr_pair pr_pf pr_pf)
 let pr_pos = string_of_loc
+let pr_exp = Cprinter.poly_string_of_pr Cprinter.pr_formula_exp
 
 (*********************************************************************
  * Global variables
@@ -214,54 +215,59 @@ let rec translate_exp (exp: CP.exp) =
     SBC.mk_func ~pos:pos SBC.Min [sb_e1; sb_e2]
   | _ -> report_error no_pos ("this exp is not handled"
                               ^ (Cprinter.string_of_formula_exp exp))
+let translate_back_exp_x (exp: SBC.exp) =
+  let rec aux exp = match exp with
+    | SBC.Null pos -> CP.Null (translate_back_pos pos)
+    | SBC.Var (var, pos) ->
+      let h_pos = translate_back_pos pos in
+      CP.Var (translate_back_var var, h_pos)
+    | SBC.IConst (num, pos) -> CP.IConst (num, translate_back_pos pos)
+    | SBC.BinExp (bin_op, exp1, exp2, pos) ->
+      let h_pos = translate_back_pos pos in
+      begin
+        match bin_op with
+        | SBC.Add -> CP.Add (aux exp1, aux exp2, h_pos)
+        | SBC.Sub -> CP.Subtract (aux exp1, aux exp2, h_pos)
+        | SBC.Mul -> CP.Mult (aux exp1, aux exp2, h_pos)
+        | SBC.Div -> CP.Div (aux exp1, aux exp2, h_pos)
+      end
+    | SBC.LTerm (lterm, pos) ->
+      let n_exp = SBC.convert_lterm_to_binary_exp pos lterm in
+      aux n_exp
+    | SBC.PTerm (pterm, pos) ->
+      let n_exp = SBC.convert_pterm_to_binary_exp pos pterm in
+      aux n_exp
+    | SBC.Func (func, exps, pos) ->
+      begin
+        match func with
+        | SBC.Max ->
+          let args = List.map aux exps in
+          if List.length args = 2 then
+            let exp1 = List.hd args in
+            let exp2 = args |> List.tl |> List.hd in
+            let loc = translate_back_pos pos in
+            CP.Max (exp1, exp2, loc)
+          else report_error no_pos "number of args in max wrong"
+        | SBC.Min ->
+          let args = List.map aux exps in
+          if List.length args = 2 then
+            let exp1 = List.hd args in
+            let exp2 = args |> List.tl |> List.hd in
+            let loc = translate_back_pos pos in
+            CP.Min (exp1, exp2, loc)
+          else report_error no_pos "number of args in min wrong"
+        | _ ->
+          let e_str = "trans_back_exp" ^ (SBC.pr_exp exp) ^ " not handled" in
+          report_error no_pos e_str
+      end
+    | _ ->
+      let e_str = "trans_back_exp" ^ (SBC.pr_exp exp) ^ " not handled" in
+      report_error no_pos e_str in
+  aux exp
 
-let rec translate_back_exp (exp: SBC.exp) = match exp with
-  | SBC.Null pos -> CP.Null (translate_back_pos pos)
-  | SBC.Var (var, pos) -> CP.Var (translate_back_var var, translate_back_pos
-                                                            pos)
-  | SBC.IConst (num, pos) -> CP.IConst (num, translate_back_pos pos)
-  | SBC.BinExp (bin_op, exp1, exp2, pos) ->
-    begin
-      match bin_op with
-      | SBC.Add -> CP.Add (translate_back_exp exp1, translate_back_exp exp2,
-                           translate_back_pos pos)
-      | SBC.Sub -> CP.Subtract (translate_back_exp exp1, translate_back_exp exp2,
-                                translate_back_pos pos)
-      | SBC.Mul -> CP.Mult (translate_back_exp exp1, translate_back_exp exp2,
-                            translate_back_pos pos)
-      | SBC.Div -> CP.Div (translate_back_exp exp1, translate_back_exp exp2,
-                           translate_back_pos pos)
-    end
-  | SBC.LTerm (lterm, pos) ->
-    let n_exp = SBC.convert_lterm_to_binary_exp pos lterm in
-    translate_back_exp n_exp
-  | SBC.PTerm (pterm, pos) ->
-    let n_exp = SBC.convert_pterm_to_binary_exp pos pterm in
-    translate_back_exp n_exp
-  | SBC.Func (func, exps, pos) ->
-    begin
-      match func with
-      | SBC.Max ->
-        let args = List.map translate_back_exp exps in
-        if List.length args = 2 then
-          let exp1 = List.hd args in
-          let exp2 = args |> List.tl |> List.hd in
-          let loc = translate_back_pos pos in
-          CP.Max (exp1, exp2, loc)
-        else report_error no_pos "number of args in max wrong"
-      | SBC.Min ->
-        let args = List.map translate_back_exp exps in
-        if List.length args = 2 then
-          let exp1 = List.hd args in
-          let exp2 = args |> List.tl |> List.hd in
-          let loc = translate_back_pos pos in
-          CP.Min (exp1, exp2, loc)
-        else report_error no_pos "number of args in min wrong"
-      | _ -> report_error no_pos
-               ("translate_back_exp:" ^ (SBC.pr_exp exp) ^ " is not handled")
-    end
-  | _ -> report_error no_pos
-           ("this exp formula not handled: " ^ (SBC.pr_exp exp))
+let translate_back_exp (exp : SBC.exp) =
+  Debug.no_1 "translate_back_exp" SBC.pr_exp pr_exp
+    (fun _ -> translate_back_exp_x exp) exp
 
 let rec translate_pf (pure_f: CP.formula)  =
   match pure_f with
@@ -345,7 +351,8 @@ let translate_pf_wrapper pf =
   Debug.no_1 "translate_pf" pr_pf (SBC.pr_pf)
     (fun _ -> translate_pf pf) pf
 
-let rec translate_back_pf (pf : SBC.pure_form) = match pf with
+let translate_back_pf_x (pf : SBC.pure_form) =
+  let rec aux pf = match pf with
   | SBC.BConst (b, pos)
     -> CP.BForm ((CP.BConst (b, translate_back_pos pos), None), None)
   | SBC.BVar (var, pos) -> let hip_var = translate_back_var var in
@@ -366,16 +373,18 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
           match exp2_hip with
           | CP.Max (max1, max2, _) ->
             CP.BForm((CP.EqMax (exp1_hip, max1, max2, loc), None), None)
+          | CP.Min (min1, min2, _) ->
+            CP.BForm((CP.EqMin (exp1_hip, min1, min2, loc), None), None)
           | _ ->
             CP.BForm((CP.Eq (exp1_hip, exp2_hip, loc), None), None)
         end
       | SBC.Ne -> CP.BForm((CP.Neq (exp1_hip, exp2_hip, loc), None), None)
     end
   | SBC.PNeg (pf, pos) -> let loc = translate_back_pos pos in
-    let hip_pf = translate_back_pf pf in
+    let hip_pf = aux pf in
     CP.mkNot hip_pf None loc
   | SBC.PDisj (pfs, pos) ->
-    let hip_pfs = List.map translate_back_pf pfs in
+    let hip_pfs = List.map aux pfs in
     let rec list_to_or pfs = match pfs with
       | [] -> report_error no_pos "empty"
       | [h] -> h
@@ -383,7 +392,7 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
         CP.mkOr h t_f None no_pos in
     list_to_or hip_pfs
   | SBC.PConj (pfs, pos) ->
-    let hip_pfs = List.map translate_back_pf pfs in
+    let hip_pfs = List.map aux pfs in
     let rec list_to_and pfs = match pfs with
       | [] -> report_error no_pos "empty"
       | [h] -> h
@@ -392,17 +401,22 @@ let rec translate_back_pf (pf : SBC.pure_form) = match pf with
     list_to_and hip_pfs
   | SBC.PForall (vars, pf, pos) ->
     let h_vars = List.map translate_back_var vars in
-    let h_pf = translate_back_pf pf in
+    let h_pf = aux pf in
     let h_pos = translate_back_pos pos in
     CP.mkForall h_vars h_pf None h_pos
   | SBC.PExists (vars, pf, pos) ->
     let loc = translate_back_pos pos in
-    let hip_pf = translate_back_pf pf in
+    let hip_pf = aux pf in
     let hip_vars = List.map translate_back_var vars in
     CP.mkExists hip_vars hip_pf None loc
   | _ ->
-    let to_print = "translate_back_pf " ^ (SBC.pr_pf pf) ^ " not handled" in
-    report_error no_pos to_print
+    let to_print = "aux " ^ (SBC.pr_pf pf) ^ " not handled" in
+    report_error no_pos to_print in
+  aux pf
+
+let translate_back_pf pf =
+  Debug.no_1 "translate_back_pf" SBC.pr_pf pr_pf
+    (fun _ -> translate_back_pf_x pf) pf
 
 let rec translate_hf hf =
   let hf = Syn.rm_emp_hf hf in
@@ -577,7 +591,8 @@ let rec translate_back_formula_x sb_f holes = match sb_f with
     let rec helper pfs = match pfs with
       | [] -> CP.mkTrue no_pos
       | [h] -> h
-      | h::t -> let t_pf = helper t in
+      | h::t ->
+        let t_pf = helper t in
         CP.mkAnd h t_pf no_pos in
     let h_hf, pfs, evars = translate_back_hf hf holes in
     let h_pf = translate_back_pf pf in
@@ -920,7 +935,6 @@ let get_repair_candidate prog ents cond_op =
   let fun_def_exp = get_func_exp fun_defs prog.CA.prog_exp_decls in
   match fun_def_exp with
   | Some fun_def_cexp ->
-    let pr_exp = Cprinter.poly_string_of_pr Cprinter.pr_formula_exp in
     let () = x_tinfo_hp (add_str "exp: " pr_exp) fun_def_cexp no_pos in
     let exp_decl = List.hd prog.CA.prog_exp_decls in
     let n_exp_decl = {exp_decl with CA.exp_body = fun_def_cexp} in

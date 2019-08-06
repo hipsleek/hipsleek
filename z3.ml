@@ -123,9 +123,10 @@ let rec smt_of_exp a =
   (* UNHANDLED *)
   | CP.Bag ([], _) -> "0"
   | CP.Max _
-  | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
+  | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here"
+                                ^ (!CP.print_exp a))
   | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
-  | CP.Tup2 _ 
+  | CP.Tup2 _
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
