@@ -17,8 +17,8 @@ node insert2(node x, node vn)
 	ensures res::sll<n+1, mi, ma> & mi=min(v, sm) & ma=max(v, lg);
 {
 	if (x==null) {
-		// vn = null;
-		vn.next = null;
+		vn = null;
+		// vn.next = null;
     return vn;
 	}
 	else if (vn.val <= x.val) {
