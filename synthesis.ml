@@ -2096,13 +2096,16 @@ let rec synthesize_st_core st : Iast.exp option =
         I.exp_new_arguments = params;
         I.exp_new_pos = no_pos;
       } in
-    let assign = I.Assign {
-        I.exp_assign_op = I.OpAssign;
-        I.exp_assign_lhs = mkVar r_var;
-        I.exp_assign_path_id = None;
-        I.exp_assign_rhs = e_new;
-        I.exp_assign_pos = no_pos;
-      } in
+    let assign = if CP.is_res_sv r_var then
+        I.Return { I.exp_return_val = Some e_new;
+                   I.exp_return_path_id = None;
+                   I.exp_return_pos = no_pos}
+      else
+        I.Assign { I.exp_assign_op = I.OpAssign;
+                   I.exp_assign_lhs = mkVar r_var;
+                   I.exp_assign_path_id = None;
+                   I.exp_assign_rhs = e_new;
+                   I.exp_assign_pos = no_pos} in
     let seq = if rc.ra_end then assign
       else
         let lhs = I.VarDecl {

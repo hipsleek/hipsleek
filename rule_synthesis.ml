@@ -19,8 +19,8 @@ let check_goal_procs_x goal =
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
     let specs = get_pre_post specs in
     let aux_pre_post (pre, post) =
-      let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
-      let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+      let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
+      let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
       let post_nodes = post |> get_heap |> get_heap_nodes
                        |> List.map (fun (x,_,_) -> x) in
       let post_views = post |> get_heap |> get_heap_views
@@ -31,8 +31,8 @@ let check_goal_procs_x goal =
                      |> List.map (fun (x,_,_) -> x) in
       let post_vars = post_nodes @ post_views in
       let pre_vars = pre_nodes @ pre_views in
-      let () = x_binfo_hp (add_str "pre vars" pr_vars) pre_vars no_pos in
-      let () = x_binfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
+      let () = x_tinfo_hp (add_str "pre vars" pr_vars) pre_vars no_pos in
+      let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
       List.length post_vars > List.length pre_vars in
     List.exists aux_pre_post specs in
   List.exists aux procs
@@ -439,7 +439,8 @@ let check_head_allocate_x goal : CP.spec_var list =
   let all_vars = goal.gl_vars |> List.filter is_node_var in
   let () = x_tinfo_hp (add_str "pre node" pr_vars) pre_vars no_pos in
   let () = x_tinfo_hp (add_str "post node" pr_vars) post_vars no_pos in
-  let n_vars = post_vars |> List.filter (fun x -> CP.mem x all_vars)
+  let n_vars = post_vars |> List.filter
+                 (fun x -> CP.mem x all_vars || CP.is_res_sv x)
               |> List.filter (fun x -> not(CP.mem x pre_vars)) in
   let () = x_tinfo_hp (add_str "allocate vars" pr_vars) n_vars no_pos in
   if not (CP.subset pre_vars post_vars) then
