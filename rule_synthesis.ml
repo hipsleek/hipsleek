@@ -395,19 +395,48 @@ let unify_fcall proc_decl pre_proc post_proc goal =
               |> List.map (fun (_,a,b,c,d,e) -> (a,b,c,d,e)) in
   rules |> List.map mk_rule
 
+let check_head_allocate_x goal : CP.spec_var list =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let pre_nodes = pre |> get_heap |> get_heap_nodes
+                  |> List.map (fun (x,_,_) -> x) in
+  let pre_views = pre |> get_heap |> get_heap_views
+                   |> List.map (fun (x,_,_) -> x) in
+  let post_nodes = post |> get_heap |> get_heap_nodes
+                  |> List.map (fun (x,_,_) -> x) in
+  let post_views = post |> get_heap |> get_heap_views
+                   |> List.map (fun (x,_,_) -> x) in
+  let pre_vars = pre_nodes @ pre_views in
+  let post_vars = post_nodes @ post_views in
+  let all_vars = goal.gl_vars |> List.filter is_node_var in
+  let () = x_tinfo_hp (add_str "pre node" pr_vars) pre_vars no_pos in
+  let () = x_tinfo_hp (add_str "post node" pr_vars) post_vars no_pos in
+  let n_vars = post_vars |> List.filter (fun x -> CP.mem x all_vars)
+              |> List.filter (fun x -> not(CP.mem x pre_vars)) in
+  let () = x_tinfo_hp (add_str "allocate vars" pr_vars) n_vars no_pos in
+  if not (CP.subset pre_vars post_vars) then
+    n_vars
+  else []
+
+let check_head_allocate goal =
+  Debug.no_1 "check_head_allocate" pr_goal pr_vars
+    (fun _ -> check_head_allocate_x goal) goal
+
 let choose_rule_func_call goal =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let procs = goal.gl_proc_decls in
-  let aux proc_decl =
-    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-    (* TODO: fix this one *)
-    (* let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
-     * let post_cond = specs |> get_post_cond |> rm_emp_formula in *)
-    let spec_pairs = get_pre_post specs in
-    let pre_cond, post_cond = List.hd spec_pairs in
-    let rules = unify_fcall proc_decl pre_cond post_cond goal in
-    rules in
-  procs |> List.map aux |> List.concat
+  (* if check_head_allocate goal != [] then []
+   * else *)
+    let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+    let procs = goal.gl_proc_decls in
+    let aux proc_decl =
+      let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+      (* TODO: fix this one *)
+      (* let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
+       * let post_cond = specs |> get_post_cond |> rm_emp_formula in *)
+      let spec_pairs = get_pre_post specs in
+      let pre_cond, post_cond = List.hd spec_pairs in
+      let rules = unify_fcall proc_decl pre_cond post_cond goal in
+      rules in
+    procs |> List.map aux |> List.concat
 
 let check_allocate goal pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
@@ -438,20 +467,6 @@ let check_goal_procs goal =
       List.length post_vars > List.length pre_vars in
     List.exists aux_pre_post specs in
   List.exists aux procs
-
-let check_head_allocate goal =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let pre_vars = pre |> CF.fv in
-  let post_nodes = post |> get_heap |> get_heap_nodes
-                  |> List.map (fun (x,_,_) -> x) in
-  let post_views = post |> get_heap |> get_heap_views
-                   |> List.map (fun (x,_,_) -> x) in
-  let post_vars = post_nodes @ post_views in
-  let all_vars = goal.gl_vars |> List.filter is_node_var in
-  let () = x_tinfo_hp (add_str "post node" pr_vars) post_vars no_pos in
-  post_vars |> List.filter (fun x -> CP.mem x all_vars)
-  |> List.filter (fun x -> not(CP.mem x pre_vars))
 
 let check_mk_null pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
@@ -771,7 +786,7 @@ let choose_rule_allocate_return goal : rule list =
                 |> List.concat in
     rules in
   let allocate_vars = check_head_allocate goal in
-  if List.length allocate_vars = 1 then
+  if allocate_vars != [] then
     let allocate_var = List.hd allocate_vars in
     let () = x_tinfo_hp (add_str "var" pr_var) allocate_var no_pos in
     let rules = data_decls |> List.map (aux_end allocate_var) |> List.concat in

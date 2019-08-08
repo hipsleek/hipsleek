@@ -217,7 +217,7 @@ let rec choose_rule_interact goal rules =
   else
     let str = pr_list_ln pr_rule rules in
     let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-    let () = x_binfo_hp (add_str "Rules" pr_rules) rules no_pos in
+    let () = x_binfo_hp (add_str "Rules\n" pr_rules) rules no_pos in
     let choose_str = "Please choose a/q or from 1 to "
                      ^ (string_of_int (List.length rules)) ^ ": " in
     let () = x_binfo_pp choose_str no_pos in
@@ -295,6 +295,7 @@ let choose_rule_fread_x goal =
     let unfold_rules = choose_rule_unfold_pre n_goal in
     let fcall_rules = choose_rule_func_call n_goal2 in
     let fwrite_rules = choose_rule_fwrite n_goal2 in
+    let () = x_binfo_hp (add_str "fcall rules" pr_rules) fcall_rules no_pos in
     List.mem var pre_node_vars ||
     List.exists (rule_use_var var) fwrite_rules ||
     unfold_rules != [] || (List.exists (rule_use_var var) fcall_rules) in
@@ -499,7 +500,7 @@ let choose_rule_new_num_x goal : rule list =
       let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
       let n_rules = n_rules @ (choose_rule_func_call n_goal) in
       let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
-      let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
+      let () = x_binfo_hp (add_str "rules" pr_rules) n_rules no_pos in
       if List.exists (rule_use_var var) n_rules then
         let n_goal = {n_goal with gl_lookahead = n_rules} in
         let n_rule = {rule with rnn_lookahead = Some n_goal} in
@@ -571,9 +572,9 @@ let choose_main_rules goal =
   let duration = cur_time -. goal.gl_start_time in
   let a_vars = check_head_allocate goal in
   let () = x_tinfo_hp (add_str "a_vars" pr_vars) a_vars no_pos in
-  if (a_vars != []) && not (check_goal_procs goal)
-     && List.length goal.gl_trace > 2 then []
-  else
+  (* if (a_vars != []) && not (check_goal_procs goal)
+   *    && List.length goal.gl_trace > 2 then []
+   * else *)
   if duration > !synthesis_timeout && not(!enable_i)
   then []
   else
