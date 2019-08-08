@@ -1003,6 +1003,8 @@ let get_pre_post_x (struc_f: CF.struc_formula) =
     | CF.EBase bf ->
       let pre = bf.CF.formula_struc_base in
       let post = bf.CF.formula_struc_continuation |> Gen.unsome |> get_post in
+      let pre = pre |> rm_emp_formula in
+      let post = post |> rm_emp_formula in
       [(pre, post)]
     | CF.ECase cases ->
       let branches = cases.CF.formula_case_branches in

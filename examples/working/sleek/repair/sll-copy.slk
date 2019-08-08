@@ -10,24 +10,8 @@ node copy(node x)
 requires x::ll<n>
 ensures res::ll<n> * x::ll<n>;.
 
-// synthesize [node x,node tmp,node k]
-// k::node<an95,tmp> * x::node<an95,q96> * q96::ll<n99> * tmp::ll<n99> & 
-// 0<=n99 & n=1+n99 & n=1+fl94
-// ~>
-// (exists an33,q34, an24, q_4625: res::node<an33,q34> * x::node<an24,q_4625> * 
-//         q34::ll<n99> * q_4625::ll<n99>).
-
-
 synthesize [node x,node tmp]
-x::ll<n>&x!=null
+ x::ll<n>&x!=null
 ~>
-(exists fr1,fr2,fl73, nx74: x::node<fl73,nx74> * nx74::ll<fr1> * tmp::ll<fr2> &
+(exists fr1,fr2,vl73,nx74: x::node<vl73,nx74> * nx74::ll<fr1> * tmp::ll<fr2> &
 1<=n & 1+fr1=n & 1+fr2=n).
-
-// [RlFRead(node x.next, node q_59)
-// [RlFuncRes copy$node([q_59])
-// [RlFramePred(node nx74_46, node q_59)
-// [RlFrameData(node x, node x)
-// [RlHeapAssign (node tmp, node rs2
-// [RlSkip
-// []]]]]]]

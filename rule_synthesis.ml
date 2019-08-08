@@ -13,6 +13,34 @@ module CF = Cformula
 module CP = Cpure
 module SB = Songbird
 
+let check_goal_procs_x goal =
+  let procs = goal.gl_proc_decls in
+  let aux proc_decl =
+    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+    let specs = get_pre_post specs in
+    let aux_pre_post (pre, post) =
+      let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
+      let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+      let post_nodes = post |> get_heap |> get_heap_nodes
+                       |> List.map (fun (x,_,_) -> x) in
+      let post_views = post |> get_heap |> get_heap_views
+                       |> List.map (fun (x,_,_) -> x) in
+      let pre_nodes = pre |> get_heap |> get_heap_nodes
+                       |> List.map (fun (x,_,_) -> x) in
+      let pre_views = pre |> get_heap |> get_heap_views
+                     |> List.map (fun (x,_,_) -> x) in
+      let post_vars = post_nodes @ post_views in
+      let pre_vars = pre_nodes @ pre_views in
+      let () = x_binfo_hp (add_str "pre vars" pr_vars) pre_vars no_pos in
+      let () = x_binfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
+      List.length post_vars > List.length pre_vars in
+    List.exists aux_pre_post specs in
+  List.exists aux procs
+
+let check_goal_procs goal =
+  Debug.no_1 "check_goal_procs" pr_goal string_of_bool
+    (fun _ -> check_goal_procs_x goal) goal
+
 let check_entail_sleek_x prog ante (conseq:CF.formula) =
   let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
   let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
@@ -423,8 +451,9 @@ let check_head_allocate goal =
     (fun _ -> check_head_allocate_x goal) goal
 
 let choose_rule_func_call goal =
-  (* if check_head_allocate goal != [] then []
-   * else *)
+  if check_head_allocate goal != [] &&
+     not (check_goal_procs goal) then []
+  else
     let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
     let procs = goal.gl_proc_decls in
     let aux proc_decl =
@@ -448,48 +477,30 @@ let check_allocate goal pre post =
   (CP.diff_svl all_vars pre_node_vars != []) ||
   (List.length post_vars = 2 && List.length pre_vars = 1)
 
-let check_goal_procs goal =
-  let procs = goal.gl_proc_decls in
-  let aux proc_decl =
-    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-    let specs = get_pre_post specs in
-    let aux_pre_post (pre, post) =
-      let post_nodes = post |> get_heap |> get_heap_nodes
-                       |> List.map (fun (x,_,_) -> x) in
-      let post_views = post |> get_heap |> get_heap_views
-                       |> List.map (fun (x,_,_) -> x) in
-      let pre_nodes = pre |> get_heap |> get_heap_nodes
-                       |> List.map (fun (x,_,_) -> x) in
-      let pre_views = pre |> get_heap |> get_heap_views
-                     |> List.map (fun (x,_,_) -> x) in
-      let post_vars = post_nodes @ post_views in
-      let pre_vars = pre_nodes @ pre_views in
-      List.length post_vars > List.length pre_vars in
-    List.exists aux_pre_post specs in
-  List.exists aux procs
-
 let check_mk_null pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
   let post_vars = post |> get_heap |> get_heap_nodes in
   List.length post_vars - List.length pre_vars = 1
 
 let choose_rule_unfold_pre goal =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let vars, prog = goal.gl_vars, goal.gl_prog in
-  let vnodes = get_unfold_view goal.gl_vars pre in
-  let helper vnode =
-    let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
-    let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
-    let () = x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos in
-    let pre_list = List.filter (fun x -> SB.check_unsat goal.gl_prog x
-                                         |> negate) nf in
-    if pre_list = [] then []
-    else if List.length pre_list = 1 then
-      let n_pre = pre_list |> List.hd |> remove_exists |> rm_emp_formula in
-      let rule = RlUnfoldPre {n_pre = n_pre} in
-      [rule]
-    else [] in
-  vnodes |> List.map helper |> List.concat
+  if check_head_allocate goal != [] then []
+  else
+    let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+    let vars, prog = goal.gl_vars, goal.gl_prog in
+    let vnodes = get_unfold_view goal.gl_vars pre in
+    let helper vnode =
+      let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
+      let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
+      let () = x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos in
+      let pre_list = List.filter (fun x -> SB.check_unsat goal.gl_prog x
+                                           |> negate) nf in
+      if pre_list = [] then []
+      else if List.length pre_list = 1 then
+        let n_pre = pre_list |> List.hd |> remove_exists |> rm_emp_formula in
+        let rule = RlUnfoldPre {n_pre = n_pre} in
+        [rule]
+      else [] in
+    vnodes |> List.map helper |> List.concat
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -531,7 +542,8 @@ let choose_rule_unfold_post goal =
         rp_var = vnode.CF.h_formula_view_node;
         rp_case_formula = f}) in
     rules |> List.rev in
-  if has_unfold_post goal.gl_trace then []
+  if has_unfold_post goal.gl_trace ||
+     check_head_allocate goal != [] then []
   else
     let rules1 = vnodes |> List.map helper |> List.concat in
     let rules2 = e_vnodes |> List.map helper |> List.concat in
