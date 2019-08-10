@@ -89,38 +89,39 @@ let rec find_sub_var sv cur_vars pre_pf =
   *  conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
   *  |> List.filter aux *)
 
-
 let choose_rule_frame_pred goal =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let exists_vars = CF.get_exists post |> List.filter is_node_var in
-  let filter (lhs, rhs) =
-    let n_pre, pre_vars = frame_var_formula pre rhs in
-    let n_post, post_vars = frame_var_formula post lhs in
-    (* let check_field f field =
-     *   match extract_var_f f field with
-     *   | Some var_f -> if CF.is_emp_formula var_f then true
-     *     else false
-     *   | _ -> true in
-     * let check_pre = List.for_all (check_field pre) pre_vars in
-     * let check_post = List.for_all (check_field post) post_vars in *)
-    if SB.check_unsat goal.gl_prog n_post then []
-    else if (List.length pre_vars = List.length post_vars) (* &&
-        * check_pre && check_post *) then
-      let pre_vars = rhs::pre_vars in
-      let post_vars = lhs::post_vars in
-      let rule = RlFramePred {
-          rfp_lhs = lhs;
-          rfp_rhs = rhs;
-          rfp_pairs = List.combine pre_vars post_vars;
-          rfp_pre = n_pre;
-          rfp_post = n_post;
-        } in [rule]
-    else [] in
-  let helper var =
-    let eq_vars = find_instantiate_var goal var in
-    eq_vars |> List.map (fun x -> (var, x)) in
-  exists_vars |> List.map helper |> List.concat |> List.map filter
-  |> List.concat
+  if check_head_allocate_wrapper goal then []
+  else
+    let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+    let exists_vars = CF.get_exists post |> List.filter is_node_var in
+    let filter (lhs, rhs) =
+      let n_pre, pre_vars = frame_var_formula pre rhs in
+      let n_post, post_vars = frame_var_formula post lhs in
+      (* let check_field f field =
+       *   match extract_var_f f field with
+       *   | Some var_f -> if CF.is_emp_formula var_f then true
+       *     else false
+       *   | _ -> true in
+       * let check_pre = List.for_all (check_field pre) pre_vars in
+       * let check_post = List.for_all (check_field post) post_vars in *)
+      if SB.check_unsat goal.gl_prog n_post then []
+      else if (List.length pre_vars = List.length post_vars) (* &&
+                                                              * check_pre && check_post *) then
+        let pre_vars = rhs::pre_vars in
+        let post_vars = lhs::post_vars in
+        let rule = RlFramePred {
+            rfp_lhs = lhs;
+            rfp_rhs = rhs;
+            rfp_pairs = List.combine pre_vars post_vars;
+            rfp_pre = n_pre;
+            rfp_post = n_post;
+          } in [rule]
+      else [] in
+    let helper var =
+      let eq_vars = find_instantiate_var goal var in
+      eq_vars |> List.map (fun x -> (var, x)) in
+    exists_vars |> List.map helper |> List.concat |> List.map filter
+    |> List.concat
 
 let find_frame_node_var goal all_vars post_var =
   let all_vars = List.filter (fun x -> not(CP.eq_sv x post_var)) all_vars in
@@ -165,33 +166,35 @@ let find_frame_node_var goal all_vars post_var =
   frame_vars |> List.map (fun x -> (post_var, x))
 
 let choose_rule_frame_data goal =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let post_vars = post |> get_node_vars in
-  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
-  let pairs = post_vars |> List.map (find_frame_node_var goal post_vars)
-              |> List.concat in
-  let pr_pairs = pr_list (pr_pair pr_var pr_var) in
-  let () = x_tinfo_hp (add_str "pairs" pr_pairs) pairs no_pos in
-  let filter (lhs, rhs) =
-    let n_pre, pre_vars = frame_var_formula pre rhs in
-    let n_post, post_vars = frame_var_formula post lhs in
-    let () = x_tinfo_hp (add_str "pre_vars" pr_vars) pre_vars no_pos in
-    let () = x_tinfo_hp (add_str "post_vars" pr_vars) post_vars no_pos in
-    if (List.length pre_vars = List.length post_vars) then
-      let pre_cond_vars = pre |> CF.fv in
-      if CP.mem lhs pre_cond_vars && not(CP.eq_sv lhs rhs) then []
-      else
-        let pre_vars = rhs::pre_vars in
-        let post_vars = lhs::post_vars in
-        let rule = RlFrameData {
-            rfd_lhs = lhs;
-            rfd_rhs = rhs;
-            rfd_pairs = List.combine pre_vars post_vars;
-            rfd_pre = n_pre;
-            rfd_post = n_post;
-          } in [rule]
-    else [] in
-  pairs |> List.map filter |> List.concat
+  if check_head_allocate_wrapper goal then []
+  else
+    let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+    let post_vars = post |> get_node_vars in
+    let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
+    let pairs = post_vars |> List.map (find_frame_node_var goal post_vars)
+                |> List.concat in
+    let pr_pairs = pr_list (pr_pair pr_var pr_var) in
+    let () = x_tinfo_hp (add_str "pairs" pr_pairs) pairs no_pos in
+    let filter (lhs, rhs) =
+      let n_pre, pre_vars = frame_var_formula pre rhs in
+      let n_post, post_vars = frame_var_formula post lhs in
+      let () = x_tinfo_hp (add_str "pre_vars" pr_vars) pre_vars no_pos in
+      let () = x_tinfo_hp (add_str "post_vars" pr_vars) post_vars no_pos in
+      if (List.length pre_vars = List.length post_vars) then
+        let pre_cond_vars = pre |> CF.fv in
+        if CP.mem lhs pre_cond_vars && not(CP.eq_sv lhs rhs) then []
+        else
+          let pre_vars = rhs::pre_vars in
+          let post_vars = lhs::post_vars in
+          let rule = RlFrameData {
+              rfd_lhs = lhs;
+              rfd_rhs = rhs;
+              rfd_pairs = List.combine pre_vars post_vars;
+              rfd_pre = n_pre;
+              rfd_post = n_post;
+            } in [rule]
+      else [] in
+    pairs |> List.map filter |> List.concat
 
 (* let choose_rule_exists_right goal =
  *   let post = goal.gl_post_cond in
@@ -451,7 +454,7 @@ let choose_rule_mk_null goal : rule list =
       let n_rules = n_rules @ (choose_rule_func_call n_goal) in
       let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
       let n_goal = {n_goal with gl_lookahead = n_rules} in
-      let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
+      let () = x_binfo_hp (add_str "rules" pr_rules) n_rules no_pos in
       let rule = {rule with rmn_lookahead = Some n_goal} in
       if List.exists (rule_use_var var) n_rules then
         (true, rule)
@@ -717,48 +720,61 @@ let process_rule_fread goal rc =
                             gl_trace = (RlFRead rc)::goal.gl_trace} in
     mk_derivation_subgoals goal (RlFRead rc) [n_goal]
 
-let aux_func_call goal rule fname params subst res_var residue =
-  let residue = residue |> rm_emp_formula in
-  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
-  let proc_decl = goal.gl_proc_decls
-                  |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
-  let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-  (* TODO: fix this one *)
-  let spec_pairs = get_pre_post specs in
-  let post_proc = List.hd spec_pairs |> snd in
-  let fun_args = proc_decl.Cast.proc_args
-                 |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let substs = (List.combine fun_args params) @ subst in
-  let params_post = CF.subst substs post_proc in
-  let () = x_tinfo_hp (add_str "param_post" pr_formula) params_post no_pos in
-  let evars = CF.get_exists params_post in
-  let post_state = add_formula_to_formula residue params_post |> rm_emp_formula in
-  let np_vars = CF.fv post_state in
-  let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
-                    |> List.exists (fun x -> x = res_name) in
-  let post_state, n_vars = if res_var != None then
-      let res = List.find (fun x -> eq_str (CP.name_of_sv x) res_name)
-          (CF.fv post_proc) in
-      let n_var = Gen.unsome res_var in
-      let n_f = CF.subst [(res, n_var)] post_state in
-      (n_f, goal.gl_vars @ [n_var])
-    else post_state, goal.gl_vars in
-  let () = x_tinfo_hp (add_str "post" pr_formula) post_state no_pos in
-  let sub_goal = {goal with gl_vars = n_vars;
-                            gl_trace = rule::goal.gl_trace;
-                            gl_pre_cond = post_state} in
-  mk_derivation_subgoals goal rule [sub_goal]
+(* let aux_func_call goal rule fname params subst res_var residue =
+ *   let residue = residue |> rm_emp_formula in
+ *   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+ *   let proc_decl = goal.gl_proc_decls
+ *                   |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
+ *   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+ *   (\* TODO: fix this one *\)
+ *   let spec_pairs = get_pre_post specs in
+ *   let post_proc = List.hd spec_pairs |> snd in
+ *   let fun_args = proc_decl.Cast.proc_args
+ *                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+ *   let substs = (List.combine fun_args params) @ subst in
+ *   let params_post = CF.subst substs post_proc in
+ *   let () = x_tinfo_hp (add_str "param_post" pr_formula) params_post no_pos in
+ *   let evars = CF.get_exists params_post in
+ *   let post_state = add_formula_to_formula residue params_post |> rm_emp_formula in
+ *   let np_vars = CF.fv post_state in
+ *   let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
+ *                     |> List.exists (fun x -> x = res_name) in
+ *   let post_state, n_vars = if res_var != None then
+ *       let res = List.find (fun x -> eq_str (CP.name_of_sv x) res_name)
+ *           (CF.fv post_proc) in
+ *       let n_var = Gen.unsome res_var in
+ *       let n_f = CF.subst [(res, n_var)] post_state in
+ *       (n_f, goal.gl_vars @ [n_var])
+ *     else post_state, goal.gl_vars in
+ *   let () = x_tinfo_hp (add_str "post" pr_formula) post_state no_pos in
+ *   let sub_goal = {goal with gl_vars = n_vars;
+ *                             gl_trace = rule::goal.gl_trace;
+ *                             gl_pre_cond = post_state} in
+ *   mk_derivation_subgoals goal rule [sub_goal] *)
 
-let process_rule_func_call goal rc : derivation =
-  let fname, params = rc.rfc_fname, rc.rfc_params in
-  let residue = rc.rfc_residue |> rm_emp_formula in
-  aux_func_call goal (RlFuncCall rc) fname params rc.rfc_substs None residue
+(* let process_rule_func_call goal rc : derivation =
+ *   let fname, params = rc.rfc_fname, rc.rfc_params in
+ *   let residue = rc.rfc_residue |> rm_emp_formula in
+ *   aux_func_call goal (RlFuncCall rc) fname params rc.rfc_substs None residue *)
 
-let process_rule_func_res goal rc : derivation =
-  let fname, params = rc.rfr_fname, rc.rfr_params in
-  let res_var = Some rc.rfr_return in
-  let residue = rc.rfr_residue |> rm_emp_formula in
-  aux_func_call goal (RlFuncRes rc) fname params rc.rfr_substs res_var residue
+let process_rule_func_call2 goal rc : derivation =
+  let n_pre = rc.rfc_new_pre in
+  let n_goal = {goal with gl_trace = (RlFuncCall rc)::goal.gl_trace;
+                          gl_pre_cond = n_pre} in
+  mk_derivation_subgoals goal (RlFuncCall rc) [n_goal]
+
+(* let process_rule_func_res goal rc : derivation =
+ *   let fname, params = rc.rfr_fname, rc.rfr_params in
+ *   let res_var = Some rc.rfr_return in
+ *   let residue = rc.rfr_residue |> rm_emp_formula in
+ *   aux_func_call goal (RlFuncRes rc) fname params rc.rfr_substs res_var residue *)
+
+(* let process_rule_func_res2 goal rc : derivation =
+ *   let n_pre = rc.rfr_residue in
+ *   let n_goal = {goal with gl_trace = (RlFuncRes rc)::goal.gl_trace;
+ *                           gl_vars = (rc.rfr_return)::goal.gl_vars;
+ *                           gl_pre_cond = n_pre} in
+ *   mk_derivation_subgoals goal (RlFuncRes rc) [n_goal] *)
 
 let process_rule_unfold_pre goal rc =
   let n_pres = rc.n_pre in
@@ -925,9 +941,9 @@ and process_one_rule goal rule : derivation =
     mk_derivation_fail goal rule
   else
     match rule with
-    | RlFuncCall rc -> process_rule_func_call goal rc
+    | RlFuncCall rc -> process_rule_func_call2 goal rc
     | RlAllocate rc -> process_rule_allocate goal rc
-    | RlFuncRes rc -> process_rule_func_res goal rc
+    (* | RlFuncRes rc -> process_rule_func_res2 goal rc *)
     | RlPostAssign rc -> process_rule_post_assign goal rc
     | RlAssign rc -> process_rule_assign goal rc
     | RlReturn rc -> process_rule_return goal rc
