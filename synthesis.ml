@@ -318,13 +318,11 @@ let pr_rule_post_assign rule =
 
 let pr_func_call rule =
   let fc_name = rule.rfc_fname in
-  let args = rule.rfc_params |> (pr_list Cprinter.string_of_sv) in
-  fc_name ^ "(" ^ args ^ ")"
-
-(* let pr_func_res rule =
- *   let fc_name = rule.rfr_fname in
- *   let args = rule.rfr_params |> (pr_list Cprinter.string_of_sv) in
- *   fc_name ^ "(" ^ args ^ ")" *)
+  let args = rule.rfc_params |> pr_vars in
+  match rule.rfc_return with
+  | None -> fc_name ^ "(" ^ args ^ ")"
+  | Some var ->
+    (pr_var var) ^ " = " ^ fc_name ^ "(" ^ args ^ ")"
 
 let pr_rule_bind rule =
   let exp = rule.rfw_bound_var in
@@ -356,7 +354,6 @@ let pr_rule_new_num r =
   let e = r.rnn_num in
   (pr_var var) ^ ", " ^ (pr_exp e)
 
-
 let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlMkNull r -> "RlMkNull " ^ (pr_rule_mk_null r)
@@ -371,8 +368,7 @@ let pr_rule rule = match rule with
   | RlFWrite rule -> "RlFWrite " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
   | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
-  | RlUnfoldPost rule ->
-    "RlUnfoldPost<" ^ (rule.rp_case_formula |> pr_formula) ^ ">"
+  | RlUnfoldPost rule -> "RlUnfoldPost<" ^ (rule.rp_case_formula |> pr_f) ^ ">"
   | RlFramePred rule -> "RlFramePred" ^ (pr_instantiate rule)
   | RlFrameData rcore -> "RlFrameData" ^ (pr_frame_data rcore)
 
@@ -2613,21 +2609,26 @@ let rec is_fwrite_called trace rcore : bool  =
       | _ -> is_fwrite_called tail rcore
     end
 
-let rec is_fcall_called trace args : bool =
-  match trace with
-  | [] -> false
-  | head::tail ->
-    begin
-      match head with
-      | RlFuncCall rcore ->
-        let params = rcore.rfc_params in
-        if (List.length args = List.length params) then
-          if List.for_all2 (fun x y -> CP.eq_spec_var x y) args params
-          then true
-          else is_fcall_called tail args
-        else is_fcall_called tail args
-      | _ -> is_fcall_called tail args
-    end
+let rec is_fcall_called_x trace args : bool =
+  let rec aux trace = match trace with
+    | [] -> false
+    | head::tail ->
+      begin
+        match head with
+        | RlFuncCall rcore ->
+          let params = rcore.rfc_params in
+          if (List.length args = List.length params) then
+            if List.for_all2 (fun x y -> CP.eq_spec_var x y) args params
+            then true
+            else aux tail
+          else aux tail
+        | _ -> aux tail
+      end in
+  aux trace
+
+let is_fcall_called trace args : bool =
+  Debug.no_2 "is_fcall_called" pr_rules pr_vars string_of_bool
+    (fun _ _ -> is_fcall_called_x trace args) trace args
 
 let is_fcall_ever_called trace : bool =
   let rec aux trace num =

@@ -282,67 +282,6 @@ let choose_rule_fwrite goal =
     } in
   tuples |> List.map mk_fwrite_rule
 
-let is_same_shape (f1:CF.formula) (f2:CF.formula) =
-  let check_hf (hf1:CF.h_formula) (hf2:CF.h_formula) =
-    match hf1, hf2 with
-    | CF.HEmp, HEmp -> (true, [])
-    | DataNode dn1, DataNode dn2 ->
-      let arg1 = dn1.h_formula_data_arguments in
-      let arg2 = dn2.h_formula_data_arguments in
-      if List.length arg1 = List.length arg2
-      then (true, List.combine arg1 arg2)
-      else (false, [])
-    | ViewNode vn1, ViewNode vn2 ->
-      let arg1 = vn1.h_formula_view_arguments in
-      let arg2 = vn2.h_formula_view_arguments in
-      if List.length arg1 = List.length arg2
-      then (true, List.combine arg1 arg2)
-      else (false, [])
-    | _ -> (false, []) in
-  let hf1,hf2 = get_hf f1, get_hf f2 in
-  check_hf hf1 hf2
-
-(* to add current specs of the arg *)
-let unify_pair goal proc_decl arg pre_var =
-  let pre_cond = goal.gl_pre_cond in
-  let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-  (* let pre_proc = specs |> get_pre_cond |> rm_emp_formula in *)
-  let proc_pre_list = specs |> get_pre_post |> List.map fst
-                      |> List.map rm_emp_formula in
-  let aux proc_pre =
-    let a_pre = arg |> extract_var_f proc_pre in
-    let l_pre = pre_var |> extract_var_f pre_cond in
-    match a_pre, l_pre with
-    | Some apre_f, Some lpre_f ->
-      let () = x_binfo_hp (add_str "pre_f" pr_formula) apre_f no_pos in
-      let () = x_binfo_hp (add_str "cand_f" pr_formula) lpre_f no_pos in
-      is_same_shape apre_f lpre_f
-    | _ -> false, [] in
-  let res = proc_pre_list |> List.map aux
-            |> List.filter (fun (x, _) -> x) in
-  if res != [] then List.hd res
-  else (false, [])
-
-let unify_arg_x goal proc_decl arg =
-  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "arg" pr_var) arg no_pos in
-  let candidate_vars = goal.gl_vars |> List.filter (equal_type arg) in
-                       (* |> List.filter (fun x -> CP.mem x goal.gl_vars) in *)
-  let () = x_binfo_hp (add_str "cand vars" pr_vars) candidate_vars no_pos in
-  let ss_vars = List.map (fun candidate_var ->
-      let (x,y) = unify_pair goal proc_decl arg candidate_var in
-      (candidate_var, x, y)) candidate_vars in
-  let ss_vars = List.filter (fun (_,x,_) -> x) ss_vars in
-  let ss_vars = List.map (fun (x,_,y) -> (x,y)) ss_vars in
-  let candidate_vars = ss_vars |> List.map fst in
-  let () = x_tinfo_hp (add_str "cand vars" pr_vars) candidate_vars no_pos in
-  ss_vars
-
-let unify_arg goal proc_decl arg =
-  Debug.no_2 "unify_arg" pr_goal pr_var
-    (fun x -> List.map fst x |> pr_vars)
-    (fun _ _ -> unify_arg_x goal proc_decl arg) goal arg
-
 let rec mk_args_input args = match args with
   | [] -> []
   | [h] -> List.map (fun x -> [x]) h
@@ -350,19 +289,17 @@ let rec mk_args_input args = match args with
     let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
     List.concat head_added
 
-let unify_arg2 goal proc_decl (argument: CP.spec_var) =
+let unify_arg goal proc_decl (argument: CP.spec_var) =
   let vars = goal.gl_vars in
   vars |> List.filter (equal_type argument)
 
 let check_func_arguments goal proc_decl (args: CP.spec_var list) =
   let proc_args = proc_decl.C.proc_args
                   |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let has_res_arg = List.exists is_res_sv_syn args in
   let args_called = is_fcall_called goal.gl_trace args in
-                    (* || is_fres_called goal.gl_trace args in *)
   let called = is_fcall_ever_called goal.gl_trace in
   let eq_args = List.for_all2 CP.eq_sv args proc_args in
-  if (not has_res_arg) && (not args_called) && not eq_args && not called then
+  if not args_called && not eq_args && not called then
     let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let pre_cond = goal.gl_pre_cond in
     let substs = List.combine proc_args args in
@@ -379,15 +316,15 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
     let n_proc_pre = CF.subst n_substs n_proc_pre in
     let n_proc_post = CF.subst n_substs n_proc_post in
     (* let n_proc_pre = add_exists_vars n_proc_pre n_vars in *)
-    let () = x_binfo_hp (add_str "goal pre" pr_f) pre_cond no_pos in
-    let () = x_binfo_hp (add_str "proc_pre" pr_f) n_proc_pre no_pos in
-    let () = x_binfo_hp (add_str "proc_post" pr_f) n_proc_post no_pos in
+    let () = x_tinfo_hp (add_str "goal pre" pr_f) pre_cond no_pos in
+    let () = x_tinfo_hp (add_str "proc_pre" pr_f) n_proc_pre no_pos in
+    let () = x_tinfo_hp (add_str "proc_post" pr_f) n_proc_post no_pos in
     let check, residue = check_entail_wrapper goal.gl_prog pre_cond n_proc_pre in
     if check then
       let residue = Gen.unsome residue in
-      let () = x_binfo_hp (add_str "residue" pr_f) residue no_pos in
+      let () = x_tinfo_hp (add_str "residue" pr_f) residue no_pos in
       let n_pre = add_formula_to_formula n_proc_post residue in
-      let () = x_binfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
+      let () = x_tinfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
       let n_pre_vars = n_pre |> CF.fv in
       let n_var, n_pre = if List.exists CP.is_res_sv n_pre_vars then
           let res = List.find (fun x -> eq_str (CP.name_of_sv x) res_name)
@@ -408,89 +345,13 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
     else []
   else []
 
-let unify_fcall2 proc_decl pre_proc post_proc goal =
+let unify_fcall proc_decl pre_proc post_proc goal =
   let proc_args = proc_decl.Cast.proc_args |>
                   List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let ss_args = proc_args |> List.map (unify_arg2 goal proc_decl) in
+  let ss_args = proc_args |> List.map (unify_arg goal proc_decl) in
   let ss_args = mk_args_input ss_args in
   let rules = ss_args |> List.map (check_func_arguments goal proc_decl) in
   rules |> List.concat
-
-(* let unify_fcall proc_decl pre_proc post_proc goal =
- *   let proc_args = proc_decl.Cast.proc_args |>
- *                   List.map (fun (x,y) -> CP.mk_typed_sv x y) in
- *   let ss_args = proc_args |> List.map (unify_arg goal proc_decl) in
- *   let ss_args = mk_args_input ss_args in
- *   let contain_res = CF.fv post_proc |> List.map CP.name_of_sv
- *                     |> List.exists (eq_str res_name) in
- *   let ss_args = List.filter (fun list_and_subst ->
- *       let list = List.map fst list_and_subst in
- *       let n_list = CP.remove_dups_svl list in
- *       List.length n_list = List.length list
- *     ) ss_args in
- *   let check_residue (fname, params, is_res, subst) =
- *     let () = x_binfo_hp (add_str "params" pr_vars) params no_pos in
- *     let proc_decl = goal.gl_proc_decls
- *                     |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
- *     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
- *     let spec_pairs = get_pre_post specs in
- *     (\* to check a list of pre/post *\)
- *     let (pre_proc, post_proc) = List.hd spec_pairs in
- *     (\* TODO: fix this one *\)
- *     let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
- *     let fun_args = proc_decl.Cast.proc_args
- *                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
- *     let substs = (List.combine fun_args params) @ subst in
- *     let params_pre = CF.subst substs pre_proc in
- *     let exists_vars = CF.fv params_pre |> List.filter (fun x -> CP.not_mem x params) in
- *     let fresh_evars = List.map CP.mk_fresh_sv exists_vars in
- *     let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
- *     let params_pre = CF.wrap_exists fresh_evars params_pre |> rm_emp_formula in
- *     let ent_check, residue = check_entail_wrapper goal.gl_prog pre_cond
- *         params_pre in
- *     (ent_check, fname, params, is_res, subst, residue) in
- *   let mk_rule (fname, params, is_res, subst, residue) =
- *     let residue = Gen.unsome residue in
- *     if is_res then
- *       let res = List.find (fun x -> eq_str (CP.name_of_sv x) res_name)
- *           (CF.fv post_proc) in
- *       let n_var = CP.mk_typed_sv (CP.type_of_sv res)
- *           ("rs" ^ (string_of_int !res_num)) in
- *       let () = res_num := !res_num + 1 in
- *       RlFuncRes {
- *         rfr_fname = fname;
- *         rfr_params = params;
- *         rfr_substs = subst;
- *         rfr_residue = residue;
- *         rfr_return = n_var}
- *     else RlFuncCall{
- *         rfc_fname = fname;
- *         rfc_residue = residue;
- *         rfc_params = params;
- *         rfc_substs = subst} in
- *   let aux_args args_substs =
- *     let args = List.map fst args_substs in
- *     let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
- *     let substs = List.map snd args_substs |> List.concat in
- *     let is_cur_vars = List.for_all (fun x ->
- *         List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args in
- *     let has_res_arg = List.exists is_res_sv_syn args in
- *     let args_called = is_fcall_called goal.gl_trace args ||
- *                       is_fres_called goal.gl_trace args in
- *     let called = is_fcall_ever_called goal.gl_trace in
- *     let eq_args = List.for_all2 CP.eq_sv args proc_args in
- *     if is_cur_vars && (not has_res_arg) && (not args_called) && not eq_args
- *        && not (called) then
- *       let fname = proc_decl.Cast.proc_name in
- *       let fc_rule = if contain_res then (fname, args, true, substs)
- *         else (fname, args, false, substs) in
- *       [fc_rule]
- *     else [] in
- *   let list = ss_args |> List.map aux_args |> List.concat in
- *   let rules = list |> List.map check_residue in
- *   let rules = rules |> List.filter (fun (x,_,_,_,_,_) -> x)
- *               |> List.map (fun (_,a,b,c,d,e) -> (a,b,c,d,e)) in
- *   rules |> List.map mk_rule *)
 
 let check_head_allocate_x goal : CP.spec_var list =
   let pre = goal.gl_pre_cond in
@@ -524,7 +385,7 @@ let check_head_allocate_wrapper goal =
   let vars = check_head_allocate goal in
   vars != [] && not (check_goal_procs goal)
 
-let choose_rule_func_call goal =
+let choose_rule_func_call_x goal =
   if check_head_allocate_wrapper goal then []
   else
     let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -535,9 +396,13 @@ let choose_rule_func_call goal =
       let pre_cond, post_cond = List.hd spec_pairs in
       let () = x_tinfo_hp (add_str "pre" pr_formula) pre_cond no_pos in
       let () = x_tinfo_hp (add_str "post" pr_formula) post_cond no_pos in
-      let rules = unify_fcall2 proc_decl pre_cond post_cond goal in
+      let rules = unify_fcall proc_decl pre_cond post_cond goal in
       rules in
     procs |> List.map aux |> List.concat
+
+let choose_rule_func_call goal =
+  Debug.no_1 "choose_rule_func_call" pr_goal pr_rules
+    (fun _ -> choose_rule_func_call_x goal) goal
 
 let check_allocate goal pre post =
   let pre_vars = pre |> get_heap |> get_heap_nodes in
