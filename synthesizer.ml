@@ -551,17 +551,17 @@ let mk_rule_free goal residue =
   else []
 
 let choose_rule_skip goal =
-  (* if is_code_rule goal.gl_trace then *)
-  let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
-  let sk, residue = check_entail_wrapper prog pre post in
-  if sk then
-    let residue = Gen.unsome residue in
-    if CF.is_emp_formula residue then
-      let rule = RlSkip in
-      [rule]
-    else mk_rule_free goal residue
+  if is_code_rule goal.gl_trace then
+    let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
+    let sk, residue = check_entail_wrapper prog pre post in
+    if sk then
+      let residue = Gen.unsome residue in
+      if CF.is_emp_formula residue then
+        let rule = RlSkip in
+        [rule]
+      else mk_rule_free goal residue
+    else []
   else []
-(* else [] *)
 
 let choose_synthesis_rules goal : rule list =
   let rules =
