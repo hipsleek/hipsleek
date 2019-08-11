@@ -131,7 +131,6 @@ let choose_all_rules rs goal =
   let rs = rs @ (choose_rule_fwrite goal) in
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_allocate goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
@@ -144,7 +143,6 @@ let choose_rules_after_mk_null rs goal =
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
@@ -156,7 +154,6 @@ let choose_rules_after_new_num rs goal =
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
@@ -168,7 +165,6 @@ let choose_rules_after_allocate rs goal =
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_post_assign goal) in
   let rs = rs @ (choose_rule_allocate goal) in
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
@@ -180,7 +176,6 @@ let choose_rules_after_fread rs goal =
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_post_assign goal) in
   (* let rs = rs @ (choose_rule_allocate goal) in *)
   let rs = rs @ (choose_rule_mk_null goal) in
   let rs = rs @ (choose_rule_new_num goal) in
@@ -274,20 +269,6 @@ let process_rule_assign goal rc =
     let sub_goal = {goal with gl_pre_cond = n_pre;
                               gl_trace = (RlAssign rc)::goal.gl_trace} in
     mk_derivation_subgoals goal (RlAssign rc) [sub_goal]
-
-let process_rule_post_assign goal rc =
-  let lhs = rc.rapost_lhs in
-  let rhs = rc.rapost_rhs in
-  let n_vars = lhs::goal.gl_vars in
-  let n_post = remove_exists_vars goal.gl_post_cond [lhs] in
-  let e_var = CP.mkVar lhs no_pos in
-  let n_pf = CP.mkEqExp e_var rhs no_pos in
-  let n_pre = CF.add_pure_formula_to_formula n_pf goal.gl_pre_cond in
-  let sub_goal = {goal with gl_vars = n_vars;
-                            gl_post_cond = n_post;
-                            gl_pre_cond = n_pre;
-                            gl_trace = (RlPostAssign rc)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlPostAssign rc) [sub_goal]
 
 let process_rule_return goal rc =
   let checked = rc.r_checked in
@@ -424,8 +405,10 @@ let process_rule_mk_null goal rc =
     let var_e = CP.mkVar var no_pos in
     let pf = CP.mkEqExp var_e n_exp no_pos in
     let n_pre = CF.add_pure_formula_to_formula pf goal.gl_pre_cond in
+    let n_post = remove_exists_vars goal.gl_post_cond [var] in
     let n_goal = {goal with gl_vars = all_vars;
                             gl_pre_cond = n_pre;
+                            gl_post_cond = n_post;
                             gl_trace = (RlMkNull rc)::goal.gl_trace} in
     mk_derivation_subgoals goal (RlMkNull rc) [n_goal]
 
@@ -522,7 +505,6 @@ and process_one_rule goal rule : derivation =
     match rule with
     | RlFuncCall rc -> process_rule_func_call goal rc
     | RlAllocate rc -> process_rule_allocate goal rc
-    | RlPostAssign rc -> process_rule_post_assign goal rc
     | RlAssign rc -> process_rule_assign goal rc
     | RlReturn rc -> process_rule_return goal rc
     | RlFWrite rc -> process_rule_fwrite goal rc

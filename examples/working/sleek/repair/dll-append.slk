@@ -11,12 +11,7 @@ void append2(node2 x, node2 y)
 	ensures (exists k2: x::dll<q, k2> & k2 = m + n);.
 
 synthesize [node2 x,node2 y]
-x::node2<q70, q73> * q73::dll<x, flt72> * y::dll<p,n> &
+x::node2<p7,q73> * q73::dll<x,flt72> * y::dll<p,n> &
 0<=flt72 & q73!=null & m=1+flt72
 ~>
-(exists fr16: x::dll<q70,fr16> & fr16=1+flt72+n).
-
-// RlFRead(node2 x.next, node2 q_4573)
-// [RlFuncCall append2$node2~node2([q_4573,y])
-// [RlSkip
-// failed branch 20
+(exists fr16: x::dll<p7,fr16> & fr16=1+flt72+n).

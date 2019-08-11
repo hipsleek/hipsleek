@@ -20,7 +20,7 @@ os.environ["LC_ALL"] = "C"
 script_dir = sys.path[0]
 current_dir = os.getcwd()
 home_dir = os.path.realpath(script_dir)
-timeout = 10
+timeout = 20
 
 # parse arguments
 def parse_args ():

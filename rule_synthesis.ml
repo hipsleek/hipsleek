@@ -223,42 +223,6 @@ let check_entail_wrapper prog ante conseq =
     (pr_pair string_of_bool pr_f_opt)
     (fun _ _ -> check_entail_wrapper prog ante conseq) ante conseq
 
-let choose_rule_post_assign goal : rule list =
-  let trace = goal.gl_trace in
-  if List.length trace > 2 then []
-  else
-    let all_vars = goal.gl_vars in
-    let post = goal.gl_post_cond in
-    let pre = goal.gl_pre_cond in
-    let e_vars = CF.get_exists post in
-    let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
-    let post_pf = CF.get_pure post |> remove_exists_vars_pf in
-    let post_conjuncts = CP.split_conjunctions post_pf in
-    x_tinfo_hp (add_str "conjuncts" (pr_list pr_pf)) post_conjuncts no_pos;
-    let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
-                   |> List.concat in
-    let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
-    let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
-    let filter_fun (x,y) =
-      let vars = CP.afv y in
-      vars = [] in
-    (* not(is_null_type (CP.type_of_sv x)) && *)
-    let filter_eq = Gen.BList.remove_dups_eq
-        (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
-    let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
-    let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
-    let mk_rule (var, exp) =
-      RlPostAssign {
-        rapost_lhs = var;
-        rapost_rhs = exp
-      } in
-    []
-    (* List.map mk_rule eq_pairs *)
-
-let choose_rule_post_assign goal =
-  Debug.no_1 "choose_rule_post_assign" pr_goal pr_rules
-    (fun _ -> choose_rule_post_assign goal) goal
-
 let choose_rule_assign goal : rule list =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let all_vars = goal.gl_vars @ res_vars in
@@ -1113,35 +1077,55 @@ let choose_rule_allocate goal : rule list =
     rules |> List.map (fun x -> RlAllocate x)
   else []
 
+let aux_post_assign goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
+  let e_vars = CF.get_exists post in
+  let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
+  let post_pf = CF.get_pure post |> remove_exists_vars_pf in
+  let post_conjuncts = CP.split_conjunctions post_pf in
+  x_tinfo_hp (add_str "conjuncts" (pr_list pr_pf)) post_conjuncts no_pos;
+  let eq_pairs = List.map (find_exists_substs e_vars) post_conjuncts
+                 |> List.concat in
+  let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
+  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
+  let filter_fun (x,y) =
+    let vars = CP.afv y in
+    vars = [] in
+  let filter_eq = Gen.BList.remove_dups_eq
+      (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
+  let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
+  let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
+  let mk_rule (var, exp) = {
+    rmn_var = var;
+    rmn_null = exp;
+    rmn_lookahead = None;
+  } in
+  let rules = List.map mk_rule eq_pairs in
+  rules
+
 let choose_rule_mk_null goal : rule list =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let prog = goal.gl_prog in
   if has_mk_null goal.gl_trace then []
   else let trace = goal.gl_trace in
   if List.length trace > 2 then []
   else
-    let pre = goal.gl_pre_cond in
-    let post = goal.gl_post_cond in
-    let prog = goal.gl_prog in
     let data_decls = prog.C.prog_data_decls in
     let others = ["__Exc"; "thrd"; "Object"; "__Error"; "__MayError"; "__Fail";
                   "char_star"; "int_ptr_ptr"; "int_ptr"; "lock"; "barrier";
                   "__RET"; "__ArrBoundErr"; "__DivByZeroErr"; "String"] in
     let filter_fun x = not(List.mem x.C.data_name others) in
     let data_decls = data_decls |> List.filter filter_fun in
-    let aux_rule data_decl =
-      let data_name = data_decl.C.data_name in
-      let typ = Globals.Named data_name in
-      let name = Globals.fresh_name () in
-      let var = CP.mk_typed_sv typ name in
-      let n_exp = CP.Null no_pos in
+    let filter_rule (rule : rule_mk_null) =
+      let var = rule.rmn_var in
+      let n_exp = rule.rmn_null in
       let all_vars = var::goal.gl_vars in
       let var_e = CP.mkVar var no_pos in
       let pf = CP.mkEqExp var_e n_exp no_pos in
       let n_pre = CF.add_pure_formula_to_formula pf goal.gl_pre_cond in
-      let rule = {
-        rmn_null = n_exp;
-        rmn_var = var;
-        rmn_lookahead = None;
-      } in
       let n_goal = {goal with gl_vars = all_vars;
                               gl_pre_cond = n_pre;
                               gl_trace = (RlMkNull rule)::goal.gl_trace} in
@@ -1156,7 +1140,22 @@ let choose_rule_mk_null goal : rule list =
       if List.exists (rule_use_var var) n_rules then
         (true, rule)
       else (false, rule) in
-    let list = data_decls |> List.map aux_rule
+    let aux_rule data_decl =
+      let data_name = data_decl.C.data_name in
+      let typ = Globals.Named data_name in
+      let name = Globals.fresh_name () in
+      let var = CP.mk_typed_sv typ name in
+      let n_exp = CP.Null no_pos in
+      let rule = {
+        rmn_null = n_exp;
+        rmn_var = var;
+        rmn_lookahead = None;
+      } in
+      rule in
+    let list1 = data_decls |> List.map aux_rule in
+    let list2 = aux_post_assign goal in
+    (* let list2 = [] in *)
+    let list = list1 @ list2 |> List.map filter_rule
                |> List.filter (fun (x,y) -> x)
                |> List.map snd in
     list |> List.map (fun x -> RlMkNull x)
