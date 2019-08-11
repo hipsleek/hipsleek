@@ -4,18 +4,18 @@ data node {
 }.
 
 pred ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1> & n > 0.
+	or self::node<_, q> * q::ll<n-1> & n > 0
+  inv n >= 0.
 
 node copy(node x)
 requires x::ll<n>
 ensures res::ll<n> * x::ll<n>;.
 
 synthesize [node x,node tmp]
- x::node<ann41,q11> * q11::ll<n14> * tmp::ll<n14> &
-0<=n14 & n=1+n14 & n=1+flt9
+x::node<ann14,q15> * q15::ll<n18> * tmp::ll<n18> &
+0<=n18 & n=1+n18 & n=1+flted_7_4413
 ~>
-(exists ann89,q19,ann8,q9:
-res::node<ann89,q19> * x::node<ann8,q9> *
-       q19::ll<n14> * q9::ll<n14>).
+(exists ann9,q21,ann28,q29: res::node<ann9,q21> * x::node<ann28,q29> * 
+       q21::ll<n18> * q29::ll<n18>).
 
 // return new node(x.val, tmp);

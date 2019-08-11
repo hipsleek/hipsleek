@@ -265,6 +265,11 @@ let raise_rules rs = if rs != [] then raise (ERules rs) else ()
  * Queries
  *********************************************************************)
 
+let pr_priority pr = match pr with
+  | PriHigh -> "PriHigh"
+  | PriLow -> "PriLow"
+  | PriEqual -> "PriEqual"
+
 let get_synthesis_tree_status stree : synthesis_tree_status =
   match stree with
   | StDerive std -> std.std_status
@@ -325,7 +330,7 @@ let pr_rule_bind rule =
   ^ (Cprinter.string_of_spec_var rule.rfw_value)
 
 let pr_fread rule =
-  "(" ^ (pr_var rule.rfr_bound_var) ^ "." ^ (snd rule.rfr_field) ^ ", "
+  "FREAD (" ^ (pr_var rule.rfr_bound_var) ^ "." ^ (snd rule.rfr_field) ^ ", "
   ^ (pr_var rule.rfr_value) ^ ")"
 
 let pr_instantiate rule =
@@ -361,7 +366,7 @@ let pr_rule rule = match rule with
   | RlPostAssign rule -> "RlPostAssign" ^ "(" ^ (pr_rule_post_assign rule) ^ ")"
   | RlReturn rule -> "RlReturn " ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
   | RlFWrite rule -> "RlFWrite " ^ (pr_rule_bind rule)
-  | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
+  | RlFRead rule -> pr_fread rule
   | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost<" ^ (rule.rp_case_formula |> pr_f) ^ ">"
   | RlFramePred rule -> "RlFramePred" ^ (pr_instantiate rule)
@@ -2778,6 +2783,23 @@ let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | _ -> PriLow
 
+let compare_rule_fread_vs_fread r1 r2 =
+  let contain_allocate rule = match rule with
+    | RlAllocate rc -> rc.ra_end
+    | _ -> false in
+  match r1.rfr_lookahead, r2.rfr_lookahead with
+  | Some g1, Some g2 ->
+    let rules1 = g1.gl_lookahead in
+    let rules2 = g2.gl_lookahead in
+    if List.exists contain_allocate rules1 then PriHigh
+    else if List.exists contain_allocate rules2 then PriLow
+    else PriEqual
+  | _ -> PriEqual
+
+let compare_rule_fread_vs_fread r1 r2 =
+  Debug.no_2 "compare_rule_fread_vs_fread" pr_fread pr_fread pr_priority
+    (fun _ _ -> compare_rule_fread_vs_fread r1 r2) r1 r2
+
 let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
@@ -2785,6 +2807,7 @@ let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlFuncCall _
   | RlPostAssign _  -> PriLow
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
+  | RlUnfoldPre r2 -> PriEqual
   | _ -> PriHigh
 
 let compare_rule_allocate_vs_other r1 r2 = match r2 with
@@ -2804,6 +2827,7 @@ let compare_rule_post_assign_vs_other r1 r2 = match r2 with
 let compare_rule_fread_vs_other r1 r2 = match r2 with
   | RlSkip | RlReturn _ -> PriLow
   | RlPostAssign _ -> PriLow
+  | RlFRead r2 -> compare_rule_fread_vs_fread r1 r2
   | _ -> PriHigh
 
 let compare_rule_mk_null_vs_other r1 r2 = match r2 with
@@ -2828,7 +2852,7 @@ let compare_rule goal r1 r2 =
   | RlFree _ -> PriHigh
   | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
   | RlHeapAssign _ -> PriEqual
-  | RlFRead r -> compare_rule_fread_vs_other r r2
+  | RlFRead r1 -> compare_rule_fread_vs_other r1 r2
   | RlFWrite _ -> PriHigh
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlPostAssign r1 -> compare_rule_post_assign_vs_other r1 r2

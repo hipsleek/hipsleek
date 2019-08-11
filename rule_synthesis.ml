@@ -344,7 +344,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
   let eq_args = List.for_all2 CP.eq_sv args proc_args in
   if args_called || eq_args || called then []
   else
-    let () = x_binfo_hp (add_str "args" pr_vars) args no_pos in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let pre_cond = goal.gl_pre_cond in
     let substs = List.combine proc_args args in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -384,7 +384,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
           let () = res_num := !res_num + 1 in
           Some n_var, n_pre
         else None, n_pre in
-      let () = x_binfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
+      let () = x_tinfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
       let rule = RlFuncCall {
           rfc_fname = proc_decl.Cast.proc_name;
           rfc_params = args;
