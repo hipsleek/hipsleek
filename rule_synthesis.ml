@@ -53,8 +53,34 @@ let check_goal_procs goal =
   Debug.no_1 "check_goal_procs" pr_goal string_of_bool
     (fun _ -> check_goal_procs goal) goal
 
-let check_entail_sleek_x prog ante (conseq:CF.formula) =
+let get_subst_from_list_context (l_ctx: CF.list_context) =
+  let aux_ent_state ent_s =
+    let fst, snd = ent_s.CF.es_subst in
+    List.combine fst snd in
+  let rec aux_ctx ctx = match ctx with
+    | CF.Ctx ent_state -> aux_ent_state ent_state
+    | CF.OCtx (ctx1, ctx2) -> (aux_ctx ctx1) @ (aux_ctx ctx2) in
+  match l_ctx with
+  | CF.FailCtx _ -> []
+  | CF.SuccCtx ctx_list -> ctx_list |> List.map aux_ctx |> List.concat
+
+let get_subst_from_list_context l_ctx =
+  Debug.no_1 "get_subst_from_list_context" Cprinter.string_of_list_context
+    pr_substs (fun _ -> get_subst_from_list_context l_ctx) l_ctx
+
+let mk_pure_form_from_eq_pairs eq_pairs =
+  let aux (fst, snd) =
+    CP.mkEqVar fst snd no_pos in
+  let eq_pairs = eq_pairs |> List.map aux in
+  eq_pairs |> CP.join_conjunctions
+
+let mk_pure_form_from_eq_pairs eq_pairs =
+  Debug.no_1 "mk_pure_form_from_eq_pairs" pr_substs pr_pf
+    (fun _ -> mk_pure_form_from_eq_pairs eq_pairs) eq_pairs
+
+let check_entail_sleek prog ante (conseq:CF.formula) =
   let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
+  let exists_vars = CF.get_exists conseq in
   let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
@@ -64,13 +90,20 @@ let check_entail_sleek_x prog ante (conseq:CF.formula) =
       (CF.SuccCtx[ctx]) conseq no_pos None in
   if CF.isFailCtx list_ctx then false, None
   else
+    let () = x_tinfo_hp (add_str "list ctx" Cprinter.string_of_list_context) list_ctx no_pos in
     let residue = CF.formula_of_list_context list_ctx in
+    let substs = get_subst_from_list_context list_ctx in
+    let substs = List.combine exists_vars (List.map snd substs) in
+    let e_vars = substs |> List.map fst in
+    let n_pf = mk_pure_form_from_eq_pairs substs in
+    let residue = CF.add_pure_formula_to_formula n_pf residue in
+    let residue = add_exists_vars residue e_vars in
     true, Some residue
 
 let check_entail_sleek prog ante conseq =
   Debug.no_2 "check_entail_sleek" pr_formula pr_formula
-    (fun (x, _) -> string_of_bool x)
-    (fun _ _ -> check_entail_sleek_x prog ante conseq) ante conseq
+    (pr_pair string_of_bool pr_f_opt)
+    (fun _ _ -> check_entail_sleek prog ante conseq) ante conseq
 
 let check_entail_exact_sleek prog ante (conseq:CF.formula) =
   let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
@@ -111,14 +144,14 @@ let check_entail_exact_wrapper prog ante conseq =
 let check_entail_wrapper prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
-  (* if contains_lseg prog then
-   *   let () = x_tinfo_pp "marking" no_pos in
-   *   SB.check_entail_residue prog ante conseq
-   * else
-   *   try
-   *     check_entail_sleek prog ante conseq
-   *   with _ -> *)
-  SB.check_entail_residue prog ante conseq
+  if contains_lseg prog then
+    let () = x_tinfo_pp "marking" no_pos in
+    SB.check_entail_residue prog ante conseq
+  else
+    try
+      check_entail_sleek prog ante conseq
+    with _ ->
+      SB.check_entail_residue prog ante conseq
 
 let check_entail_wrapper prog ante conseq =
   Debug.no_2 "check_entail_wrapper" pr_formula pr_formula
@@ -303,7 +336,7 @@ let unify_arg goal proc_decl (argument: CP.spec_var) =
   let vars = goal.gl_vars in
   vars |> List.filter (equal_type argument)
 
-let check_func_arguments_x goal proc_decl (args: CP.spec_var list) =
+let check_func_arguments goal proc_decl (args: CP.spec_var list) =
   let proc_args = proc_decl.C.proc_args
                   |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let args_called = is_fcall_called goal.gl_trace args in
@@ -327,9 +360,9 @@ let check_func_arguments_x goal proc_decl (args: CP.spec_var list) =
     let n_proc_pre = CF.subst n_substs n_proc_pre in
     let n_proc_post = CF.subst n_substs n_proc_post in
     let n_proc_pre = add_exists_vars n_proc_pre n_vars in
-    let () = x_binfo_hp (add_str "goal pre" pr_f) pre_cond no_pos in
-    let () = x_binfo_hp (add_str "proc_pre" pr_f) n_proc_pre no_pos in
-    let () = x_binfo_hp (add_str "proc_post" pr_f) n_proc_post no_pos in
+    let () = x_tinfo_hp (add_str "goal pre" pr_f) pre_cond no_pos in
+    let () = x_tinfo_hp (add_str "proc_pre" pr_f) n_proc_pre no_pos in
+    let () = x_tinfo_hp (add_str "proc_post" pr_f) n_proc_post no_pos in
     let check, residue = check_entail_wrapper goal.gl_prog pre_cond n_proc_pre in
     if check then
       let residue = Gen.unsome residue in
@@ -348,10 +381,10 @@ let check_func_arguments_x goal proc_decl (args: CP.spec_var list) =
           let n_var = CP.mk_typed_sv (CP.type_of_sv res)
               ("rs" ^ (string_of_int !res_num)) in
           let n_pre = n_pre |> CF.subst [(res, n_var)] in
-          let () = x_tinfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
           let () = res_num := !res_num + 1 in
           Some n_var, n_pre
         else None, n_pre in
+      let () = x_binfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
       let rule = RlFuncCall {
           rfc_fname = proc_decl.Cast.proc_name;
           rfc_params = args;
@@ -363,7 +396,7 @@ let check_func_arguments_x goal proc_decl (args: CP.spec_var list) =
 
 let check_func_arguments goal proc_decl args =
   Debug.no_2 "check_func_arguments" pr_goal pr_vars pr_rules
-    (fun _ _ -> check_func_arguments_x goal proc_decl args) goal args
+    (fun _ _ -> check_func_arguments goal proc_decl args) goal args
 
 let unify_fcall proc_decl pre_proc post_proc goal =
   let proc_args = proc_decl.Cast.proc_args |>
@@ -459,6 +492,10 @@ let choose_rule_unfold_pre goal =
         [rule]
       else [] in
     vnodes |> List.map helper |> List.concat
+
+let choose_rule_unfold_pre goal =
+  Debug.no_1 "choose_rule_unfold_pre" pr_goal pr_rules
+    (fun _ -> choose_rule_unfold_pre goal) goal
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -601,7 +638,7 @@ let choose_rule_numeric goal =
   Debug.no_1 "choose_rule_numeric" pr_goal pr_rules
     (fun _ -> choose_rule_numeric_end goal) goal
 
-let find_instantiate_var_x goal var =
+let find_instantiate_var goal var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let post_vars = CF.fv post in
   let all_vars = CF.fv pre |> List.filter is_node_var in
@@ -638,7 +675,7 @@ let find_instantiate_var_x goal var =
 
 let find_instantiate_var goal var =
   Debug.no_2 "find_instantiate_var" pr_goal pr_var pr_vars
-    (fun _ _ -> find_instantiate_var_x goal var) goal var
+    (fun _ _ -> find_instantiate_var goal var) goal var
 
 let choose_rule_return goal =
   let post = goal.gl_post_cond in

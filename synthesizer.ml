@@ -519,7 +519,7 @@ let choose_main_rules goal =
   then []
   else
     let rs = goal.gl_lookahead in
-    let () = x_binfo_hp (add_str "lookahead" pr_rules) rs no_pos in
+    let () = x_tinfo_hp (add_str "lookahead" pr_rules) rs no_pos in
     let rs = if goal.gl_trace = [] then
         choose_all_rules rs goal
       else
@@ -551,21 +551,19 @@ let mk_rule_free goal residue =
   else []
 
 let choose_rule_skip goal =
-  if is_code_rule goal.gl_trace then
-    let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
-    try
-      let sk, residue = check_entail_wrapper prog pre post in
-      if sk then
-        let residue = Gen.unsome residue in
-        if CF.is_emp_formula residue then
-          let rule = RlSkip in
-          [rule]
-        else mk_rule_free goal residue
-      else []
-    with _ -> []
+  (* if is_code_rule goal.gl_trace then *)
+  let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
+  let sk, residue = check_entail_wrapper prog pre post in
+  if sk then
+    let residue = Gen.unsome residue in
+    if CF.is_emp_formula residue then
+      let rule = RlSkip in
+      [rule]
+    else mk_rule_free goal residue
   else []
+(* else [] *)
 
-let choose_synthesis_rules_x goal : rule list =
+let choose_synthesis_rules goal : rule list =
   let rules =
     try
       let _ = choose_rule_skip goal |> raise_rules in
@@ -580,7 +578,7 @@ let choose_synthesis_rules_x goal : rule list =
 
 let choose_synthesis_rules goal =
   Debug.no_1 "choose_synthesis_rules" pr_goal pr_rules
-    (fun _ -> choose_synthesis_rules_x goal) goal
+    (fun _ -> choose_synthesis_rules goal) goal
 
 (*********************************************************************
  * Processing rules

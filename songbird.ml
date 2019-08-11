@@ -996,10 +996,10 @@ let check_entail_residue prog ante conseq =
     let sb_ante = List.hd sb_ante in
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
-    let () = x_binfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
+    let () = x_tinfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
     let () = x_tinfo_hp (add_str "ENT PROGRAM" SBC.pr_program) sb_prog no_pos in
     let start_time = get_time() in
-    let ptree = SBPH.check_entailment ~timeout:3 ~interact:false sb_prog ent in
+    let ptree = SBPH.check_entailment ~timeout:1 ~interact:false sb_prog ent in
     let () = Syn.sb_ent_time := !Syn.sb_ent_time +. (get_time() -. start_time) in
     let () = Syn.sb_ent_num := !Syn.sb_ent_num + 1 in
     let res = ptree.SBPA.enr_validity in
