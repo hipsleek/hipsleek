@@ -27,6 +27,9 @@ let pr_hps = pr_list Cprinter.string_of_hp_decl
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_substs = pr_list (pr_pair pr_var pr_var)
 let pr_failesc_list = Cprinter.string_of_list_failesc_context
+let pr_f_opt f = match f with
+  | None -> ""
+  | Some f -> pr_f f
 
 (*** Reference variable***********)
 let rel_num = ref 0
@@ -86,9 +89,7 @@ type rule =
   | RlFRead of rule_field_read
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
-  (* | RlFuncRes of rule_func_res *)
   | RlPostAssign of rule_post_assign
-  (* | RlPreAssign of rule_pre_assign *)
 
 and rule_heap_assign = {
   rha_left : CP.spec_var;
@@ -166,6 +167,7 @@ and rule_frame_data = {
 
 and rule_unfold_pre = {
   n_pre: CF.formula;
+  unfold_pre_var: CP.spec_var;
 }
 
 and rule_unfold_post = {
@@ -180,14 +182,6 @@ and rule_func_call = {
   rfc_return: CP.spec_var option;
 }
 
-(* and rule_func_res = {
- *   rfr_fname : string;
- *   rfr_params : CP.spec_var list;
- *   rfr_substs : (CP.spec_var * CP.spec_var) list;
- *   rfr_return : CP.spec_var;
- *   rfr_residue: CF.formula;
- * } *)
-
 and rule_field_write = {
   rfw_bound_var: CP.spec_var;
   rfw_field: typed_ident;
@@ -198,6 +192,7 @@ and rule_field_read = {
   rfr_bound_var: CP.spec_var;
   rfr_field: typed_ident;
   rfr_value: CP.spec_var;
+  rfr_lookahead: goal option;
 }
 
 and rule_assign = {
@@ -1957,33 +1952,6 @@ let rec st_core2cast st : Cast.exp option = match st.stc_rule with
         exp_bind_pos = no_pos
       } in
     aux_c_subtrees st bind
-  (* | RlFuncRes rule ->
-   *   let fname = rule.rfr_fname in
-   *   let params = rule.rfr_params |> List.map CP.name_of_sv in
-   *   let r_var = rule.rfr_return in
-   *   let f_call = C.SCall {
-   *       C.exp_scall_type = CP.type_of_sv r_var;
-   *       C.exp_scall_method_name = fname;
-   *       C.exp_scall_lock = None;
-   *       C.exp_scall_arguments = params;
-   *       C.exp_scall_ho_arg = None;
-   *       C.exp_scall_is_rec = true;
-   *       C.exp_scall_path_id = None;
-   *       C.exp_scall_pos = no_pos
-   *     } in
-   *   let r_name = CP.name_of_sv r_var in
-   *   let res_var = C.VarDecl {
-   *       C.exp_var_decl_type = CP.type_of_sv r_var;
-   *       C.exp_var_decl_name = r_name;
-   *       C.exp_var_decl_pos = no_pos
-   *     } in
-   *   let assign = C.Assign {
-   *       C.exp_assign_lhs = r_name;
-   *       C.exp_assign_rhs = f_call;
-   *       C.exp_assign_pos = no_pos;
-   *     } in
-   *   let seq2 = mkCSeq res_var assign in
-   *   aux_c_subtrees st seq2 *)
   | RlFuncCall rule ->
     let fname = rule.rfc_fname in
     let params = rule.rfc_params |> List.map CP.name_of_sv in
@@ -2209,8 +2177,9 @@ let rec synthesize_st_core st : Iast.exp option =
       } in
     let bind = mkAssign exp_mem rhs_var in
     aux_subtrees st bind
-  | RlFRead rcore -> let lhs = rcore.rfr_value in
-    let bvar, (typ, f_name) = rcore.rfr_bound_var, rcore.rfr_field in
+  | RlFRead rc ->
+    let lhs = rc.rfr_value in
+    let bvar, (typ, f_name) = rc.rfr_bound_var, rc.rfr_field in
     let exp_decl = I.VarDecl {
         exp_var_decl_type = CP.type_of_sv lhs;
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
@@ -2226,34 +2195,27 @@ let rec synthesize_st_core st : Iast.exp option =
     let lhs = mkVar lhs in
     let body = mkAssign lhs mem_var in
     let seq = mkSeq exp_decl body in aux_subtrees st seq
-  | RlFuncCall rcore ->
-    let args = rcore.rfc_params |> List.map mkVar in
+  | RlFuncCall rc ->
+    let args = rc.rfc_params |> List.map mkVar in
     let fcall = Iast.CallNRecv {
-        exp_call_nrecv_method = rcore.rfc_fname |> Cast.unmingle_name;
+        exp_call_nrecv_method = rc.rfc_fname |> Cast.unmingle_name;
         exp_call_nrecv_lock = None;
         exp_call_nrecv_ho_arg = None;
         exp_call_nrecv_arguments = args;
         exp_call_nrecv_path_id = None;
         exp_call_nrecv_pos = no_pos} in
-    aux_subtrees st fcall
-  (* | RlFuncRes rcore ->
-   *   let args = rcore.rfr_params |> List.map mkVar in
-   *   let fcall = Iast.CallNRecv {
-   *       exp_call_nrecv_method = rcore.rfr_fname |> Cast.unmingle_name;
-   *       exp_call_nrecv_lock = None;
-   *       exp_call_nrecv_ho_arg = None;
-   *       exp_call_nrecv_arguments = args;
-   *       exp_call_nrecv_path_id = None;
-   *       exp_call_nrecv_pos = no_pos} in
-   *   let rvar = rcore.rfr_return in
-   *   let r_var = I.VarDecl {
-   *       exp_var_decl_type = CP.type_of_sv rvar;
-   *       exp_var_decl_decls = [(CP.name_of_sv rvar, None, no_pos)];
-   *      exp_var_decl_pos = no_pos;
-   *     } in
-   *   let asgn = mkAssign (mkVar rvar) fcall in
-   *   let seq = mkSeq r_var asgn in aux_subtrees st seq *)
-  
+    let seq = match rc.rfc_return with
+      | None -> fcall
+      | Some rvar ->
+        let r_var = I.VarDecl {
+            I.exp_var_decl_type = CP.type_of_sv rvar;
+            I.exp_var_decl_decls = [(CP.name_of_sv rvar, None, no_pos)];
+            I.exp_var_decl_pos = no_pos;
+          } in
+        let asgn = mkAssign (mkVar rvar) fcall in
+        mkSeq r_var asgn in
+    aux_subtrees st seq
+
 and aux_subtrees st cur_codes =
   let st_code = List.map synthesize_st_core st.stc_subtrees in
   match st_code with
@@ -2644,22 +2606,6 @@ let is_fcall_ever_called trace : bool =
       end in
   aux trace 2
 
-(* let rec is_fres_called trace args : bool =
- *   match trace with
- *   | [] -> false
- *   | head::tail ->
- *     begin
- *       match head with
- *       | RlFuncRes rcore ->
- *         let params = rcore.rfr_params in
- *         if (List.length args = List.length params) then
- *           if List.for_all2 (fun x y -> CP.eq_spec_var x y) args params
- *           then true
- *           else is_fres_called tail args
- *         else is_fres_called tail args
- *       | _ -> is_fcall_called tail args
- *     end *)
-
 let rec is_fread_called trace rcore : bool  =
   match trace with
   | [] -> false
@@ -2686,10 +2632,7 @@ let is_rule_fread_usable goal r =
       | Some arg_f -> if CF.is_emp_formula arg_f then false
         else true
 
-let rule_use_var var rule = match rule with
-  (* | RlFuncRes rc ->
-   *   let params = rc.rfr_params in
-   *   CP.mem var params *)
+let rule_use_var_x var rule = match rule with
   | RlFree rc ->
     let params = rc.rd_vars in
     CP.mem var params
@@ -2713,88 +2656,53 @@ let rule_use_var var rule = match rule with
     CP.mem var vars
   | RlFrameData rc ->
     CP.eq_sv rc.rfd_rhs var
+  | RlUnfoldPre rc ->
+    CP.eq_sv rc.unfold_pre_var var
   | _ -> false
 
-let eliminate_useless_rules goal rules =
-  let contain_sym_rules rule = match rule with
-    | RlFRead _ -> true
-    (* | RlUnfoldPre _ -> true *)
-    | _ -> false in
-  let is_rule_unfold_post_usable rules =
-    not (List.exists contain_sym_rules rules) in
+let rule_use_var var rule =
+  Debug.no_2 "rule_use_var" pr_var pr_rule string_of_bool
+    (fun _ _ -> rule_use_var_x var rule) var rule
+
+let eliminate_useless_rules_x goal rules =
+  (* let contain_sym_rules rule = match rule with
+   *   | RlFRead _ -> true
+   *     | _ -> false in *)
+  (* let is_rule_unfold_post_usable rules =
+   *   not (List.exists contain_sym_rules rules) in *)
   let n_rules = rules in
-  let n_rules = List.filter (fun rule -> match rule with
-      | RlFRead r -> is_rule_fread_usable goal r
-      | _ -> true) rules in
-  let filter_mk_null all_rules rule = match rule with
-    | RlMkNull r ->
-      (* let rhs = r.rmn_null in
-       * if CP.is_int_type (CP.get_exp_type rhs) then true
-       * else *)
-      if List.exists (fun x -> match x with | RlPostAssign _ -> true
-                                            | _ -> false) all_rules
-      then false
-      else true
-    | _ -> true in
-  let n_rules = n_rules |> List.filter (filter_mk_null n_rules) in
-  let get_func_calls rules =
-    let rec aux rules set = match rules with
-      | [] -> set
-      | h::tail ->
-        begin
-          match h with
-          | RlFuncCall rc -> aux tail (rc::set)
-          | _ -> aux tail set
-        end in
-    aux rules [] in
-  let call_rules = get_func_calls n_rules in
-  let get_useless_calls rules =
-    let rec aux rules set = match rules with
-      | [] -> set
-      | [h] -> set
-      | h::tail ->
-        let params = h.rfc_params in
-        let other_params = List.map (fun x -> x.rfc_params) tail |> List.concat in
-        if List.for_all (fun x -> not(CP.mem x other_params)) params then
-          aux tail (h::set)
-        else aux tail set in
-    let fc_rules = aux rules [] in
-    fc_rules |> List.map (fun x -> RlFuncCall x) in
-  let () = x_tinfo_hp (add_str "funcall rules" (pr_list pr_func_call)) call_rules no_pos in
-  let useless_calls = get_useless_calls call_rules in
-  let () = x_tinfo_hp (add_str "useless func" pr_rules) useless_calls no_pos in
-  let n_rules = List.filter (fun x -> not(List.mem x useless_calls)) n_rules in
-  (* let get_funres_calls rules =
+  (* let get_func_calls rules =
    *   let rec aux rules set = match rules with
    *     | [] -> set
    *     | h::tail ->
    *       begin
    *         match h with
-   *         (\* | RlFuncRes rc -> aux tail (rc::set) *\)
+   *         | RlFuncCall rc -> aux tail (rc::set)
    *         | _ -> aux tail set
    *       end in
    *   aux rules [] in
-   * let callres_rules = get_funres_calls n_rules in *)
-  (* let () = x_tinfo_hp (add_str "funres rules" (pr_list pr_func_res)) callres_rules no_pos in *)
-  (* let get_useless_funres rules =
+   * let call_rules = get_func_calls n_rules in
+   * let get_useless_calls rules =
    *   let rec aux rules set = match rules with
    *     | [] -> set
    *     | [h] -> set
    *     | h::tail ->
-   *       let params = h.rfr_params in
-   *       let other_params = List.map (fun x -> x.rfr_params) tail |> List.concat in
+   *       let params = h.rfc_params in
+   *       let other_params = List.map (fun x -> x.rfc_params) tail |> List.concat in
    *       if List.for_all (fun x -> not(CP.mem x other_params)) params then
    *         aux tail (h::set)
    *       else aux tail set in
    *   let fc_rules = aux rules [] in
-   *   fc_rules |> List.map (fun x -> RlFuncRes x) in *)
-  (* let useless_funres = get_useless_funres callres_rules in
-   * let () = x_tinfo_hp (add_str "useless funres" pr_rules) useless_funres no_pos in
-   * let n_rules = List.filter (fun x -> not(List.mem x useless_funres)) n_rules in *)
-  (* let n_rules = List.filter (fun rule -> match rule with
-   *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
-   *     | _ -> true) n_rules in *)
+   *   fc_rules |> List.map (fun x -> RlFuncCall x) in
+   * let () = x_tinfo_hp (add_str "funcall rules" (pr_list pr_func_call)) call_rules no_pos in
+   * let useless_calls = get_useless_calls call_rules in
+   * let () = x_tinfo_hp (add_str "useless func" pr_rules) useless_calls no_pos in
+   * let n_rules = List.filter (fun x -> not(List.mem x useless_calls)) n_rules in *)
   n_rules
+
+let eliminate_useless_rules goal rules =
+  Debug.no_2 "eliminate_useless_rules" pr_goal pr_rules pr_rules
+    (fun _ _ -> eliminate_useless_rules_x goal rules) goal rules
 
 let compare_rule_assign_vs_assign goal r1 r2 =
   if CP.is_res_spec_var r1.ra_lhs then PriHigh
@@ -2848,16 +2756,7 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | RlNewNum _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   (* | RlUnfoldPost _
-   * | RlFuncRes _
    * | RlFuncCall _ -> PriLow *)
-  | _ -> PriHigh
-
-let compare_rule_fun_res_vs_other r1 r2 = match r2 with
-  | RlNewNum _ -> PriLow
-  | RlReturn _ -> PriLow
-  | RlMkNull _ -> PriLow
-  | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
-  | RlPostAssign _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
@@ -2884,8 +2783,7 @@ let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlMkNull _ -> PriLow
   | RlNewNum _ -> PriLow
   | RlFuncCall _
-  | RlPostAssign _
-  (* | RlFuncRes _ *) -> PriLow
+  | RlPostAssign _  -> PriLow
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | _ -> PriHigh
 
@@ -2932,7 +2830,6 @@ let compare_rule goal r1 r2 =
   | RlHeapAssign _ -> PriEqual
   | RlFRead r -> compare_rule_fread_vs_other r r2
   | RlFWrite _ -> PriHigh
-  (* | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2 *)
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlPostAssign r1 -> compare_rule_post_assign_vs_other r1 r2
   | RlNewNum _ -> PriHigh

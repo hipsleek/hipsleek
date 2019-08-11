@@ -251,64 +251,6 @@ let choose_rule_free goal =
     else []
   else []
 
-let choose_rule_fread_x goal =
-  let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
-  let pre_node_vars = pre_cond |> get_heap |> get_heap_nodes
-                      |> List.map (fun (x, _,_) -> x) in
-  let rec helper_hf (hf:CF.h_formula) = match hf with
-    | CF.DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
-      if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
-        let dn_name = dnode.CF.h_formula_data_name in
-        let dn_args = dnode.CF.h_formula_data_arguments in
-        [(dn_var, dn_name, dn_args)]
-      else []
-    | CF.Star sf -> let hf1, hf2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
-      (helper_hf hf1) @ (helper_hf hf2)
-    | _ -> [] in
-  let rec helper_f (f:CF.formula) = match f with
-    | CF.Base bf -> helper_hf bf.CF.formula_base_heap
-    | CF.Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
-      (helper_f f1) @ (helper_f f2)
-    | CF.Exists bf -> helper_hf bf.formula_exists_heap in
-  let triples = helper_f pre_cond in
-  let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
-  let filter_rule rule =
-    let var = rule.rfr_value in
-    let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
-    let n_goal = {goal with gl_vars = [var]} in
-    let n_goal2 = {goal with gl_vars = var::goal.gl_vars} in
-    let unfold_rules = choose_rule_unfold_pre n_goal in
-    let fcall_rules = choose_rule_func_call n_goal2 in
-    let fwrite_rules = choose_rule_fwrite n_goal2 in
-    let () = x_tinfo_hp (add_str "fcall rules" pr_rules) fcall_rules no_pos in
-    List.mem var pre_node_vars ||
-    List.exists (rule_use_var var) fwrite_rules ||
-    unfold_rules != [] || (List.exists (rule_use_var var) fcall_rules) in
-  let helper_triple (var, data, args) =
-    let prog = goal.gl_prog in
-    let data = List.find (fun x -> x.Cast.data_name = data)
-        prog.Cast.prog_data_decls in
-    let d_args = data.Cast.data_fields |> List.map fst in
-    let d_arg_pairs = List.combine args d_args in
-    let filter_fun (x, _) = CP.mem x vars |> negate in
-    let d_arg_pairs = List.filter filter_fun d_arg_pairs in
-    let helper_arg (arg, field) =
-      let rbind = {
-          rfr_bound_var = var;
-          rfr_field = field;
-          rfr_value = arg;
-        } in [rbind] in
-    d_arg_pairs |> List.map helper_arg |> List.concat in
-  List.map helper_triple triples |> List.concat
-  |> List.filter (fun x -> is_fread_called goal.gl_trace x |> negate)
-  |> List.filter filter_rule
-  |> List.map (fun x -> RlFRead x) |> List.rev
-
-let choose_rule_fread goal =
-  Debug.no_1 "choose_rule_fread" pr_goal pr_rules
-    (fun _ -> choose_rule_fread_x goal) goal
-
 let choose_rule_allocate goal : rule list =
   let prog = goal.gl_prog in
   let all_vars = goal.gl_vars in
@@ -553,6 +495,18 @@ let choose_rules_after_allocate rs goal =
   let rs = rs @ (choose_rule_unfold_post goal) in
   rs
 
+let choose_rules_after_fread rs goal =
+  let rs = rs @ (choose_rule_frame_pred goal) in
+  let rs = rs @ (choose_rule_assign goal) in
+  let rs = rs @ (choose_rule_fread goal) in
+  let rs = rs @ (choose_rule_frame_data goal) in
+  let rs = rs @ (choose_rule_post_assign goal) in
+  (* let rs = rs @ (choose_rule_allocate goal) in *)
+  let rs = rs @ (choose_rule_mk_null goal) in
+  let rs = rs @ (choose_rule_new_num goal) in
+  let rs = rs @ (choose_rule_unfold_post goal) in
+  rs
+
 let choose_main_rules goal =
   let cur_time = get_time () in
   let duration = cur_time -. goal.gl_start_time in
@@ -565,7 +519,7 @@ let choose_main_rules goal =
   then []
   else
     let rs = goal.gl_lookahead in
-    let () = x_tinfo_hp (add_str "lookahead" pr_rules) rs no_pos in
+    let () = x_binfo_hp (add_str "lookahead" pr_rules) rs no_pos in
     let rs = if goal.gl_trace = [] then
         choose_all_rules rs goal
       else
@@ -574,6 +528,7 @@ let choose_main_rules goal =
         | RlMkNull _ -> choose_rules_after_mk_null rs goal
         | RlNewNum _ -> choose_rules_after_new_num rs goal
         | RlAllocate _ -> choose_rules_after_allocate rs goal
+        | RlFRead _ -> choose_rules_after_fread rs goal
         | _ -> choose_all_rules rs goal in
     let rs = eliminate_useless_rules goal rs in
     let rs = reorder_rules goal rs in
@@ -703,6 +658,9 @@ let process_rule_fwrite goal rc =
   mk_derivation_subgoals goal (RlFWrite rc) [n_goal]
 
 let process_rule_fread goal rc =
+  match rc.rfr_lookahead with
+  | Some n_goal -> mk_derivation_subgoals goal (RlFRead rc) [n_goal]
+  | None ->
     let vars = [rc.rfr_value] @ goal.gl_vars |> CP.remove_dups_svl in
     let n_goal = {goal with gl_vars = vars;
                             gl_trace = (RlFRead rc)::goal.gl_trace} in

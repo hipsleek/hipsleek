@@ -269,89 +269,90 @@ let translate_back_exp (exp : SBC.exp) =
   Debug.no_1 "translate_back_exp" SBC.pr_exp pr_exp
     (fun _ -> translate_back_exp_x exp) exp
 
-let rec translate_pf (pure_f: CP.formula)  =
-  match pure_f with
-  | CP.BForm (b_formula, _) ->
-    let (p_formula, _) = b_formula in
-    begin
-      match (p_formula:CP.p_formula) with
-      | CP.BVar (var, loc) ->
-        SBC.BVar (translate_var var, translate_loc loc)
-      | CP.BConst (b, loc) ->
-        SBC.BConst (b, translate_loc loc)
-      | CP.Eq (exp1, exp2, loc) ->
-        let sb_exp1 = translate_exp exp1 in
-        let sb_exp2 = translate_exp exp2 in
-        let sb_loc = translate_loc loc in
-        SBC.BinRel (SBC.Eq, sb_exp1, sb_exp2, sb_loc)
-      | CP.Neq (exp1, exp2, loc) ->
-        let sb_exp1 = translate_exp exp1 in
-        let sb_exp2 = translate_exp exp2 in
-        let sb_loc = translate_loc loc in
-        SBC.BinRel (SBC.Ne, sb_exp1, sb_exp2, sb_loc)
-      | CP.Gt (exp1, exp2, loc) ->
-        let sb_exp1 = translate_exp exp1 in
-        let sb_exp2 = translate_exp exp2 in
-        let sb_loc = translate_loc loc in
-        SBC.BinRel (SBC.Gt, sb_exp1, sb_exp2, sb_loc)
-      | CP.Gte (exp1, exp2, loc) ->
-        let sb_exp1 = translate_exp exp1 in
-        let sb_exp2 = translate_exp exp2 in
-        let sb_loc = translate_loc loc in
-        SBC.BinRel (SBC.Ge, sb_exp1, sb_exp2, sb_loc)
-      | CP.Lt (exp1, exp2, loc) ->
-        let sb_exp1 = translate_exp exp1 in
-        let sb_exp2 = translate_exp exp2 in
-        let sb_loc = translate_loc loc in
-        SBC.BinRel (SBC.Lt, sb_exp1, sb_exp2, sb_loc)
-      | CP.Lte (exp1, exp2, loc) ->
-        let sb_exp1 = translate_exp exp1 in
-        let sb_exp2 = translate_exp exp2 in
-        let sb_loc = translate_loc loc in
-        SBC.BinRel (SBC.Le, sb_exp1, sb_exp2, sb_loc)
-      | CP.EqMax (e1, e2, e3, loc) ->
-        let sb_exp1 = translate_exp e1 in
-        let sb_exp2 = translate_exp e2 in
-        let sb_exp3 = translate_exp e3 in
-        let sb_loc = translate_loc loc in
-        let max = SBC.mk_func SBC.Max [sb_exp2; sb_exp3] in
-        SBC.BinRel (SBC.Eq, sb_exp1, max, sb_loc)
-      | CP.EqMin (e1, e2, e3, loc) ->
-        let sb_exp1 = translate_exp e1 in
-        let sb_exp2 = translate_exp e2 in
-        let sb_exp3 = translate_exp e3 in
-        let sb_loc = translate_loc loc in
-        let max = SBC.mk_func SBC.Min [sb_exp2; sb_exp3] in
-        SBC.BinRel (SBC.Eq, sb_exp1, max, sb_loc)
-      | CP.LexVar lex ->
-        SBC.BConst (true, translate_loc lex.CP.lex_loc)
-      | _ -> report_error no_pos
-               ("this p_formula is not handled" ^ (CPR.string_of_p_formula p_formula))
-    end
-  | CP.And (f1, f2, loc) ->
-    let n_f1 = translate_pf f1 in
-    let n_f2 = translate_pf f2 in
-    SBC.PConj ([n_f1; n_f2], translate_loc loc)
-  | CP.Or (f1, f2, _, loc) ->
-    let n_f1 = translate_pf f1 in
-    let n_f2 = translate_pf f2 in
-    SBC.PDisj ([n_f1; n_f2], translate_loc loc)
-  | CP.Not (f, _, loc) ->
-    let n_f = translate_pf f in
-    SBC.PNeg (n_f, translate_loc loc)
-  | CP.Exists (sv, pf, _, loc) ->
-    let sb_var = translate_var sv in
-    let sb_pf = translate_pf pf in
-    let sb_loc = translate_loc loc in
-    SBC.mk_pexists ~pos:sb_loc [sb_var] sb_pf
-  | _ -> report_error no_pos
-           ("this pure formula not handled" ^ (CPR.string_of_pure_formula pure_f))
+let translate_pf (pure_f: CP.formula)  =
+  let rec aux pure_f = match pure_f with
+    | CP.BForm (b_formula, _) ->
+      let (p_formula, _) = b_formula in
+      begin
+        match (p_formula:CP.p_formula) with
+        | CP.BVar (var, loc) ->
+          SBC.BVar (translate_var var, translate_loc loc)
+        | CP.BConst (b, loc) ->
+          SBC.BConst (b, translate_loc loc)
+        | CP.Eq (exp1, exp2, loc) ->
+          let sb_exp1 = translate_exp exp1 in
+          let sb_exp2 = translate_exp exp2 in
+          let sb_loc = translate_loc loc in
+          SBC.BinRel (SBC.Eq, sb_exp1, sb_exp2, sb_loc)
+        | CP.Neq (exp1, exp2, loc) ->
+          let sb_exp1 = translate_exp exp1 in
+          let sb_exp2 = translate_exp exp2 in
+          let sb_loc = translate_loc loc in
+          SBC.BinRel (SBC.Ne, sb_exp1, sb_exp2, sb_loc)
+        | CP.Gt (exp1, exp2, loc) ->
+          let sb_exp1 = translate_exp exp1 in
+          let sb_exp2 = translate_exp exp2 in
+          let sb_loc = translate_loc loc in
+          SBC.BinRel (SBC.Gt, sb_exp1, sb_exp2, sb_loc)
+        | CP.Gte (exp1, exp2, loc) ->
+          let sb_exp1 = translate_exp exp1 in
+          let sb_exp2 = translate_exp exp2 in
+          let sb_loc = translate_loc loc in
+          SBC.BinRel (SBC.Ge, sb_exp1, sb_exp2, sb_loc)
+        | CP.Lt (exp1, exp2, loc) ->
+          let sb_exp1 = translate_exp exp1 in
+          let sb_exp2 = translate_exp exp2 in
+          let sb_loc = translate_loc loc in
+          SBC.BinRel (SBC.Lt, sb_exp1, sb_exp2, sb_loc)
+        | CP.Lte (exp1, exp2, loc) ->
+          let sb_exp1 = translate_exp exp1 in
+          let sb_exp2 = translate_exp exp2 in
+          let sb_loc = translate_loc loc in
+          SBC.BinRel (SBC.Le, sb_exp1, sb_exp2, sb_loc)
+        | CP.EqMax (e1, e2, e3, loc) ->
+          let sb_exp1 = translate_exp e1 in
+          let sb_exp2 = translate_exp e2 in
+          let sb_exp3 = translate_exp e3 in
+          let sb_loc = translate_loc loc in
+          let max = SBC.mk_func SBC.Max [sb_exp2; sb_exp3] in
+          SBC.BinRel (SBC.Eq, sb_exp1, max, sb_loc)
+        | CP.EqMin (e1, e2, e3, loc) ->
+          let sb_exp1 = translate_exp e1 in
+          let sb_exp2 = translate_exp e2 in
+          let sb_exp3 = translate_exp e3 in
+          let sb_loc = translate_loc loc in
+          let max = SBC.mk_func SBC.Min [sb_exp2; sb_exp3] in
+          SBC.BinRel (SBC.Eq, sb_exp1, max, sb_loc)
+        | CP.LexVar lex ->
+          SBC.BConst (true, translate_loc lex.CP.lex_loc)
+        | _ -> report_error no_pos
+                 ("this p_formula is not handled" ^ (CPR.string_of_p_formula p_formula))
+      end
+    | CP.And (f1, f2, loc) ->
+      let n_f1 = aux f1 in
+      let n_f2 = aux f2 in
+      SBC.PConj ([n_f1; n_f2], translate_loc loc)
+    | CP.Or (f1, f2, _, loc) ->
+      let n_f1 = aux f1 in
+      let n_f2 = aux f2 in
+      SBC.PDisj ([n_f1; n_f2], translate_loc loc)
+    | CP.Not (f, _, loc) ->
+      let n_f = aux f in
+      SBC.PNeg (n_f, translate_loc loc)
+    | CP.Exists (sv, pf, _, loc) ->
+      let sb_var = translate_var sv in
+      let sb_pf = aux pf in
+      let sb_loc = translate_loc loc in
+      SBC.mk_pexists ~pos:sb_loc [sb_var] sb_pf
+    | _ -> report_error no_pos
+             ("this pure formula not handled" ^ (pr_pf pure_f)) in
+  aux pure_f
 
 let translate_pf_wrapper pf =
   Debug.no_1 "translate_pf" pr_pf (SBC.pr_pf)
     (fun _ -> translate_pf pf) pf
 
-let translate_back_pf_x (pf : SBC.pure_form) =
+let translate_back_pf (pf : SBC.pure_form) =
   let rec aux pf = match pf with
   | SBC.BConst (b, pos)
     -> CP.BForm ((CP.BConst (b, translate_back_pos pos), None), None)
@@ -416,7 +417,7 @@ let translate_back_pf_x (pf : SBC.pure_form) =
 
 let translate_back_pf pf =
   Debug.no_1 "translate_back_pf" SBC.pr_pf pr_pf
-    (fun _ -> translate_back_pf_x pf) pf
+    (fun _ -> translate_back_pf pf) pf
 
 let rec translate_hf hf =
   let hf = Syn.rm_emp_hf hf in
@@ -847,7 +848,7 @@ let solve_entailments_one prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+    let () = x_binfo_hp (add_str "vdefns" (pr_list_mln SBC.pr_vdfs)) vdefns_list
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -958,7 +959,7 @@ let get_repair_candidate prog ents cond_op =
   | None -> let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
     None
 
-let check_entail_exact_x prog ante conseq =
+let check_entail_exact prog ante conseq =
   let () = Syn.check_entail_num := !Syn.check_entail_num + 1 in
   let sb_prog = translate_prog prog in
   let sb_ante, _ = translate_formula ante in
@@ -982,9 +983,9 @@ let check_entail_exact_x prog ante conseq =
 
 let check_entail_exact prog ante conseq =
   Debug.no_2 "SB.check_entail_exact" pr_formula pr_formula string_of_bool
-    (fun _ _ -> check_entail_exact_x prog ante conseq) ante conseq
+    (fun _ _ -> check_entail_exact prog ante conseq) ante conseq
 
-let check_entail_residue_x prog ante conseq =
+let check_entail_residue prog ante conseq =
   let () = Syn.check_entail_num := !Syn.check_entail_num + 1 in
   let sb_prog = translate_prog prog in
   let sb_ante, _ = translate_formula ante in
@@ -995,7 +996,7 @@ let check_entail_residue_x prog ante conseq =
     let sb_ante = List.hd sb_ante in
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
-    let () = x_tinfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
+    let () = x_binfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
     let () = x_tinfo_hp (add_str "ENT PROGRAM" SBC.pr_program) sb_prog no_pos in
     let start_time = get_time() in
     let ptree = SBPH.check_entailment ~timeout:3 ~interact:false sb_prog ent in
@@ -1007,15 +1008,16 @@ let check_entail_residue_x prog ante conseq =
     match res with
     | SBG.MvlTrue ->
       let residue_fs = ptree.SBPA.enr_residues in
-      let red = residue_fs |> List.rev |> List.hd in
-      let hip_red = translate_back_formula red [] in
-      true, Some hip_red
+      let residue = residue_fs |> List.rev |> List.hd in
+      let () = x_tinfo_hp (add_str "ENT residue" SBC.pr_f) residue no_pos in
+      let hip_residue = translate_back_formula residue [] in
+      true, Some hip_residue
     | _ -> false, None
 
 let check_entail_residue prog ante conseq =
   Debug.no_2 "SB.check_entail_residue" pr_formula pr_formula
-    (fun (x, _) -> string_of_bool x)
-    (fun _ _ -> check_entail_residue_x prog ante conseq) ante conseq
+    (pr_pair string_of_bool Syn.pr_f_opt)
+    (fun _ _ -> check_entail_residue prog ante conseq) ante conseq
 
 let output_sb_ent sb_prog sb_ent =
   let file = List.hd !source_files in
@@ -1414,8 +1416,9 @@ and hentail_after_sat_ebase prog ctx es bf =
       x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos;
       x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
       let msg = "songbird result is Failed." in
-      (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
-      , Prooftracer.Failure)
+      let n_ctx = CF.mkFailCtx_simple msg es bf.CF.formula_struc_base
+          (CF.mk_cex true) no_pos in
+      (n_ctx, Prooftracer.Failure)
 
 and heap_entail_after_sat_struc prog ctx conseq =
   let () = x_tinfo_pp "SONGBIRD Prover activated" no_pos in

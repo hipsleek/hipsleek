@@ -14,9 +14,7 @@ ensures res::ll<n> * x::ll<n>;
   else {
       node tmp;
       tmp = copy(x.next);
-      node k;
-      k = new node(x.val, tmp);
-      return k.next;
-      // return k;
+      return new node(x.val, tmp.next);
+      // return new node(x.val, tmp);
   }
 }
