@@ -4,27 +4,17 @@ data node {
 }.
 
 pred ll<n> == self = null & n = 0
-	or (exists v, q: self::node<v, q> * q::ll<n-1> & n > 0).
+	or (exists v, q: self::node<v, q> * q::ll<n-1> & n > 0)
+  inv n >= 0.
 
 void insert(node x, int a)
 	requires x::ll<n> & n > 0 
 	ensures exists k: x::ll<k> & k = n+1;.
 
-
-// synthesize [node x,int a]
-//  x::node<Anon_4401,f_r_4432>&
-// q_4402=null & flted_7_4400=0 & n=1 & f_r_4432=null
-// ~>
-//  (exists f_r_4433,Anon_29,q_30,
-// Anon_107: q_30::node<Anon_107,f_r_4433> * x::node<Anon_29,q_30>&
-// f_r_4433=null).
-// x.next = new node(a, null)
-
-
-synthesize [node x,int a, node q12]
-x::node<ann11,q12> * q12::ll<flt7>& 0<=flt7 & q12!=null & n=1+flt7
+synthesize [node x,int a]
+x::node<ann5,fr36> & q6=null & flt4=0 & n=1 & fr36=null
 ~>
- (exists Anon_31,q_32,Anon_88,q_89: q_32::node<Anon_88,q_89> * x::node<Anon_31,q_32> * 
-      q_89::ll<flt7>).
+(exists fr37,an29,q3,ann7: q3::node<ann7,fr37> * x::node<an29,q3> &
+fr37=null).
 
-// insert(x.next, a);
+// x.next = new node(a, null);

@@ -13,6 +13,7 @@ module I = Iast
 module C = Cast
 
 (** Printing  **********)
+let pr_ctxs = Cprinter.string_of_list_context
 let pr_int = string_of_int
 let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
