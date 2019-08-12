@@ -1139,7 +1139,7 @@ let is_unk_type_var (var: CP.spec_var) = match CP.type_of_sv var with
   | _ -> false
 
 let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
-  | Int -> true
+  | Int | NUM -> true
   | _ -> false
 
 let is_node_or_int_var x = is_node_var x || is_int_var x

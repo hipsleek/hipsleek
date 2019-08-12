@@ -119,6 +119,14 @@ let get_subst_from_list_context l_ctx =
   Debug.no_1 "get_subst_from_list_context" Cprinter.string_of_list_context
     pr_substs (fun _ -> get_subst_from_list_context l_ctx) l_ctx
 
+let get_evars_from_list_context (l_ctx: CF.list_context) =
+  let rec aux_ctx ctx = match ctx with
+    | CF.Ctx ent_state -> ent_state.CF.es_evars
+    | CF.OCtx (ctx1, ctx2) -> (aux_ctx ctx1) @ (aux_ctx ctx2) in
+  match l_ctx with
+  | CF.FailCtx _ -> []
+  | CF.SuccCtx ctx_list -> ctx_list |> List.map aux_ctx |> List.concat
+
 let get_es_pf_from_list_context (l_ctx: CF.list_context) =
   let rec aux_ctx ctx = match ctx with
     | CF.Ctx ent_state -> ent_state.CF.es_aux_conseq
@@ -166,23 +174,26 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
     let fst_prefix = fst |> CP.name_of_sv |> get_prefix in
     let snd_prefix = snd |> CP.name_of_sv |> get_prefix in
     eq_str fst_prefix snd_prefix in
-  let find_subst substs fst =
-    let (_,y) = List.find (fun (x,_) ->
-        common_prefix x fst) substs in
-    (fst, y) in
+  let get_exists_pair old_vars n_evar =
+    let old_evar = List.find (common_prefix n_evar) old_vars in
+    (old_evar, n_evar) in
   if CF.isFailCtx list_ctx then false, None
   else
     let () = x_binfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in
     let residue = CF.formula_of_list_context list_ctx in
+    let evars_residue = get_evars_from_list_context list_ctx in
+    let evar_substs = exists_vars |> List.map (get_exists_pair evars_residue) in
+    let () = x_binfo_hp (add_str "evar subst" pr_substs) evar_substs no_pos in
     let n_pf =
-      let substs = get_subst_from_list_context list_ctx in
-      if List.length exists_vars = List.length substs then
-        let substs = List.map (find_subst substs) exists_vars in
-        (* let e_vars = substs |> List.map fst in *)
-        mk_pure_form_from_eq_pairs substs
-      else get_es_pf_from_list_context list_ctx in
+      let residue_pairs = get_subst_from_list_context list_ctx in
+      let fst_vars = List.map fst evar_substs in
+      let residue_pairs = residue_pairs |> List.filter
+                            (fun (x,_) -> CP.mem x fst_vars) in
+      let pf1 = mk_pure_form_from_eq_pairs residue_pairs in
+      let pf2 = get_es_pf_from_list_context list_ctx in
+      CP.mkAnd pf1 pf2 no_pos in
+    let n_pf = CP.subst evar_substs n_pf in
     let residue = CF.add_pure_formula_to_formula n_pf residue in
-    (* let residue = add_exists_vars residue e_vars in *)
     true, Some residue
 
 let check_entail_sleek prog ante conseq =
@@ -398,7 +409,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
   let eq_args = List.for_all2 CP.eq_sv args proc_args in
   if args_called || eq_args || called then []
   else
-    let () = x_binfo_hp (add_str "args" pr_vars) args no_pos in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let pre_cond = goal.gl_pre_cond in
     let substs = List.combine proc_args args in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -425,6 +436,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
        * let () = x_tinfo_hp (add_str "subst" pr_substs) n_subst no_pos in
        * let residue = residue |> CF.subst n_subst in
        * let n_proc_post = n_proc_post |> CF.subst n_subst in *)
+
       let () = x_tinfo_hp (add_str "residue" pr_f) residue no_pos in
       let n_pre = add_formula_to_formula n_proc_post residue in
       let () = x_tinfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
@@ -607,8 +619,10 @@ let choose_rule_numeric_end goal =
   x_tinfo_hp (add_str "vars" pr_vars) vars no_pos;
   let post_vars = CF.fv goal.gl_post_cond in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let pre_vars, post_vars = CF.fv pre, CF.fv post in
+  let pre_vars = CF.fv pre in
+  let post_vars = CF.fv post in
   let post_vars = List.filter is_int_var post_vars in
+  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let vars_lhs = List.filter (fun x -> CP.mem x vars || CP.is_res_sv x)
       post_vars in
   let vars_lhs = List.filter (fun x -> CP.mem x pre_vars |> negate) vars_lhs in
@@ -625,6 +639,7 @@ let choose_rule_numeric_end goal =
     let rhs_one = CP.Add (rhs_e, CP.mkIConst 1 no_pos, no_pos) in
     let added_pf = CP.mkEqExp (CP.Var (cur_var, no_pos)) rhs_one no_pos in
     let n_pre = CF.add_pure_formula_to_formula added_pf pre in
+    let () = x_tinfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
     let rules = if check_entail_exact_wrapper goal.gl_prog n_pre post then
         let rule = if CP.is_res_sv cur_var then
             RlReturn { r_exp = rhs_one;
@@ -858,7 +873,8 @@ let choose_rule_fread goal =
   let filter_rule rule =
     let var = rule.rfr_value in
     let () = x_binfo_hp (add_str "var" pr_var) var no_pos in
-    let n_goal = {goal with gl_vars = var::goal.gl_vars} in
+    let n_goal = {goal with gl_vars = var::goal.gl_vars;
+                            gl_trace = (RlFRead rule)::goal.gl_trace} in
     let n_rules = [] in
     let n_rules = n_rules @ (choose_rule_unfold_pre n_goal) in
     let n_rules = n_rules @ (choose_rule_func_call n_goal) in
@@ -874,7 +890,7 @@ let choose_rule_fread goal =
   |> List.filter (fun x -> is_fread_called goal.gl_trace x |> negate)
   |> List.filter filter_fread_int
   |> List.map filter_rule |> List.filter (fun (x,_) -> x) |> List.map snd
-  |> List.map (fun x -> RlFRead x) |> List.rev
+  |> List.map (fun x -> RlFRead x)
 
 let choose_rule_fread goal =
   Debug.no_1 "choose_rule_fread" pr_goal pr_rules
@@ -915,6 +931,7 @@ let choose_rule_new_num goal : rule list =
                               gl_pre_cond = n_pre;
                               gl_trace = (RlNewNum rule)::goal.gl_trace} in
       let () = x_binfo_hp (add_str "var" pr_var) var no_pos in
+      let () = x_binfo_hp (add_str "exp" pr_exp) n_exp no_pos in
       let n_rules = choose_rule_allocate_return n_goal in
       let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
       let n_rules = n_rules @ (choose_rule_func_call n_goal) in

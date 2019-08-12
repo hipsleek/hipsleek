@@ -9,8 +9,9 @@ int length(node x)
   requires x::ll<n>
   ensures x::ll<n> & res = n;.
 
-synthesize [node x]
-x::ll<n>&x!=null
+
+synthesize [node r74,node x]
+x::node<r74> * r74::ll<n75>&x!=null & n=1+n75 & 1<=n
 ~>
- (exists fr59,r14: x::node<r14> * r14::ll<fr59>&
-1<=n & n=res & 1+fr59=n).
+ (exists f_r_4359,r_14: x::node<r_14> * r_14::ll<f_r_4359>&
+n=res & 1+f_r_4359=n).

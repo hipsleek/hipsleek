@@ -97,7 +97,7 @@ let choose_main_rules goal =
   then []
   else
     let rs = goal.gl_lookahead in
-    let () = x_tinfo_hp (add_str "lookahead" pr_rules) rs no_pos in
+    let () = x_binfo_hp (add_str "lookahead" pr_rules) rs no_pos in
     let rs = if goal.gl_trace = [] then
         choose_all_rules rs goal
       else
