@@ -13,8 +13,8 @@ module CF = Cformula
 module CP = Cpure
 module SB = Songbird
 
-(* START CHECKING FOR MAKING RULES *)
 
+(* START CHECKING FOR MAKING RULES *)
 let check_head_allocate goal : CP.spec_var list =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
@@ -150,15 +150,35 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
   let conseq = CF.struc_formula_of_formula conseq no_pos in
   let list_ctx, _ = Solver.heap_entail_struc_init prog false true
       (CF.SuccCtx[ctx]) conseq no_pos None in
+  let get_prefix (s:string) =
+    let slen = (String.length s) in
+    let ri =
+      try
+        let n = (String.rindex s '_') in
+        let l = (slen-(n+1)) in
+        if (l==0) then slen-1
+        else
+          let tr = String.sub s (n+1) (slen-(n+1)) in
+          n
+      with  _ -> slen in
+    String.sub s 0 ri in
+  let common_prefix fst snd =
+    let fst_prefix = fst |> CP.name_of_sv |> get_prefix in
+    let snd_prefix = snd |> CP.name_of_sv |> get_prefix in
+    eq_str fst_prefix snd_prefix in
+  let find_subst substs fst =
+    let (_,y) = List.find (fun (x,_) ->
+        common_prefix x fst) substs in
+    (fst, y) in
   if CF.isFailCtx list_ctx then false, None
   else
-    let () = x_tinfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in
+    let () = x_binfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in
     let residue = CF.formula_of_list_context list_ctx in
     let n_pf =
       let substs = get_subst_from_list_context list_ctx in
       if List.length exists_vars = List.length substs then
-        let substs = List.combine exists_vars (List.map snd substs) in
-        let e_vars = substs |> List.map fst in
+        let substs = List.map (find_subst substs) exists_vars in
+        (* let e_vars = substs |> List.map fst in *)
         mk_pure_form_from_eq_pairs substs
       else get_es_pf_from_list_context list_ctx in
     let residue = CF.add_pure_formula_to_formula n_pf residue in
@@ -378,7 +398,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
   let eq_args = List.for_all2 CP.eq_sv args proc_args in
   if args_called || eq_args || called then []
   else
-    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
+    let () = x_binfo_hp (add_str "args" pr_vars) args no_pos in
     let pre_cond = goal.gl_pre_cond in
     let substs = List.combine proc_args args in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -1215,3 +1235,64 @@ let choose_rule_free goal =
     else []
   else []
 
+let choose_rule_frame_pred goal =
+  if check_head_allocate_wrapper goal then []
+  else
+    let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+    let exists_vars = CF.get_exists post |> List.filter is_node_var in
+    let filter (lhs, rhs) =
+      let n_pre, pre_vars = frame_var_formula pre rhs in
+      let n_post, post_vars = frame_var_formula post lhs in
+      (* let check_field f field =
+       *   match extract_var_f f field with
+       *   | Some var_f -> if CF.is_emp_formula var_f then true
+       *     else false
+       *   | _ -> true in
+       * let check_pre = List.for_all (check_field pre) pre_vars in
+       * let check_post = List.for_all (check_field post) post_vars in *)
+      if SB.check_unsat goal.gl_prog n_post then []
+      else if (List.length pre_vars = List.length post_vars) (* &&
+                                                              * check_pre && check_post *) then
+        let pre_vars = rhs::pre_vars in
+        let post_vars = lhs::post_vars in
+        let rule = RlFramePred {
+            rfp_lhs = lhs;
+            rfp_rhs = rhs;
+            rfp_pairs = List.combine pre_vars post_vars;
+            rfp_pre = n_pre;
+            rfp_post = n_post;
+          } in [rule]
+      else [] in
+    let helper var =
+      let eq_vars = find_instantiate_var goal var in
+      eq_vars |> List.map (fun x -> (var, x)) in
+    exists_vars |> List.map helper |> List.concat |> List.map filter
+    |> List.concat
+
+let choose_rule_free goal residue =
+  let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
+  let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
+  let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
+  let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
+  let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
+  let free_vars = CP.diff_svl pre_node_vars post_node_vars in
+  if free_vars != [] then
+    let rule = RlFree {
+        rd_vars = free_vars;
+      } in
+    [rule]
+  else []
+
+let choose_rule_skip goal =
+  if is_code_rule goal.gl_trace then
+    let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
+    let sk, residue = check_entail_wrapper prog pre post in
+    if sk then
+      let residue = Gen.unsome residue in
+      if CF.is_emp_formula residue then
+        let rule = RlSkip in
+        [rule]
+      else choose_rule_free goal residue
+    else []
+  else []

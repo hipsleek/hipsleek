@@ -4,13 +4,14 @@ data node2 {
 }.
 
 pred dll<p,n> == self = null & n = 0 
-  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
+  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0)
+  inv n >= 0.
 
 void append2(node2 x, node2 y)
 	requires x::dll<q, m> * y::dll<p, n> & m>0
 	ensures (exists k2: x::dll<q, k2> & k2 = m + n);.
 
-synthesize [node2 x,node2 y]
+synthesize [node2 x,node2 y, node2 q73]
 x::node2<p7,q73> * q73::dll<x,flt72> * y::dll<p,n> &
 0<=flt72 & q73!=null & m=1+flt72
 ~>

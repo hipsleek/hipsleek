@@ -3978,7 +3978,7 @@ and subst_pos_formula p f = match f with
   | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
 
 (* pre : _<num> *)
-and fresh_old_name_x (s: string):string = 
+and fresh_old_name_x (s: string):string =
   let slen = (String.length s) in
   let ri =
     try

@@ -21,107 +21,10 @@ module SB = Songbird
 exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
+
 (*********************************************************************
  * Choosing rules
  *********************************************************************)
-
-let rec find_sub_var sv cur_vars pre_pf =
-  match pre_pf with
-  | CP.BForm (b, _) ->
-    let bvars = CP.bfv b in
-    if List.exists (fun x -> CP.eq_spec_var x sv) bvars then
-      let (pf, _) = b in
-      (match pf with
-       | Eq (e1, e2, _) ->
-         begin
-           match e1, e2 with
-           | Var (sv1, _), Var (sv2, _) ->
-             if CP.eq_spec_var sv1 sv &&
-                List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
-             then Some sv2
-             else if CP.eq_spec_var sv2 sv &&
-                     List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
-             then Some sv1 else None
-           | _ -> None
-         end
-       | _ -> None
-      )
-    else None
-  | CP.And (f1, f2, _) ->
-    let res1 = find_sub_var sv cur_vars f1 in
-    if res1 = None then find_sub_var sv cur_vars f2
-    else res1
-  | _ -> None
-
-(* let choose_rule_pre_assign goal : rule list =
- *   let all_vars = goal.gl_vars in
- *   let post = goal.gl_post_cond in
- *   let pre = goal.gl_pre_cond in
- *   let pre_vars = CF.fv pre in
- *   let pre_pf = CF.get_pure pre in
- *   let pre_conjuncts = CP.split_conjunctions pre_pf in
- *   let eq_pairs = List.map (find_exists_substs pre_vars) pre_conjuncts
- *                  |> List.concat in
- *   let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
- *   let filter_fun (x,y) =
- *     let vars = CP.afv y in
- *     not(CP.mem x all_vars) && vars != [] && CP.subset vars all_vars in
- *   let filter_eq = Gen.BList.remove_dups_eq
- *       (fun x1 x2 -> CP.eq_sv (fst x1) (fst x2)) in
- *   let eq_pairs = eq_pairs |> filter_eq |> List.filter filter_fun in
- *   let () = x_tinfo_hp (add_str "pairs" pr_pairs) eq_pairs no_pos in
- *   let mk_rule (var, exp) =
- *     RlPreAssign {
- *       rpa_lhs = var;
- *       rpa_rhs = exp
- *     } in
- *   List.map mk_rule eq_pairs *)
-
- (* let get_cond_exp prog formula base recursive puref vars =
-  *  let conjuncs = CP.split_conjunctions puref in
-  *  let aux pf =
-  *    let n_bf = CF.add_pure_formula_to_formula pf formula in
-  *    let n_pf = CP.mkNot_s pf in
-  *    let n_rc = CF.add_pure_formula_to_formula n_pf formula in
-  *    let fst = SB.check_entail_exact prog n_bf base in
-  *    let snd = SB.check_entail_exact prog n_rc recursive in
-  *    fst && snd in
-  *  conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
-  *  |> List.filter aux *)
-
-let choose_rule_frame_pred goal =
-  if check_head_allocate_wrapper goal then []
-  else
-    let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-    let exists_vars = CF.get_exists post |> List.filter is_node_var in
-    let filter (lhs, rhs) =
-      let n_pre, pre_vars = frame_var_formula pre rhs in
-      let n_post, post_vars = frame_var_formula post lhs in
-      (* let check_field f field =
-       *   match extract_var_f f field with
-       *   | Some var_f -> if CF.is_emp_formula var_f then true
-       *     else false
-       *   | _ -> true in
-       * let check_pre = List.for_all (check_field pre) pre_vars in
-       * let check_post = List.for_all (check_field post) post_vars in *)
-      if SB.check_unsat goal.gl_prog n_post then []
-      else if (List.length pre_vars = List.length post_vars) (* &&
-                                                              * check_pre && check_post *) then
-        let pre_vars = rhs::pre_vars in
-        let post_vars = lhs::post_vars in
-        let rule = RlFramePred {
-            rfp_lhs = lhs;
-            rfp_rhs = rhs;
-            rfp_pairs = List.combine pre_vars post_vars;
-            rfp_pre = n_pre;
-            rfp_post = n_post;
-          } in [rule]
-      else [] in
-    let helper var =
-      let eq_vars = find_instantiate_var goal var in
-      eq_vars |> List.map (fun x -> (var, x)) in
-    exists_vars |> List.map helper |> List.concat |> List.map filter
-    |> List.concat
 
 let choose_all_rules rs goal =
   let rs = rs @ (choose_rule_unfold_pre goal) in
@@ -209,35 +112,6 @@ let choose_main_rules goal =
     let rs = reorder_rules goal rs in
     rs
 
-
-let mk_rule_free goal residue =
-  let post = goal.gl_post_cond in
-  let all_vars = goal.gl_vars in
-  let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
-  let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
-  let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
-  let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
-  let free_vars = CP.diff_svl pre_node_vars post_node_vars in
-  if free_vars != [] then
-    let rule = RlFree {
-        rd_vars = free_vars;
-      } in
-    [rule]
-  else []
-
-let choose_rule_skip goal =
-  if is_code_rule goal.gl_trace then
-    let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
-    let sk, residue = check_entail_wrapper prog pre post in
-    if sk then
-      let residue = Gen.unsome residue in
-      if CF.is_emp_formula residue then
-        let rule = RlSkip in
-        [rule]
-      else mk_rule_free goal residue
-    else []
-  else []
-
 let choose_synthesis_rules goal : rule list =
   let rules =
     try
@@ -254,6 +128,7 @@ let choose_synthesis_rules goal : rule list =
 let choose_synthesis_rules goal =
   Debug.no_1 "choose_synthesis_rules" pr_goal pr_rules
     (fun _ -> choose_synthesis_rules goal) goal
+
 
 (*********************************************************************
  * Processing rules
@@ -288,30 +163,30 @@ let process_rule_return goal rc =
       else mk_derivation_fail goal (RlReturn rc)
     | false ->  mk_derivation_fail goal (RlReturn rc)
 
-let subs_fwrite formula var field new_val data_decls =
-  match (formula:CF.formula) with
-  | Base bf -> let hf = bf.CF.formula_base_heap in
-    let () = x_tinfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf no_pos in
-    let rec helper (hf:CF.h_formula) = match hf with
-      | DataNode dnode ->
-        let data_var = dnode.h_formula_data_node in
-        if CP.eq_spec_var data_var var then
-          let n_dnode = set_field dnode field new_val data_decls in
-          (CF.DataNode n_dnode)
-        else hf
-      | Star sf -> let n_h1 = helper sf.CF.h_formula_star_h1 in
-        let n_h2 = helper sf.CF.h_formula_star_h2 in
-        Star {sf with h_formula_star_h1 = n_h1;
-                      h_formula_star_h2 = n_h2}
-      | _ -> hf in
-    CF.Base {bf with formula_base_heap = helper hf}
-  | _ -> formula
-
 let process_rule_fwrite goal rc =
+  let aux_fun formula var field new_val data_decls =
+    match (formula:CF.formula) with
+    | CF.Base bf -> let hf = bf.CF.formula_base_heap in
+      let () = x_tinfo_hp (add_str "hf" pr_hf) hf no_pos in
+      let rec helper (hf:CF.h_formula) = match hf with
+        | CF.DataNode dnode ->
+          let data_var = dnode.h_formula_data_node in
+          if CP.eq_spec_var data_var var then
+            let n_dnode = set_field dnode field new_val data_decls in
+            (CF.DataNode n_dnode)
+          else hf
+        | CF.Star sf ->
+          let n_h1 = helper sf.CF.h_formula_star_h1 in
+          let n_h2 = helper sf.CF.h_formula_star_h2 in
+          CF.Star {sf with CF.h_formula_star_h1 = n_h1;
+                           CF.h_formula_star_h2 = n_h2}
+        | _ -> hf in
+      CF.Base {bf with formula_base_heap = helper hf}
+    | _ -> formula in
   let pre, var = goal.gl_pre_cond, rc.rfw_bound_var in
   let field, prog = rc.rfw_field, goal.gl_prog in
   let rhs, data_decls = rc.rfw_value, prog.prog_data_decls in
-  let n_pre = subs_fwrite pre var field rhs data_decls in
+  let n_pre = aux_fun pre var field rhs data_decls in
   let n_goal = {goal with gl_pre_cond = n_pre;
                           gl_trace = (RlFWrite rc)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlFWrite rc) [n_goal]
