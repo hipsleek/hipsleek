@@ -22,113 +22,6 @@ exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
 
-(*********************************************************************
- * Choosing rules
- *********************************************************************)
-
-let choose_all_rules rs goal =
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_rule_frame_pred goal) in
-  let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_fwrite goal) in
-  let rs = rs @ (choose_rule_func_call goal) in
-  let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_allocate goal) in
-  let rs = rs @ (choose_rule_mk_null goal) in
-  let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  rs
-
-let choose_rules_after_mk_null rs goal =
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_rule_frame_pred goal) in
-  let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_mk_null goal) in
-  let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  rs
-
-let choose_rules_after_new_num rs goal =
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_rule_frame_pred goal) in
-  let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_mk_null goal) in
-  let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  rs
-
-let choose_rules_after_allocate rs goal =
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_rule_frame_pred goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_func_call goal) in
-  let rs = rs @ (choose_rule_frame_data goal) in
-  let rs = rs @ (choose_rule_allocate goal) in
-  let rs = rs @ (choose_rule_mk_null goal) in
-  let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  rs
-
-let choose_rules_after_fread rs goal =
-  let rs = rs @ (choose_rule_frame_pred goal) in
-  let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_frame_data goal) in
-  (* let rs = rs @ (choose_rule_allocate goal) in *)
-  let rs = rs @ (choose_rule_mk_null goal) in
-  let rs = rs @ (choose_rule_new_num goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  rs
-
-let choose_main_rules goal =
-  let cur_time = get_time () in
-  let duration = cur_time -. goal.gl_start_time in
-  (* let a_vars = check_head_allocate goal in *)
-  (* let () = x_tinfo_hp (add_str "a_vars" pr_vars) a_vars no_pos in *)
-  (* if (a_vars != []) && not (check_goal_procs goal)
-   *    && List.length goal.gl_trace > 2 then []
-   * else *)
-  if duration > !synthesis_timeout && not(!enable_i)
-  then []
-  else
-    let rs = goal.gl_lookahead in
-    let () = x_binfo_hp (add_str "lookahead" pr_rules) rs no_pos in
-    let rs = if goal.gl_trace = [] then
-        choose_all_rules rs goal
-      else
-        let head = List.hd goal.gl_trace in
-        match head with
-        | RlMkNull _ -> choose_rules_after_mk_null rs goal
-        | RlNewNum _ -> choose_rules_after_new_num rs goal
-        | RlAllocate _ -> choose_rules_after_allocate rs goal
-        | RlFRead _ -> choose_rules_after_fread rs goal
-        | _ -> choose_all_rules rs goal in
-    let rs = eliminate_useless_rules goal rs in
-    let rs = reorder_rules goal rs in
-    rs
-
-let choose_synthesis_rules goal : rule list =
-  let rules =
-    try
-      let _ = choose_rule_skip goal |> raise_rules in
-      let _ = choose_rule_return goal |> raise_rules in
-      let _ = choose_rule_allocate_return goal |> raise_rules in
-      let _ = choose_rule_numeric goal |> raise_rules in
-      let _ = choose_rule_heap_assign goal |> raise_rules in
-      let _ = choose_main_rules goal |> raise_rules in
-      []
-    with ERules rs -> rs in
-  rules
-
-let choose_synthesis_rules goal =
-  Debug.no_1 "choose_synthesis_rules" pr_goal pr_rules
-    (fun _ -> choose_synthesis_rules goal) goal
-
 
 (*********************************************************************
  * Processing rules
@@ -346,7 +239,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
     if duration > !synthesis_timeout && not(!enable_i) then
       mk_synthesis_tree_fail goal [] "TIMEOUT"
     else
-      let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+      let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
       let rules = choose_synthesis_rules goal in
       process_all_rules goal rules
 
@@ -422,7 +315,7 @@ and process_one_derivation drv : synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let goal = simplify_goal goal in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
   let () = x_tinfo_hp (add_str "synthesis tree " pr_st) st no_pos in

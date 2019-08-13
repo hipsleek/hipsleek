@@ -43,6 +43,7 @@ let check_entail_num = ref 0
 let r_pre = ref 0
 let inference_time = ref 0.0
 let synthesis_time = ref 0.0
+let allocate_list = ref ([]: CP.spec_var list list)
 
 let repair_pos = ref (None : VarGen.loc option)
 let repair_pos_fst = ref (None : VarGen.loc option)
@@ -1270,25 +1271,6 @@ let rm_duplicate_constraint_pf (pf: CP.formula) : (CP.spec_var list * CP.formula
   let e_vars = e_constraints |> List.map fst |> List.concat in
   (e_vars, n_pf)
 
-let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
-  let rec aux (formula: CF.formula) = match formula with
-    | CF.Base bf ->
-      let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
-      let e_vars, pf = rm_duplicate_constraint_pf pf in
-      let base = CF.Base  {bf with CF.formula_base_pure = MCP.mix_of_pure pf} in
-      add_exists_vars base e_vars
-    | CF.Exists bf ->
-      let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
-      let e_vars, pf = rm_duplicate_constraint_pf pf in
-      let base = CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure pf} in
-      add_exists_vars base e_vars
-    | CF.Or bf ->
-      let n_f1 = aux bf.CF.formula_or_f1 in
-      let n_f2 = aux bf.CF.formula_or_f2 in
-      CF.Or {bf with CF.formula_or_f1 = n_f1;
-                     CF.formula_or_f2 = n_f2} in
-  aux formula
-
 let simplify_min_max_pf pf =
   let conjuncts = pf |> remove_exists_pf |> CP.split_conjunctions in
   let rec aux_exp e = match e with
@@ -1395,7 +1377,7 @@ let simplify_min_max_pf pf =
   let n_pf = CP.join_conjunctions n_list in
   (n_pf, e_vars)
 
-let simplify_min_max_x formula =
+let simplify_min_max formula =
   let rec aux formula = match formula with
   | CF.Base bf ->
     let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
@@ -1416,7 +1398,26 @@ let simplify_min_max_x formula =
 
 let simplify_min_max formula =
   Debug.no_1 "simplify_min_max" pr_formula pr_formula
-    (fun _ -> simplify_min_max_x formula) formula
+    (fun _ -> simplify_min_max formula) formula
+
+let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
+  let rec aux (formula: CF.formula) = match formula with
+    | CF.Base bf ->
+      let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+      let e_vars, pf = rm_duplicate_constraint_pf pf in
+      let base = CF.Base  {bf with CF.formula_base_pure = MCP.mix_of_pure pf} in
+      add_exists_vars base e_vars
+    | CF.Exists bf ->
+      let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+      let e_vars, pf = rm_duplicate_constraint_pf pf in
+      let base = CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure pf} in
+      add_exists_vars base e_vars
+    | CF.Or bf ->
+      let n_f1 = aux bf.CF.formula_or_f1 in
+      let n_f2 = aux bf.CF.formula_or_f2 in
+      CF.Or {bf with CF.formula_or_f1 = n_f1;
+                     CF.formula_or_f2 = n_f2} in
+  aux formula
 
 let simplify_goal goal =
   let n_pre = goal.gl_pre_cond in
@@ -2312,6 +2313,13 @@ let get_heap_views (hf:CF.h_formula) =
     | _ -> [] in
   aux hf
 
+let get_heap_variables (f:CF.formula) : CP.spec_var list =
+  let f_nodes = f |> get_heap |> get_heap_nodes
+                |> List.map (fun (x,_,_) -> x) in
+  let f_views = f |> get_heap |> get_heap_views
+                  |> List.map (fun (x,_,_) -> x) in
+  f_nodes @ f_views
+
 let get_heap_vars (hf:CF.h_formula) : CP.spec_var list =
   let rec aux hf = match hf with
     | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
@@ -2785,7 +2793,7 @@ let compare_rule goal r1 r2 =
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
   | RlNewNum _ -> PriHigh
 
-let is_code_rule_x trace = match trace with
+let is_code_rule trace = match trace with
   | [] -> false
   | h::_ ->
     match h with
@@ -2796,7 +2804,13 @@ let is_code_rule_x trace = match trace with
 
 let is_code_rule trace =
   Debug.no_1 "is_code_rule" pr_trace string_of_bool
-    (fun _ -> is_code_rule_x trace) trace
+    (fun _ -> is_code_rule trace) trace
+
+let is_end_rule rule =
+  match rule with
+  | RlSkip | RlReturn _ -> true
+  | RlAllocate rc -> rc.ra_end
+  | _ -> false
 
 let is_generate_code_rule rule = match rule with
     | RlAssign _ | RlReturn _ | RlFWrite _ (* | RlFuncRes _ *)
@@ -2871,6 +2885,7 @@ let negate_priority prio = match prio with
   | PriHigh -> PriLow
 
 let mk_goal cprog pre post vars =
+  let () = allocate_list := [] in
   { gl_prog = cprog;
     gl_start_time = get_time ();
     gl_lookahead = [];
@@ -2884,6 +2899,7 @@ let mk_goal_w_procs cprog proc_decls pre post vars =
   let () = fail_branch_num := 0 in
   let pre = unprime_formula pre in
   let post = unprime_formula post in
+  let () = allocate_list := [] in
   { gl_prog = cprog;
     gl_lookahead = [];
     gl_proc_decls = proc_decls;
