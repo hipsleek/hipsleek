@@ -834,18 +834,23 @@ let choose_rule_allocate_return goal : rule list =
     let past_allocate args =
       let past_list = !allocate_list in
       List.exists (CP.eq_spec_var_list args) past_list |> negate in
-    let args_groups = args_groups |> List.filter past_allocate in
+    let args_groups = args_groups |> List.filter past_allocate |> List.rev in
     let () = x_binfo_hp (add_str "args list" (pr_list_mln pr_vars)) args_groups no_pos in
-    let rules = args_groups |> List.map (mk_rule_end data_decl allocate_var)
-                |> List.concat in
+    let rec process_list list = match list with
+      | [] -> []
+      | head::tail ->
+        let rules = mk_rule_end data_decl allocate_var head in
+        if rules != [] then rules
+        else process_list tail in
+    let rules = args_groups |> process_list in
     let () = allocate_list := args_groups @ (!allocate_list) in
+    let rules = rules |> List.map (fun x -> RlAllocate x) in
     rules in
   let allocate_vars = check_head_allocate goal in
   if allocate_vars != [] then
     let allocate_var = List.hd allocate_vars in
     let () = x_tinfo_hp (add_str "var" pr_var) allocate_var no_pos in
     let rules = data_decls |> List.map (aux_end allocate_var) |> List.concat in
-    let rules = rules |> List.map (fun x -> RlAllocate x) in
     rules
   else []
 
@@ -928,7 +933,7 @@ let choose_rule_new_num goal : rule list =
     let pre = goal.gl_pre_cond in
     let post = goal.gl_post_cond in
     let prog = goal.gl_prog in
-    let int_vars = goal.gl_vars |> List.filter is_int_var in
+    let int_vars = goal.gl_vars |> List.filter is_int_var |> List.rev in
     let aux_int var =
       let n_var = CP.fresh_spec_var var in
       let n_var2 = CP.fresh_spec_var var in
