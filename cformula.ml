@@ -2969,8 +2969,7 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
           formula_base_and = a;
           formula_base_flow = fl;
           formula_base_label = lbl;
-          formula_base_pos = pos })) 
-      in
+          formula_base_pos = pos })) in
       (* let vars = List.concat (List.map one_formula_fv a) in *)
       let fvars = CP.remove_dups_svl ((* vars@ *)fvars) in
       let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in

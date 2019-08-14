@@ -840,7 +840,7 @@ let solve_entailments_one prog entails =
   let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
-  let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 2)
+  let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 6)
       sb_prog sb_ents in
   let duration = get_time () -. start_time in
   let () = Syn.inference_time := (!Syn.inference_time) +. duration in

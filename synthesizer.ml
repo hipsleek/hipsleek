@@ -27,7 +27,7 @@ let raise_stree st = raise (EStree st)
  * Processing rules
  *********************************************************************)
 let process_rule_assign goal rc =
-  if rc.ra_numeric then   mk_derivation_success goal (RlAssign rc)
+  if rc.ra_numeric then mk_derivation_success goal (RlAssign rc)
   else
     let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
     let lhs, rhs = rc.ra_lhs, rc.ra_rhs in
@@ -228,7 +228,7 @@ let process_rule_heap_assign goal rc =
 let rec synthesize_one_goal goal : synthesis_tree =
   let goal = simplify_goal goal in
   let trace = goal.gl_trace in
-  if num_of_code_rules trace > 2 || length_of_trace trace > 3
+  if num_of_code_rules trace > 3 || length_of_trace trace > 3
      || List.length trace > 8
   then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in

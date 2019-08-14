@@ -2632,16 +2632,18 @@ let is_fcall_called trace args : bool =
   Debug.no_2 "is_fcall_called" pr_rules pr_vars string_of_bool
     (fun _ _ -> is_fcall_called_x trace args) trace args
 
-let is_fcall_ever_called trace : bool =
+let is_fcall_ever_called trace fun_name : bool =
   let rec aux trace num =
     match trace with
     | [] -> false
     | head::tail ->
       begin
         match head with
-        | RlFuncCall _ ->
-          if num - 1 = 0 then true
-          else aux tail (num-1)
+        | RlFuncCall rc->
+          let n_num = if eq_str rc.rfc_fname fun_name then num -1
+            else num in
+          if n_num = 0 then true
+          else aux tail n_num
         | _ -> aux tail num
       end in
   aux trace 2
@@ -2902,6 +2904,7 @@ let is_end_rule rule =
   match rule with
   | RlSkip | RlReturn _ -> true
   | RlAllocate rc -> rc.ra_end
+  | RlAssign rc -> rc.ra_numeric
   | _ -> false
 
 let is_generate_code_rule rule = match rule with
@@ -2921,7 +2924,6 @@ let get_rule_vars rule = match rule with
   | RlReturn rc ->
     let rhs = CP.afv rc.r_exp in
     rhs
-  (* | RlFuncRes rc -> rc.rfr_return::rc.rfr_params *)
   | RlFuncCall rc -> rc.rfc_params
   | _ -> []
 
@@ -2943,6 +2945,17 @@ let check_trace_consistence_x trace =
       else aux tail vars in
   let trace = List.rev trace in
   aux trace []
+
+let get_trace_vars (trace: rule list) =
+  let aux rule = match rule with
+    | RlFuncCall rc ->
+      (match rc.rfc_return with
+       | None -> []
+       | Some var -> [var])
+    (* | RlFWrite rc -> [rc.rfw_value]
+     * | RlFRead rc -> [rc.rfr_value] *)
+    | _ -> [] in
+  trace |> List.map aux |> List.concat
 
 let check_trace_consistence trace =
   Debug.no_1 "check_trace_consistence" pr_rules string_of_bool
