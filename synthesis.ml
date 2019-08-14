@@ -18,6 +18,7 @@ let pr_int = string_of_int
 let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
 let pr_f = pr_formula
+let pr_ent (x,y) = (pr_f x)^ " |- " ^ (pr_f y)
 let pr_formulas = Cprinter.string_of_formula_list_ln
 let pr_exp = Cprinter.string_of_formula_exp
 let pr_var = Cprinter.string_of_typed_spec_var

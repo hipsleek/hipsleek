@@ -206,13 +206,14 @@ let check_entail_exact_wrapper prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
   if contains_lseg prog then
-    let () = x_tinfo_pp "marking" no_pos in
     SB.check_entail_exact prog ante conseq
   else
     let start = get_time () in
     let res = check_entail_exact_sleek prog ante conseq in
     let duration = get_time () -. start in
-    let () = x_binfo_hp (add_str "duration" string_of_float) duration no_pos in
+    let () = if duration > 1.0 then
+        x_binfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos;
+        x_binfo_hp (add_str "duration" string_of_float) duration no_pos in
     res
 
 let check_entail_exact_wrapper prog ante conseq =
@@ -224,13 +225,14 @@ let check_entail_wrapper prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
   if contains_lseg prog then
-    let () = x_tinfo_pp "marking" no_pos in
     SB.check_entail_residue prog ante conseq
   else
     let start = get_time () in
     let res = check_entail_sleek prog ante conseq in
     let duration = get_time () -. start in
-    let () = x_binfo_hp (add_str "duration" string_of_float) duration no_pos in
+    let () = if duration > 1.0 then
+        x_binfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos;
+        x_binfo_hp (add_str "duration" string_of_float) duration no_pos in
     res
 
 let check_entail_wrapper prog ante conseq =
@@ -612,29 +614,39 @@ let choose_rule_numeric_end goal =
     | h::tail ->
       let e2 = vars2exp tail in
       CP.Add ((CP.Var (h, no_pos)), e2, no_pos) in
-  let create_templ all_vars cur_var =
-    let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
-    let rhs_e = vars2exp other_vars |> CP.norm_exp in
-    let rules = [] in
-    let rhs_one = CP.Add (rhs_e, CP.mkIConst 1 no_pos, no_pos) in
+  let aux_pairs cur_var rhs =
+    let rhs = CP.Var (rhs, no_pos) in
+    let rhs_one = CP.Add (rhs, CP.mkIConst 1 no_pos, no_pos) in
     let added_pf = CP.mkEqExp (CP.Var (cur_var, no_pos)) rhs_one no_pos in
     let n_pre = CF.add_pure_formula_to_formula added_pf pre in
     let () = x_tinfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
-    let rules = if check_entail_exact_wrapper goal.gl_prog n_pre post then
-        let rule = if CP.is_res_sv cur_var then
-            RlReturn { r_exp = rhs_one;
-                       r_checked = true;
-                     }
-          else RlAssign {
-              ra_lhs = cur_var;
-              ra_rhs = rhs_one;
-              ra_numeric = true;
-            } in
-        rule::rules
+    if check_entail_exact_wrapper goal.gl_prog n_pre post then
+      let rule = if CP.is_res_sv cur_var then
+          RlReturn { r_exp = rhs_one;
+                     r_checked = true;
+                   }
+        else RlAssign {
+            ra_lhs = cur_var;
+            ra_rhs = rhs_one;
+            ra_numeric = true;
+          } in
+      [rule]
+    else [] in
+  let create_templ all_vars cur_var =
+    let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
+    let rec process_list list = match list with
+      | [] -> []
+      | head::tail ->
+        let rules = aux_pairs cur_var head in
+        if rules = [] then process_list tail
+        else rules in
+    other_vars |> process_list in
+  let rec process_vars list = match list with
+    | [] -> []
+    | head::tail -> let rules = create_templ vars head in
+      if rules = [] then process_vars tail
       else rules in
-    rules in
-  let rules = vars_lhs |> List.map (fun x -> create_templ vars x) in
-  rules |> List.concat
+  vars_lhs |> process_vars
 
 let choose_rule_numeric goal =
   Debug.no_1 "choose_rule_numeric" pr_goal pr_rules
@@ -1351,25 +1363,15 @@ let choose_rules_after_fread rs goal =
 
 let choose_all_rules rs goal =
   let rs = rs @ (choose_rule_unfold_pre goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_frame_pred goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_assign goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_fread goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_fwrite goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_func_call goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_frame_data goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_allocate goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_mk_null goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_new_num goal) in
-  let () = x_binfo_pp "marking" no_pos in
   let rs = rs @ (choose_rule_unfold_post goal) in
   rs
 
