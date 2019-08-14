@@ -45,6 +45,8 @@ let inference_time = ref 0.0
 let synthesis_time = ref 0.0
 let allocate_list = ref ([]: CP.spec_var list list)
 
+let max_triples = ref ([] : (CP.exp * CP.exp * CP.exp) list)
+let min_triples = ref ([] : (CP.exp * CP.exp * CP.exp) list)
 let repair_pos = ref (None : VarGen.loc option)
 let repair_pos_fst = ref (None : VarGen.loc option)
 let repair_pos_snd = ref (None : VarGen.loc option)
@@ -586,6 +588,61 @@ let get_equality_pairs (formula: CP.formula) =
   let check_eq = List.map is_equality_pair conjuncts in
   check_eq |> List.filter (fun x -> x != None)
   |> List.map Gen.unsome
+
+let get_eq_max (pf: CP.formula) =
+  let aux_pf pf = match (pf: CP.p_formula) with
+    | CP.EqMax (e1, e2, e3,_) -> [(e1, e2, e3)]
+    | _ -> [] in
+  let rec aux pf = match pf with
+    | CP.BForm (bf, _) ->
+      let (p_f,_) = bf in
+      aux_pf p_f
+    | CP.And (pf1, pf2,_) ->
+      (aux pf1) @ (aux pf2)
+    | CP.AndList list ->
+      list |> List.map snd |> List.map aux |> List.concat
+    | CP.Or (pf1, pf2,_,_) ->
+      (aux pf1) @ (aux pf2)
+    | CP.Not (n_pf, _,_) -> aux n_pf
+    | CP.Forall (_, a_pf,_,_) -> aux a_pf
+    | CP.Exists (_, a_pf,_,_) -> aux a_pf in
+  aux pf
+
+let replace_eq_max (pf: CP.formula) (o_e1, o_e2, o_e3) =
+  let eq_exp e1 e2 = match e1, e2 with
+    | CP.Var (sv1, _), CP.Var (sv2, _) -> CP.eq_sv sv1 sv2
+    | _ -> false in
+  let eq_pair_exp (fst1, snd1) (fst2, snd2) =
+    match fst1, snd1, fst2, snd2 with
+    | CP.Var (sv1, _), CP.Var (sv2, _), CP.Var (sv3, _), CP.Var (sv4, _) ->
+      CP.eq_spec_var_list [sv1; sv2] [sv3; sv4]
+    | _ -> false in
+  let aux_pf pf = match (pf: CP.p_formula) with
+    | CP.EqMax (e1, e2, e3,loc) ->
+      if not(eq_exp e1 o_e1) && (eq_pair_exp (e2, e3) (o_e2, o_e3)) then
+        CP.Eq (e1, o_e1, loc)
+      else pf
+    | _ -> pf in
+  let rec aux (pf: CP.formula) = match pf with
+    | CP.BForm (bf, lbl1) ->
+      let (p_f,lbl2) = bf in
+      let n_p_f = aux_pf p_f in
+      CP.BForm ((n_p_f, lbl2), lbl1)
+    | CP.And (pf1, pf2,loc) ->
+      let n_pf1 = aux pf1 in
+      let n_pf2 = aux pf2 in
+      CP.And (n_pf1, n_pf2, loc)
+    | CP.AndList list ->
+      let n_list = list |> List.map (fun (x, y) -> (x, aux y)) in
+      CP.AndList n_list
+    | CP.Or (pf1, pf2,opt,loc) ->
+      let n_pf1 = aux pf1 in
+      let n_pf2 = aux pf2 in
+      CP.Or (n_pf1, n_pf2, opt, loc)
+    | CP.Not (n_pf, a,b) -> CP.Not(aux n_pf, a, b)
+    | CP.Forall (a, a_pf,b,c) -> CP.Forall (a, aux a_pf, b,c)
+    | CP.Exists (a, a_pf,b,c) -> CP.Exists (a, aux a_pf, b,c) in
+  aux pf
 
 let simplify_equality gl_vars pre_cond post_cond =
   let pre_pf = CF.get_pure pre_cond in
@@ -1272,24 +1329,43 @@ let rm_duplicate_constraint_pf (pf: CP.formula) : (CP.spec_var list * CP.formula
   (e_vars, n_pf)
 
 let simplify_min_max_pf pf =
+  let eq_find (fst1, snd1) (token, fst2, snd2) =
+    match fst1, snd1, fst2, snd2 with
+    | CP.Var (sv1, _), CP.Var (sv2, _), CP.Var (sv3, _), CP.Var (sv4, _) ->
+      CP.eq_spec_var_list [sv1; sv2] [sv3; sv4]
+    | _ -> false in
   let conjuncts = pf |> remove_exists_pf |> CP.split_conjunctions in
   let rec aux_exp e = match e with
-    | CP.Min (e1,e2,loc) ->
-      let n_e1, var1, orig1 = aux_exp e1 in
-      let n_e2, var2, orig2 = aux_exp e2 in
-      let n_name = fresh_any_name "min" in
-      let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
-      let n_e = CP.Var (n_var, loc) in
-      let add_formula = CP.EqMin (n_e, n_e1, n_e2, no_pos) in
-      (n_e, n_var::var1@var2, add_formula::orig1@orig2)
     | CP.Max (e1,e2,loc) ->
       let n_e1, var1, orig1 = aux_exp e1 in
       let n_e2, var2, orig2 = aux_exp e2 in
-      let n_name = fresh_any_name "max" in
-      let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
-      let n_e = CP.Var (n_var, loc) in
-      let add_formula = CP.EqMax (n_e, n_e1, n_e2, no_pos) in
-      (n_e, n_var::var1@var2, add_formula::orig1@orig2)
+      let n_e, n_vars, add_formula =
+        try
+          let n_e,_,_ = List.find (eq_find (n_e1, n_e2)) !max_triples in
+          n_e, var1@var2, orig1@orig2
+        with _ ->
+          let n_name = fresh_any_name "max" in
+          let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+          let n_e = CP.Var (n_var, loc) in
+          let add_formula = CP.EqMax (n_e, n_e1, n_e2, no_pos) in
+          let () = max_triples := (n_e, n_e1, n_e2)::!max_triples in
+          n_e, n_var::var1@var2, add_formula::orig1@orig2 in
+      (n_e, n_vars, add_formula)
+    | CP.Min (e1,e2,loc) ->
+      let n_e1, var1, orig1 = aux_exp e1 in
+      let n_e2, var2, orig2 = aux_exp e2 in
+      let n_e, n_vars, add_formula =
+        try
+          let n_e,_,_ = List.find (eq_find (n_e1, n_e2)) !min_triples in
+          n_e, var1@var2, orig1@orig2
+        with _ ->
+          let n_name = fresh_any_name "min" in
+          let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+          let n_e = CP.Var (n_var, loc) in
+          let add_formula = CP.EqMin (n_e, n_e1, n_e2, no_pos) in
+          let () = min_triples := (n_e, n_e1, n_e2)::!min_triples in
+          n_e, n_var::var1@var2, add_formula::orig1@orig2 in
+      (n_e, n_vars, orig1@orig2)
     | CP.Add (e1, e2, pos) ->
       let n_e1, var1, orig1 = aux_exp e1 in
       let n_e2, var2, orig2 = aux_exp e2 in
@@ -1400,6 +1476,15 @@ let simplify_min_max formula =
   Debug.no_1 "simplify_min_max" pr_formula pr_formula
     (fun _ -> simplify_min_max formula) formula
 
+let simplify_min_max_entailment ante conseq =
+  let () = min_triples := [] in
+  let () = max_triples := [] in
+  let ante = simplify_min_max ante in
+  let conseq = simplify_min_max conseq in
+  let () = min_triples := [] in
+  let () = max_triples := [] in
+  (ante, conseq)
+
 let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
   let rec aux (formula: CF.formula) = match formula with
     | CF.Base bf ->
@@ -1422,8 +1507,7 @@ let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
 let simplify_goal goal =
   let n_pre = goal.gl_pre_cond in
   let n_post = goal.gl_post_cond in
-  let n_pre = simplify_min_max n_pre in
-  let n_post = simplify_min_max n_post in
+  let (n_pre, n_post) = simplify_min_max_entailment n_pre n_post in
   let n_pre = remove_exists n_pre in
   let n_pre = elim_idents n_pre in
   let n_post = elim_idents n_post in
@@ -2319,6 +2403,13 @@ let get_heap_variables (f:CF.formula) : CP.spec_var list =
   let f_views = f |> get_heap |> get_heap_views
                   |> List.map (fun (x,_,_) -> x) in
   f_nodes @ f_views
+
+let get_heap_args (f:CF.formula) : CP.spec_var list =
+  let node_args = f |> get_heap |> get_heap_nodes
+                |> List.map (fun (_,_,x) -> x) |> List.concat in
+  let view_args = f |> get_heap |> get_heap_views
+                  |> List.map (fun (_,_,x) -> x) |> List.concat in
+  node_args @ view_args
 
 let get_heap_vars (hf:CF.h_formula) : CP.spec_var list =
   let rec aux hf = match hf with
