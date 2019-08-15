@@ -916,8 +916,7 @@ let mk_fcode_cprocs iprog var_decls =
     |> List.filter (fun x -> is_substr fcode_str x.C.proc_name) in
   fcode_cprocs
 
-
-let create_tmpl_body_block_x (body : C.exp) (block : C.exp list) var_decls =
+let create_tmpl_body_block (body : C.exp) (block : C.exp list) var_decls =
   let replace_pos = block |> List.map C.pos_of_exp |> List.rev |> List.hd in
   let replace_exp = block |> List.rev |> List.hd in
   let removed_exps = block |> List.rev |> List.tl in
@@ -958,7 +957,7 @@ let create_tmpl_body_block_x (body : C.exp) (block : C.exp list) var_decls =
 
 let create_tmpl_body_block (body: C.exp) block var_decls =
   Debug.no_2 "create_tmpl_body_block" pr_c_exp pr_c_exps pr_c_exp
-    (fun _ _ -> create_tmpl_body_block_x body block var_decls) body block
+    (fun _ _ -> create_tmpl_body_block body block var_decls) body block
 
 let reset_repair_straight_line var_decls replace_pos =
   let () = Syn.is_return_cand := false in
@@ -1798,7 +1797,7 @@ let lookup_var v_name =
     }
   with e -> raise e
 
-let get_all_func_x body =
+let get_all_func body =
   let rec aux (exp:I.exp) = match exp with
     | I.Binary e ->
       let l1 = aux e.I.exp_binary_oper1 in
@@ -1837,9 +1836,9 @@ let get_all_func_x body =
 let get_all_func iproc =
   let body = iproc.I.proc_body |> Gen.unsome in
   Debug.no_1 "get_all_func" pr_exp (pr_list pr_id)
-    (fun _ -> get_all_func_x body) body
+    (fun _ -> get_all_func body) body
 
-let get_var_decls_x pos (exp:I.exp) =
+let get_var_decls pos (exp:I.exp) =
   let traces = get_ast_traces exp in
   let () = x_tinfo_hp (add_str "traces" pr_bck) traces no_pos in
   let traces = get_bck_trace_stmts traces in
@@ -1870,4 +1869,4 @@ let get_var_decls_x pos (exp:I.exp) =
 
 let get_var_decls pos (exp:I.exp) : CP.spec_var list =
   Debug.no_1 "get_var_decls" Iprinter.string_of_exp pr_vars
-    (fun _ -> get_var_decls_x pos exp) exp
+    (fun _ -> get_var_decls pos exp) exp

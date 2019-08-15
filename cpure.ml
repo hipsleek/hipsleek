@@ -134,7 +134,6 @@ let is_hp_typ sv = match sv with
 let is_var_typ sv =
   match sv with
   | SpecVar (t, _, _) -> is_type_var t
-  
 
 let is_bool_typ sv = match sv with
   | SpecVar (Bool,_,_) -> true

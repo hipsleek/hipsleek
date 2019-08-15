@@ -186,7 +186,7 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
     true, Some residue
 
 let check_entail_sleek prog ante conseq =
-  Debug.no_2 "check_entail_sleek" pr_formula pr_formula
+  Debug.no_2 "check_entail_sleek" pr_f pr_f
     (pr_pair string_of_bool pr_f_opt)
     (fun _ _ -> check_entail_sleek prog ante conseq) ante conseq
 
@@ -206,7 +206,7 @@ let check_entail_exact_sleek prog ante (conseq:CF.formula) =
     else false
 
 let check_entail_exact_sleek prog ante conseq =
-  Debug.no_2 "check_entail_exact_sleek" pr_formula pr_formula string_of_bool
+  Debug.no_2 "check_entail_exact_sleek" pr_f pr_f string_of_bool
     (fun _ _ -> check_entail_exact_sleek prog ante conseq) ante conseq
 
 let check_entail_exact_wrapper prog ante conseq =
@@ -224,7 +224,7 @@ let check_entail_exact_wrapper prog ante conseq =
     res
 
 let check_entail_exact_wrapper prog ante conseq =
-  Debug.no_2 "check_entail_exact_wrapper" pr_formula pr_formula
+  Debug.no_2 "check_entail_exact_wrapper" pr_f pr_f
     string_of_bool
     (fun _ _ -> check_entail_exact_wrapper prog ante conseq) ante conseq
 
@@ -239,11 +239,11 @@ let check_entail_wrapper prog ante conseq =
     let duration = get_time () -. start in
     let () = if duration > 1.0 then
         let () = x_tinfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos in
-        x_binfo_hp (add_str "duration" string_of_float) duration no_pos in
+        x_tinfo_hp (add_str "duration" string_of_float) duration no_pos in
     res
 
 let check_entail_wrapper prog ante conseq =
-  Debug.no_2 "check_entail_wrapper" pr_formula pr_formula
+  Debug.no_2 "check_entail_wrapper" pr_f pr_f
     (pr_pair string_of_bool pr_f_opt)
     (fun _ _ -> check_entail_wrapper prog ante conseq) ante conseq
 
@@ -561,8 +561,8 @@ let choose_rule_func_call goal =
       let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
       let spec_pairs = get_pre_post specs in
       let pre_cond, post_cond = List.hd spec_pairs in
-      let () = x_binfo_hp (add_str "pre" pr_formula) pre_cond no_pos in
-      let () = x_binfo_hp (add_str "post" pr_formula) post_cond no_pos in
+      let () = x_tinfo_hp (add_str "pre" pr_f) pre_cond no_pos in
+      let () = x_tinfo_hp (add_str "post" pr_f) post_cond no_pos in
       let rules = unify_fcall proc_decl pre_cond post_cond goal in
       rules in
     procs |> List.map aux |> List.concat
@@ -580,7 +580,7 @@ let choose_rule_unfold_pre goal =
     let helper vnode =
       let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
       let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
-      let () = x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos in
+      let () = x_tinfo_hp (add_str "nf" (pr_list pr_f)) nf no_pos in
       let pre_list = List.filter (fun x -> check_unsat_wrapper goal.gl_prog x
                                            |> negate) nf in
       if pre_list = [] then []
@@ -612,9 +612,9 @@ let choose_rule_unfold_post goal =
   let helper_exists vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
+    x_tinfo_hp (add_str "nf" (pr_list pr_f)) nf no_pos;
     let nf = nf |> List.filter filter_fun in
-    x_tinfo_hp (add_str "nf" pr_formulas) nf no_pos;
+    x_tinfo_hp (add_str "nf" (pr_list pr_f)) nf no_pos;
     if List.length nf = 1 then
       let case_f = List.hd nf in
       let rule =  RlUnfoldPost {
@@ -730,7 +730,7 @@ let choose_rule_return goal =
     let check_return res_var r_var =
       let n_pf = CP.mkEqVar res_var r_var no_pos in
       let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-      let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
+      let () = x_tinfo_hp (add_str "post" pr_f) post no_pos in
       let ent_check, _ = check_entail_wrapper goal.gl_prog n_pre post in
       ent_check in
     if List.length post_vars = 1 then
@@ -755,7 +755,7 @@ let choose_rule_allocate_return goal : rule list =
   let all_vars = goal.gl_vars in
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "pre" pr_formula) goal.gl_pre_cond no_pos in
+  let () = x_tinfo_hp (add_str "pre" pr_f) goal.gl_pre_cond no_pos in
   let rec mk_args_input args = match args with
     | [] -> []
     | [h] -> List.map (fun x -> [x]) h
@@ -900,7 +900,7 @@ let choose_rule_fread goal =
     else true in
   let filter_rule rule =
     let var = rule.rfr_value in
-    let () = x_binfo_hp (add_str "var" pr_var) var no_pos in
+    let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
     let n_goal = {goal with gl_vars = var::goal.gl_vars;
                             gl_trace = (RlFRead rule)::goal.gl_trace} in
     let n_rules = [] in
@@ -908,7 +908,7 @@ let choose_rule_fread goal =
     let n_rules = n_rules @ (choose_rule_func_call n_goal) in
     let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
     let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
-    let () = x_binfo_hp (add_str "lookahead rules" pr_rules) n_rules no_pos in
+    let () = x_tinfo_hp (add_str "lookahead rules" pr_rules) n_rules no_pos in
     if List.exists (rule_use_var var) n_rules then
       let n_goal = { n_goal with gl_lookahead = n_rules} in
       let rule = {rule with rfr_lookahead = Some n_goal} in
@@ -1068,7 +1068,7 @@ let choose_rule_allocate goal : rule list =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
-  let () = x_tinfo_hp (add_str "pre" pr_formula) goal.gl_pre_cond no_pos in
+  let () = x_tinfo_hp (add_str "pre" pr_f) goal.gl_pre_cond no_pos in
   let rec mk_args_input args = match args with
     | [] -> []
     | [h] -> List.map (fun x -> [x]) h
@@ -1091,7 +1091,7 @@ let choose_rule_allocate goal : rule list =
     let n_rules = (choose_rule_return n_goal) @ n_rules in
     let n_rules = (choose_rule_frame_data n_goal) @ n_rules in
     let () = x_tinfo_hp (add_str "arg" pr_var) rule.ra_var no_pos in
-    let () = x_tinfo_hp (add_str "pre" pr_formula) n_pre no_pos in
+    let () = x_tinfo_hp (add_str "pre" pr_f) n_pre no_pos in
     let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
     if List.exists (rule_use_var rule.ra_var) n_rules then
       let n_goal = {n_goal with gl_lookahead = n_rules} in
@@ -1410,7 +1410,7 @@ let choose_main_rules goal =
   if duration > !synthesis_timeout && not(!enable_i) then []
   else
     let rs = goal.gl_lookahead in
-    let () = x_binfo_hp (add_str "lookahead" pr_rules) rs no_pos in
+    let () = x_tinfo_hp (add_str "lookahead" pr_rules) rs no_pos in
     let rs = if goal.gl_trace = [] then
         choose_all_rules rs goal
       else

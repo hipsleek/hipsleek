@@ -339,7 +339,7 @@ let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
 let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let body = r_iproc.I.proc_body |> Gen.unsome in
   let traces = get_ast_traces body in
-  let () = x_binfo_hp (add_str "traces" pr_bck) traces no_pos in
+  let () = x_tinfo_hp (add_str "traces" pr_bck) traces no_pos in
   let blocks = map_stmt_with_level traces in
   let candidates = get_level_two_cand blocks in
   let aux_pair (fst,snd) =
@@ -667,22 +667,27 @@ let infest_and_repair src (iprog : I.prog_decl) =
       else
         let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " FAIL") no_pos in
         (1, 0) in
+  let reset_timing () =
+    let () = Syn.inference_time := 0.0 in
+    let () = Syn.synthesis_time := 0.0 in
+    let () = repair_time := 0.0 in
+    () in
   let aux level =
     let level1 = List.filter (fun (_, x) -> x = level) buggy_progs in
     let res_level1 = level1 |> List.map aux_one in
-    let buggy_sum = res_level1 |> List.map fst |> sum_list in
-    let repaired_sum = res_level1 |> List.map snd |> sum_list in
-    let l_str = "LEVEL " ^ (pr_int level) in
-    if buggy_sum > 0 then
-      let () = x_binfo_hp (add_str (l_str ^" #BUGGY") pr_int) buggy_sum no_pos in
-      let () = x_binfo_hp (add_str (l_str ^ " #REPAIRED") pr_int) repaired_sum no_pos in
-      let () = x_binfo_hp (add_str (l_str ^ " INFERENCE TIME") pr_float)
-          (!Syn.inference_time/.(float_of_int buggy_sum)) no_pos in
-      let () = x_binfo_hp (add_str (l_str ^ " SYNTHESIS TIME") pr_float)
-          (!Syn.synthesis_time/.(float_of_int buggy_sum)) no_pos in
-      let () = x_binfo_hp (add_str (l_str ^ " TOTAL REPAIR TIME") pr_float)
-          (!repair_time/.(float_of_int buggy_sum)) no_pos in
-      ()
-    else () in
-  if !infest_level_two then aux 2
-  else aux 1
+    let b_sum = res_level1 |> List.map fst |> sum_list in
+    let r_sum = res_level1 |> List.map snd |> sum_list in
+    let b_sum = float_of_int b_sum in
+    let r_sum = float_of_int r_sum in
+    let r_time = !repair_time /. b_sum in
+    let inference_t = !Syn.inference_time/. b_sum in
+    let r_time = r_time/. b_sum in
+    let syn_t = !Syn.synthesis_time/. b_sum in
+    let l1_stats = [b_sum; r_sum; inference_t; syn_t; r_time] in
+    l1_stats in
+  let l1_stats = aux 1 in
+  let () = reset_timing () in
+  let l2_stats = aux 2 in
+  let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln pr_float)) l1_stats no_pos in
+  let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln pr_float)) l2_stats no_pos in
+  x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos

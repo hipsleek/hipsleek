@@ -124,7 +124,7 @@ let process_rule_frame_pred goal rc =
   (* if SB.check_unsat goal.gl_prog n_post then
    *   mk_derivation_fail goal (RlFramePred rc)
    * else *)
-  let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+  let () = x_tinfo_hp (add_str "n_post" pr_f) n_post no_pos in
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlFramePred rc)::goal.gl_trace;
                            gl_pre_cond = rc.rfp_pre} in
@@ -140,11 +140,11 @@ let process_rule_frame_data goal rc =
   let e_vars = substs |> List.map fst in
   let exists_vars = CF.get_exists post in
   let n_post = remove_exists_vars post exists_vars in
-  let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+  let () = x_tinfo_hp (add_str "n_post" pr_f) n_post no_pos in
   let n_post = CF.subst substs n_post in
   let e_vars = CP.diff_svl exists_vars e_vars in
   let n_post = add_exists_vars n_post e_vars in
-  let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+  let () = x_tinfo_hp (add_str "n_post" pr_f) n_post no_pos in
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlFrameData rc)::goal.gl_trace;
                            gl_pre_cond = rc.rfd_pre} in
@@ -378,8 +378,8 @@ let get_spec_from_hps prog hps =
   let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
   let post = post_hp.Cast.hp_formula in
   let pre = pre_hp.Cast.hp_formula |> remove_exists in
-  let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
-  let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
+  let () = x_tinfo_hp (add_str "pre" pr_f) pre no_pos in
+  let () = x_tinfo_hp (add_str "post" pr_f) post no_pos in
   (pre,post)
 
 let compare_spec (pre1, _) (pre2, _) =
@@ -410,7 +410,7 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
       if !stop then ()
       else
         if isHFalse post then
-          let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+          let () = x_binfo_hp (add_str "post" pr_f) post no_pos in
           ()
         else
           let all_procs = CA.list_of_procs prog in
