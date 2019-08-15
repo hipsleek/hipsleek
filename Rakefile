@@ -301,8 +301,9 @@ end
 
 namespace :commit do
   task :init do
-    sh "mkdir src"
+    sh "mkdir -p src"
     sh "mv *.ml src/"
+    sh "mv *.mli src/"
     sh "mv *.mll src/"
     sh "mv *.mly src/"
   end
@@ -313,6 +314,7 @@ namespace :commit do
 
   task :end do
     sh "rm *.ml"
+    sh "rm *.mli"
     sh "rm *.mll"
     sh "rm *.mly"
   end
