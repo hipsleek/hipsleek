@@ -1818,8 +1818,12 @@ let get_all_func_x body =
       l1 @ l2
     | I.Unary e ->
       aux e.exp_unary_exp
-    | I.CallRecv e -> [e.I.exp_call_recv_method]
-    | I.CallNRecv e -> [e.I.exp_call_nrecv_method]
+    | I.CallRecv e ->
+      let args = e.I.exp_call_recv_arguments |> List.map aux |> List.concat in
+      args @ [e.I.exp_call_recv_method]
+    | I.CallNRecv e ->
+      let args = e.I.exp_call_nrecv_arguments |> List.map aux |> List.concat in
+      args @ [e.I.exp_call_nrecv_method]
     | I.Return e ->
       let r_e = e.I.exp_return_val in
       begin

@@ -257,6 +257,10 @@ let check_unsat_wrapper prog formula =
     SB.check_unsat prog formula
   else Solver.unsat_base_nth 7 prog (ref 0) formula
 
+let check_unsat_wrapper prog formula =
+  Debug.no_1 "check_unsat_wrapper" pr_f string_of_bool
+    (fun _ -> check_unsat_wrapper prog formula) formula
+
 let choose_rule_assign_end (goal: goal) : rule list=
   if check_head_allocate_wrapper goal then []
   else
@@ -452,7 +456,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
                    (fun x -> not(CP.mem x pre_vars) && CP.mem x post_vars) in
   if non_init || args_called || eq_args || called then []
   else
-    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
+    let () = x_binfo_hp (add_str "args" pr_vars) args no_pos in
     let pre_cond = goal.gl_pre_cond in
     let substs = List.combine proc_args args in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -557,8 +561,8 @@ let choose_rule_func_call goal =
       let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
       let spec_pairs = get_pre_post specs in
       let pre_cond, post_cond = List.hd spec_pairs in
-      let () = x_tinfo_hp (add_str "pre" pr_formula) pre_cond no_pos in
-      let () = x_tinfo_hp (add_str "post" pr_formula) post_cond no_pos in
+      let () = x_binfo_hp (add_str "pre" pr_formula) pre_cond no_pos in
+      let () = x_binfo_hp (add_str "post" pr_formula) post_cond no_pos in
       let rules = unify_fcall proc_decl pre_cond post_cond goal in
       rules in
     procs |> List.map aux |> List.concat
@@ -1292,8 +1296,8 @@ let choose_rule_frame_pred goal =
        * let check_pre = List.for_all (check_field pre) pre_vars in
        * let check_post = List.for_all (check_field post) post_vars in *)
       if check_unsat_wrapper goal.gl_prog n_post then []
-      else if (List.length pre_vars = List.length post_vars) (* &&
-                                                              * check_pre && check_post *) then
+      else if (List.length pre_vars = List.length post_vars)
+      (* && * check_pre && check_post *) then
         let pre_vars = rhs::pre_vars in
         let post_vars = lhs::post_vars in
         let rule = RlFramePred {
@@ -1403,13 +1407,7 @@ let choose_all_rules rs goal =
 let choose_main_rules goal =
   let cur_time = get_time () in
   let duration = cur_time -. goal.gl_start_time in
-  (* let a_vars = check_head_allocate goal in *)
-  (* let () = x_tinfo_hp (add_str "a_vars" pr_vars) a_vars no_pos in *)
-  (* if (a_vars != []) && not (check_goal_procs goal)
-   *    && List.length goal.gl_trace > 2 then []
-   * else *)
-  if duration > !synthesis_timeout && not(!enable_i)
-  then []
+  if duration > !synthesis_timeout && not(!enable_i) then []
   else
     let rs = goal.gl_lookahead in
     let () = x_binfo_hp (add_str "lookahead" pr_rules) rs no_pos in
