@@ -1365,12 +1365,17 @@ let common_arguments = [
         Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
-  ("-ifa",Arg.Set Globals.ifa,"perform information flow analysis");
+  ("-ifa",Arg.Unit (fun _ ->
+    Globals.ifa := true;
+    Globals.gist_pairwise := true) ,
+    "perform information flow analysis"
+  );
   ("-ifa-only",
     Arg.Unit
     (fun _ ->
       Globals.ifa := true;
-      Globals.ifa_only := true
+      Globals.ifa_only := true;
+      Globals.gist_pairwise := true
     )
   ,"perform information flow analysis only, ignoring arithmetic information");
   ("--gist-pairwise", Arg.Set Globals.gist_pairwise, "Use gist when doing pairwisecheck");
