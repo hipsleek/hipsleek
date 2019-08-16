@@ -11,11 +11,19 @@ node copy(node x)
 requires x::ll<n>
 ensures res::ll<n> * x::ll<n>;.
 
-synthesize [node x,node tmp]
-x::node<ann14,q15> * q15::ll<n18> * tmp::ll<n18> &
-0<=n18 & n=1+n18 & n=1+flted_7_4413
-~>
-(exists ann9,q21,ann28,q29: res::node<ann9,q21> * x::node<ann28,q29> * 
-       q21::ll<n18> * q29::ll<n18>).
+// synthesize [node x,node tmp]
+// x::node<ann14,q15> * q15::ll<n18> * tmp::ll<n18> &
+// 0<=n18 & n=1+n18 & n=1+flted_7_4413
+// ~>
+// (exists ann9,q21,ann28,q29: res::node<ann9,q21> * x::node<ann28,q29> * 
+//        q21::ll<n18> * q29::ll<n18>).
 
 // return new node(x.val, tmp);
+
+synthesize [node x, node tmp]
+ tmp::ll<n_15076> * x::ll<n_15076>&x!=null & 0<=n_15076 & n=n_15076
+~>
+ (exists f_r_15086,f_r_15087,Anon_1731,q_1732,Anon_1791,
+q_1792: res::node<Anon_1791,q_1792> * x::node<Anon_1731,q_1732> * 
+        q_1732::ll<f_r_15086> * q_1792::ll<f_r_15087>&
+1<=n_15076 & 1+f_r_15086=n_15076 & 1+f_r_15087=n_15076).

@@ -239,7 +239,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
     if duration > !synthesis_timeout && not(!enable_i) then
       mk_synthesis_tree_fail goal [] "TIMEOUT"
     else
-      let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+      let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
       let rules = choose_synthesis_rules goal in
       process_all_rules goal rules
 
@@ -315,13 +315,12 @@ and process_one_derivation drv : synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let goal = simplify_goal goal in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
   let () = x_tinfo_hp (add_str "synthesis tree " pr_st) st no_pos in
   match st_status with
   | StValid st_core ->
-    (* let st_core = rm_useless_stc st_core in *)
     let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
     let () = x_tinfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
@@ -350,12 +349,12 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num 
   let iast_exp = synthesize_program goal in
   let duration = get_time () -. start_time in
   let () = synthesis_time := (!synthesis_time) +. duration in
-  let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
-  let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
+  let pname, i_procs = proc.CA.proc_name, iprog.IA.prog_proc_decls in
+  let i_proc = List.find (fun x -> contains pname x.IA.proc_name) i_procs in
   let n_proc, res = match iast_exp with
     | None -> (i_proc, false)
     | Some exp0 -> (replace_exp_proc exp0 i_proc num, true) in
-  let n_iprocs = List.map (fun x -> if contains pname x.Iast.proc_name
+  let n_iprocs = List.map (fun x -> if contains pname x.IA.proc_name
                             then n_proc else x) i_procs in
   ({iprog with I.prog_proc_decls = n_iprocs}, res)
 
@@ -373,11 +372,12 @@ let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
     let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
     Some n_body
 
-let get_spec_from_hps prog hps =
-  let post_hp = List.find (fun x -> x.Cast.hp_name = "N_Q1") hps in
-  let pre_hp = List.find (fun x -> x.Cast.hp_name = "N_P1") hps in
-  let post = post_hp.Cast.hp_formula in
-  let pre = pre_hp.Cast.hp_formula |> remove_exists in
+let get_spec_from_hps prog num hps =
+  let num_str = string_of_int num in
+  let pre_hp = List.find (fun x -> x.CA.hp_name = ("N_P" ^ num_str)) hps in
+  let post_hp = List.find (fun x -> x.CA.hp_name = ("N_Q" ^ num_str)) hps in
+  let post = post_hp.CA.hp_formula in
+  let pre = pre_hp.CA.hp_formula |> remove_exists in
   let () = x_tinfo_hp (add_str "pre" pr_f) pre no_pos in
   let () = x_tinfo_hp (add_str "post" pr_f) post no_pos in
   (pre,post)
@@ -391,6 +391,15 @@ let compare_spec (pre1, _) (pre2, _) =
   else if List.length hf2_vars > List.length hf1_vars then PriLow
   else PriEqual
 
+let ranking_specs specs =
+  let cmp_spec spec1 spec2 =
+    let prio = compare_spec spec1 spec2 in
+    match prio with
+    | PriEqual -> 0
+    | PriLow -> +1
+    | PriHigh -> -1 in
+  List.sort cmp_spec specs
+
 let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
   let entailments = !Synthesis.entailments |> List.rev in
   let hps = SB.solve_entailments_one prog entailments in
@@ -402,7 +411,7 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
     let decl_vars = match iproc.IA.proc_body with
       | None -> []
       | Some exp -> get_var_decls (Gen.unsome !repair_pos) exp in
-    let syn_vars = proc.Cast.proc_args
+    let syn_vars = proc.CA.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     let stop = ref false in
@@ -430,43 +439,29 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
           else () in
     if hps_list = [] then ()
     else
-      (* let hps = List.hd hps_list in
-       * helper hps *)
-      let spec_list = List.map (get_spec_from_hps prog) hps_list in
-      let ranking_specs specs =
-        let cmp_spec spec1 spec2 =
-          let prio = compare_spec spec1 spec2 in
-          match prio with
-          | PriEqual -> 0
-          | PriLow -> +1
-          | PriHigh -> -1 in
-        List.sort cmp_spec specs in
+      let spec_list = List.map (get_spec_from_hps prog 1) hps_list in
       let spec_list = ranking_specs spec_list in
       let spec = List.hd spec_list in
       (* List.iter helper spec_list *)
       helper spec
 
 let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
+  let fst_pos = 1 in
+  let snd_pos = 2 in
   let entailments = !Synthesis.entailments |> List.rev in
   let hps = SB.solve_entailments_two prog entailments in
   let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
       iprog.IA.prog_proc_decls in
-  let decl_vars = match iproc.IA.proc_body with
-    | None -> []
-    | Some exp -> get_var_decls (Gen.unsome !repair_pos) exp in
-  let syn_vars = proc.Cast.proc_args
-                 |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
-  let helper iprog hps num =
-    let post_hp = if num = 1 then
-        List.find (fun x -> x.Cast.hp_name = "N_Q1") hps
-      else List.find (fun x -> x.Cast.hp_name = "N_Q2") hps in
-    let pre_hp = if num = 1 then
-        List.find (fun x -> x.Cast.hp_name = "N_P1") hps
-      else List.find (fun x -> x.Cast.hp_name = "N_P2") hps in
-    let post = post_hp.Cast.hp_formula in
-    let post = rm_unk_type_formula prog post in
-    let pre = pre_hp.Cast.hp_formula |> remove_exists in
+  let syn_vars = proc.CA.proc_args |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+  let helper (pre, post) num =
+    let decl_vars =
+      let proc_body = iproc.IA.proc_body |> Gen.unsome in
+      if num = fst_pos then
+        get_var_decls (Gen.unsome !repair_pos_fst) proc_body
+      else if num = snd_pos then
+        get_var_decls (Gen.unsome !repair_pos_snd) proc_body
+      else [] in
+    let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     let all_procs = CA.list_of_procs prog in
     let filter_fun proc =
       let proc_name = proc.CA.proc_name |> CA.unmingle_name in
@@ -478,39 +473,36 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
   match hps with
   | None -> None
   | Some (hps1, hps2) ->
-    let hp1 = List.hd hps1 in
-    let (n_iprog, res) = helper iprog hp1 1 in
-    if res then
-      let hp2 = List.hd hps2 in
-      let (n_iprog, res) = helper n_iprog hp2 2 in
-      if res then Some n_iprog
+    let spec_list1 = List.map (get_spec_from_hps prog fst_pos) hps1 in
+    let spec_list1 = ranking_specs spec_list1 in
+    let spec1 = List.hd spec_list1 in
+    let pr_spec = pr_pair pr_f pr_f in
+    let () = x_binfo_hp (add_str "spec1" pr_spec) spec1 no_pos in
+    let (n_iprog, res1) = helper spec1 fst_pos in
+    if res1 then
+      let spec_list2 = List.map (get_spec_from_hps prog snd_pos) hps2 in
+      let spec_list2 = ranking_specs spec_list2 in
+      let spec2 = List.hd spec_list2 in
+      let () = x_binfo_hp (add_str "spec2" pr_spec) spec2 no_pos in
+      let (n_iprog, res2) = helper spec2 snd_pos in
+      if res2 then Some n_iprog
+      (* To Validate *)
       else None
     else None
-
-
-let statement_search (iprog: IA.prog_decl) prog proc (suspicious: I.exp)
-    candidates =
-  (* let ents = !Synthesis.entailments |> List.rev in *)
-  (* let triples = !Synthesis.triples |> List.rev in *)
-  (* let hps = prog.CA.prog_hp_decls @ !unk_hps in
-   * let hps = Gen.BList.remove_dups_eq eq_hp_decl hps in
-   * let s_goal = Searcher.mk_search_goal iprog prog proc triples in
-   * let _ = Searcher.solve_unknown_hp s_goal candidates in *)
-  None
 
 let synthesize_block_statements iprog prog orig_proc proc decl_vars =
   let entailments = !Synthesis.entailments |> List.rev in
   let hps = SB.solve_entailments_one prog entailments in
-  let syn_vars = proc.Cast.proc_args
+  let syn_vars = proc.CA.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
   let helper cur_res hps =
     if cur_res != None then cur_res
     else
-      let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
-      let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
-      let post = post_hp.Cast.hp_formula in
-      let pre = pre_hp.Cast.hp_formula |> remove_exists in
+      let post_hp = List.find (fun x -> x.CA.hp_name = "QQ") hps in
+      let pre_hp = List.find (fun x -> x.CA.hp_name = "PP") hps in
+      let post = post_hp.CA.hp_formula in
+      let pre = pre_hp.CA.hp_formula |> remove_exists in
       let n_block = synthesize_block_wrapper prog orig_proc proc
           pre post syn_vars in
       match n_block with
@@ -532,7 +524,6 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
   | Some hps_list ->
     let hp = hps_list |> List.hd in
     helper None hp
-(* List.fold_left helper None hps_list *)
 
 let infer_block_specs (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
@@ -545,14 +536,14 @@ let infer_block_specs (iprog:IA.prog_decl) prog proc =
     let decl_vars = match iproc.IA.proc_body with
       | None -> []
       | Some exp -> get_var_decls (Gen.unsome !repair_pos) exp in
-    let syn_vars = proc.Cast.proc_args
+    let syn_vars = proc.CA.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     let helper hps =
-      let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
-      let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
-      let post = post_hp.Cast.hp_formula in
-      let pre = pre_hp.Cast.hp_formula |> remove_exists in
+      let post_hp = List.find (fun x -> x.CA.hp_name = "QQ") hps in
+      let pre_hp = List.find (fun x -> x.CA.hp_name = "PP") hps in
+      let post = post_hp.CA.hp_formula in
+      let pre = pre_hp.CA.hp_formula |> remove_exists in
       (pre, post) in
     let specs = hps_list |> List.map helper in
     Some specs

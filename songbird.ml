@@ -1,6 +1,7 @@
 #include "xdebug.cppo"
 open Globals
 open Gen.Basic
+open VarGen
 
 module SBC = Libsongbird.Cast
 module SBD = Libsongbird.Debug
@@ -15,19 +16,15 @@ module SBE = Libsongbird.Exportc
 module CA = Cast
 module CP = Cpure
 module CF = Cformula
-module CPR = Cprinter
 module MCP = Mcpure
 module Syn = Synthesis
 
-let add_str = Gen.Basic.add_str
-let no_pos = VarGen.no_pos
-let report_error = Gen.Basic.report_error
-let pr_formula = CPR.string_of_formula
-let pr_hf = CPR.string_of_h_formula
-let pr_vars = CPR.string_of_spec_var_list
-let pr_hps = pr_list CPR.string_of_hp_decl
-let pr_struc_f = CPR.string_of_struc_formula
-let pr_svs = CPR.string_of_spec_var_list
+let pr_formula = Cprinter.string_of_formula
+let pr_hf = Cprinter.string_of_h_formula
+let pr_vars = Cprinter.string_of_spec_var_list
+let pr_hps = pr_list Cprinter.string_of_hp_decl
+let pr_struc_f = Cprinter.string_of_struc_formula
+let pr_svs = Cprinter.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_entail = SBC.pr_entailment
 let sb_program = ref (None: SBC.program option)
@@ -156,9 +153,8 @@ let translate_var_x (var: CP.spec_var): SBG.var =
   | _ -> (ident, translate_type typ)
 
 let translate_var var =
-  let pr1 = CPR.string_of_spec_var in
   let pr2 = SBG.pr_var in
-  Debug.no_1 "translate_var" pr1 pr2
+  Debug.no_1 "translate_var" Syn.pr_var pr2
     (fun _ -> translate_var_x var) var
 
 let translate_back_var (var : SBG.var) =
@@ -326,7 +322,7 @@ let translate_pf (pure_f: CP.formula)  =
         | CP.LexVar lex ->
           SBC.BConst (true, translate_loc lex.CP.lex_loc)
         | _ -> report_error no_pos
-                 ("this p_formula is not handled" ^ (CPR.string_of_p_formula p_formula))
+                 ("this p_formula is not handled" ^ (Cprinter.string_of_p_formula p_formula))
       end
     | CP.And (f1, f2, loc) ->
       let n_f1 = aux f1 in
@@ -729,14 +725,14 @@ let translate_prog ?(no_unk_views = false) (prog:CA.prog_decl) =
                    "__ArrBoundErr"; "__DivByZeroErr"; "Object"; "String"] in
     let data_decls = data_decls |> List.filter (fun x ->
       not(Gen.BList.mem_eq eq_str x.CA.data_name prelude)) in
-    let pr1 = CPR.string_of_data_decl_list in
+    let pr1 = Cprinter.string_of_data_decl_list in
     let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
     let sb_data_decls = List.map translate_data_decl data_decls in
     let view_decls = prog.CA.prog_view_decls in
     let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"; "size"] in
     let view_decls = view_decls |> List.filter (fun x ->
       not(Gen.BList.mem_eq eq_str x.CA.view_name pre_views)) in
-    let pr2 = CPR.string_of_view_decl_list in
+    let pr2 = Cprinter.string_of_view_decl_list in
     let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
     let hps = if no_unk_views then prog.CA.prog_hp_decls
       else prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
@@ -837,7 +833,7 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 10)
@@ -848,7 +844,7 @@ let solve_entailments_one prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_binfo_hp (add_str "vdefns" (pr_list_mln SBC.pr_vdfs)) vdefns_list
+    let () = x_tinfo_hp (add_str "vdefns" (pr_list_mln SBC.pr_vdfs)) vdefns_list
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list
@@ -873,8 +869,8 @@ let solve_entailments_two prog entails =
   let aux entails num =
     let sb_ents = List.map translate_entailment entails in
     let sb_prog = translate_prog prog in
-    let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-    let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+    let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+    let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
     let start_time = get_time () in
     let ptree = if num = 1 then
         SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 1)
@@ -887,7 +883,7 @@ let solve_entailments_two prog entails =
     let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
     if res = SBG.MvlTrue then
       let vdefns_list = SBPFU.get_solved_vdefns ptree in
-      let () = x_tinfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+      let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
           no_pos in
       let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
       Some hps_list
@@ -976,7 +972,7 @@ let check_entail_exact prog ante conseq =
     let () = Syn.sb_ent_time := !Syn.sb_ent_time +. (get_time() -. start_time) in
     let () = Syn.sb_ent_num := !Syn.sb_ent_num + 1 in
     let res = ptree.SBPA.enr_validity in
-    let () = export_songbird_entailments_results sb_prog [ent] [res] in
+    (* let () = export_songbird_entailments_results sb_prog [ent] [res] in *)
     match res with
     | SBG.MvlTrue -> true
     | _ -> false
@@ -1048,7 +1044,7 @@ let check_entail_prog_state prog (es: CF.entail_state)
               @ bf.CF.formula_struc_exists @ es.CF.es_evars
               |> CP.remove_dups_svl in
   x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos;
-  x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos;
+  x_tinfo_hp (add_str "es" Cprinter.string_of_entail_state) es no_pos;
   x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
   let hps = prog.CA.prog_hp_decls @ !Syn.unk_hps in
   let hps = Gen.BList.remove_dups_eq Syn.eq_hp_decl hps in
@@ -1067,8 +1063,8 @@ let check_entail_prog_state prog (es: CF.entail_state)
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
-  let () = List.iter (fun ent ->
-      export_songbird_entailments_results n_prog [ent] [SBG.MvlUnkn]) ents in
+  (* let () = List.iter (fun ent ->
+   *     export_songbird_entailments_results n_prog [ent] [SBG.MvlUnkn]) ents in *)
   let check_fun =
     SBPH.check_entailment ~interact:false ~disproof:!songbird_disproof
       ~timeout:2 n_prog in
@@ -1094,13 +1090,13 @@ let check_entail_prog_state prog (es: CF.entail_state)
     let valid_ents = pairs |> List.filter is_valid |> List.map fst in
     let () = if invalid_ents != [] then
         List.iter (fun ent ->
-            let _ = x_binfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+            let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) invalid_ents in
     let () = if unkn_ents != [] then
         List.iter (fun ent ->
             let _ = x_tinfo_hp (add_str "Program: " SBC.pr_program) n_prog no_pos in
-            let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+            let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
             (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
             ()) unkn_ents in
     let () = if !songbird_export_invalid_entails then
@@ -1250,9 +1246,9 @@ let get_residues ptrees =
     residue_fs |> List.rev |> List.hd
   ) ptrees
 
-let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
+let rec heap_entail_after_sat_struc (prog:CA.prog_decl)
           (ctx:CF.context) (conseq:CF.struc_formula) =
-  let () = x_tinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
+  let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
   let () = x_tinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
   match ctx with
   | CF.Ctx es -> (match conseq with
@@ -1288,9 +1284,7 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
         let has_pred = Syn.get_hp_formula hp_names assume_f in
         if has_pred != [] then
           let pred_name = List.find (fun x -> is_substr "Q" x) has_pred in
-          (* let pred_name = "QQ" ^ (string_of_int !Syn.r_pre) in *)
           let pred_name = "N_" ^ pred_name in
-
           let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
           let n_args = (f |> CF.fv) @ syn_pre_vars in
           let n_args = if !Syn.is_return_cand then
@@ -1304,10 +1298,13 @@ let rec heap_entail_after_sat_struc_x (prog:CA.prog_decl)
             else n_args in
           let n_args = n_args |> CP.remove_dups_svl in
           let n_args = n_args |> List.filter
-                                   (fun x -> Syn.is_int_var x || Syn.is_node_var x)
+                         (fun x -> Syn.is_int_var x || Syn.is_node_var x)
                        |> CP.remove_dups_svl in
-          let var_decls = !Syn.block_var_decls
-                          |> List.filter (fun x -> not(CP.mem_svl x n_args))
+          let var_decls =
+            if pred_name = "N_Q1" then !Syn.block_var_decls
+            else if pred_name = "N_Q2" then !Syn.block_var_decls_snd
+            else [] in
+          let var_decls = var_decls |> List.filter (fun x -> not(CP.mem_svl x n_args))
                           |> List.map CP.to_primed in
           let n_args = n_args @ var_decls |> CP.remove_dups_svl in
           let n_args = n_args |> CP.remove_dups_svl in
@@ -1351,13 +1348,16 @@ and hentail_after_sat_ebase prog ctx es bf =
       let ante_vars = ante |> CF.fv
                       |> List.filter (fun x ->
                           Syn.is_int_var x || Syn.is_node_var x) in
-      let var_decls = !Syn.block_var_decls
-                      |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
+      let pred_name = List.find (fun x -> is_substr "P" x) conseq_hps in
+      let pred_name = "N_" ^ pred_name in
+      let var_decls =
+        if pred_name = "N_P1" then !Syn.block_var_decls
+        else if pred_name = "N_P2" then !Syn.block_var_decls_snd
+        else [] in
+      let var_decls = var_decls |> List.filter (fun x -> not(CP.mem_svl x ante_vars))
                       |> List.map CP.to_primed in
       let ante_vars = ante_vars @ var_decls |> CP.remove_dups_svl in
       let () = Syn.r_pre := !Syn.r_pre + 1 in
-      let pred_name = List.find (fun x -> is_substr "P" x) conseq_hps in
-      let pred_name = "N_" ^ pred_name in
       let old_conseq = Syn.create_spec_pred ante_vars pred_name in
       let () = x_tinfo_hp (add_str "old_conseq" pr_formula) old_conseq no_pos in
       let n_conseq, residue =
@@ -1420,9 +1420,9 @@ and hentail_after_sat_ebase prog ctx es bf =
           (CF.mk_cex true) no_pos in
       (n_ctx, Prooftracer.Failure)
 
-and heap_entail_after_sat_struc prog ctx conseq =
+let heap_entail_after_sat_struc prog ctx conseq =
   let () = x_tinfo_pp "SONGBIRD Prover activated" no_pos in
   Debug.no_2 "SB.heap_entail_after_sat_struc" Cprinter.string_of_context
     Cprinter.string_of_struc_formula
     (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
-    (fun _ _ -> heap_entail_after_sat_struc_x prog ctx conseq) ctx conseq
+    (fun _ _ -> heap_entail_after_sat_struc prog ctx conseq) ctx conseq

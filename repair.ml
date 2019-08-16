@@ -268,9 +268,10 @@ let mk_pair_candidate_iprog iprog iproc (fst_cand, snd_cand) =
   let aux iprog iproc candidate num =
     let n_iproc, args = mk_candidate_proc iproc args candidate num in
     let () = x_tinfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
-    let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
     let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
-    let () = Syn.block_var_decls := decl_vars in
+    let () = if num = 1 then
+        Syn.block_var_decls := decl_vars
+      else Syn.block_var_decls_snd := decl_vars in
     let names = args |> List.map snd in
     let arg_str = helper args in
     let arg_names = pr_idents_wo_brackets names "," in
@@ -325,6 +326,7 @@ let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
       let iprog = !Syn.syn_iprog |> Gen.unsome in
       let prog = !Syn.syn_cprog |> Gen.unsome in
       let proc = C.find_proc prog proc_name in
+      let () = x_binfo_hp (add_str "proc" pr_cproc) proc no_pos in
       let () = Syn.repair_pos_fst := Some (I.get_exp_pos fst_cand) in
       let () = Syn.repair_pos_snd := Some (I.get_exp_pos snd_cand) in
       let proc_names = get_all_func r_iproc in
@@ -685,9 +687,9 @@ let infest_and_repair src (iprog : I.prog_decl) =
     let syn_t = !Syn.synthesis_time/. b_sum in
     let l1_stats = [b_sum; r_sum; inference_t; syn_t; r_time] in
     l1_stats in
-  let l1_stats = aux 1 in
-  let () = reset_timing () in
+  (* let l1_stats = aux 1 in
+   * let () = reset_timing () in *)
+  (* let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln pr_float)) l1_stats no_pos in *)
   let l2_stats = aux 2 in
-  let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln pr_float)) l1_stats no_pos in
   let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln pr_float)) l2_stats no_pos in
   x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos

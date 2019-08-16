@@ -56,6 +56,7 @@ let is_return_snd = ref false
 let check_post_list = ref ([]: bool list)
 let unk_hps = ref ([] : C.hp_decl list)
 let block_var_decls = ref ([]: CP.spec_var list)
+let block_var_decls_snd = ref ([]: CP.spec_var list)
 let repair_proc = ref (None : C.proc_decl option)
 let syn_iprog = ref (None: I.prog_decl option)
 let syn_cprog = ref (None: C.prog_decl option)

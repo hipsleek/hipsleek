@@ -456,7 +456,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
                    (fun x -> not(CP.mem x pre_vars) && CP.mem x post_vars) in
   if non_init || args_called || eq_args || called then []
   else
-    let () = x_binfo_hp (add_str "args" pr_vars) args no_pos in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let pre_cond = goal.gl_pre_cond in
     let substs = List.combine proc_args args in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -832,7 +832,7 @@ let choose_rule_allocate_return goal : rule list =
     let allocated_var_filter args =
       args |> List.exists (fun x -> CP.mem x pre_allocated_vars) |> negate in
     let args_groups = args_groups |> List.filter allocated_var_filter in
-    let () = x_binfo_hp (add_str "args list after" (pr_list_mln pr_vars)) args_groups no_pos in
+    let () = x_tinfo_hp (add_str "args list after" (pr_list_mln pr_vars)) args_groups no_pos in
     let rec process_list list = match list with
       | [] -> []
       | head::tail ->
