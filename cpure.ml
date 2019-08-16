@@ -1640,7 +1640,11 @@ and bfv' ?(vartype=Vartypes.var_with_none) (bf : b_formula) =
     List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
   | Security (var, lbl, _)
   | ExplicitFlow (var, lbl, _)
-  | ImplicitFlow (var, lbl, _) -> remove_dups_svl (var :: sec_label_fv lbl)
+  | ImplicitFlow (var, lbl, _) ->
+      if vartype # is_security_left_hand_side_only then
+        [var]
+      else
+        remove_dups_svl (var :: sec_label_fv lbl)
 
 and sec_label_fv = function
   | SecLabel _ -> []
@@ -2873,6 +2877,7 @@ and mkNot_dumb f lbl1 pos0:formula =
         | Neq (e1, e2, pos) -> BForm ((Eq (e1, e2, pos), il),lbl)
         | BagIn e -> BForm (((BagNotIn e), il),lbl)
         | BagNotIn e -> BForm (((BagIn e), il),lbl)
+        (* | (Security _)@sec -> BForm ((sec, il), lbl) *)
         | _ -> Not (f, lbl, pos0)
       end
     | _ -> Not (f, lbl1,pos0)
@@ -3992,6 +3997,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
   | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq sv1 sv3) && (eq sv2 sv4)
   | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eqExp_f eq e1 e3) && (eqExp_f eq e2 e4)
   | (RelForm (r1,args1,_), RelForm (r2,args2,_)) -> (eq_spec_var r1 r2) && (eqExp_list_f eq args1 args2)
+  | (Security (v1, lbl1, _), Security (v2, lbl2, _)) -> eq_spec_var v1 v2 && eq_sec_label lbl1 lbl2
   | _ -> false
           (*
             match (f1,f2) with
@@ -4063,6 +4069,14 @@ and equalFormula (f1:formula) (f2:formula):bool = equalFormula_f eq_spec_var  f1
 and equalBFormula (f1:b_formula)(f2:b_formula):bool = equalBFormula_f eq_spec_var  f1 f2
 
 and eqExp (f1:exp) (f2:exp):bool = eqExp_f eq_spec_var  f1 f2
+
+and eq_sec_label l1 l2 =
+  match l1, l2 with
+  | SecLabel l1', SecLabel l2' -> Security.Label.equal l1' l2'
+  | SecVar v1, SecVar v2 -> eq_spec_var v1 v2
+  | Glb (l1', l2'), Glb (l1'', l2'') -> eq_sec_label l1' l1'' && eq_sec_label l2' l2''
+  | Lub (l1', l2'), Lub (l1'', l2'') -> eq_sec_label l1' l1'' && eq_sec_label l2' l2''
+  | _, _ -> false
 
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos =
@@ -15191,9 +15205,17 @@ let is_ieq f =
     begin
       match pf with
       | Neq _ | Gt _ | Gte _
-      | Lt _ | Lte _ -> true
+      | Lt _ | Lte _  | Security _ -> true
       |_ -> false
     end
+  | _ -> false
+
+let is_security = function
+  | BForm ((pf, _), _) ->
+      begin match pf with
+        | Security _ -> true
+        | _ -> false
+      end
   | _ -> false
 
 (* let swap_null_x (f : formula) : formula = *)

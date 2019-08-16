@@ -44,7 +44,7 @@ let simplif_arith f =
   match f with
   | CP.BForm (b, lb) ->
     begin
-      let b = 
+      let b =
         match b with
         | (CP.Lte (e1, e2, s), l) ->  (CP.Lte (CP.norm_exp e1,CP.norm_exp e2, s), l)
         | (CP.Lt (e1, e2, s), l) ->  (CP.Lt (CP.norm_exp e1,CP.norm_exp e2, s), l)
@@ -66,7 +66,7 @@ let limit_conj = 2
 let list_of_n n start =
   let rec aux n top lst =
     if n == 0 then lst@[top]
-    else (aux (n-1) (top-1) lst@[top]) 
+    else (aux (n-1) (top-1) lst@[top])
   in aux n start []
 
 let neq_conj_n n bot var =
@@ -74,7 +74,7 @@ let neq_conj_n n bot var =
   let f_conj = List.map (fun i ->  (CP.BForm((CP.mkNeq var (CP.mkIConst i no_pos) no_pos, None), None))) lst_n in
   f_conj
 
-let conv_exp_to_var e = 
+let conv_exp_to_var e =
   match e with
   | CP.IConst(i, _) -> Some (CP.mk_sp_const i)
   | CP.Null _ -> Some CP.null_var
@@ -104,7 +104,7 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
       | (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _), (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _) ->
         if (CP.eq_spec_var v1 v2) then
           if i1<i2 then  merged [CP.mkTrue no_pos]
-          else 
+          else
           if((i1-i2) < limit_conj) then merged (neq_conj_n (i1-i2) i1 var)
           else merge_other f1 f2
         else merge_other f1 f2
@@ -112,6 +112,11 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
       | (CP.Lt ( (CP.Var(v1,_) as var1), (CP.Var(v2,_) as var2), _), _), (CP.Lt (CP.Var(v3,_),CP.Var(v4,_), _), _) ->
         if (CP.eq_spec_var v1 v4) && (CP.eq_spec_var v2 v3) then merged [(CP.BForm((CP.mkNeq var1 var2 no_pos, None), None))] (* a<b | b<a *)
         else merge_other f1 f2
+      | ((CP.Security (v1, sec_lbl1, loc1), _), (CP.Security (v2, sec_lbl2, loc2), _)) ->
+          if CP.eq_spec_var v1 v2 then
+            merged [CP.mk_sec_bform v1 (CP.lub_op !Security.current_lattice sec_lbl1 sec_lbl2) loc1]
+          else
+            merge_other f1 f2
       | _ -> merge_other f1 f2
     end
   | _ -> merge_other f1 f2
@@ -157,22 +162,30 @@ let merge_eq_ieq eq ieq  = merge_other eq ieq
 
 let merge_eq_eq f1 f2 = merge_other f1 f2
 
-let merge_two_disj f1 f2 = 
+let merge_two_disj f1 f2 =
   let f1 = simplif_arith f1 in
   let f2 = simplif_arith f2 in
   let f1 = make_strict_ieq f1 in
   let f2 = make_strict_ieq f2 in
   match CP.is_ieq f1, CP.is_ieq f2 with
-  | true, true ->  merge_ieq_ieq  f1 f2 
+  | true, true ->  merge_ieq_ieq  f1 f2
   | false, true ->  if CP.is_eq_exp f1 then merge_eq_ieq f1 f2  else  merge_other f1 f2
   | true, false ->  if CP.is_eq_exp f2 then merge_eq_ieq f2 f1  else  merge_other f1 f2
   | false, false -> if (CP.is_eq_exp f1) && (CP.is_eq_exp f2) then merge_eq_eq f1 f2 else  merge_other f1 f2
 
 let can_further_norm f1_conj f2_conj =
-  let f1_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f1_conj in
-  let f2_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f2_conj in
+  let f1_sv = List.fold_left (fun a f ->  (CP.all_vars ~vartype:Vartypes.security_var_left_hand_side_only f)@a) [] f1_conj in
+  let f2_sv = List.fold_left (fun a f ->  (CP.all_vars ~vartype:Vartypes.security_var_left_hand_side_only f)@a) [] f2_conj in
   if Gen.BList.list_setequal_eq CP.eq_spec_var f1_sv f2_sv then true
   else false
+
+let can_further_norm =
+  Debug.no_2
+    "can_further_norm"
+    (pr_list Cprinter.string_of_pure_formula)
+    (pr_list Cprinter.string_of_pure_formula)
+    string_of_bool
+    can_further_norm
 
 let maybe_merge conj1i conj2i = (* (true, conj1) *)
   let common_conj, conj1 = List.partition (fun f -> Gen.BList.mem_eq CP.equalFormula f conj2i) conj1i in
@@ -181,14 +194,14 @@ let maybe_merge conj1i conj2i = (* (true, conj1) *)
   | [], [] -> (true,conj1i)                     (* identical lists*)
   | _, []
   | [], _  -> (true, common_conj)
-  | f1::[], f2::[] -> 
-    if can_further_norm [f1] [f2] then 
+  | f1::[], f2::[] ->
+    if can_further_norm [f1] [f2] then
       let merged, new_f = merge_two_disj f1 f2 in
       (merged,common_conj@new_f)
     else
       (false,[])
-  | _, _   -> 
-    if can_further_norm conj1 conj2 then 
+  | _, _   ->
+    if can_further_norm conj1 conj2 then
       (* let norm = norm_disj_lsts f1_conj f2_conj in *)
       (* CP.join_conjunctions (common_conj@[norm]) *)
       (false,[])
@@ -200,24 +213,24 @@ let maybe_merge conj1 conj2 =
   let pr_out = pr_pair string_of_bool pr in
   Debug.no_2 "maybe_merge" pr pr pr_out maybe_merge conj1 conj2
 
-let update_disj disj conj_lst = 
+let update_disj disj conj_lst =
   let rec helper disj (conj_lst,d_init) =
     match disj with
     | []    -> (None, [Node(conj_lst, d_init)])
-    | x::xs -> 
+    | x::xs ->
       match x with
       | Empty -> (Some (Node (conj_lst,d_init)), xs)
-      | Node (conj, d) -> 
-        let (merged, new_conj) = maybe_merge conj conj_lst in 
+      | Node (conj, d) ->
+        let (merged, new_conj) = maybe_merge conj conj_lst in
         if merged then
           (Some (Node (new_conj,d_init@d)), xs)
-        else 
+        else
           let merged_node, disj = helper xs (conj_lst,d_init) in
           (merged_node, disj@[x])
   in
   let rec aux disj (conj_lst, d) =
     let merged_node, disj = helper disj (conj_lst,d)  in
-    match merged_node with 
+    match merged_node with
     | Some Node (conj, d) -> aux disj (conj,d)
     | _ -> disj
   in
@@ -227,10 +240,10 @@ let update_disj disj conj_lst =
 let add_disj_to_tree conj_lst tree =
   match tree with
   | Empty -> Node(conj_lst, [Empty])
-  | Node (common, disjT) -> 
+  | Node (common, disjT) ->
     (* new_common <-- conj_lst \intersect common; push_back = common\conj_lst *)
     let new_common, push_back = List.partition (fun c-> Gen.BList.mem_eq CP.equalFormula c conj_lst) common in
-    let new_disjT = List.map (fun d -> 
+    let new_disjT = List.map (fun d ->
         match d with
         | Empty -> Node(push_back, [])
         | Node (c,d) -> Node (c@push_back, d) ) disjT in
@@ -240,10 +253,10 @@ let add_disj_to_tree conj_lst tree =
     Node(new_common, new_disjT)
 
 (* creates the tree of disjunctions *)
-let norm_disj_tree disj = 
+let norm_disj_tree disj =
   let rec helper disj tree =
     match disj with
-    | x::xs -> 
+    | x::xs ->
       let tree = add_disj_to_tree x tree in
       helper xs tree
     | []    -> tree
@@ -251,32 +264,34 @@ let norm_disj_tree disj =
   let tree = helper disj Empty in
   tree
 
-let norm_disj_tree disj = 
+let norm_disj_tree disj =
   let pr = pr_list (pr_list Cprinter.string_of_pure_formula) in
   Debug.no_1 "norm_disj_tree" pr string_of_disj_tree norm_disj_tree disj
 
-let formula_of_tree tree = 
-  let rec aux tree = 
+let formula_of_tree tree =
+  let rec aux tree =
     match tree with
     | Empty -> CP.mkTrue no_pos
-    | Node (common, disj) -> 
+    | Node (common, disj) ->
       (* let common = CP.join_conjunctions common in *)
       let disj = List.filter (fun t -> match t with | Empty -> false  | _ -> true ) disj in
       let disj_clause = CP.join_disjunctions (List.map aux disj) in
       CP.join_conjunctions (common@[disj_clause] )
   in aux tree
 
-let formula_of_tree tree = 
-  Debug.no_1 "formula_of_tree" string_of_disj_tree Cprinter.string_of_pure_formula formula_of_tree tree 
+let formula_of_tree tree =
+  Debug.no_1 "formula_of_tree" string_of_disj_tree Cprinter.string_of_pure_formula formula_of_tree tree
 
-let norm_disj f = 
+let norm_disj f =
   let disj = List.map CP.split_conjunctions (CP.split_disjunctions f) in
   let f = formula_of_tree (norm_disj_tree disj) in
   f
 
-let norm_disj f = 
+let norm_disj f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "norm_disj" pr pr norm_disj f
+
+let () = Omega.norm_disj := norm_disj
 (*****************************************************************)
 (**END simplify/hul/pairwise check - disjuncts normalization **)
 (*****************************************************************)

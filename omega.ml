@@ -1152,6 +1152,7 @@ let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin
     omega_subst_lst := [];
+    let () = y_tinfo_hp (add_str "pairwisecheck untranslated" !Cpure.print_formula) pe in
     (* let pe = drop_varperm_formula pe in *)
     let pe, sec_bounds = translate_security_formula_for_infer !Security.current_lattice pe in
     let inv_bounds =
@@ -1162,6 +1163,7 @@ let pairwisecheck (pe : formula) : formula =
     let inv_bounds = Cpure.mkExists exist_v inv_bounds None no_pos in
     let inv_bounds_vars = get_vars_formula inv_bounds in
     let inv_bounds_vars_str = omega_of_var_list (Gen.BList.remove_dups_eq (=) inv_bounds_vars) in
+    let () = y_tinfo_hp (add_str "before pairwise" !Cpure.print_formula) pe in
 
 
     match (omega_of_formula_old 21 pe, omega_of_formula_old 25 inv_bounds) with
@@ -1190,7 +1192,6 @@ let pairwisecheck (pe : formula) : formula =
         let rel = send_and_receive fomega !in_timeout (* 0. *) in
       let r = match_vars (fv pe) rel in
       let () = y_tinfo_hp (add_str "after pairwise check: " !Cpure.print_formula) r in
-      let r = Trans_sec.rev_translate_sec_from_infer r in
       (* trans_bool *) r
       with
       | End_of_file ->
@@ -1206,16 +1207,32 @@ let pairwisecheck (pe:formula) : formula =
   (Trans_arr.translate_back_array_in_one_formula (pairwisecheck (x_add_1 Trans_arr.translate_array_one_formula pe)))
 ;;
 
+let norm_disj = ref (fun (a : Cpure.formula) -> x_report_error no_pos "norm not yet initialised")
+
+let pairwisecheck pe =
+  let r = pairwisecheck pe in
+  let r = Trans_sec.rev_translate_sec_from_infer r in
+  let () = y_tinfo_hp (add_str "after rev trans: " !Cpure.print_formula) r in
+  let r = !norm_disj r in
+  let () = y_tinfo_hp (add_str "after norm: " !Cpure.print_formula) r in
+  let dist_and_over_or_r = Cpure.dist_and_over_or r in
+  let () = y_tinfo_hp (add_str "dnf after norm: " !Cpure.print_formula) dist_and_over_or_r in
+  dist_and_over_or_r
+
 let pairwisecheck (pe : formula) : formula =
   let r = pairwisecheck pe in
   if count_disj r > count_disj pe then pe
-  else r
+  else
+  r
 
 let wrap f = Wrapper.wrap_silence_output f
 
 let pairwisecheck (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.pairwisecheck" pf pf (Wrapper.wrap_silence_output pairwisecheck) pe
+  Debug.no_1 "Omega.pairwisecheck" pf pf
+  (* (Wrapper.wrap_silence_output pairwisecheck) *)
+  pairwisecheck
+  pe
 
 let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
