@@ -14,13 +14,12 @@ ensures x::dll<p, n> * res::dll<p, n>;
   if (x == null) return x;
   else {
       node2 tmp;
-      // tmp = copy(x.next);
-      tmp = copy(x.next.next);
-      node2 tmp2 = x.prev;
-      node2 n = new node2(tmp2, tmp);
-      if (tmp != null) tmp.prev = n;
-      return n;
+      tmp = copy(x.next);
+      node2 nd;
+      nd = new node2(x.prev, tmp);
+      if (tmp != null) tmp.prev = nd;
+      return nd.next;
+      // return nd;
   }
 }
 
-// cannot solve all entailments -> to get all definitions.

@@ -96,7 +96,7 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
   if !Syn.repair_res != None then None
   else
     let iprog = mk_candidate_iprog iprog r_iproc args candidate 1 in
-    let () = x_tinfo_pp "marking" no_pos in
+    let () = x_binfo_pp "marking" no_pos in
     let () = Syn.entailments := [] in
     let () = Syn.rel_num := 0 in
     let () = Syn.res_num := 0 in
@@ -107,6 +107,7 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     let () = verified_procs := [] in
     let () = Syn.syn_pre := None in
     let cprog, _ = Astsimp.trans_prog iprog in
+    let () = x_binfo_pp "marking" no_pos in
     let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
     try
       let () = repair_collect_constraint := true in
@@ -687,9 +688,9 @@ let infest_and_repair src (iprog : I.prog_decl) =
     let syn_t = !Syn.synthesis_time/. b_sum in
     let l1_stats = [b_sum; r_sum; inference_t; syn_t; r_time] in
     l1_stats in
-  (* let l1_stats = aux 1 in
-   * let () = reset_timing () in *)
-  (* let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln pr_float)) l1_stats no_pos in *)
+  let l1_stats = aux 1 in
+  let () = reset_timing () in
   let l2_stats = aux 2 in
+  let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln pr_float)) l1_stats no_pos in
   let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln pr_float)) l2_stats no_pos in
   x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos

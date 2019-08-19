@@ -474,7 +474,8 @@ let remove_exists_pf pf =
       CP.Not (n_pf, lbl, loc)
     | CP.Exists (_, exists_f, _ , _) -> aux exists_f
     | CP.Forall _ -> pf in
-  aux pf
+  let conjuncts = pf |> CP.split_conjunctions in
+  conjuncts |> List.map aux |> CP.join_conjunctions
 
 let remove_exists_pf pf =
   Debug.no_1 "remove_exists_pf" pr_pf pr_pf
@@ -497,32 +498,34 @@ let remove_exists_vars_pf vars pf =
       let n_f2 = aux f2 in
       CP.Or (n_f1, n_f2, lbl, loc)
     | _ -> pf in
-  aux pf
+  let conjuncts = pf |> CP.split_conjunctions in
+  conjuncts |> List.map aux |> CP.join_conjunctions
 
 let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
-  | Base bf ->
+  | CF.Base bf ->
     let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
     let n_pf = remove_exists_vars_pf vars pf in
     CF.Base {bf with CF.formula_base_pure = MCP.mix_of_pure n_pf}
-  | Exists ({formula_exists_qvars = qvars;
-             formula_exists_heap =  h;
-             formula_exists_vperm = vp;
-             formula_exists_pure = p;
-             formula_exists_type = t;
-             formula_exists_and = a;
-             formula_exists_flow = fl;
-             formula_exists_label = lbl;
-             formula_exists_pos = pos } as bf) ->
+  | CF.Exists ({formula_exists_qvars = qvars;
+                formula_exists_heap =  h;
+                formula_exists_vperm = vp;
+                formula_exists_pure = p;
+                formula_exists_type = t;
+                formula_exists_and = a;
+                formula_exists_flow = fl;
+                formula_exists_label = lbl;
+                formula_exists_pos = pos } as bf) ->
     let n_qvars = List.filter (fun x -> not(CP.mem_svl x vars)) qvars in
     let n_pf = remove_exists_vars_pf vars (MCP.pure_of_mix p) in
     let n_pf = MCP.mix_of_pure n_pf in
     if n_qvars = [] then CF.mkBase_w_lbl h n_pf vp t fl a pos lbl
     else CF.Exists {bf with CF.formula_exists_qvars = n_qvars;
                             CF.formula_exists_pure = n_pf}
-  | Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
+  | CF.Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
     let n_f2 = remove_exists_vars bf.formula_or_f2 vars in
-    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+    CF.Or {bf with CF.formula_or_f1 = n_f1;
+                   CF.formula_or_f2 = n_f2}
 
 let remove_exists formula =
   let rec aux formula = match formula with
@@ -552,6 +555,47 @@ let remove_exists formula =
 let remove_exists formula =
   Debug.no_1 "remove_exists" pr_f pr_f
     (fun _ -> remove_exists formula) formula
+
+let get_heap (formula:CF.formula) = match formula with
+  | CF.Base bf -> bf.CF.formula_base_heap
+  | CF.Exists bf -> bf.CF.formula_exists_heap
+  | CF.Or bf -> report_error no_pos ("faulty formula" ^ (pr_f formula))
+
+let get_heap_nodes (hf:CF.h_formula) =
+  let rec aux hf = match hf with
+    | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
+    | CF.DataNode dn ->
+      let var = dn.CF.h_formula_data_node in
+      let args = dn.CF.h_formula_data_arguments in
+      let data_name = dn.CF.h_formula_data_name in
+      [(var, data_name, args)]
+    | _ -> [] in
+  aux hf
+
+let get_heap_views (hf:CF.h_formula) =
+  let rec aux hf = match hf with
+    | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
+    | CF.ViewNode vn ->
+      let var = vn.CF.h_formula_view_node in
+      let args = vn.CF.h_formula_view_arguments in
+      let view_name = vn.CF.h_formula_view_name in
+      [(var, view_name, args)]
+    | _ -> [] in
+  aux hf
+
+let get_heap_variables (f:CF.formula) : CP.spec_var list =
+  let f_nodes = f |> get_heap |> get_heap_nodes
+                |> List.map (fun (x,_,_) -> x) in
+  let f_views = f |> get_heap |> get_heap_views
+                  |> List.map (fun (x,_,_) -> x) in
+  f_nodes @ f_views
+
+let get_heap_args (f:CF.formula) : CP.spec_var list =
+  let node_args = f |> get_heap |> get_heap_nodes
+                |> List.map (fun (_,_,x) -> x) |> List.concat in
+  let view_args = f |> get_heap |> get_heap_views
+                  |> List.map (fun (_,_,x) -> x) |> List.concat in
+  node_args @ view_args
 
 let rec elim_idents (f:CF.formula) = match f with
   | CF.Base bf ->
@@ -584,7 +628,12 @@ let get_equality_pairs (formula: CP.formula) =
     | CP.Not _ -> []
     | CP.Forall (_, pf, _, _) -> aux pf
     | CP.Exists (_, exists_f, _, _) -> aux exists_f in
-  aux formula
+  let conjuncts = formula |> CP.split_conjunctions in
+  conjuncts |> List.map aux |> List.concat
+
+let get_equality_pairs (formula: CP.formula) =
+  Debug.no_1 "get_equality_pairs" pr_pf pr_substs
+    (fun _ -> get_equality_pairs formula) formula
 
 let get_eq_max (pf: CP.formula) =
   let aux_pf pf = match (pf: CP.p_formula) with
@@ -641,6 +690,7 @@ let replace_eq_max (pf: CP.formula) (o_e1, o_e2, o_e3) =
     | CP.Exists (a, a_pf,b,c) -> CP.Exists (a, aux a_pf, b,c) in
   aux pf
 
+(* remove common equality in the post-condition *)
 let simplify_equality gl_vars pre_cond post_cond =
   let pre_pf = CF.get_pure pre_cond in
   let post_pf = CF.get_pure post_cond in
@@ -726,7 +776,8 @@ let extract_var_pf (pf:CP.formula) vars =
       if CP.is_True n_f1 then n_f2
       else if CP.is_True n_f2 then n_f1
       else And (n_f1, n_f2, loc)
-    | AndList list -> AndList (List.map (fun (x,y) -> (x, helper y vars)) list)
+    | CP.AndList list ->
+      CP.AndList (List.map (fun (x,y) -> (x, helper y vars)) list)
     | _ -> pf in
   let n_pf = helper pf vars in
   let n_vars = CP.fv n_pf in
@@ -1497,6 +1548,42 @@ let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
                      CF.formula_or_f2 = n_f2} in
   aux formula
 
+let get_equal_pairs_pre_cond_pf vars heap_vars pf =
+  let eq_pairs = get_equality_pairs pf in
+  let () = x_tinfo_hp (add_str "eq_pairs" pr_substs) eq_pairs no_pos in
+  let swap (x,y) = if CP.mem y heap_vars && not(CP.mem y vars)
+    then (y, x) else (x,y) in
+  let eq_pairs = eq_pairs |> List.map swap in
+  let filter_fun (x,y) = CP.mem x heap_vars && not(CP.mem x vars)
+                         && (CP.mem y vars) in
+  let eq_pairs = eq_pairs |> List.filter filter_fun in
+  eq_pairs
+
+let get_equal_pairs_pre_cond_pf vars heap_vars pf =
+  Debug.no_3 "get_equal_pairs_pre_cond_pf" pr_vars pr_vars pr_pf pr_substs
+    (fun _ _ _ -> get_equal_pairs_pre_cond_pf vars heap_vars pf) vars heap_vars pf
+
+let simplify_goal_pre_cond goal pre_cond post_cond =
+  let pre_cond = pre_cond |> remove_exists in
+  let all_vars = goal.gl_vars in
+  let heap_vars = pre_cond |> get_heap_variables in
+  let aux pre_cond = match pre_cond with
+    | CF.Base bf ->
+      let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+      get_equal_pairs_pre_cond_pf all_vars heap_vars pf
+    | CF.Exists bf ->
+      let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+      get_equal_pairs_pre_cond_pf all_vars heap_vars pf
+    | _ -> [] in
+  let eq_pairs = aux pre_cond in
+  let n_pre = pre_cond |> CF.subst eq_pairs in
+  let n_post = post_cond |> CF.subst eq_pairs in
+  (n_pre, n_post)
+
+let simplify_goal_pre_cond goal pre_cond post_cond =
+  Debug.no_1 "simplify_goal_pre_cond" pr_f (pr_pair pr_f pr_f)
+    (fun _ -> simplify_goal_pre_cond goal pre_cond post_cond) pre_cond
+
 let simplify_goal goal =
   let n_pre = goal.gl_pre_cond in
   let n_post = goal.gl_post_cond in
@@ -1511,6 +1598,7 @@ let simplify_goal goal =
   let n_post = simplify_arithmetic n_post in
   let n_pre = rm_duplicate_constraints n_pre in
   let n_post = rm_duplicate_constraints n_post in
+  let (n_pre, n_post) = simplify_goal_pre_cond goal n_pre n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
@@ -1582,29 +1670,6 @@ let simplify_predicate_vars (vars : CP.spec_var list) =
     CP.is_primed var && Gen.BList.mem_eq eq_str name unprimed_names in
   vars |> List.filter (fun x -> helper_fun x |> negate)
 
-let simplify_ante (ante: CF.formula) =
-  let ante = remove_exists ante in
-  let ante = unprime_formula ante in
-  (* let pf = ante |> CF.get_pure |> remove_exists_pf in
-   * let filter_fun (x,y) = CP.is_primed x &&
-   *                        eq_str (CP.name_of_sv x) (CP.name_of_sv y) in
-   * let eq_pairs = get_equality_pairs pf |> List.filter filter_fun in
-   * let n_ante = CF.subst eq_pairs ante |> elim_idents in
-   * let pr_pairs = pr_list (pr_pair pr_var pr_var) in
-   * x_tinfo_hp (add_str "eq_pairs" pr_pairs) eq_pairs no_pos; *)
-  (* let deleted_vars = eq_pairs |> List.map fst in
-   * let rec aux n_ante =
-   *   let vars = CF.fv n_ante in
-   *   if CP.intersect_svl vars deleted_vars = [] then n_ante
-   *   else
-   *     let n_ante = CF.subst eq_pairs n_ante |> elim_idents in
-   *     aux n_ante in *)
-  ante |> remove_boolean_constraints
-
-let simplify_ante ante =
-  Debug.no_1 "simplify_ante" pr_f pr_f
-    (fun _ -> simplify_ante ante) ante
-
 let rec has_new_num trace = match trace with
   | [] -> false
   | h::t -> begin
@@ -1669,20 +1734,24 @@ let has_unfold_post trace =
     end in
   aux trace 2
 
-let rec remove_exists_vars_pf (formula:CP.formula) = match formula with
-  | Exists (_, x,_,_) -> remove_exists_vars_pf x
-  | BForm _ -> formula
-  | And (f1, f2, loc) -> let nf1 = remove_exists_vars_pf f1 in
-    let nf2 = remove_exists_vars_pf f2 in
-    And (nf1, nf2, loc)
-  | AndList list ->
-    let nlist = List.map (fun (x,y) -> (x, remove_exists_vars_pf y)) list in
-    AndList nlist
-  | Not (f, opt, loc) -> Not (remove_exists_vars_pf f, opt, loc)
-  | Or (f1, f2, opt, loc) -> let nf1 = remove_exists_vars_pf f1 in
-    let nf2 = remove_exists_vars_pf f2 in
-    Or (nf1, nf2, opt, loc)
-  | Forall (_, f, _, _) -> remove_exists_vars_pf f
+let remove_exists_vars_pf (formula:CP.formula) =
+  let rec aux formula = match formula with
+    | CP.Exists (_, x,_,_) -> aux x
+    | CP.BForm _ -> formula
+    | CP.And (f1, f2, loc) -> let nf1 = aux f1 in
+      let nf2 = aux f2 in
+      CP.And (nf1, nf2, loc)
+    | CP.AndList list ->
+      let nlist = List.map (fun (x,y) -> (x, aux y)) list in
+      CP.AndList nlist
+    | CP.Not (f, opt, loc) -> Not (aux f, opt, loc)
+    | CP.Or (f1, f2, opt, loc) ->
+      let nf1 = aux f1 in
+      let nf2 = aux f2 in
+      CP.Or (nf1, nf2, opt, loc)
+    | CP.Forall _ -> formula in
+  let conjuncts = formula |> CP.split_conjunctions in
+  conjuncts |> List.map aux |> CP.join_conjunctions
 
 (*****************************************************
   * Synthesize CAST and IAST exp
@@ -2361,46 +2430,6 @@ let rec subst_term_formula sst (formula:CF.formula) = match formula with
     CF.Or {bf with CF.formula_or_f1 = n_f1;
                 CF.formula_or_f2 = n_f2}
 
-let get_heap (formula:CF.formula) = match formula with
-  | CF.Base bf -> bf.CF.formula_base_heap
-  | CF.Exists bf -> bf.CF.formula_exists_heap
-  | CF.Or bf -> report_error no_pos ("faulty formula" ^ (pr_f formula))
-
-let get_heap_nodes (hf:CF.h_formula) =
-  let rec aux hf = match hf with
-    | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
-    | CF.DataNode dn ->
-      let var = dn.CF.h_formula_data_node in
-      let args = dn.CF.h_formula_data_arguments in
-      let data_name = dn.CF.h_formula_data_name in
-      [(var, data_name, args)]
-    | _ -> [] in
-  aux hf
-
-let get_heap_views (hf:CF.h_formula) =
-  let rec aux hf = match hf with
-    | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
-    | CF.ViewNode vn ->
-      let var = vn.CF.h_formula_view_node in
-      let args = vn.CF.h_formula_view_arguments in
-      let view_name = vn.CF.h_formula_view_name in
-      [(var, view_name, args)]
-    | _ -> [] in
-  aux hf
-
-let get_heap_variables (f:CF.formula) : CP.spec_var list =
-  let f_nodes = f |> get_heap |> get_heap_nodes
-                |> List.map (fun (x,_,_) -> x) in
-  let f_views = f |> get_heap |> get_heap_views
-                  |> List.map (fun (x,_,_) -> x) in
-  f_nodes @ f_views
-
-let get_heap_args (f:CF.formula) : CP.spec_var list =
-  let node_args = f |> get_heap |> get_heap_nodes
-                |> List.map (fun (_,_,x) -> x) |> List.concat in
-  let view_args = f |> get_heap |> get_heap_views
-                  |> List.map (fun (_,_,x) -> x) |> List.concat in
-  node_args @ view_args
 
 let get_heap_vars (hf:CF.h_formula) : CP.spec_var list =
   let rec aux hf = match hf with

@@ -220,7 +220,7 @@ let check_entail_exact_wrapper prog ante conseq =
     let duration = get_time () -. start in
     let () = if duration > 1.0 then
         let () = x_tinfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos in
-        x_binfo_hp (add_str "duration" string_of_float) duration no_pos in
+        x_tinfo_hp (add_str "duration" string_of_float) duration no_pos in
     res
 
 let check_entail_exact_wrapper prog ante conseq =
@@ -423,7 +423,8 @@ let choose_rule_fwrite goal =
         dif_fields |> List.map (fun (x, y, z) -> (var, y, z))
       with _ -> [] in
     let tuples = pre_nodes |> List.map (aux post_nodes) |> List.concat in
-    let filter (_,n_val, _) = CP.mem n_val all_vars in
+    let filter (cur_var,n_val, _) =
+      CP.mem n_val all_vars && CP.mem cur_var all_vars in
     let tuples = tuples |> List.filter filter in
     let mk_fwrite_rule (var, n_val, field) =
       RlFWrite {
@@ -959,15 +960,15 @@ let choose_rule_new_num goal : rule list =
       let n_goal = {goal with gl_vars = all_vars;
                               gl_pre_cond = n_pre;
                               gl_trace = (RlNewNum rule)::goal.gl_trace} in
-      let () = x_binfo_hp (add_str "var" pr_var) var no_pos in
-      let () = x_binfo_hp (add_str "exp" pr_exp) n_exp no_pos in
+      let () = x_tinfo_hp (add_str "var" pr_var) var no_pos in
+      let () = x_tinfo_hp (add_str "exp" pr_exp) n_exp no_pos in
       let n_rules = choose_rule_allocate_return n_goal in
       let n_rules, early_end = if n_rules = [] then
           let n_rules = n_rules @ (choose_rule_func_call n_goal) in
           let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
           (n_rules, false)
         else (n_rules, true) in
-      let () = x_binfo_hp (add_str "rules" pr_rules) n_rules no_pos in
+      let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
       if early_end || List.exists (rule_use_var var) n_rules then
         let n_goal = {n_goal with gl_lookahead = n_rules} in
         let n_rule = {rule with rnn_lookahead = Some n_goal} in
@@ -1219,7 +1220,6 @@ let choose_rule_mk_null goal : rule list =
       rule in
     let list1 = data_decls |> List.map aux_rule in
     let list2 = aux_post_assign goal in
-    (* let list2 = [] in *)
     let list = list1 @ list2 |> List.map filter_rule
                |> List.filter (fun (x,y) -> x)
                |> List.map snd in

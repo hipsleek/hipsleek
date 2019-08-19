@@ -25,7 +25,6 @@ case {
      k = reverse(x.next);
      x.next.next = x;
      x.next = null;
-     // return k.next;
      return k;
   }
 }
