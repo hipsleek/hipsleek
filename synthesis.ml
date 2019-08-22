@@ -23,7 +23,8 @@ let pr_var = Cprinter.string_of_typed_spec_var
 let pr_vars = Cprinter.string_of_typed_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_sv = Cprinter.string_of_spec_var
-let pr_hps = pr_list Cprinter.string_of_hp_decl
+let pr_hp = Cprinter.string_of_hp_decl
+let pr_hps = pr_list pr_hp
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_substs = pr_list (pr_pair pr_var pr_var)
 let pr_failesc_list = Cprinter.string_of_list_failesc_context
@@ -50,6 +51,7 @@ let repair_pos = ref (None : VarGen.loc option)
 let repair_pos_fst = ref (None : VarGen.loc option)
 let repair_pos_snd = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
+let r_pre_vars = ref ([] : CP.spec_var list)
 let is_return_cand = ref false
 let is_return_fst = ref false
 let is_return_snd = ref false
@@ -1187,6 +1189,7 @@ let create_pred vars =
   hrel_f
 
 let create_spec_pred vars pred_name =
+  let vars = vars |> CP.remove_dups_svl in
   let name = pred_name in
   let hl_name = CP.mk_spec_var name in
   let () = rel_num := !rel_num + 1 in
@@ -1200,12 +1203,8 @@ let create_spec_pred vars pred_name =
     C.hp_view = None;
     C.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
   } in
-  let cur_hps = !unk_hps in
-  (* let cur_hps = if is_substr "P" pred_name || is_substr "Q" pred_name then
-   *   let filter_fun hp = not(is_substr "P" hp.C.hp_name || is_substr "Q" hp.C.hp_name) in
-   *   List.filter filter_fun cur_hps
-   *   else cur_hps in *)
-  let () = unk_hps := hp_decl::cur_hps in
+  let () = unk_hps := hp_decl::!unk_hps in
+  let () = x_binfo_hp (add_str "hp_decl" pr_hp) hp_decl no_pos in
   let hrel = CF.HRel (hl_name, args, no_pos) in
   let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
   hrel_f

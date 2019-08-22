@@ -21,7 +21,8 @@ module Syn = Synthesis
 
 let pr_formula = Cprinter.string_of_formula
 let pr_hf = Cprinter.string_of_h_formula
-let pr_vars = Cprinter.string_of_spec_var_list
+let pr_var = Cprinter.string_of_typed_spec_var
+let pr_vars = pr_list pr_var
 let pr_hps = pr_list Cprinter.string_of_hp_decl
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_svs = Cprinter.string_of_spec_var_list
@@ -444,10 +445,11 @@ let rec translate_hf hf =
     let holes = match ann with
       | CP.ConstAnn Lend -> [hf]
       | _ -> [] in
-    let root, name = vf.CF.h_formula_view_node, vf.CF.h_formula_view_name in
+    let root = vf.CF.h_formula_view_node in
+    let name = vf.CF.h_formula_view_name in
     let args = vf.CF.h_formula_view_arguments in
-    let () = x_tinfo_hp (add_str "root: " CP.string_of_spec_var) root no_pos in
-    let () = x_tinfo_hp (add_str "args: " (pr_list CP.string_of_spec_var)) args no_pos in
+    let () = x_tinfo_hp (add_str "root" pr_var) root no_pos in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let args = [root] @ args in
     let sb_vars = List.map translate_var args in
     let sb_exps = List.map SBC.mk_exp_var sb_vars in
@@ -700,6 +702,8 @@ let translate_back_vdefns prog (vdefns: SBC.view_defn list) =
           translate_back_formula x.SBC.vdc_form []) cases in
         helper_f formulas in
     let () = x_tinfo_hp (add_str "body" pr_formula) body no_pos in
+    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
+    let () = x_tinfo_hp (add_str "h_args" pr_vars) hip_args no_pos in
     let body = body |> CF.subst (List.combine args hip_args) in
     {hp with CA.hp_formula = body} in
   vdefns |> List.map (helper hps)
@@ -925,6 +929,8 @@ let get_repair_candidate prog ents cond_op =
         let sb_vars = fun_def.SBC.func_params in
         let translated_vars = List.map translate_back_var sb_vars in
         let translated_exp = translate_back_exp exp in
+        let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
+        let () = x_binfo_hp (add_str "t_vars" pr_vars) translated_vars no_pos in
         let substs = List.combine translated_vars vars in
         let n_exp = CP.e_apply_subs substs translated_exp in
         Some n_exp
@@ -1063,10 +1069,11 @@ let check_entail_prog_state prog (es: CF.entail_state)
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
+  let () = x_tinfo_hp (add_str "prog" SBC.pr_program) n_prog no_pos in
+  let () = x_tinfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
   (* let () = List.iter (fun ent ->
    *     export_songbird_entailments_results n_prog [ent] [SBG.MvlUnkn]) ents in *)
-  let check_fun =
-    SBPH.check_entailment ~interact:false ~disproof:!songbird_disproof
+  let check_fun = SBPH.check_entailment ~interact:false ~disproof:!songbird_disproof
       ~timeout:2 n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in
   let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
@@ -1076,38 +1083,37 @@ let check_entail_prog_state prog (es: CF.entail_state)
       else () in
     let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
     let residue = translate_back_fs residues holes in
-    let () = x_tinfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
     let () = x_tinfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
     (true, Some residue)
   else if conseq_hps || ante_hps then false, None
   else
-    let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
-    let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
-    let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
-    let pairs = List.combine ents ptrees in
-    let invalid_ents = pairs |> List.filter is_invalid |> List.map fst in
-    let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
-    let valid_ents = pairs |> List.filter is_valid |> List.map fst in
-    let () = if invalid_ents != [] then
-        List.iter (fun ent ->
-            let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
-            (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
-            ()) invalid_ents in
-    let () = if unkn_ents != [] then
-        List.iter (fun ent ->
-            let _ = x_tinfo_hp (add_str "Program: " SBC.pr_program) n_prog no_pos in
-            let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
-            (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
-            ()) unkn_ents in
-    let () = if !songbird_export_invalid_entails then
-        let _ = List.map (output_sb_ent n_prog) invalid_ents in
-        let _ = List.map (output_sb_ent n_prog) unkn_ents in
-        () else () in
-    let () = if !songbird_disproof then
-        let () = invalid_num := !invalid_num + (List.length invalid_ents) in
-        let () = unkn_num := !unkn_num + (List.length unkn_ents) in
-        valid_num := !valid_num + (List.length valid_ents)
-      else () in
+    (* let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
+     * let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
+     * let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
+     * let pairs = List.combine ents ptrees in
+     * let invalid_ents = pairs |> List.filter is_invalid |> List.map fst in
+     * let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
+     * let valid_ents = pairs |> List.filter is_valid |> List.map fst in
+     * let () = if invalid_ents != [] then
+     *     List.iter (fun ent ->
+     *         let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+     *         (\* let _ = SBPH.check_entailment ~interact:true n_prog ent in *\)
+     *         ()) invalid_ents in
+     * let () = if unkn_ents != [] then
+     *     List.iter (fun ent ->
+     *         let _ = x_tinfo_hp (add_str "Program: " SBC.pr_program) n_prog no_pos in
+     *         let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+     *         (\* let _ = SBPH.check_entailment ~interact:true n_prog ent in *\)
+     *         ()) unkn_ents in
+     * let () = if !songbird_export_invalid_entails then
+     *     let _ = List.map (output_sb_ent n_prog) invalid_ents in
+     *     let _ = List.map (output_sb_ent n_prog) unkn_ents in
+     *     () else () in
+     * let () = if !songbird_disproof then
+     *     let () = invalid_num := !invalid_num + (List.length invalid_ents) in
+     *     let () = unkn_num := !unkn_num + (List.length unkn_ents) in
+     *     valid_num := !valid_num + (List.length valid_ents)
+     *   else () in *)
     false, None
 
 let check_equal prog first second =
@@ -1345,9 +1351,13 @@ and hentail_after_sat_ebase prog ctx es bf =
       let pure_ante = CF.get_pure ante |> Syn.remove_exists_pf in
       let ante_wo_pred = Syn.rm_hp_formula ante in
       let () = Syn.syn_pre := Some ante in
-      let ante_vars = ante |> CF.fv
+      (* let ante_vars = ante |> CF.fv
+       *                 |> List.filter (fun x ->
+       *                     Syn.is_int_var x || Syn.is_node_var x) in *)
+      let ante_vars = !Syn.r_pre_vars
                       |> List.filter (fun x ->
                           Syn.is_int_var x || Syn.is_node_var x) in
+      let () = x_binfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
       let pred_name = List.find (fun x -> is_substr "P" x) conseq_hps in
       let pred_name = "N_" ^ pred_name in
       let var_decls =
@@ -1361,10 +1371,6 @@ and hentail_after_sat_ebase prog ctx es bf =
       let old_conseq = Syn.create_spec_pred ante_vars pred_name in
       let () = x_tinfo_hp (add_str "old_conseq" pr_formula) old_conseq no_pos in
       let n_conseq, residue =
-        (* if !enable_frameless then
-         *   let n_conseq = Syn.add_pure_formula_to_formula pure_ante old_conseq in
-         *   n_conseq, pure_ante
-         * else *)
         let residue = Syn.create_pred ante_vars in
         x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos;
         x_tinfo_hp (add_str "pure ante" pr_pf) pure_ante no_pos;
@@ -1388,12 +1394,11 @@ and hentail_after_sat_ebase prog ctx es bf =
       let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
       let vars = vars @ exists_vars |> List.filter filter_var in
       let conseq = bf.CF.formula_struc_base in
-      x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos;
+      x_binfo_hp (add_str "conseq" pr_formula) conseq no_pos;
       let conseq = Syn.add_exists_vars conseq exists_vars in
       let n_es, n_conseq = Syn.create_residue vars prog conseq in
-      let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
+      let () = x_binfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let pure_ante = ante |> CF.get_pure in
-      (* let ante_wo_pred = ante |> Syn. *)
       (* let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in *)
       let n_conseq, n_es = if !check_post then
           CF.add_pure_formula_to_formula pure_ante n_conseq,
@@ -1420,9 +1425,10 @@ and hentail_after_sat_ebase prog ctx es bf =
           (CF.mk_cex true) no_pos in
       (n_ctx, Prooftracer.Failure)
 
-let heap_entail_after_sat_struc prog ctx conseq =
+let heap_entail_after_sat_struc prog (ctx:CF.context) (conseq:CF.struc_formula) =
   let () = x_tinfo_pp "SONGBIRD Prover activated" no_pos in
   Debug.no_2 "SB.heap_entail_after_sat_struc" Cprinter.string_of_context
     Cprinter.string_of_struc_formula
     (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
     (fun _ _ -> heap_entail_after_sat_struc prog ctx conseq) ctx conseq
+

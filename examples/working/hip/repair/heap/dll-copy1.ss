@@ -18,8 +18,25 @@ ensures x::dll<p, n> * res::dll<p, n>;
       node2 nd;
       nd = new node2(x.prev, tmp);
       if (tmp != null) tmp.prev = nd;
-      return nd.next;
-      // return nd;
+      // return nd.next;
+      dprint;
+      return nd;
+  }
+}
+
+node2 copy(node2 x)
+requires x::dll<p, n>
+ensures x::dll<p, n> * res::dll<p, n>;
+{
+  if (x == null) return x;
+  else {
+      node2 tmp;
+      tmp = copy(x.next);
+      node2 nd;
+      nd = new node2(x.prev, tmp);
+      if (tmp != null) tmp.prev = nd;
+      dprint;
+      return nd;
   }
 }
 

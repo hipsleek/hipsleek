@@ -2295,9 +2295,9 @@ and heap_entail_struc_list_partial_context (prog : prog_decl)
       context_list_proofs = prf_l; } in
   (result, proof)
 
-and heap_entail_struc_list_failesc_context (prog : prog_decl) (is_folding :
-  bool)  (has_post: bool) (cl : list_failesc_context) (conseq) (tid: CP.spec_var
-  option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
+and heap_entail_struc_list_failesc_context (prog : prog_decl)
+    (is_folding:bool) (has_post: bool) (cl : list_failesc_context) conseq
+    (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
   (pid:control_path_id) f to_string : (list_failesc_context * proof) =
   let pr1 = Cprinter.string_of_list_failesc_context in
   let pr2 (x,_) = Cprinter.string_of_list_failesc_context x in
@@ -2308,9 +2308,15 @@ and heap_entail_struc_list_failesc_context (prog : prog_decl) (is_folding :
 and heap_entail_struc_list_failesc_context_x (prog : prog_decl) (is_folding :
   bool) (has_post: bool)(cl : list_failesc_context) (conseq) (tid: CP.spec_var
   option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
-  (pid:control_path_id) f to_string : (list_failesc_context * proof) =
+    (pid:control_path_id) f to_string : (list_failesc_context * proof) =
+  let () = if !enable_repair || !infestor then
+      let cl_formula = formula_of_list_failesc_context cl in
+      let cl_vars = CF.fv cl_formula in
+      let e_vars = CF.get_exists cl_formula in
+      Synthesis.r_pre_vars := (cl_vars @ e_vars)
+    else () in
   let l = List.map (fun c-> x_add heap_entail_struc_failesc_context prog
-                       is_folding  has_post c conseq tid delayed_f join_id pos
+                       is_folding has_post c conseq tid delayed_f join_id pos
                        pid f to_string) cl in
   let l_ctx , prf_l = List.split l in
   let result = List.fold_left list_failesc_context_union (List.hd l_ctx)
@@ -2390,7 +2396,6 @@ and heap_entail_struc_failesc_context (prog : prog_decl) (is_folding : bool)
   Debug.no_1 "heap_entail_struc_failesc_context" pr1 pr2 (fun _ ->
       heap_entail_struc_failesc_context_x prog is_folding
         (has_post)(cl) (conseq) tid delayed_f join_id pos (pid) f to_string) cl
-
 
 and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
   (has_post: bool) (cl : failesc_context) (conseq:'a) (tid: CP.spec_var option)
@@ -2639,13 +2644,13 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
         SB.contains_hps prog ctx conseq then (* unknown predicate *)
         SB.heap_entail_after_sat_struc prog ctx conseq
       else if !songbird || !songbird_disproof then
-        Songbird.heap_entail_after_sat_struc prog ctx conseq
+        SB.heap_entail_after_sat_struc prog ctx conseq
       else
         let res = x_add heap_entail_after_sat_struc 1 prog is_folding
                     has_post ctx conseq tid delayed_f join_id pos pid [] in
         (* TRUNG: very temporarily way to export. to remove later *)
         let _ = if !songbird_export_all_entails then
-            let _ = Songbird.heap_entail_after_sat_struc prog ctx conseq in
+            let _ = SB.heap_entail_after_sat_struc prog ctx conseq in
             () in
         res in
     let result = subs_crt_holes_list_ctx result in

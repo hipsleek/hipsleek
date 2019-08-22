@@ -9876,7 +9876,7 @@ and list_context =
 
 and branch_fail = path_trace * fail_type
 
-and branch_ctx =  path_trace * context  * fail_type option
+and branch_ctx = path_trace * context  * fail_type option
 
 (* disjunction of state with failures and partial success *)
 (* a state is successful if it has empty branch_fail *)
@@ -9923,7 +9923,7 @@ let rec is_infer_pre_must sf = match sf with
     (inf_obj # is_pre_must)
   | _ -> false
 
-let is_dis_err_exc es = 
+let is_dis_err_exc es =
   es.es_infer_obj # is_dis_err_all
 
 let is_err_must_exc es = 
@@ -9935,7 +9935,6 @@ let is_err_must_only_exc es =
 let is_en_error_exc es =
   not(is_dis_err_exc es)
 (* es.es_infer_obj # is_err_must || es.es_infer_obj # is_err_may *)
-
 
 let rec is_en_error_exc_ctx c =
   match c with
