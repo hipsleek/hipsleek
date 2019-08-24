@@ -10,9 +10,11 @@ node2 copy(node2 x)
 requires x::dll<p, n>
 ensures x::dll<p, n> * res::dll<p, n>;.
 
-synthesize [node2 x, node2 tmp]
+synthesize [node2 x,node2 tmp,node2 nd]
 
-x::dll<p,n> & x != null
+nd::node2<p1,tmp> * x::node2<p1,q4> * q4::dll<x,n9> *
+ tmp::dll<x,n9> &
+0<=n9 & tmp!=null & n=1+n9 & n=1+flted_8_4603
 ~>
-x::node2<p, q64> * q64::dll<x,n69> * tmp::dll<x,n69>
-& n69 = n - 1 & x != null.
+(exists q39,q64: nd::node2<p1,q39> * x::node2<p1,q64> * 
+       q39::dll<nd,n9> * q64::dll<x,n9>).

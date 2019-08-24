@@ -1292,7 +1292,9 @@ let rec heap_entail_after_sat_struc (prog:CA.prog_decl)
           let pred_name = List.find (fun x -> is_substr "Q" x) has_pred in
           let pred_name = "N_" ^ pred_name in
           let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
-          let n_args = (f |> CF.fv) @ syn_pre_vars in
+          let assume_vars = f |> CF.fv in
+          (* let assume_vars = !Syn.r_pre_vars in *)
+          let n_args = assume_vars @ syn_pre_vars in
           let n_args = if !Syn.is_return_cand then
               n_args @ (!Syn.syn_res_vars)
             else n_args in

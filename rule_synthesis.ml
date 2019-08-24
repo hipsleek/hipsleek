@@ -228,6 +228,10 @@ let check_entail_exact_wrapper prog ante conseq =
     string_of_bool
     (fun _ _ -> check_entail_exact_wrapper prog ante conseq) ante conseq
 
+(* let rename_conseq (conseq: CF.formula) =
+ *   let e_vars = 
+ *   let h_args = get_ *)
+
 let check_entail_wrapper prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
@@ -1258,27 +1262,27 @@ let rec choose_rule_interact goal rules =
             chosen_rules no_pos in
         chosen_rules @ other_rules
 
-let choose_rule_free goal =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let sk, residue = check_entail_wrapper goal.gl_prog pre post in
-  if sk then
-    let residue = Gen.unsome residue in
-    if not(CF.is_emp_formula residue) then
-      let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
-      let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
-      let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
-      let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
-      let free_vars = CP.diff_svl pre_node_vars post_node_vars in
-      let in_vars x = CP.mem x goal.gl_vars in
-      if free_vars != [] && List.for_all in_vars free_vars then
-        let rule = RlFree {
-            rd_vars = free_vars;
-          } in
-        [rule]
-      else []
-    else []
-  else []
+(* let choose_rule_free goal =
+ *   let pre = goal.gl_pre_cond in
+ *   let post = goal.gl_post_cond in
+ *   let sk, residue = check_entail_wrapper goal.gl_prog pre post in
+ *   if sk then
+ *     let residue = Gen.unsome residue in
+ *     if not(CF.is_emp_formula residue) then
+ *       let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
+ *       let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
+ *       let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
+ *       let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
+ *       let free_vars = CP.diff_svl pre_node_vars post_node_vars in
+ *       let in_vars x = CP.mem x goal.gl_vars in
+ *       if List.length free_vars = 1 && List.for_all in_vars free_vars then
+ *         let rule = RlFree {
+ *             rd_vars = free_vars;
+ *           } in
+ *         [rule]
+ *       else []
+ *     else []
+ *   else [] *)
 
 let choose_rule_frame_pred goal =
   if check_head_allocate_wrapper goal then []
@@ -1315,14 +1319,15 @@ let choose_rule_frame_pred goal =
     |> List.concat
 
 let choose_rule_free goal residue =
-  let post = goal.gl_post_cond in
-  let all_vars = goal.gl_vars in
-  let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
-  let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
-  let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
-  let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
-  let free_vars = CP.diff_svl pre_node_vars post_node_vars in
-  if free_vars != [] then
+  (* let post = goal.gl_post_cond in
+   * let all_vars = goal.gl_vars in
+   * let pre_nodes = goal.gl_pre_cond |> get_heap |> get_heap_nodes in
+   * let post_nodes = goal.gl_post_cond |> get_heap |> get_heap_nodes in
+   * let pre_node_vars = pre_nodes |> List.map (fun (x, _,_) -> x) in
+   * let post_node_vars = post_nodes |> List.map (fun (x, _,_) -> x) in
+   * let free_vars = CP.diff_svl pre_node_vars post_node_vars in *)
+  let free_vars = get_heap_variables residue in
+  if List.length free_vars = 1 then
     let rule = RlFree {
         rd_vars = free_vars;
       } in
@@ -1330,17 +1335,17 @@ let choose_rule_free goal residue =
   else []
 
 let choose_rule_skip goal =
-  if is_code_rule goal.gl_trace then
-    let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
-    let sk, residue = check_entail_wrapper prog pre post in
-    if sk then
-      let residue = Gen.unsome residue in
-      if CF.is_emp_formula residue then
-        let rule = RlSkip in
-        [rule]
-      else choose_rule_free goal residue
-    else []
+  (* if is_code_rule goal.gl_trace then *)
+  let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
+  let sk, residue = check_entail_wrapper prog pre post in
+  if sk then
+    let residue = Gen.unsome residue in
+    if CF.is_emp_formula residue then
+      let rule = RlSkip in
+      [rule]
+    else choose_rule_free goal residue
   else []
+(* else [] *)
 
 (*********************************************************************
  * Choosing rules

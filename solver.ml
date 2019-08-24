@@ -188,7 +188,7 @@ let prune_branches_subsume prog lhs_node rhs_node =
   let pr1 = pr_pair Cprinter.string_of_pure_formula string_of_bool in
   let pr2 = pr_pair string_of_bool (pr_opt pr1) in
   let pr = Cprinter.string_of_h_formula in
-  Debug.no_2 "pr_branches_subsume " pr pr pr2 (fun _ _ ->
+  Debug.no_2 "pr_branches_subsume" pr pr pr2 (fun _ _ ->
       prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
 
 (*LDK: only use crt_heap_entailer
@@ -8103,7 +8103,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
       (* try *)
       (*   List.combine r_args l_args *)
       (* with _ -> [] (\*matching with cyclic proof is not the same predicate*\) in *)
-      let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+      let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
       let () = x_tinfo_hp (add_str "to_ante" !CP.print_formula) to_ante no_pos in
       let () = x_tinfo_hp (add_str "to_conseq" !CP.print_formula) to_conseq no_pos in
       (* without branch label *)
@@ -8592,8 +8592,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                                     fe, estate.es_trace))
        ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
   else
+    let () = x_binfo_zp (lazy ("estate: "^ (Cprinter.string_of_entail_state estate))) pos in
     let l_h, l_p, l_vp, l_fl, l_t, l_a = split_components estate.es_formula in
     x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
+    x_binfo_hp (add_str "l_p" (Cprinter.string_of_pure_formula))
+      (MCP.pure_of_mix l_p) pos;
     let restore_hole h estate =
       let restore_hole_b = ((* isPoly r_ann && *) (isMutable l_ann || isImm l_ann)) || (CP.isPoly r_ann && CP.isPoly l_ann) in
       x_tinfo_hp (add_str "restore_hole_b" (string_of_bool)) restore_hole_b pos;
@@ -8626,6 +8629,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     in
     (* let (l_h, estate) = replace_hole_w_emp l_h estate in *)
     let (l_h, estate) = restore_hole l_h estate in
+    x_binfo_zp (lazy ("estate: "^ (Cprinter.string_of_entail_state estate))) pos;
     x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
     x_tinfo_hp (add_str "estate" (Cprinter.string_of_entail_state)) estate pos;
     let r_h, r_p, r_vp, r_fl, r_t, r_a = split_components rhs in
@@ -8859,12 +8863,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             | None -> to_rhs
             | Some bf -> CP.mkAnd bf to_rhs no_pos in
           let () = x_tinfo_hp (add_str "to_rhs" (Cprinter.string_of_pure_formula)) to_rhs pos in
-          (* let () = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
+          (* let () = print_string("cris: to_rhs = " ^
+             (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
+          let () = x_binfo_hp (add_str "to_lhs" (Cprinter.string_of_pure_formula)) to_lhs pos in
           let to_lhs =
             match ann_lhs with
             | None -> to_lhs
             | Some bf -> CP.mkAnd bf to_lhs no_pos in
-          let () = x_tinfo_hp (add_str "to_lhs" (Cprinter.string_of_pure_formula)) to_lhs pos in
+          let () = x_binfo_hp (add_str "to_lhs" (Cprinter.string_of_pure_formula)) to_lhs pos in
           (* In the presence of ho_arg, r_args is bound with l_args   *)
           (* and is moved inside the binding of high-order argument.  *)
           (* Therefore, if this is a match of 2 high-order view node, *)
@@ -8894,12 +8900,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* for the free vars from the RHS to the LHS                            *)
           (************************************************************************)
           let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs) in
+          let () = y_binfo_hp (add_str "new_ante_p" !CP.print_formula)
+              (MCP.pure_of_mix new_ante_p) in
+          let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
           let () = x_tinfo_hp (add_str "to_rhs, before adding" (Cprinter.string_of_pure_formula)) to_rhs pos in
           let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs) in
           (* let () = print_endline ("new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p)) in     *)
           (* let () = print_endline ("new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p)) in *)
           (* Add instantiation for perm vars *)
           let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante) in
+          let () = y_binfo_hp (add_str "new_ante_p" !CP.print_formula)
+              (MCP.pure_of_mix new_ante_p) in
           let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq) in
           (* (i) find Univ in LHS (2) find univ inst in conseq (3) perform univ inst proving *)
           (* ==================== Extract equation expression related to Univ vars ==================== *)
@@ -8911,7 +8922,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let () = y_dinfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
           let () = y_dinfo_hp (add_str "to_rhs" !CP.print_formula) to_rhs in
           let () = y_dinfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
-          let () = y_dinfo_hp (add_str "pure_new_ante_p" !CP.print_formula) pure_new_ante_p in
+          let () = y_binfo_hp (add_str "pure_new_ante_p" !CP.print_formula) pure_new_ante_p in
           let () = y_dinfo_hp (add_str "pure_new_conseq_p" !CP.print_formula) pure_new_conseq_p in
           let (to_lst,fr_lst) = List.split ivar_subs_to_conseq in
           let pure_new_conseq_p = CP.subst_avoid_capture fr_lst to_lst pure_new_conseq_p in
@@ -8987,7 +8998,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let new_ante = mkBase l_h new_ante_p l_vp l_t l_fl l_a pos in
           let tmp_conseq = mkBase r_h new_conseq_p r_vp r_t r_fl r_a pos  in
           let () = x_dinfo_hp (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
-          let () = x_dinfo_hp (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
+          let () = x_tinfo_hp (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
           let lhs_vars = CP.fv to_lhs in
           (* Apply the new bindings to the consequent *)
           (* let e_subs = ivar_subs_to_conseq @ ext_subst in *)
@@ -9329,7 +9340,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let new_es' = new_es in
             let new_es = pop_exists_estate ivars new_es' in
             let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
-            x_dinfo_zp (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context new_ctx))) pos;
+            x_tinfo_zp (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context new_ctx))) pos;
             x_dinfo_zp (lazy ("do_match (after): RHS:" ^ (Cprinter.string_of_formula new_conseq))) pos;
             (* let () = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
             let new_ctx = x_add_1 Immutable.restore_tmp_ann_ctx new_ctx in
@@ -9408,7 +9419,7 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
       (* let () = DD.info_hprint (add_str " conseq1" Cprinter.prtt_string_of_formula) conseq1 no_pos in *)
       let r = x_add Syn_checkeq.check_exists_cyclic_proofs estate (ante1, conseq1) in
       let estate = {estate with CF.es_proof_traces = estate.CF.es_proof_traces@[(ante1, conseq1)]} in
-      let () = x_tinfo_hp (add_str "estate1" (Cprinter.string_of_entail_state)) estate pos in
+      let () = x_binfo_hp (add_str "estate1" (Cprinter.string_of_entail_state)) estate pos in
       (r,estate)
     else
       (false, estate)
@@ -10619,13 +10630,14 @@ and process_before_do_match_x new_p prog estate conseq lhs_b rhs_b
     let rhs_p = match to_be_proven with
       | None -> rhs_b.formula_base_pure
       | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
-    let () = x_tinfo_zp (lazy ("before_do_match rhs_p"
+    let () = x_binfo_zp (lazy ("before_do_match rhs_p"
                                ^ (Cprinter.string_of_mix_formula rhs_p))) pos in
     let rhs_p = if new_p==[] then rhs_p
       else MCP.memoise_add_pure rhs_p (CP.join_conjunctions new_p) in
     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
     let () = x_tinfo_hp (add_str "new_estate(M_match)"
                            (Cprinter.string_of_entail_state)) new_estate pos in
+    let () = y_tinfo_hp (add_str "new_p" !CP.print_formula) (CP.join_conjunctions new_p) in
     let () = y_tinfo_hp (add_str "n_rhs_b" !CF.print_formula) n_rhs_b in
     let res_es0, prf0 = x_add do_match prog new_estate lhs_node rhs_node n_rhs_b
         rhs_h_matched_set is_folding pos in
@@ -10719,9 +10731,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a
                     (Cprinter.string_of_h_formula)) lhs_rest pos;
       let pure_to_add = match infer_opt with
         | Some f ->
-          let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
-          let () = x_dinfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
-          let () = x_dinfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
+          let () = y_binfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
+          let () = x_binfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
+          let () = x_binfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
           [f]
         | _ -> [] in
       (*******SPLIT/COMBINE permissions********>>
@@ -10832,7 +10844,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a
        | None  -> begin
            (*<<***END SPLIT/COMBINE permissions*******************)
            y_dinfo_pp ("Match action, do process_before_do_match r");
-           let r = process_before_do_match pure_to_add prog estate conseq lhs_b
+           let r = x_add process_before_do_match pure_to_add prog estate conseq lhs_b
                rhs_b rhs_h_matched_set is_folding pos lhs_node lhs_rest rhs_node
                rhs_rest holes in
            Debug.dinfo_hprint (add_str "Match action, context r" (fun x ->

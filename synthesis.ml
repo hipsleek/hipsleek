@@ -1190,20 +1190,26 @@ let create_pred vars =
 
 let create_spec_pred vars pred_name =
   let vars = vars |> CP.remove_dups_svl in
+  let all_predicates = !unk_hps in
   let name = pred_name in
   let hl_name = CP.mk_spec_var name in
-  let () = rel_num := !rel_num + 1 in
   let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
-  let hp_decl = {
-    C.hp_name = name;
-    C.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
-    C.hp_part_vars = [];
-    C.hp_root_pos = None;
-    C.hp_is_pre = false;
-    C.hp_view = None;
-    C.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
-  } in
-  let () = unk_hps := hp_decl::!unk_hps in
+  let hp_decl =
+    try
+      List.find (fun x -> eq_str x.C.hp_name pred_name) all_predicates
+    with _ ->
+      let () = rel_num := !rel_num + 1 in
+      let hp_decl = {
+        C.hp_name = name;
+        C.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
+        C.hp_part_vars = [];
+        C.hp_root_pos = None;
+        C.hp_is_pre = false;
+        C.hp_view = None;
+        C.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
+      } in
+      let () = unk_hps := hp_decl::!unk_hps in
+      hp_decl in
   let () = x_binfo_hp (add_str "hp_decl" pr_hp) hp_decl no_pos in
   let hrel = CF.HRel (hl_name, args, no_pos) in
   let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
@@ -2819,6 +2825,7 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
+  | RlUnfoldPre _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_unfold_post_vs_unfold_post r1 r2 =
@@ -2854,7 +2861,7 @@ let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
   | RlNewNum _ -> PriLow
-  | RlFuncCall _ -> PriLow
+  | RlFuncCall _ -> PriHigh
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | RlUnfoldPre r2 -> PriEqual
   | _ -> PriHigh

@@ -19890,7 +19890,7 @@ let is_exists_hp_rel v es =
   CP.is_exists_svl v vs
 
 let get_args_of_node l_node =
-  let l_ho_args, l_args, l_node_name, node_kind, r_var, l_perm, l_ann, l_param_ann = 
+  let l_ho_args, l_args, l_node_name, node_kind, r_var, l_perm, l_ann, l_param_ann =
     match l_node with
     | ThreadNode {
         h_formula_thread_name = l_node_name;
@@ -19926,7 +19926,7 @@ let get_args_of_node l_node =
 let get_args_of_node l_node =
   let pr = !print_h_formula in
   let dummy_pr = fun _ -> "" in
-  Debug.no_1 "get_args_of_node" pr dummy_pr 
+  Debug.no_1 "get_args_of_node" pr dummy_pr
     get_args_of_node l_node
 
 
