@@ -228,13 +228,26 @@ let check_entail_exact_wrapper prog ante conseq =
     string_of_bool
     (fun _ _ -> check_entail_exact_wrapper prog ante conseq) ante conseq
 
-(* let rename_conseq (conseq: CF.formula) =
- *   let e_vars = 
- *   let h_args = get_ *)
+let rename_conseq (conseq: CF.formula) =
+  let e_vars = CF.get_exists conseq in
+  (* let conseq = remove_exists conseq in *)
+  let h_args = get_heap_args conseq
+               |> List.filter (fun x -> CP.mem x e_vars |> negate) in
+  let n_args = h_args |> List.map CP.fresh_spec_var in
+  let substs = List.combine h_args n_args in
+  let n_conseq = conseq |> CF.subst substs in
+  let n_pf = mk_pure_form_from_eq_pairs substs in
+  let n_conseq = CF.add_pure_formula_to_formula n_pf n_conseq in
+  add_exists_vars n_conseq n_args
+
+let rename_conseq conseq =
+  Debug.no_1 "rename_conseq" pr_f pr_f
+    (fun _ -> rename_conseq conseq) conseq
 
 let check_entail_wrapper prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
+  let conseq = rename_conseq conseq in
   if contains_lseg prog then
     SB.check_entail_residue prog ante conseq
   else
