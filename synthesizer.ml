@@ -95,6 +95,9 @@ let process_rule_fread goal rc =
 
 let process_rule_func_call goal rc : derivation =
   let n_pre = rc.rfc_new_pre in
+  (* if check_entail_exact_wrapper goal.gl_prog n_pre goal.gl_post_cond then
+   *   mk_derivation_success goal (RlFuncCall rc)
+   * else *)
   let n_vars = match rc.rfc_return with
     | None -> goal.gl_vars
     | Some var -> var::goal.gl_vars in
@@ -107,6 +110,7 @@ let process_rule_func_call goal rc : derivation =
 let process_rule_unfold_pre goal rc =
   let n_pres = rc.n_pre in
   let n_goal = {goal with gl_pre_cond = rc.n_pre;
+                          gl_lookahead = [];
                           gl_trace = (RlUnfoldPre rc)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlUnfoldPre rc) [n_goal]
 

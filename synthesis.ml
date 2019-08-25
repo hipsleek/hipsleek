@@ -2825,7 +2825,7 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
-  | RlUnfoldPre _ -> PriLow
+  | RlUnfoldPre _ -> PriHigh
   | _ -> PriHigh
 
 let compare_rule_unfold_post_vs_unfold_post r1 r2 =
@@ -2861,7 +2861,7 @@ let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
   | RlNewNum _ -> PriLow
-  | RlFuncCall _ -> PriHigh
+  | RlFuncCall _ -> PriLow
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | RlUnfoldPre r2 -> PriEqual
   | _ -> PriHigh
