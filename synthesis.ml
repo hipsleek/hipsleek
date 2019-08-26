@@ -273,6 +273,11 @@ let pr_priority pr = match pr with
   | PriLow -> "PriLow"
   | PriEqual -> "PriEqual"
 
+let negate_priority prio = match prio with
+  | PriLow -> PriHigh
+  | PriEqual -> PriEqual
+  | PriHigh -> PriLow
+
 let get_synthesis_tree_status stree : synthesis_tree_status =
   match stree with
   | StDerive std -> std.std_status
@@ -2853,21 +2858,6 @@ let compare_rule_frame_data_vs_other r1 r2 =
   (* | RlMkNull _ -> PriLow *)
   | _ -> PriHigh
 
-let compare_rule_frame_pred_vs_other goal r1 r2 =
-  match r2 with
-  | RlFramePred r2 -> compare_two_frame_pred goal r1 r2
-  | RlFrameData r2 -> if CP.is_res_sv r2.rfd_lhs then PriLow
-    else PriHigh
-  | RlAllocate _ -> PriLow
-  | RlFRead _ -> PriLow
-  | RlFree _ -> PriLow
-  | RlReturn _ -> PriLow
-  | RlNewNum _ -> PriLow
-  (* | RlMkNull _ -> PriLow *)
-  (* | RlUnfoldPost _
-   * | RlFuncCall _ -> PriLow *)
-  | _ -> PriHigh
-
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
@@ -2926,10 +2916,33 @@ let compare_rule_post_assign_vs_other r1 r2 = match r2 with
   | RlFramePred _ | RlFrameData _
   | _ -> PriHigh
 
+let compare_rule_fread_vs_frame_pred r1 r2 =
+  let frame_var = r2.rfp_rhs in
+  let fread_var = r1.rfr_value in
+  if CP.eq_sv frame_var fread_var then PriLow
+  else PriHigh
+
 let compare_rule_fread_vs_other r1 r2 = match r2 with
   | RlSkip | RlReturn _ -> PriLow
   | RlFRead r2 -> compare_rule_fread_vs_fread r1 r2
+  | RlFramePred r2 -> compare_rule_fread_vs_frame_pred r1 r2
   | _ -> PriHigh
+
+let compare_rule_frame_pred_vs_other goal r1 r2 =
+  match r2 with
+  | RlFramePred r2 -> compare_two_frame_pred goal r1 r2
+  | RlFrameData r2 -> if CP.is_res_sv r2.rfd_lhs then PriLow
+    else PriHigh
+  | RlAllocate _ -> PriLow
+  | RlFRead r2 -> compare_rule_fread_vs_frame_pred r2 r1 |> negate_priority
+  | RlFree _ -> PriLow
+  | RlReturn _ -> PriLow
+  | RlNewNum _ -> PriLow
+  (* | RlMkNull _ -> PriLow *)
+  (* | RlUnfoldPost _
+   * | RlFuncCall _ -> PriLow *)
+  | _ -> PriHigh
+
 
 let compare_rule_mk_null_vs_other r1 r2 = match r2 with
   | RlMkNull r2 ->
@@ -3054,11 +3067,6 @@ let reorder_rules goal rules =
 (*********************************************************************
  * Constructors
  *********************************************************************)
-
-let negate_priority prio = match prio with
-  | PriLow -> PriHigh
-  | PriEqual -> PriEqual
-  | PriHigh -> PriLow
 
 let mk_goal cprog pre post vars =
   let () = allocate_list := [] in

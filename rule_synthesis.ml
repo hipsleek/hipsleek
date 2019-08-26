@@ -172,27 +172,29 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
   let get_exists_pair old_vars n_evar =
     let old_evar = List.find (common_prefix n_evar) old_vars in
     (old_evar, n_evar) in
-  if CF.isFailCtx list_ctx then false, None
-  else
-    let () = x_binfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in
-    let residue = CF.formula_of_list_context list_ctx in
-    let () = x_binfo_hp (add_str "residue" pr_f) residue no_pos in
-    if isHFalse residue then false, None
+  let is_fail_ctx list_ctx =
+    if CF.isFailCtx list_ctx then true
     else
-      let evars_residue = get_evars_from_list_context list_ctx in
-      let evar_substs = exists_vars |> List.map (get_exists_pair evars_residue) in
-      let () = x_tinfo_hp (add_str "evar subst" pr_substs) evar_substs no_pos in
-      let n_pf =
-        let residue_pairs = get_subst_from_list_context list_ctx in
-        let fst_vars = List.map fst evar_substs in
-        let residue_pairs = residue_pairs |> List.filter
-                              (fun (x,_) -> CP.mem x fst_vars) in
-        let pf1 = mk_pure_form_from_eq_pairs residue_pairs in
-        let pf2 = get_es_pf_from_list_context list_ctx in
-        CP.mkAnd pf1 pf2 no_pos in
-      let n_pf = CP.subst evar_substs n_pf in
-      let residue = CF.add_pure_formula_to_formula n_pf residue in
-      true, Some residue
+      let residue = CF.formula_of_list_context list_ctx in
+      isHFalse residue in
+  if is_fail_ctx list_ctx then false, None
+  else
+    let () = x_tinfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in
+    let residue = CF.formula_of_list_context list_ctx in
+    let evars_residue = get_evars_from_list_context list_ctx in
+    let evar_substs = exists_vars |> List.map (get_exists_pair evars_residue) in
+    let () = x_tinfo_hp (add_str "evar subst" pr_substs) evar_substs no_pos in
+    let n_pf =
+      let residue_pairs = get_subst_from_list_context list_ctx in
+      let fst_vars = List.map fst evar_substs in
+      let residue_pairs = residue_pairs |> List.filter
+                            (fun (x,_) -> CP.mem x fst_vars) in
+      let pf1 = mk_pure_form_from_eq_pairs residue_pairs in
+      let pf2 = get_es_pf_from_list_context list_ctx in
+      CP.mkAnd pf1 pf2 no_pos in
+    let n_pf = CP.subst evar_substs n_pf in
+    let residue = CF.add_pure_formula_to_formula n_pf residue in
+    true, Some residue
 
 let check_entail_sleek prog ante conseq =
   Debug.no_2 "check_entail_sleek" pr_f pr_f
@@ -569,6 +571,10 @@ let unify_fcall proc_decl proc_pre proc_post goal =
   let ss_args = ss_args |> List.filter filter_args in
   (* let ss_args = ss_args |> Gen.BList.remove_dups_eq eq_args in *)
   let ss_args = ss_args |> List.filter filter_nodes in
+  let trace_vars = goal.gl_trace |> get_trace_vars in
+  let filter_trace_vars args =
+    args |> List.exists (fun x -> CP.mem x trace_vars) |> negate in
+  let ss_args = ss_args |> List.filter filter_trace_vars in
   let rules = ss_args |> List.map (check_func_arguments goal proc_decl) in
   rules |> List.concat
 
@@ -895,6 +901,9 @@ let choose_rule_fread goal =
       (helper_f f1) @ (helper_f f2)
     | CF.Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
+  let trace_vars = goal.gl_trace |> get_trace_vars in
+  let filter_triple (x,_,_) = CP.mem x trace_vars |> negate in
+  let triples = triples |> List.filter filter_triple in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
   let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
