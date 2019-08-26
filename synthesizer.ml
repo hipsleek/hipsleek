@@ -115,21 +115,17 @@ let process_rule_unfold_pre goal rc =
   mk_derivation_subgoals goal (RlUnfoldPre rc) [n_goal]
 
 let process_rule_frame_pred goal rc =
-  let eq_pairs = rc.rfp_pairs in
-  let eq_pairs = List.map (fun (x,y) -> (y,x)) eq_pairs in
-  let () = x_tinfo_hp (add_str "substs" pr_substs) eq_pairs no_pos in
-  let post = rc.rfp_post in
-  let e_vars = eq_pairs |> List.map fst in
-  let exists_vars = CF.get_exists post in
-  let n_post = remove_exists_vars post exists_vars in
-  let n_post = CF.subst eq_pairs n_post in
-  let n_exists_vars = CP.diff_svl exists_vars e_vars in
-  let n_post = add_exists_vars n_post n_exists_vars in
-  (* if SB.check_unsat goal.gl_prog n_post then
-   *   mk_derivation_fail goal (RlFramePred rc)
-   * else *)
-  let () = x_tinfo_hp (add_str "n_post" pr_f) n_post no_pos in
-  let subgoal = {goal with gl_post_cond = n_post;
+  (* let eq_pairs = rc.rfp_pairs in
+   * let eq_pairs = List.map (fun (x,y) -> (y,x)) eq_pairs in
+   * let post = rc.rfp_post in
+   * let e_vars = eq_pairs |> List.map fst in
+   * let exists_vars = CF.get_exists post in
+   * let n_post = remove_exists_vars post exists_vars in
+   * let n_post = CF.subst eq_pairs n_post in
+   * let n_exists_vars = CP.diff_svl exists_vars e_vars in
+   * let n_post = add_exists_vars n_post n_exists_vars in
+   * let () = x_tinfo_hp (add_str "n_post" pr_f) n_post no_pos in *)
+  let subgoal = {goal with gl_post_cond = rc.rfp_post;
                            gl_trace = (RlFramePred rc)::goal.gl_trace;
                            gl_pre_cond = rc.rfp_pre} in
   mk_derivation_subgoals goal (RlFramePred rc) [subgoal]
@@ -140,15 +136,12 @@ let process_rule_frame_data goal rc =
   let eq_pf = mkAndList eq_pairs in
   let post = rc.rfd_post in
   let substs = substs |> List.map (fun (x,y) -> (y,x)) in
-  let () = x_tinfo_hp (add_str "substs" pr_substs) substs no_pos in
   let e_vars = substs |> List.map fst in
   let exists_vars = CF.get_exists post in
   let n_post = remove_exists_vars post exists_vars in
-  let () = x_tinfo_hp (add_str "n_post" pr_f) n_post no_pos in
   let n_post = CF.subst substs n_post in
   let e_vars = CP.diff_svl exists_vars e_vars in
   let n_post = add_exists_vars n_post e_vars in
-  let () = x_tinfo_hp (add_str "n_post" pr_f) n_post no_pos in
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlFrameData rc)::goal.gl_trace;
                            gl_pre_cond = rc.rfd_pre} in

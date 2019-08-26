@@ -96,7 +96,6 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
   if !Syn.repair_res != None then None
   else
     let iprog = mk_candidate_iprog iprog r_iproc args candidate 1 in
-    let () = x_binfo_pp "marking" no_pos in
     let () = Syn.entailments := [] in
     let () = Syn.rel_num := 0 in
     let () = Syn.res_num := 0 in
@@ -107,7 +106,6 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     let () = verified_procs := [] in
     let () = Syn.syn_pre := None in
     let cprog, _ = Astsimp.trans_prog iprog in
-    let () = x_binfo_pp "marking" no_pos in
     let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
     try
       let () = repair_collect_constraint := true in

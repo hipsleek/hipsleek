@@ -156,7 +156,6 @@ and rule_exists_right = {
 and rule_frame_pred = {
   rfp_lhs: CP.spec_var;
   rfp_rhs: CP.spec_var;
-  rfp_pairs: (CP.spec_var * CP.spec_var) list;
   rfp_pre: CF.formula;
   rfp_post: CF.formula
 }
@@ -610,6 +609,16 @@ let rec elim_idents (f:CF.formula) = match f with
     CF.Exists {bf with formula_exists_pure = mix_of_pure n_pf}
   | CF.Or bf -> CF.Or {bf with formula_or_f1 = elim_idents bf.CF.formula_or_f1;
                                formula_or_f2 = elim_idents bf.CF.formula_or_f2}
+
+let mk_pure_form_from_eq_pairs eq_pairs =
+  let aux (fst, snd) =
+    CP.mkEqVar fst snd no_pos in
+  let eq_pairs = eq_pairs |> List.map aux in
+  eq_pairs |> CP.join_conjunctions
+
+let mk_pure_form_from_eq_pairs eq_pairs =
+  Debug.no_1 "mk_pure_form_from_eq_pairs" pr_substs pr_pf
+    (fun _ -> mk_pure_form_from_eq_pairs eq_pairs) eq_pairs
 
 let get_equality_pairs (formula: CP.formula) =
   let aux_pf (pf:CP.p_formula) = match pf with

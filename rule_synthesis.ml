@@ -129,16 +129,6 @@ let get_es_pf_from_list_context (l_ctx: CF.list_context) =
   | CF.FailCtx _ -> report_error no_pos "cannot applied"
   | CF.SuccCtx ctx_list -> ctx_list |> List.map aux_ctx |> CP.join_conjunctions
 
-let mk_pure_form_from_eq_pairs eq_pairs =
-  let aux (fst, snd) =
-    CP.mkEqVar fst snd no_pos in
-  let eq_pairs = eq_pairs |> List.map aux in
-  eq_pairs |> CP.join_conjunctions
-
-let mk_pure_form_from_eq_pairs eq_pairs =
-  Debug.no_1 "mk_pure_form_from_eq_pairs" pr_substs pr_pf
-    (fun _ -> mk_pure_form_from_eq_pairs eq_pairs) eq_pairs
-
 let rename_conseq (conseq: CF.formula) =
   let e_vars = CF.get_exists conseq in
   let h_args = get_heap_args conseq
@@ -610,6 +600,7 @@ let choose_rule_unfold_pre goal =
       let () = x_tinfo_hp (add_str "nf" (pr_list_mln pr_f)) nf no_pos in
       let pre_list = List.filter (fun x -> check_unsat_wrapper goal.gl_prog x
                                            |> negate) nf in
+      let () = x_tinfo_hp (add_str "nf after" (pr_list_mln pr_f)) nf no_pos in
       if pre_list = [] then []
       else if List.length pre_list = 1 then
         let n_pre = pre_list |> List.hd |> remove_exists |> rm_emp_formula in
@@ -1323,18 +1314,40 @@ let choose_rule_frame_pred goal =
        *   | _ -> true in
        * let check_pre = List.for_all (check_field pre) pre_vars in
        * let check_post = List.for_all (check_field post) post_vars in *)
-      if check_unsat_wrapper goal.gl_prog n_post then []
-      else if (List.length pre_vars = List.length post_vars)
+      (* if check_unsat_wrapper goal.gl_prog n_post then []
+       * else *)
+      if (List.length pre_vars = List.length post_vars)
       (* && * check_pre && check_post *) then
         let pre_vars = rhs::pre_vars in
         let post_vars = lhs::post_vars in
-        let rule = RlFramePred {
-            rfp_lhs = lhs;
-            rfp_rhs = rhs;
-            rfp_pairs = List.combine pre_vars post_vars;
-            rfp_pre = n_pre;
-            rfp_post = n_post;
-          } in [rule]
+        let eq_pairs = List.combine pre_vars post_vars in
+        let eq_pairs = List.map (fun (x,y) -> (y,x)) eq_pairs in
+        (* let e_vars = eq_pairs |> List.map fst in *)
+        let exists_vars = CF.get_exists n_post in
+        let n_post = remove_exists_vars n_post exists_vars in
+        let n_post = CF.subst eq_pairs n_post in
+        (* let n_exists_vars = CP.diff_svl exists_vars e_vars in *)
+        let n_pf = mk_pure_form_from_eq_pairs eq_pairs in
+        let n_post = CF.add_pure_formula_to_formula n_pf n_post in
+        let n_post = add_exists_vars n_post exists_vars in
+
+        let post_e_vars = n_post |> CF.get_exists in
+        let pre_eq_pairs = eq_pairs |> List.filter
+                             (fun (x,y) -> not(CP.mem x post_e_vars)) in
+        let n_pre_pf = pre_eq_pairs |> mk_pure_form_from_eq_pairs in
+        let n_pre = CF.add_pure_formula_to_formula n_pre_pf n_pre in
+        let prog = goal.gl_prog in
+        if check_unsat_wrapper prog n_pre || check_unsat_wrapper prog n_post
+        then []
+        else
+          let () = x_binfo_hp (add_str "n_pre" pr_f) n_pre no_pos in
+          let () = x_binfo_hp (add_str "n_post" pr_f) n_post no_pos in
+          let rule = RlFramePred {
+              rfp_lhs = lhs;
+              rfp_rhs = rhs;
+              rfp_pre = n_pre;
+              rfp_post = n_post;
+            } in [rule]
       else [] in
     let helper var =
       let eq_vars = find_instantiate_var goal var in
