@@ -605,10 +605,14 @@ let rec elim_idents (f:CF.formula) = match f with
     CF.Base {bf with formula_base_pure = mix_of_pure n_pf}
   | CF.Exists bf ->
     let pf = bf.CF.formula_exists_pure |> pure_of_mix in
-    let n_pf = pf |> CP.elim_idents_node (* |> elim_bool_constraint *) in
+    let n_pf = pf |> CP.elim_idents_node in
     CF.Exists {bf with formula_exists_pure = mix_of_pure n_pf}
   | CF.Or bf -> CF.Or {bf with formula_or_f1 = elim_idents bf.CF.formula_or_f1;
                                formula_or_f2 = elim_idents bf.CF.formula_or_f2}
+
+let elim_idents formula =
+  Debug.no_1 "elim_idents" pr_f pr_f
+    (fun _ -> elim_idents formula) formula
 
 let mk_pure_form_from_eq_pairs eq_pairs =
   let aux (fst, snd) =
@@ -728,6 +732,35 @@ let simplify_equality gl_vars pre_cond post_cond =
     (pre_cond, post_cond)
 
 let simplify_post post_cond =
+  let get_exists_pf (pf:CP.formula) =
+    let rec aux pf = match pf with
+    | CP.BForm _ -> []
+    | CP.And (f1, f2, _) -> (aux f1) @ (aux f2)
+    | CP.AndList list -> list |> List.map snd |> List.map aux |> List.concat
+    | CP.Or (f1,f2,_,_) -> (aux f1) @ (aux f2)
+    | CP.Not (n_f,_,_) ->aux n_f
+    | CP.Forall _ -> []
+    | CP.Exists (e_var, e_f, _, _) -> e_var::(aux e_f) in
+    pf |> CP.split_conjunctions |> List.map aux |> List.concat in
+  let rec move_exists_pf (formula: CF.formula) = match formula with
+    | CF.Base bf ->
+      let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
+      let e_vars = get_exists_pf pf in
+      let n_pf = remove_exists_pf pf |> MCP.mix_of_pure in
+      let n_f = CF.Base {bf with CF.formula_base_pure = n_pf} in
+      add_exists_vars n_f e_vars
+    | CF.Exists bf ->
+      let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
+      let e_vars = get_exists_pf pf in
+      let n_pf = remove_exists_pf pf |> MCP.mix_of_pure in
+      let n_f = CF.Exists {bf with CF.formula_exists_pure = n_pf} in
+      add_exists_vars n_f e_vars
+    | CF.Or bf ->
+      let n_f1 = move_exists_pf bf.CF.formula_or_f1 in
+      let n_f2 = move_exists_pf bf.CF.formula_or_f2 in
+      CF.Or { bf with CF.formula_or_f1 = n_f1;
+                      CF.formula_or_f2 = n_f2} in
+  let post_cond = move_exists_pf post_cond in
   let exists_vars = CF.get_exists post_cond in
   let pf = CF.get_pure post_cond in
   let filter_fun (x,y) = CP.mem x exists_vars || CP.mem y exists_vars in
@@ -1543,6 +1576,10 @@ let simplify_min_max_entailment ante conseq =
   let () = max_triples := [] in
   (ante, conseq)
 
+let simplify_min_max_entailment ante conseq =
+  Debug.no_2 "simplify_min_max_entailment" pr_f pr_f pr_ent
+    (fun _ _ -> simplify_min_max_entailment ante conseq) ante conseq
+
 let rm_duplicate_constraints (formula: CF.formula) : CF.formula =
   let rec aux (formula: CF.formula) = match formula with
     | CF.Base bf ->
@@ -1601,18 +1638,18 @@ let simplify_goal_pre_cond goal pre_cond post_cond =
 let simplify_goal goal =
   let n_pre = goal.gl_pre_cond in
   let n_post = goal.gl_post_cond in
-  let (n_pre, n_post) = simplify_min_max_entailment n_pre n_post in
+  let n_post = simplify_post n_post in
   let n_pre = remove_exists n_pre in
   let n_pre = elim_idents n_pre in
   let n_post = elim_idents n_post in
   let (n_pre, n_post) = simplify_equality goal.gl_vars n_pre n_post in
-  let n_post = simplify_post n_post in
   let n_post = rm_ident_constraints n_pre n_post in
   let n_pre = simplify_arithmetic n_pre in
   let n_post = simplify_arithmetic n_post in
   let n_pre = rm_duplicate_constraints n_pre in
   let n_post = rm_duplicate_constraints n_post in
   let (n_pre, n_post) = simplify_goal_pre_cond goal n_pre n_post in
+  let (n_pre, n_post) = simplify_min_max_entailment n_pre n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 

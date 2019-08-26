@@ -4,7 +4,7 @@ data node {
 }
 
 ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1>
+	or self::node<_, q> * q::ll<n-1> & n > 0
 	inv n >= 0;
 
 sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
@@ -20,7 +20,7 @@ node insert2(node x, node vn)
     return vn;
 	}
 	else if (vn.val <= x.val) {
-		vn.next = x.next;
+		vn.next.next = x.next;
     // vn.next = x;
 		return vn;
 	}
