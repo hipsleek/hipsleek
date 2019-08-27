@@ -794,10 +794,11 @@ let simplify_post post_cond =
 let mkAndList pf_list =
   let rec aux pf_list = match pf_list with
   | [] -> CP.mkTrue no_pos
-  | h :: t -> let pf2 = aux t in
+  | h :: t ->
+    let pf2 = aux t in
     CP.mkAnd h pf2 no_pos in
   let pf = aux pf_list in
-  CP.remove_redundant_constraints pf
+  pf
 
 (* get a "fix-point" pure formula for a list of vars *)
 let extract_var_pf (pf:CP.formula) vars =
@@ -1459,9 +1460,24 @@ let simplify_min_max_pf pf =
           let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
           let n_e = CP.Var (n_var, loc) in
           let add_formula = CP.EqMin (n_e, n_e1, n_e2, no_pos) in
-          let () = min_triples := (n_e, n_e1, n_e2)::!min_triples in
+          let () = max_triples := (n_e, n_e1, n_e2)::!max_triples in
           n_e, n_var::var1@var2, add_formula::orig1@orig2 in
-      (n_e, n_vars, orig1@orig2)
+      (n_e, n_vars, add_formula)
+    (* | CP.Min (e1,e2,loc) ->
+     *   let n_e1, var1, orig1 = aux_exp e1 in
+     *   let n_e2, var2, orig2 = aux_exp e2 in
+     *   let n_e, n_vars, add_formula =
+     *     try
+     *       let n_e,_,_ = List.find (eq_find (n_e1, n_e2)) !min_triples in
+     *       n_e, var1@var2, orig1@orig2
+     *     with _ ->
+     *       let n_name = fresh_any_name "min" in
+     *       let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+     *       let n_e = CP.Var (n_var, loc) in
+     *       let add_formula = CP.EqMin (n_e, n_e1, n_e2, no_pos) in
+     *       let () = min_triples := (n_e, n_e1, n_e2)::!min_triples in
+     *       n_e, n_var::var1@var2, add_formula::orig1@orig2 in
+     *   (n_e, n_vars, orig1@orig2) *)
     | CP.Add (e1, e2, pos) ->
       let n_e1, var1, orig1 = aux_exp e1 in
       let n_e2, var2, orig2 = aux_exp e2 in
@@ -1548,6 +1564,10 @@ let simplify_min_max_pf pf =
   let e_vars = List.map snd n_conjuncts |> List.concat in
   let n_pf = CP.join_conjunctions n_list in
   (n_pf, e_vars)
+
+let simplify_min_max_pf formula =
+  Debug.no_1 "simplify_min_max_pf" pr_pf (pr_pair pr_pf pr_vars)
+    (fun _ -> simplify_min_max_pf formula) formula
 
 let simplify_min_max formula =
   let rec aux formula = match formula with
@@ -1644,6 +1664,7 @@ let simplify_goal goal =
   let n_pre = goal.gl_pre_cond in
   let n_post = goal.gl_post_cond in
   let n_post = simplify_post n_post in
+  let (n_pre, n_post) = simplify_min_max_entailment n_pre n_post in
   let n_pre = remove_exists n_pre in
   let n_pre = elim_idents n_pre in
   let n_post = elim_idents n_post in
@@ -1654,9 +1675,12 @@ let simplify_goal goal =
   let n_pre = rm_duplicate_constraints n_pre in
   let n_post = rm_duplicate_constraints n_post in
   let (n_pre, n_post) = simplify_goal_pre_cond goal n_pre n_post in
-  let (n_pre, n_post) = simplify_min_max_entailment n_pre n_post in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
+
+let simplify_goal goal =
+  Debug.no_1 "simplify_goal" pr_goal pr_goal
+    (fun _ -> simplify_goal goal) goal
 
 let mkTrue_pf_formula (formula:CF.formula) =
   match formula with

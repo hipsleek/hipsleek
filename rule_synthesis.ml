@@ -223,16 +223,16 @@ let check_entail_exact_sleek prog ante conseq =
 let check_entail_exact_wrapper prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
-  if contains_lseg prog then
+  (* if contains_lseg prog then *)
     SB.check_entail_exact prog ante conseq
-  else
-    let start = get_time () in
-    let res = check_entail_exact_sleek prog ante conseq in
-    let duration = get_time () -. start in
-    let () = if duration > 1.0 then
-        let () = x_tinfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos in
-        x_tinfo_hp (add_str "duration" string_of_float) duration no_pos in
-    res
+  (* else
+   *   let start = get_time () in
+   *   let res = check_entail_exact_sleek prog ante conseq in
+   *   let duration = get_time () -. start in
+   *   let () = if duration > 1.0 then
+   *       let () = x_tinfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos in
+   *       x_tinfo_hp (add_str "duration" string_of_float) duration no_pos in
+   *   res *)
 
 let check_entail_exact_wrapper prog ante conseq =
   Debug.no_2 "check_entail_exact_wrapper" pr_f pr_f
@@ -749,32 +749,45 @@ let find_instantiate_var goal var =
 let choose_rule_return goal =
   (* if check_head_allocate_wrapper goal then []
    * else *)
-    let post = goal.gl_post_cond in
-    let pre = goal.gl_pre_cond in
-    let post_vars = post |> get_node_vars in
-    let all_vars = goal.gl_vars in
-    let check_return res_var r_var =
-      let n_pf = CP.mkEqVar res_var r_var no_pos in
-      let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-      let () = x_tinfo_hp (add_str "post" pr_f) post no_pos in
-      let ent_check, _ = check_entail_wrapper goal.gl_prog n_pre post in
-      ent_check in
-    if List.length post_vars = 1 then
-      let p_var = List.hd post_vars in
-      if CP.is_res_sv p_var then
-        let pre = goal.gl_pre_cond in
-        let pre_vars = pre |> get_node_vars
-                       |> List.filter (fun x -> CP.mem x all_vars && not(CP.is_res_sv x)) in
-        let pre_vars = List.filter (check_return p_var) pre_vars in
-        let aux pre_var =
-          let rule = RlReturn {
-              r_exp = CP.mkVar pre_var no_pos;
-              r_checked = true;
-            } in
-          [rule] in
-        pre_vars |> List.map aux |> List.concat
-      else []
-    else []
+  let post = goal.gl_post_cond in
+  let pre = goal.gl_pre_cond in
+  let post_vars = post |> get_node_vars in
+  let all_vars = goal.gl_vars in
+  let check_return res_var r_var =
+    let n_pf = CP.mkEqVar res_var r_var no_pos in
+    let n_pre = CF.add_pure_formula_to_formula n_pf pre in
+    let () = x_tinfo_hp (add_str "post" pr_f) post no_pos in
+    let ent_check = check_entail_exact_wrapper goal.gl_prog n_pre post in
+    ent_check in
+  let aux pre_var =
+    let rule = RlReturn {
+        r_exp = CP.mkVar pre_var no_pos;
+        r_checked = true;
+      } in
+    [rule] in
+  let aux_return pre post =
+    let pre_vars = pre |> get_heap_variables in
+    let post_vars = post |> get_heap_variables in
+    let res_vars = post_vars |> List.filter CP.is_res_sv in
+    if res_vars != [] then
+      let res_var = res_vars |> List.hd in
+      let pre_vars = pre_vars |> List.filter (fun x -> not(CP.mem x post_vars)) in
+      let pre_vars = pre_vars |> List.filter (fun x -> CP.mem x all_vars) in
+      let () = x_binfo_hp (add_str "pre_vars" pr_vars) pre_vars no_pos in
+      let pre_vars = pre_vars |> List.filter (check_return res_var) in
+      pre_vars |> List.map aux |> List.concat
+    else [] in
+  aux_return pre post
+  (* if List.length post_vars = 1 then
+   *   let p_var = List.hd post_vars in
+   *   if CP.is_res_sv p_var then
+   *     let pre = goal.gl_pre_cond in
+   *     let pre_vars = pre |> get_node_vars
+   *                    |> List.filter (fun x -> CP.mem x all_vars && not(CP.is_res_sv x)) in
+   *     let pre_vars = List.filter (check_return p_var) pre_vars in
+   *     pre_vars |> List.map aux |> List.concat
+   *   else []
+   * else [] *)
 
 let choose_rule_allocate_return goal : rule list =
   let prog = goal.gl_prog in
