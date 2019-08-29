@@ -840,7 +840,7 @@ let solve_entailments_one prog entails =
   let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
-  let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 10)
+  let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 20)
       sb_prog sb_ents in
   let duration = get_time () -. start_time in
   let () = Syn.inference_time := (!Syn.inference_time) +. duration in
@@ -1315,6 +1315,7 @@ let rec heap_entail_after_sat_struc (prog:CA.prog_decl)
           let var_decls = var_decls |> List.filter (fun x -> not(CP.mem_svl x n_args))
                           |> List.map CP.to_primed in
           let n_args = n_args @ var_decls |> CP.remove_dups_svl in
+          (* let n_args = n_args @ !Syn.syn_ref_vars in *)
           let n_args = n_args |> CP.remove_dups_svl in
           let () = x_tinfo_hp (add_str "n_args" pr_vars) n_args no_pos in
           let n_pred_f = Syn.create_spec_pred n_args pred_name in
@@ -1350,16 +1351,17 @@ and hentail_after_sat_ebase prog ctx es bf =
     let ante_hps = Syn.check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps != [] then
       let ante = es.CF.es_formula |> Syn.remove_exists in
+      (* let ante = ante |> Syn.rename_primed_vars in *)
       let pure_ante = CF.get_pure ante |> Syn.remove_exists_pf in
       let ante_wo_pred = Syn.rm_hp_formula ante in
       let () = Syn.syn_pre := Some ante in
-      (* let ante_vars = ante |> CF.fv
-       *                 |> List.filter (fun x ->
-       *                     Syn.is_int_var x || Syn.is_node_var x) in *)
-      let ante_vars = !Syn.r_pre_vars
+      let ante_vars = ante |> CF.fv
                       |> List.filter (fun x ->
                           Syn.is_int_var x || Syn.is_node_var x) in
-      let () = x_binfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
+      (* let ante_vars = !Syn.r_pre_vars
+       *                 |> List.filter (fun x ->
+       *                     Syn.is_int_var x || Syn.is_node_var x) in *)
+      let () = x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
       let pred_name = List.find (fun x -> is_substr "P" x) conseq_hps in
       let pred_name = "N_" ^ pred_name in
       let var_decls =
@@ -1396,13 +1398,15 @@ and hentail_after_sat_ebase prog ctx es bf =
       let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
       let vars = vars @ exists_vars |> List.filter filter_var in
       let conseq = bf.CF.formula_struc_base in
-      x_binfo_hp (add_str "conseq" pr_formula) conseq no_pos;
+      let () = x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos in
       let conseq = Syn.add_exists_vars conseq exists_vars in
+      (* let conseq = conseq |> Syn.rename_primed_vars in *)
       let n_es, n_conseq = Syn.create_residue vars prog conseq in
-      let () = x_binfo_hp (add_str "n_es" pr_formula) n_es no_pos in
+      let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
       let pure_ante = ante |> CF.get_pure in
       (* let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in *)
       let n_conseq, n_es = if !check_post then
+          (* let n_conseq = Syn.rename_primed_vars n_conseq in *)
           CF.add_pure_formula_to_formula pure_ante n_conseq,
           CF.add_pure_formula_to_formula pure_ante n_es
         else Syn.add_formula_to_formula ante_wo_pred n_conseq,

@@ -43,7 +43,7 @@ void flatten(node2 x)
 		x.left = null;
 		x.right = tmp;
 		if (tmp != null)
-    //   tmp.left = x;
+    // tmp.left = x;
     tmp.right = x;
 	}
 }

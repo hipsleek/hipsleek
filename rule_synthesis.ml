@@ -223,16 +223,16 @@ let check_entail_exact_sleek prog ante conseq =
 let check_entail_exact_wrapper prog ante conseq =
   let ante = rm_emp_formula ante in
   let conseq = rm_emp_formula conseq in
-  (* if contains_lseg prog then *)
+  if contains_lseg prog then
     SB.check_entail_exact prog ante conseq
-  (* else
-   *   let start = get_time () in
-   *   let res = check_entail_exact_sleek prog ante conseq in
-   *   let duration = get_time () -. start in
-   *   let () = if duration > 1.0 then
-   *       let () = x_tinfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos in
-   *       x_tinfo_hp (add_str "duration" string_of_float) duration no_pos in
-   *   res *)
+  else
+    let start = get_time () in
+    let res = check_entail_exact_sleek prog ante conseq in
+    let duration = get_time () -. start in
+    let () = if duration > 1.0 then
+        let () = x_tinfo_hp (add_str "ent" pr_ent) (ante, conseq) no_pos in
+        x_tinfo_hp (add_str "duration" string_of_float) duration no_pos in
+    res
 
 let check_entail_exact_wrapper prog ante conseq =
   Debug.no_2 "check_entail_exact_wrapper" pr_f pr_f
@@ -674,9 +674,10 @@ let choose_rule_numeric_end goal =
   let vars_lhs = List.filter (fun x -> CP.mem x vars || CP.is_res_sv x)
       post_vars in
   let vars_lhs = List.filter (fun x -> CP.mem x pre_vars |> negate) vars_lhs in
-  let () = x_tinfo_hp (add_str "vars_lhs" pr_vars) vars_lhs no_pos in
+  let () = x_binfo_hp (add_str "vars_lhs" pr_vars) vars_lhs no_pos in
   let rec vars2exp vars = match vars with
     | [] -> CP.mkIConst 0 no_pos
+    | [h] -> CP.Var (h, no_pos)
     | h::tail ->
       let e2 = vars2exp tail in
       CP.Add ((CP.Var (h, no_pos)), e2, no_pos) in
@@ -701,7 +702,27 @@ let choose_rule_numeric_end goal =
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
     other_vars |> process_list (aux_pairs cur_var) in
-  vars_lhs |> process_list (create_templ vars)
+  let list1 = vars_lhs |> process_list (create_templ vars) in
+  let aux_list_vars vars_lhs =
+    let res_vars = vars_lhs |> List.filter CP.is_res_sv in
+    if res_vars != [] then
+      let res_var = res_vars |> List.hd in
+      let rhs_vars = vars |> List.filter (fun x -> CP.eq_sv x res_var |> negate) in
+      if List.length rhs_vars >= 2 then
+        let rhs_exp = vars2exp rhs_vars in
+        let rhs_one = CP.Add (rhs_exp, CP.mkIConst 1 no_pos, no_pos) in
+        let added_pf = CP.mkEqExp (CP.Var (res_var, no_pos)) rhs_one no_pos in
+        let n_pre = CF.add_pure_formula_to_formula added_pf pre in
+        if check_entail_exact_wrapper goal.gl_prog n_pre post then
+          let rule = RlReturn { r_exp = rhs_one;
+                                r_checked = true} in
+          [rule]
+        else []
+      else []
+    else [] in
+  if list1 = [] then
+    aux_list_vars vars_lhs
+  else list1
 
 let choose_rule_numeric goal =
   Debug.no_1 "choose_rule_numeric" pr_goal pr_rules
@@ -1446,7 +1467,6 @@ let choose_all_rules rs goal =
   let rs = rs @ (choose_rule_frame_pred goal) in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_fwrite goal) in
   let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ (choose_rule_frame_data goal) in
   let rs = rs @ (choose_rule_allocate goal) in
@@ -1488,6 +1508,7 @@ let choose_synthesis_rules goal : rule list =
       let _ = choose_rule_allocate_return goal |> raise_rules in
       let _ = choose_rule_numeric goal |> raise_rules in
       let _ = choose_rule_heap_assign goal |> raise_rules in
+      let _ = choose_rule_fwrite goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
       []
     with ERules rs -> rs in

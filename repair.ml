@@ -190,7 +190,10 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let res_vars = Syn.get_pre_post specs |> List.map snd |> List.map CF.fv
                  |> List.concat |> List.filter CP.is_res_sv
                  |> CP.remove_dups_svl in
+  (* let ref_vars = cproc.C.proc_by_name_params |> List.map CP.to_primed in *)
+  (* let () = x_binfo_hp (add_str "ref_vars" pr_vars) ref_vars no_pos in *)
   let () = x_tinfo_hp (add_str "res_vars" pr_vars) res_vars no_pos in
+  (* let () = Syn.syn_ref_vars := ref_vars in *)
   let () = Syn.syn_res_vars := res_vars in
   let args = cproc.C.proc_args in
   let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in

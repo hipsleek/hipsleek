@@ -66,6 +66,7 @@ let tmpl_proc_name = ref (None: string option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
 let syn_res_vars = ref ([] : CP.spec_var list)
+let syn_ref_vars = ref ([] : CP.spec_var list)
 
 (*********************************************************************
  * Data structures
@@ -487,6 +488,26 @@ let remove_exists_pf pf =
   Debug.no_1 "remove_exists_pf" pr_pf pr_pf
     (fun _ -> remove_exists_pf pf) pf
 
+let mk_pure_form_from_eq_pairs eq_pairs =
+  let aux (fst, snd) =
+    CP.mkEqVar fst snd no_pos in
+  let eq_pairs = eq_pairs |> List.map aux in
+  eq_pairs |> CP.join_conjunctions
+
+let mk_pure_form_from_eq_pairs eq_pairs =
+  Debug.no_1 "mk_pure_form_from_eq_pairs" pr_substs pr_pf
+    (fun _ -> mk_pure_form_from_eq_pairs eq_pairs) eq_pairs
+
+let rename_primed_vars formula =
+  let primed_vars = formula |> CF.fv |> List.filter CP.is_primed in
+  let n_vars = primed_vars |> List.map CP.fresh_spec_var in
+  let pairs = List.combine primed_vars n_vars in
+  let unprimed_vars = primed_vars |> List.map CP.to_unprimed in
+  let eq_pairs = List.combine n_vars unprimed_vars in
+  let n_pf = mk_pure_form_from_eq_pairs eq_pairs in
+  let n_f = formula |> CF.subst pairs in
+  CF.add_pure_formula_to_formula n_pf n_f
+
 let remove_exists_vars_pf vars pf =
   let rec aux pf = match pf with
     | CP.Exists (var, exists_f, _, _) ->
@@ -618,16 +639,6 @@ let rec elim_idents (f:CF.formula) = match f with
 let elim_idents formula =
   Debug.no_1 "elim_idents" pr_f pr_f
     (fun _ -> elim_idents formula) formula
-
-let mk_pure_form_from_eq_pairs eq_pairs =
-  let aux (fst, snd) =
-    CP.mkEqVar fst snd no_pos in
-  let eq_pairs = eq_pairs |> List.map aux in
-  eq_pairs |> CP.join_conjunctions
-
-let mk_pure_form_from_eq_pairs eq_pairs =
-  Debug.no_1 "mk_pure_form_from_eq_pairs" pr_substs pr_pf
-    (fun _ -> mk_pure_form_from_eq_pairs eq_pairs) eq_pairs
 
 let get_equality_pairs (formula: CP.formula) =
   let aux_pf (pf:CP.p_formula) = match pf with
@@ -1258,7 +1269,7 @@ let create_spec_pred vars pred_name =
       } in
       let () = unk_hps := hp_decl::!unk_hps in
       hp_decl in
-  let () = x_binfo_hp (add_str "hp_decl" pr_hp) hp_decl no_pos in
+  let () = x_tinfo_hp (add_str "hp_decl" pr_hp) hp_decl no_pos in
   let hrel = CF.HRel (hl_name, args, no_pos) in
   let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
   hrel_f
@@ -2943,8 +2954,9 @@ let compare_rule_post_assign_vs_other r1 r2 = match r2 with
 let compare_rule_fread_vs_frame_pred r1 r2 =
   let frame_var = r2.rfp_rhs in
   let fread_var = r1.rfr_value in
-  if CP.eq_sv frame_var fread_var then PriLow
-  else PriHigh
+  (* if CP.eq_sv frame_var fread_var then PriLow
+   * else PriHigh *)
+  PriHigh
 
 let compare_rule_fread_vs_other r1 r2 = match r2 with
   | RlSkip | RlReturn _ -> PriLow
@@ -3013,6 +3025,7 @@ let is_end_rule rule =
   | RlSkip | RlReturn _ -> true
   | RlAllocate rc -> rc.ra_end
   | RlAssign rc -> rc.ra_numeric
+  | RlFWrite rc -> true
   | _ -> false
 
 let is_generate_code_rule rule = match rule with
@@ -3071,7 +3084,7 @@ let check_trace_consistence trace =
 
 let length_of_trace trace =
   let is_simplify_rule rule = match rule with
-    (* | RlExistsRight _ *)
+    | RlFRead _
     | RlUnfoldPre _ | RlUnfoldPost _
     | RlFrameData _ | RlFramePred _ -> true
     | _ -> false in
@@ -3093,6 +3106,8 @@ let reorder_rules goal rules =
  *********************************************************************)
 
 let mk_goal cprog pre post vars =
+  (* let primed_vars = vars |> List.map CP.to_primed in
+   * let vars = vars @ primed_vars |> CP.remove_dups_svl in *)
   let () = allocate_list := [] in
   { gl_prog = cprog;
     gl_start_time = get_time ();
@@ -3104,6 +3119,8 @@ let mk_goal cprog pre post vars =
     gl_vars = vars;  }
 
 let mk_goal_w_procs cprog proc_decls pre post vars =
+  (* let primed_vars = vars |> List.map CP.to_primed in
+   * let vars = vars @ primed_vars |> CP.remove_dups_svl in *)
   let () = fail_branch_num := 0 in
   let pre = unprime_formula pre in
   let post = unprime_formula post in
@@ -3288,7 +3305,7 @@ let free_entail_state prog (ent_state:CF.entail_state) (typ, name) =
 
 let free_ctx prog (ctx: CF.list_failesc_context) (typ, name) =
   let () = x_tinfo_hp (add_str "ctx" pr_failesc_list) ctx no_pos in
-  let () = x_binfo_hp (add_str "var" pr_id) name no_pos in
+  let () = x_tinfo_hp (add_str "var" pr_id) name no_pos in
   let rec aux_contex (ctx: CF.context) = match ctx with
     | CF.Ctx ent_state ->
       let n_ent, fr = free_entail_state prog ent_state (typ, name) in

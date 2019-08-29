@@ -46,11 +46,11 @@ void flatten(node2 x)
 	requires x::tree<m, n> 
 	ensures (exists q : x::dll<q, m> & q=null);
 {
-	node2 tmp;
 	if (x != null)	{
 		flatten(x.left);
 		flatten(x.right);
 		tmp = append(x.left, x.right);
+   	node2 tmp;
 		x.left = null;
 		x.right = tmp;
 		if (tmp != null)		tmp.left = x;

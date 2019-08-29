@@ -2306,12 +2306,12 @@ and heap_entail_struc_list_failesc_context_x (prog : prog_decl) (is_folding :
   bool) (has_post: bool)(cl : list_failesc_context) (conseq) (tid: CP.spec_var
   option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
     (pid:control_path_id) f to_string : (list_failesc_context * proof) =
-  let () = if !enable_repair || !infestor then
-      let cl_formula = formula_of_list_failesc_context cl in
-      let cl_vars = CF.fv cl_formula in
-      let e_vars = CF.get_exists cl_formula in
-      Synthesis.r_pre_vars := (cl_vars @ e_vars)
-    else () in
+  (* let () = if !enable_repair || !infestor then
+   *     let cl_formula = formula_of_list_failesc_context cl in
+   *     let cl_vars = CF.fv cl_formula in
+   *     let e_vars = CF.get_exists cl_formula in
+   *     Synthesis.r_pre_vars := (cl_vars @ e_vars)
+   *   else () in *)
   let l = List.map (fun c-> x_add heap_entail_struc_failesc_context prog
                        is_folding has_post c conseq tid delayed_f join_id pos
                        pid f to_string) cl in

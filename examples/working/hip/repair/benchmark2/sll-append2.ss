@@ -1,0 +1,19 @@
+data node {
+	node next;
+}
+
+ll<n> == self = null & n = 0
+      or self::node<q> * q::ll<n-1> & n > 0
+      inv n >= 0;
+
+void append(node x, node y)
+  requires x::ll<n1> * y::ll<n2> & x!=null & n2 >= 0 & n1 > 0
+  ensures exists k: x::ll<k> & k = n1 + n2 & k > 0 & n2 >= 0 & n1 > 0;
+{
+	if (x.next == null){
+       x.next = y;
+   } else {
+       append(x.next, y.next);
+       // append(x, y);
+    }
+}

@@ -1,0 +1,31 @@
+data node {
+	int val; 
+	node next;	
+}
+
+ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> & n > 0
+	inv n >= 0;
+
+sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
+	or (exists qs,ql, qmin, q:
+  self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin & n > 0);
+
+node insert2(node x, node vn)
+	requires x::sll<n, sm, lg> *  vn::node<v, _>
+	ensures res::sll<n+1, mi, ma> & mi=min(v, sm) & ma=max(v, lg);
+{
+	if (x==null) {
+		vn.next = null;
+    return vn;
+	}
+	else if (vn.val <= x.val) {
+		vn.next.next = x.next;
+    // vn.next = x;
+		return vn;
+	}
+	else {
+		x.next = insert2(x.next, vn);
+		return x;
+	}
+}

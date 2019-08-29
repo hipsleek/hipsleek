@@ -1,31 +1,23 @@
 data node {
-  node next;	
+	int val; 
+	node next;	
 }
 
-lseg<p,n> == self = p & n = 0 
-or self::node<u> * u::lseg<p,n-1> & n > 0;
+ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0;
 
-node reverse(node x)
-case {
-   x= null -> ensures res = null;
-   x != null -> requires x::lseg<y, n> * y::node<null>
-   ensures y::lseg<x, n> * x::node<null> & res = y;
-}
-// requires x::lseg<y, n> * y::node<null>
-// ensures y::lseg<x, n> * x::node<null> & res = y;
+void reverse(node@R xs, node@R ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
 {
-  if (x==null){
-     return x.next;
-   }
-  else if (x.next == null){
-     return x;
-  }
-  else {
-     node k;
-     k = reverse(x.next);
-     x.next.next = x;
-     x.next = null;
-     // return k.next;
-     return k;
-  }
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp.next;
+    //xs =tmp;
+		reverse(xs, ys);
+	}
 }

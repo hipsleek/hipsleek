@@ -82,7 +82,11 @@ let process_rule_fwrite goal rc =
   let n_pre = aux_fun pre var field rhs data_decls in
   let n_goal = {goal with gl_pre_cond = n_pre;
                           gl_trace = (RlFWrite rc)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlFWrite rc) [n_goal]
+  let ent, _ = check_entail_wrapper goal.gl_prog n_pre goal.gl_post_cond in
+  if ent then mk_derivation_success goal (RlFWrite rc)
+  else
+    mk_derivation_fail goal (RlFWrite rc)
+  (* mk_derivation_subgoals goal (RlFWrite rc) [n_goal] *)
 
 let process_rule_fread goal rc =
   match rc.rfr_lookahead with

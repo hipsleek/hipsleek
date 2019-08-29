@@ -1,30 +1,83 @@
 data node2 {
+	int val;
 	node2 left;
 	node2 right; 
 }.
 
 pred tree1<m> == self = null & m = 0 
-	or self::node2<p, q> * p::tree1<m1> * q::tree1<m2> & m = 1 + m1 + m2 
+	or self::node2<_, p, q> * p::tree1<m1> * q::tree1<m2> & m = 1 + m1 + m2 
 	inv m >= 0.
 
 int count(node2 z)
 	requires z::tree1<m>
-	ensures z::tree1<m> & res = m & res >= 0;.
+	ensures z::tree1<m> & res = m;.
 
 // synthesize [node2 z,int cleft,int cright]
-// z::tree1<m>@M&v_bool_17_4425 & z=z & z=null
+// z::node2<Anon_4450,p_4451,q_4453> * p_4451::tree1<f_r_4480> * 
+// q_4453::tree1<m_4466> &
+// (1+m_4466)<=m & 0<=m_4466 & 1+m_4457+m_4466=m & m=1+cright+m_4457 & 
+// m=1+cleft+cright & 1+f_r_4480+m_4466=m
 // ~>
-//  emp&z=null & (-1*res)<=0 & m=res.
+// (exists f_r_4481,Anon_613,p_614,q_615,m2_616:
+// z::node2<Anon_613,p_614,q_615> * p_614::tree1<f_r_4481> *
+//         q_615::tree1<m2_616>&
+// res=m & cright=m_4466 & 1+m_4457+m_4466=res & cleft=m_4457 & 
+// 1+f_r_4481+m2_616=m).
 
-// synthesize [node2 z]
-//  z::tree1<m>@M&v_bool_17_4407 & z=z & z=null
-// ~>
-//  emp&z=null & (-1*res)<=0 & m=res.
+
+// synthesize [node2 z,int cleft,int cright]
+checkentail
+z::node2<an76,p45,p47> * p45::tree1<cleft> * 
+p47::tree1<cright>& res = cright + 1 &
+m = max(cleft,cright)  + 1 & 0<=cleft & 0<=cright & cleft<=cright
+|-
+ (exists m78,m80:
+ p45::tree1<m78> *p47::tree1<m80>&
+m=1+max(m78,m80) & res=m & 1+max_2078=res).
 
 
-synthesize [node2 z]
-
- z::tree1<m> & z!=null
+synthesize [node2 z,int cleft,int cright]
+ z::node2<Anon_4544,p_4545,q_4547> * p_4545::tree1<m1_4546> * 
+ q_4547::tree1<cright>&
+-1+m=max(m1_4546,cright) & 0<=m1_4546 & 0<=cright & m1_4546<=cright & 
+m1_4546=m_4554 & cleft=m1_4546 & cright=m_4569
 ~>
- z::tree1<m>&m=res.m
+ (exists Anon_776,p_777,m1_778,q_779,m2_780,
+max_4630: z::node2<Anon_776,p_777,q_779> * p_777::tree1<m1_778> * 
+          q_779::tree1<m2_780>&
+m=1+max_4630 & max_4630=max(m1_778,m2_780) & res=m & 1+max_2078=res).
 
+
+
+z'->node2{Anon_4544,p_4545,q_4547} * tree1(p_4545,m1_4546) *
+tree1(q_4547,m2_4548) & m-1=max(m1_4546,m2_4548) & -m1_4546<=0 & -m2_4548<=0 &
+m1_4546-m2_4548<=0 & z=z' & m1_4546=m_4554 & cleft'=m1_4546 & m2_4548=m_4569 &
+cright'=m2_4548
+
+(exists Anon_776,p_777,m1_778,q_779,m2_780.
+z'->node2{Anon_776,p_777,q_779} * tree1(p_777,m1_778) * tree1(q_779,m2_780) &
+m=max(m1_778,m2_780)+1 & z=z' & res=m & max_2078-res+1=0 & m1_4546=m_4554 &
+cleft'=m1_4546 & m2_4548=m_4569 & cright'=m2_4548)
+--------------
+
+
+pred
+N_P1(Anon_4544,p_4545,q_4547,m,z',z,m1_4546,m_4554,m2_4548,m_4569,cleft',cright')
+:= [[ tree1(p_4545,m1_4546) * tree1(q_4547,m2_4548) & m-1=max(m1_4546,m2_4548) &
+-m1_4546<=0 & -m2_4548<=0 & m1_4546-m2_4548<=0 & z=z' & m1_4546=m_4554 &
+cleft'=m1_4546 & m2_4548=m_4569 & cright'=m2_4548 ]]
+
+pred
+N_Q1(Anon_4544,p_4545,q_4547,m,max_2078,z',z,m1_4546,m_4554,m2_4548,m_4569,res,cleft',cright')
+:= [[ (exists m1_778,m2_780. tree1(p_4545,m1_778) * tree1(q_4547,m2_780) &
+m=max(m1_778,m2_780)+1 & z=z' & res=m & max_2078-res+1=0 & m1_4546=m_4554 &
+cleft'=m1_4546 & m2_4548=m_4569 & cright'=m2_4548) ]] 
+
+
+!!! **songbird.ml#841:sb_ents:  # z'->node2{Anon_4544,p_4545,q_4547} * tree1(p_4545,m_4554) * tree1(q_4547,m_4569) & !(v_bool_24_4517') & m=max_2078+1 & max_2078=max(m1_4546,m2_4548) & !(v_bool_17_4518') & z'!=nil & z'=z & m_4554=m1_4546 & 0<=m1_4546 & cleft'=m_4554 & m_4569=m2_4548 & 0<=m2_4548 & cright'=m_4569 & cleft'<=cright' |- N_P1(Anon_4544,p_4545,q_4547,m,z',z,m1_4546,m_4554,m2_4548,m_4569,cleft',cright') * T1(Anon_4544,p_4545,q_4547,m,z',z,m1_4546,m_4554,m2_4548,m_4569,cleft',cright') & !(v_bool_24_4517') & m=max_2078+1 & max_2078=max(m1_4546,m2_4548) & !(v_bool_17_4518') & z'!=nil & z'=z & m_4554=m1_4546 & 0<=m1_4546 & cleft'=m_4554 & m_4569=m2_4548 & 0<=m2_4548 & cright'=m_4569 & cleft'<=cright'
+  # N_Q1(Anon_4544,p_4545,q_4547,m,max_2078,z',z,m1_4546,m_4554,m2_4548,m_4569,res,m_4554,m_4569) * T1(Anon_4544,p_4545,q_4547,m,z',z,m1_4546,m_4554,m2_4548,m_4569,m_4554,m_4569) & !(v_bool_24_4517') & m=max_2078+1 & max_2078=max(m1_4546,m2_4548) & !(v_bool_17_4518') & z'!=nil & z'=z & m_4554=m1_4546 & 0<=m1_4546 & m_4569=m2_4548 & 0<=m2_4548 & m_4554<=m_4569 |- (exists m_2139. tree1(z,m_2139) & !(v_bool_24_4517') & m=max_2078+1 & max_2078=max(m1_4546,m2_4548) & !(v_bool_17_4518') & z'!=nil & z'=z & m_4554=m1_4546 & 0<=m1_4546 & m_4569=m2_4548 & 0<=m2_4548 & m_4554<=m_4569 & res=m & m_2139=m)
+
+
+!!! **songbird.ml#851:vdefns:  # pred T1(Anon_4544,p_4545,q_4547,m,z',z,m1_4546,m_4554,m2_4548,m_4569,cleft',cright') := [[ emp & z=z' & m1_4546=m_4554 & cleft'=m1_4546 & m2_4548=m_4569 & cright'=m2_4548 ]]
+  # pred N_P1(Anon_4544,p_4545,q_4547,m,z',z,m1_4546,m_4554,m2_4548,m_4569,cleft',cright') := [[ z'->node2{Anon_4544,p_4545,q_4547} * tree1(p_4545,m1_4546) * tree1(q_4547,m2_4548) & m-1=max(m1_4546,m2_4548) & -m1_4546<=0 & -m2_4548<=0 & m1_4546-m2_4548<=0 & z=z' & m1_4546=m_4554 & cleft'=m1_4546 & m2_4548=m_4569 & cright'=m2_4548 ]]
+  # pred N_Q1(Anon_4544,p_4545,q_4547,m,max_2078,z',z,m1_4546,m_4554,m2_4548,m_4569,res,cleft',cright') := [[ (exists Anon_776,p_777,m1_778,q_779,m2_780. z'->node2{Anon_776,p_777,q_779} * tree1(p_777,m1_778) * tree1(q_779,m2_780) & m=max(m1_778,m2_780)+1 & z=z' & res=m & max_2078-res+1=0 & m1_4546=m_4554 & cleft'=m1_4546 & m2_4548=m_4569 & cright'=m2_4548) ]]

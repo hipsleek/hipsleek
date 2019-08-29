@@ -33,9 +33,9 @@ module Imm = Immutils
 (*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
 (*   split_phase 0 h *)
 
-let isAccs = CP.isAccs 
-let isLend = CP.isLend 
-let isImm = CP.isImm 
+let isAccs = CP.isAccs
+let isLend = CP.isLend
+let isImm = CP.isImm
 let isMutable = CP.isMutable
 
 let defCImm = ref (CP.ConstAnn Mutable)
