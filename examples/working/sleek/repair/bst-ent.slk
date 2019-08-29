@@ -1,0 +1,20 @@
+data node2 {
+	int val;
+	node2 left;
+	node2 right; 
+}.
+
+pred bst <sm, lg> == self = null & sm <= lg
+	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst< qs, lg> & pl <= v & qs >= v)
+	inv sm <= lg.
+
+
+checkentail
+
+x!=null & v_1977<=qs_1976 & pl_1975<=v_1977 & a<=v_1977 & qs_1976<=lg & 
+sm<=pl_1975 & rs0!=null & mi=min(sm,a) & ma=max(pl_1975,a)
+|-
+pl_1975<=v_1977 & v_1977<=qs_1976 &
+x!=null & a<=v_1977 & 
+sm<=pl_1975 & rs0!=null & 
+mi=min(sm,a) & ma=max(pl_1975,a) & left_28_2007=p_1978.

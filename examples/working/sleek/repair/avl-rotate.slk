@@ -1,0 +1,24 @@
+data node {
+	int height;
+	node left;
+	node right;
+}.
+
+pred avl<size, height> == self = null & size = 0 & height = 0 
+	or self::node<height, p, q> * p::avl<size1, height1> * q::avl<size2, height2>
+  & size = 1+size1+size2
+  & height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1 
+	inv size >= 0 & height >= 0.
+
+int height(node x)
+	requires x::avl<m, n>
+	ensures x::avl<m, n> & res = n;.
+
+synthesize [node l,node rl,node rr,int h,node tmp]
+ tmp::node<flted_25_4744,l,rl> * l::avl<m,f_r_4765> * 
+ rl::avl<rlm,f_r_4766> * rr::avl<rrm,flted_25_4744>&
+1+ln_4743=flted_25_4744 & ln=ln_4743 & 1+ln=h & 1+f_r_4765=flted_25_4744 & 
+1+f_r_4766=flted_25_4744
+~>
+ (exists f_r_4767,f_r_4768: res::avl<f_r_4767,f_r_4768>&
+f_r_4767=2+m+rlm+rrm & f_r_4768=1+flted_25_4744).

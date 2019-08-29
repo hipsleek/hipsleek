@@ -1,0 +1,26 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
+	or (exists qs,ql, qmin, q:
+  self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin & n > 0)
+  inv n >= 0.
+
+node insert2(node x, node vn)
+	requires x::sll<n, sm, lg> *  vn::node<v, _>
+	ensures (exists k: res::sll<k, mi, ma> & k = n + 1 & mi=min(v, sm) & ma=max(v, lg));.
+
+synthesize [node x,node vn]
+vn::node<v,an12> * x::node<qm56,q57> * q57::sll<flt53,qs54,ql55> &
+qm56<=qs54 & ql55<=lg & sm<=qm56 & 0<=flt53 & v<=qm56 & n=1+flt53
+~>
+(exists qmin_67,q_68,qs_170,ql_171,qmin_172,q_173,qs_65,ql_66,max_4643,
+min_4644: q_68::node<qmin_172,q_173> * vn::node<qmin_67,q_68> * 
+          q_173::sll<flt53,qs_170,ql_171>&
+qmin_67<=qs_65 & ql_66<=max_4643 & max_4643=max(v,lg) & ql_171<=ql_66 & 
+qs_65<=qmin_172 & qmin_172<=qs_170 & min_4644<=qmin_67 & min_4644=min(v,sm)).
+
+
+// vn.next = x;

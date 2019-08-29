@@ -1,0 +1,43 @@
+data node {
+	int height;
+	node left;
+	node right;
+}.
+
+pred avl<size, height> == self = null & size = 0 & height = 0 
+	or self::node<height, p, q> * p::avl<size1, height1> * q::avl<size2, height2>
+  & size = 1+size1+size2
+  & height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1 
+	inv size >= 0 & height >= 0.
+
+checkentail
+
+tmp1::node<f_r_9232,a,b> * tmp2::node<f_r_9233,c,d> * a::avl<m,f_r_9234> * 
+ b::avl<m_9161,n_9162> * c::avl<m_9180,n_9181> * d::avl<m_9188,f_r_9235>&
+h3=h1+h2+1 & n_9162<=(1+n_9181) & n_9181<=(1+n_9162) & an=max(n_9162,
+n_9181) & n=max(n_9162,n_9181) & v_int_44_9184=1+max_9238 & 
+max_9238=max(max_9237,n_9162) & max_9237=max(n_9162,n_9181) & 
+an_9157=max(n_9162,n_9181) & n_9189=max(n_9162,n_9181) & 
+v_int_49_8999=1+max_9240 & max_9240=max(n_9181,max_9239) & 
+max_9239=max(n_9162,n_9181) & h1=max(max_9241,n_9162) & max_9241=max(n_9162,
+n_9181) & h2=max(n_9181,max_9242) & max_9242=max(n_9162,n_9181) & 
+f_r_9232=1+max_9244 & max_9244=max(max_9243,n_9162) & max_9243=max(n_9162,
+n_9181) & f_r_9233=1+max_9246 & max_9246=max(n_9181,max_9245) & 
+max_9245=max(n_9162,n_9181) & f_r_9234=max_9247 & max_9247=max(n_9162,
+n_9181) & f_r_9235=max_9248 & max_9248=max(n_9162,n_9181)
+
+|-
+
+(exists f_r_128,height1_129,size2_130,height2_131,max_132,max_133,max_134,
+max_135,max_136,max_137,max_138,max_139,max_140,
+max_141: tmp1::avl<f_r_128,height1_129> * tmp2::avl<size2_130,height2_131>&
+0<=(1+max_132) & max_132=max(n_9162,n_9181) & 
+0<=(2+m+m_9161+m_9180+m_9188) & 1+max_133=max_134 & max_133=max(n_9162,
+n_9181) & max_134=max(height1_129,height2_131) & 
+height1_129<=(1+height2_131) & height2_131<=(1+height1_129) & h3=1+max_135 & 
+max_135=max(n_9162,n_9181) & v_int_44_9184=1+max_136 & max_136=max(max_137,
+n_9162) & max_137=max(n_9162,n_9181) & v_int_49_8999=1+max_138 & 
+max_138=max(n_9181,max_139) & max_139=max(n_9162,n_9181) & h1=max(max_140,
+n_9162) & max_140=max(n_9162,n_9181) & h2=max(n_9181,max_141) & 
+max_141=max(n_9162,n_9181) & f_r_128+size2_130=2+m+m_9161+m_9180+m_9188)
+

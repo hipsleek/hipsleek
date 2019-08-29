@@ -1,0 +1,24 @@
+data node {
+	node next;
+}.
+
+pred ll<n> == self = null & n = 0
+	or self::node<q> * q::ll<n-1> & n > 0.
+
+void append(node x, node y)
+  requires x::ll<n1> * y::ll<n2> & x!=null
+  ensures exists k: x::ll<k> & k = n1 + n2 & k > 0;.
+
+// append(x.next, y)
+// synthesize [node x,node y]
+// x::node<q83> * q83::ll<flt2> * y::ll<n2> &
+// 0<=flt2 & q83!=null & n1=1+flt2
+// ~>
+// (exists fr4,q26: x::node<q26> * q26::ll<fr4> & 0<=(flt2+n2) & fr4=flt2+n2).
+
+// x.next = y
+synthesize [node x,node y]
+ x::node<f_r_4425> * y::ll<n2>&
+q_4395=null & flted_6_4394=0 & n1=1 & f_r_4425=null
+~>
+ (exists q_25: x::node<q_25> * q_25::ll<n2> & 0<=n2).

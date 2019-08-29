@@ -1,0 +1,32 @@
+data node2 {
+  node2 prev;
+  node2 next;
+}.
+
+pred dll<p,n> == self = null & n = 0
+or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
+
+void delete(node2 x, int a)
+	requires x::dll<p, n> & n > a & a > 0
+	ensures exists k: x::dll<p, k> & k = n-1;.
+
+// synthesize [node2 x,int a,node2 tmp]
+// s92::node2<p91,fr22> * p91::node2<p_4667,s92>&
+// p=p_4667 & self_4668=p91 & x=p91 & q_4670=s92 & q_4694=null & 
+// flted_7_4693=0 & flted_7_4669=1 & n=2 & a=1 & fr22=null
+// ~>
+// (exists f_r_4823: p91::node2<p_4667,f_r_4823>&f_r_4823=null).
+
+// synthesize [node2 x,int a,node2 tmp]
+// x::dll<p,n> & a!=1 & 1<=a & (1+a)<=n
+// ~>
+// (exists fr67,q2, q44: q2::node2<x,q44> * x::node2<p,q2> * q44::dll<q2,fr67>&
+// 3+fr67=n).
+
+
+synthesize [node2 x,int a,node2 tmp, node2 f_r_4823]
+s92::node2<x,fr22> * x::node2<p67,s92> &
+p=p67 & self_4668=x & q_4670=s92 & q_4694=null & flted_7_4693=0 & 
+flt69=1 & n=2 & a=1 & fr22=null & f_r_4823=null
+~>
+x::node2<p67,f_r_4823>&f_r_4823=null.

@@ -1,0 +1,32 @@
+data node {
+	node next;	
+}.
+
+pred lseg<p,n> == self = p & n = 0 
+or self::node<u> * u::lseg<p,n-1> & n > 0
+ inv n >= 0.
+
+node reverse(node x)
+requires x::lseg<y, n> * y::node<nx2> & nx2 = null
+ensures exists nv: y::lseg<x, n> * x::node<nv> & res = y & nv = null;.
+
+
+// x.next.next = x;
+// synthesize [node x,node k, node x8]
+// x8::node<fr92> * k::lseg<x8,flt62>&
+// 0<=flt62 & n=1+flt62 & fr92=null & k != x8
+// ~>
+// (exists u78: k::node<u78> * u78::lseg<x,flt62>).
+
+// synthesize [node x,node k,node x8]
+//  k::node<u_85> * u_85::lseg<p_83,flted_6_84> * x8::node<fr92>&
+// 0<=flt62 & n=1+flt62 & fr92=null & k!=x8 & 1+flted_6_84=flt62 & 1<=flt62 & 
+// p_83=x8
+// ~>
+//  (exists u78_81: k::node<u78_81> * u78_81::lseg<x,flt62>).
+
+synthesize [node x,node k]
+x8::node<fr92> * x::node<x8> * k::lseg<x8,flt62> &
+0<=flt62 & n=1+flt62 & fr92=null
+~>
+(exists nxt15,u78: x::node<nxt15> * k::node<u78> * u78::lseg<x,flt62>).

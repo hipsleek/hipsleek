@@ -1,0 +1,28 @@
+data node2 {
+	int val;
+	node2 left;
+	node2 right; 
+}.
+
+pred bst <sm, lg> == self = null & sm <= lg
+	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst< qs, lg> & pl <= v & qs >= v & sm <= lg).
+
+/* insert a node in a bst */
+node2 insert(node2 x, int a)
+	requires x::bst<sm, lg> 
+	ensures res::bst<mi, ma> & res != null & mi = min(sm, a) & ma = max(lg, a);.
+
+synthesize [node2 x, int a, node2 tmp]
+
+tmp'::bst<sm,pl_1975> * q_1979::bst<qs_1976,lg> * 
+ x'::node2<v_1977,tmp',q_1979> & sm <= pl_1975 & qs_1976 <= lg &
+a=a' & x'=x & a'<=v_1977 & pl_1975<=v_1977 & v_1977<=qs_1976 & x!=null
+
+~>
+
+(exists v_node2_28_1924': q_1979::bst<qs_1976,lg> * 
+                           v_node2_28_1924'::bst<mi_2005,ma_2006> * 
+                           x'::node2<v_1977,v_node2_28_1924',q_1979>&
+pl_1975<=v_1977 & v_1977<=qs_1976 &
+x'!=null & a'<=v_1977 & 
+sm<=pl_1975 & v_node2_28_1924'!=null & mi_2005=min(sm,a') & ma_2006=max(pl_1975,a')).

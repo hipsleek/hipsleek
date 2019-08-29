@@ -1,0 +1,54 @@
+data node {
+	int height;
+	node left;
+	node right;
+}.
+
+pred avl<size, height> == self = null & size = 0 & height = 0 
+	or self::node<height, p, q> * p::avl<size1, height1> * q::avl<size2, height2>
+  & size = 1+size1+size2
+  & height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1 
+	inv size >= 0 & height >= 0.
+
+int height(node x)
+	requires x::avl<m, n>
+	ensures x::avl<m, n> & res = n;.
+
+int get_max(int a , int b)
+	requires true 
+	ensures res = max(a, b);.
+
+synthesize [node a,node b,node c,node d,int h,node tmp1,int h2,node tmp2,int h3]
+ tmp1::node<f_r_5089,a,b> * tmp2::node<f_r_5090,c,d> * a::avl<m,f_r_5091> * 
+ b::avl<m_5013,n_5014> * c::avl<m_5032,n_5033> * d::avl<m_5040,f_r_5092>&
+n_5014<=(1+n_5033) & n_5033<=(1+n_5014) & an=max(n_5014,n_5033) & 
+n=max(n_5014,n_5033) & v_int_44_5036=1+max_5096 & max_5096=max(max_5095,
+n_5014) & max_5095=max(n_5014,n_5033) & an_5009=max(n_5014,n_5033) & 
+n_5041=max(n_5014,n_5033) & v_int_49_5063=1+max_5098 & max_5098=max(n_5033,
+max_5097) & max_5097=max(n_5014,n_5033) & v_int_52_4863=max(max_5100,
+max_5102) & max_5100=max(max_5099,n_5014) & max_5099=max(n_5014,n_5033) & 
+max_5102=max(n_5033,max_5101) & max_5101=max(n_5014,n_5033) & h=max(max_5103,
+n_5014) & max_5103=max(n_5014,n_5033) & h2=max(n_5033,max_5104) & 
+max_5104=max(n_5014,n_5033) & h3=1+max_5109 & max_5109=max(max_5106,
+max_5108) & max_5106=max(max_5105,n_5014) & max_5105=max(n_5014,n_5033) & 
+max_5108=max(n_5033,max_5107) & max_5107=max(n_5014,n_5033) & 
+f_r_5089=1+max_5111 & max_5111=max(max_5110,n_5014) & max_5110=max(n_5014,
+n_5033) & f_r_5090=1+max_5113 & max_5113=max(n_5033,max_5112) & 
+max_5112=max(n_5014,n_5033) & f_r_5091=max_5114 & max_5114=max(n_5014,
+n_5033) & f_r_5092=max_5115 & max_5115=max(n_5014,n_5033)
+~>
+
+(exists f_r_5093,f_r_5094,max_5117,max_5116,max_5119,max_5118,max_5121,
+max_5120,max_5123,max_5122,max_5124,max_5125,max_5130,max_5127,max_5126,
+max_5129,max_5128,max_5131: res::avl<f_r_5093,f_r_5094>&
+v_int_44_5036=1+max_5117 & max_5117=max(max_5116,n_5014) & 
+max_5116=max(n_5014,n_5033) & v_int_49_5063=1+max_5119 & max_5119=max(n_5033,
+max_5118) & max_5118=max(n_5014,n_5033) & v_int_52_4863=max(max_5121,
+max_5123) & max_5121=max(max_5120,n_5014) & max_5120=max(n_5014,n_5033) & 
+max_5123=max(n_5033,max_5122) & max_5122=max(n_5014,n_5033) & h=max(max_5124,
+n_5014) & max_5124=max(n_5014,n_5033) & h2=max(n_5033,max_5125) & 
+max_5125=max(n_5014,n_5033) & h3=1+max_5130 & max_5130=max(max_5127,
+max_5129) & max_5127=max(max_5126,n_5014) & max_5126=max(n_5014,n_5033) & 
+max_5129=max(n_5033,max_5128) & max_5128=max(n_5014,n_5033) & 
+f_r_5093=3+m+m_5013+m_5032+m_5040 & f_r_5094=2+max_5131 & 
+max_5131=max(n_5014,n_5033)).

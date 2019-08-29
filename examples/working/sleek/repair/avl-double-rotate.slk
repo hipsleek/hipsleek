@@ -1,0 +1,53 @@
+data node {
+	int height;
+	node left;
+	node right;
+}.
+
+pred avl<size, height> == self = null & size = 0 & height = 0 
+	or self::node<height, p, q> * p::avl<size1, height1> * q::avl<size2, height2>
+  & size = 1+size1+size2
+  & height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1 
+	inv size >= 0 & height >= 0.
+
+int height(node x)
+	requires x::avl<m, n>
+	ensures x::avl<m, n> & res = n;.
+
+int get_max(int a , int b)
+	requires true 
+	ensures res = max(a, b);.
+
+// synthesize [node a,node b,node c,node d,int h1]
+// a::avl<am,f_r_4976> * b::avl<bm,bn> * c::avl<cm,cn> * d::avl<dm,f_r_4977> &
+// cn<=(1+bn) & bn<=(1+cn) & an_2304=max(bn,cn) & an=max(bn,cn) & 
+// f_r_4976=max_4981 & max_4981=max(bn,cn) & f_r_4977=max_4981
+// ~>
+//  (exists f_r_4980,m,n,m_4555,n_4556,height1_4557,size2_4558,height2_4559,
+// max_4982,
+// max_4984: a::avl<f_r_4980,height1_4557> * b::avl<size2_4558,height2_4559> * 
+//           c::avl<m,n> * d::avl<m_4555,n_4556>&
+// 0<=max_4982 & max_4982=max(n,n_4556) & 0<=(m+m_4555) & n<=(1+n_4556) & 
+// n_4556<=(1+n) & h1=max(height1_4557,height2_4559) & 0<=(1+max_4981) & 
+// 0<=(2+am+bm+cm+dm) & 1+max_4981=max_4984 & max_4984=max(1+h1,1+max_4982) & 
+// h1<=(1+max_4982) & max_4982<=(1+h1) & max_4981=max(h1,max_4982) & 
+// height2_4559<=(1+height1_4557) & height1_4557<=(1+height2_4559) & 
+// (m+m_4555)<=(am+bm+cm+dm) & 0<=h1 & f_r_4980+m+m_4555+size2_4558=am+bm+cm+dm).
+
+synthesize [node a,node b,node c,node d,int h1]
+ a::avl<am,f_r_4976> * b::avl<bm,bn> * c::avl<cm,cn> * d::avl<dm,f_r_4977>&
+cn<=(1+bn) & bn<=(1+cn) & an_2304=max(bn,cn) & an=max(bn,cn) & 
+f_r_4976=max_4981 & max_4981=max(bn,cn) & f_r_4977=max_4981
+~>
+ (exists f_r_4980,m,n,m_4535,n_4536,height1_4537,size2_4538,height2_4539,
+max_4982,
+max_4984: a::avl<f_r_4980,height1_4537> * b::avl<size2_4538,height2_4539> * 
+          c::avl<m,n> * d::avl<m_4535,n_4536>&
+0<=max_4982 & max_4982=max(n,n_4536) & 0<=(m+m_4535) & n<=(1+n_4536) & 
+n_4536<=(1+n) & h1=max(height1_4537,height2_4539) & 0<=(1+max_4981) & 
+0<=(2+am+bm+cm+dm) & 1+max_4981=max_4984 & max_4984=max(1+h1,1+max_4982) & 
+h1<=(1+max_4982) & max_4982<=(1+h1) & max_4981=max(h1,max_4982) & 
+height2_4539<=(1+height1_4537) & height1_4537<=(1+height2_4539) & 
+(m+m_4535)<=(am+bm+cm+dm) & 0<=h1 & f_r_4980+m+m_4535+size2_4538=am+bm+cm+dm).
+
+// h1 = get_max(height(a), height(b));

@@ -1,0 +1,19 @@
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0
+      or self::node<q> * q::ll<n-1>
+      inv n >= 0;
+
+void reverse(node@R xs, node@R ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;.
+
+synthesize [node xs,node ys,node tmp]
+xs::node<ys> * nxt1::ll<flt95> * ys::ll<m> &
+q_4396=nxt1 & ys=xs & xs_4403=xs & xs=nxt1 & 
+tmp=nxt1 & n=1+flt95
+~>
+(exists fr12,q_36: xs::node<q_36> * q_36::ll<fr12> &
+nxt1=null & 0<=(1+flt95+m) & fr12=flt95+m).

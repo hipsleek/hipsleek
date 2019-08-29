@@ -1,0 +1,20 @@
+data node2 {
+  int val;
+	node2 prev;
+	node2 next;	
+}.
+
+pred dll<p,n> == self = null & n = 0 
+  or (exists q: self::node2<_, p , q> * q::dll<self, n-1> & n > 0).
+
+void insert(node2 x, int a)
+  requires x::dll<p, n> & n>0
+  ensures exists k: x::dll<p, k> & k = n + 1;.
+
+synthesize [node2 x,int a,node2 q95]
+x::node2<ann94,p91,q95> * q95::dll<x,flt93> &
+0<=flt93 & q95!=null & n=1+flt93
+~>
+(exists Anon_39,q_40,Anon_126,q_127:
+q_40::node2<Anon_126,x,q_127> * x::node2<Anon_39,p91,q_40> *
+       q_127::dll<q_40,flt93>).
