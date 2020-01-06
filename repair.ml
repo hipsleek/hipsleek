@@ -190,10 +190,10 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let cands, others = List.partition (filter_cand !repair_loc) cands in
   let cands = ranking_suspicious_exp cands in
   (* let cands = cands |> List.rev in *)
-  let cands = if List.length cands > 3 then
-      let elem = List.nth cands 2 in
-      [elem]
-    else [] in
+  (* let cands = if List.length cands > 3 then
+   *     let elem = List.nth cands 2 in
+   *     [elem]
+   *   else [] in *)
   let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   (* failwith "stop to debug" *)
 

@@ -1593,7 +1593,6 @@ let remove_min_max_in_both_sides (formula: CP.formula) : CP.formula =
       begin
         match p_formula with
         | CP.EqMax (e1, e2, e3, loc) ->
-          let () = x_binfo_pp "EQMAX" no_pos in
           if is_max_min_exp e1 then
             let n_name = fresh_any_name "mm" in
             let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
@@ -1607,7 +1606,6 @@ let remove_min_max_in_both_sides (formula: CP.formula) : CP.formula =
             CP.mkAnd n_pf added_pf no_pos
           else pf
         | CP.EqMin (e1, e2, e3, loc) ->
-          let () = x_binfo_pp "EQMAX" no_pos in
           if is_max_min_exp e1 then
             let n_name = fresh_any_name "mm" in
             let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
@@ -2469,45 +2467,6 @@ and aux_subtrees st cur_codes =
       let seq = mkSeq cur_codes st_code in Some seq
   | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
 
-let replace_exp_aux nexp exp num : I.exp =
-  let rec aux nexp exp = match (exp:I.exp) with
-    | I.Assign e ->
-      let n_e1 = aux nexp e.I.exp_assign_lhs in
-      let n_e2 = aux nexp e.I.exp_assign_rhs in
-      I.Assign {e with exp_assign_lhs = n_e1;
-                       exp_assign_rhs = n_e2}
-    | I.Bind e ->
-      let n_body = aux nexp e.I.exp_bind_body in
-      I.Bind {e with exp_bind_body = n_body}
-    | I.Block e ->
-      let n_body = aux nexp e.I.exp_block_body in
-      I.Block {e with exp_block_body = n_body}
-    | I.Cast e ->
-      let n_body = aux nexp e.I.exp_cast_body in
-      I.Cast {e with exp_cast_body = n_body;}
-    | I.CallNRecv e ->
-      let name = e.I.exp_call_nrecv_method in
-      let () = x_tinfo_hp (add_str "name" pr_id) name no_pos in
-      let fc = "fcode" ^ (pr_int num) in
-      if name = fc then nexp
-      else exp
-    | I.UnkExp _ -> let () = x_tinfo_pp "marking" no_pos in
-      exp
-    | I.Cond e ->
-      let () = x_tinfo_pp "marking" no_pos in
-      let r1 = aux nexp e.exp_cond_then_arm in
-      let r2 = aux nexp e.exp_cond_else_arm in
-      I.Cond {e with exp_cond_then_arm = r1;
-                     exp_cond_else_arm = r2}
-    | I.Label (a, body) -> Label (a, aux nexp body)
-    | I.Seq e ->
-      let n_e1 = aux nexp e.I.exp_seq_exp1 in
-      let n_e2 = aux nexp e.I.exp_seq_exp2 in
-      I.Seq {e with exp_seq_exp1 = n_e1;
-                    exp_seq_exp2 = n_e2}
-    | _ -> exp in
-  aux nexp exp
-
 let rec replace_cexp_aux nexp exp : C.exp =
   match (exp:C.exp) with
   | C.Assign e ->
@@ -2542,10 +2501,50 @@ let rec replace_cexp_aux nexp exp : C.exp =
   | _ -> exp
 
 let replace_exp_proc n_exp proc num =
+  let replace_exp_aux nexp exp num : I.exp =
+    let rec aux exp = match (exp:I.exp) with
+      | I.Assign e ->
+        let n_e1 = aux e.I.exp_assign_lhs in
+        let n_e2 = aux e.I.exp_assign_rhs in
+        I.Assign {e with exp_assign_lhs = n_e1;
+                         exp_assign_rhs = n_e2}
+      | I.Bind e ->
+        let n_body = aux e.I.exp_bind_body in
+        I.Bind {e with exp_bind_body = n_body}
+      | I.Block e ->
+        let n_body = aux e.I.exp_block_body in
+        I.Block {e with exp_block_body = n_body}
+      | I.Cast e ->
+        let n_body = aux e.I.exp_cast_body in
+        I.Cast {e with exp_cast_body = n_body;}
+      | I.CallNRecv e ->
+        let name = e.I.exp_call_nrecv_method in
+        let () = x_tinfo_hp (add_str "name" pr_id) name no_pos in
+        let fc = "fcode" ^ (pr_int num) in
+        if name = fc then nexp
+        else exp
+      | I.UnkExp _ -> let () = x_tinfo_pp "marking" no_pos in
+        exp
+      | I.Cond e ->
+        let () = x_tinfo_pp "marking" no_pos in
+        let r1 = aux e.exp_cond_then_arm in
+        let r2 = aux e.exp_cond_else_arm in
+        I.Cond {e with exp_cond_then_arm = r1;
+                       exp_cond_else_arm = r2}
+      | I.Label (a, body) -> Label (a, aux body)
+      | I.Seq e ->
+        let n_e1 = aux e.I.exp_seq_exp1 in
+        let n_e2 = aux e.I.exp_seq_exp2 in
+        I.Seq {e with exp_seq_exp1 = n_e1;
+                      exp_seq_exp2 = n_e2}
+      | _ -> exp in
+    aux exp in
   let body = proc.I.proc_body |> Gen.unsome in
+  let () = x_tinfo_hp (add_str "proc body" pr_i_exp) body no_pos in
+  let () = x_tinfo_hp (add_str "num" pr_int) num no_pos in
   let n_body = Some (replace_exp_aux n_exp body num) in
-  x_binfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos;
-  let () = x_tinfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
+  let () = x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos in
+  let () = x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
 
 let replace_exp_cproc n_exp proc =
