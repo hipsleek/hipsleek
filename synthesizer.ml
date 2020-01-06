@@ -33,7 +33,6 @@ let process_rule_assign goal rc =
     let lhs, rhs = rc.ra_lhs, rc.ra_rhs in
     let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rhs no_pos in
     let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-    let post_vars = CF.fv post in
     let sub_goal = {goal with gl_pre_cond = n_pre;
                               gl_trace = (RlAssign rc)::goal.gl_trace} in
     mk_derivation_subgoals goal (RlAssign rc) [sub_goal]
@@ -157,9 +156,14 @@ let process_rule_unfold_post goal rc =
   mk_derivation_subgoals goal (RlUnfoldPost rc) [n_goal]
 
 let process_rule_skip goal =
-  if is_code_rule goal.gl_trace then
-    mk_derivation_success goal RlSkip
-  else mk_derivation_fail goal RlSkip
+  (* in case trace is [], then deleting the buggy statement is sufficient to fix
+     it *)
+  match goal.gl_trace with
+  | [] -> mk_derivation_success goal RlSkip
+  | _ ->
+    if is_code_rule goal.gl_trace then
+      mk_derivation_success goal RlSkip
+    else mk_derivation_fail goal RlSkip
 
 let process_rule_free goal rc =
   mk_derivation_success goal (RlFree rc)
@@ -227,7 +231,7 @@ let process_rule_heap_assign goal rc =
  *********************************************************************)
 
 let rec synthesize_one_goal goal : synthesis_tree =
-  let goal = simplify_goal goal in
+  (* let goal = simplify_goal goal in *)
   let trace = goal.gl_trace in
   if num_of_code_rules trace > 3 || length_of_trace trace > 3
      || List.length trace > 8
@@ -240,7 +244,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
     if duration > !synthesis_timeout && not(!enable_i) then
       mk_synthesis_tree_fail goal [] "TIMEOUT"
     else
-      let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+      let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
       let rules = choose_synthesis_rules goal in
       process_all_rules goal rules
 
@@ -319,12 +323,12 @@ let synthesize_program goal =
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
-  let () = x_tinfo_hp (add_str "synthesis tree " pr_st) st no_pos in
+  let () = x_binfo_hp (add_str "synthesis tree " pr_st) st no_pos in
   match st_status with
   | StValid st_core ->
     let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
-    let () = x_tinfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
+    let () = x_binfo_hp (add_str "iast exp" pr_i_exp_opt) i_exp no_pos in
     i_exp
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     let () = x_binfo_hp (add_str "fail branches" pr_int) (!fail_branch_num) no_pos in

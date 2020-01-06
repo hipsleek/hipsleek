@@ -137,7 +137,7 @@ let log_wrapper s logger f x  =
     logtime # add_proof_info pr no;
     res
   with e ->
-    let tt = logtime # stop_time in 
+    let tt = logtime # stop_time in
     let to_flag = logtime # get_timeout () in
     let (pr,no) = logger None tt to_flag in
     logtime # add_proof_info (pr^"*EXC*") no;

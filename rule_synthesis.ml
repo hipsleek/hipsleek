@@ -318,7 +318,6 @@ let choose_rule_assign goal : rule list =
     let post_conjuncts = CP.split_conjunctions post_pf in
     let eq_pairs = List.map (find_exists_substs post_vars) post_conjuncts
                    |> List.concat in
-    let pr_pairs = pr_list (pr_pair pr_var pr_exp) in
     let filter_fun (x,y) = (List.mem x all_vars) &&
                            CP.subset (CP.afv y) all_vars in
     let eq_pairs = eq_pairs |> List.filter filter_fun in
@@ -581,7 +580,6 @@ let unify_fcall proc_decl proc_pre proc_post goal =
 let choose_rule_func_call goal =
   (* if check_head_allocate_wrapper goal then []
    * else *)
-    let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
     let procs = goal.gl_proc_decls in
     let aux proc_decl =
       let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -601,7 +599,6 @@ let choose_rule_unfold_pre goal =
   (* if check_head_allocate_wrapper goal then []
    * else *)
     let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-    let vars, prog = goal.gl_vars, goal.gl_prog in
     let vnodes = get_unfold_view goal.gl_vars pre in
     let helper vnode =
       let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
@@ -636,21 +633,20 @@ let choose_rule_unfold_post goal =
   let filter_fun formula =
     let n_formula = CF.add_pure_formula_to_formula pre_pf formula in
     check_sat_wrapper prog n_formula in
-  let helper_exists vnode =
-    let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
-    let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    let nf = nf |> List.filter filter_fun in
-    if List.length nf = 1 then
-      let case_f = List.hd nf in
-      let rule =  RlUnfoldPost {
-          rp_var = vnode.CF.h_formula_view_node;
-          rp_case_formula = case_f} in
-      [rule]
-    else [] in
+  (* let helper_exists vnode =
+   *   let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
+   *   let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
+   *   let nf = nf |> List.filter filter_fun in
+   *   if List.length nf = 1 then
+   *     let case_f = List.hd nf in
+   *     let rule =  RlUnfoldPost {
+   *         rp_var = vnode.CF.h_formula_view_node;
+   *         rp_case_formula = case_f} in
+   *     [rule]
+   *   else [] in *)
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    let prog = goal.gl_prog in
     let nf = nf |> List.filter filter_fun in
     let () = x_tinfo_hp (add_str "nf" (pr_list_mln pr_f)) nf no_pos in
     let rules = nf |> List.map (fun f -> RlUnfoldPost {
@@ -665,7 +661,6 @@ let choose_rule_unfold_post goal =
 
 let choose_rule_numeric_end goal =
   let vars = goal.gl_vars |> List.filter is_int_var in
-  let post_vars = CF.fv goal.gl_post_cond in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let pre_vars = CF.fv pre in
   let post_vars = CF.fv post in
@@ -735,9 +730,9 @@ let find_instantiate_var goal var =
   let pf1, pf2 = CF.get_pure pre, CF.get_pure post in
   let ante = CP.mkAnd pf1 pf2 no_pos |> remove_exists_vars_pf in
   let () = x_tinfo_hp (add_str "ante" pr_pf) ante no_pos in
-  let helper_pure var1 var2 =
-    let conseq = CP.mkEqVar var1 var2 no_pos in
-    SB.check_pure_entail ante conseq in
+  (* let helper_pure var1 var2 =
+   *   let conseq = CP.mkEqVar var1 var2 no_pos in
+   *   SB.check_pure_entail ante conseq in *)
   let helper f1 f2 = match f1, f2 with
     | CF.Exists bf1, CF.Base bf2 ->
       let hf1 = bf1.CF.formula_exists_heap in
@@ -772,7 +767,7 @@ let choose_rule_return goal =
    * else *)
   let post = goal.gl_post_cond in
   let pre = goal.gl_pre_cond in
-  let post_vars = post |> get_node_vars in
+  (* let post_vars = post |> get_node_vars in *)
   let all_vars = goal.gl_vars in
   let check_return res_var r_var =
     let n_pf = CP.mkEqVar res_var r_var no_pos in
@@ -917,8 +912,8 @@ let choose_rule_allocate_return goal =
 
 let choose_rule_fread goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
-  let pre_node_vars = pre_cond |> get_heap |> get_heap_nodes
-                      |> List.map (fun (x, _,_) -> x) in
+  (* let pre_node_vars = pre_cond |> get_heap |> get_heap_nodes
+   *                     |> List.map (fun (x, _,_) -> x) in *)
   let rec helper_hf (hf:CF.h_formula) = match hf with
     | CF.DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
       if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
@@ -990,9 +985,6 @@ let choose_rule_fread goal =
 let choose_rule_new_num goal : rule list =
   if has_new_num goal.gl_trace then []
   else
-    let pre = goal.gl_pre_cond in
-    let post = goal.gl_post_cond in
-    let prog = goal.gl_prog in
     let int_vars = goal.gl_vars |> List.filter is_int_var |> List.rev in
     let aux_int var =
       let n_var = CP.fresh_spec_var var in
@@ -1206,9 +1198,8 @@ let choose_rule_allocate goal : rule list =
   else []
 
 let aux_post_assign goal =
-  let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
-  let all_vars = goal.gl_vars in
+  (* let all_vars = goal.gl_vars in *)
   let e_vars = CF.get_exists post in
   let () = x_tinfo_hp (add_str "e_vars" pr_vars) e_vars no_pos in
   let post_pf = CF.get_pure post |> remove_exists_vars_pf in
@@ -1234,8 +1225,6 @@ let aux_post_assign goal =
   rules
 
 let choose_rule_mk_null goal : rule list =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
   let prog = goal.gl_prog in
   if has_mk_null goal.gl_trace then []
   else let trace = goal.gl_trace in
@@ -1294,7 +1283,6 @@ let rec choose_rule_interact goal rules =
     let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
     rules
   else
-    let str = pr_list_ln pr_rule rules in
     let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
     let () = x_binfo_hp (add_str "Rules\n" pr_rules) rules no_pos in
     let choose_str = "Please choose a/q or from 1 to "

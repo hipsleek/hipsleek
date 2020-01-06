@@ -30,7 +30,6 @@ void append2(node2 x, node2 y)
     fcode1(x);
     // x.next = y;
     if (y != null) {
-       dprint;
        y.prev = x;
     }
 	}

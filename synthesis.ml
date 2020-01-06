@@ -430,7 +430,7 @@ let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
              formula_exists_and = a;
              formula_exists_flow = fl;
              formula_exists_label = lbl;
-             formula_exists_pos = pos } as bf) ->
+             formula_exists_pos = pos }) ->
     let n_qvars = CP.remove_dups_svl (qvars @ vars) in
     CF.mkExists_w_lbl n_qvars h p vp t fl a pos lbl
   | CF.Or bf -> let n_f1 = add_exists_vars bf.formula_or_f1 vars in
@@ -516,7 +516,7 @@ let remove_exists_vars_pf vars pf =
     | CP.And (f1, f2, loc) ->
       let n_f1 = aux f1 in
       let n_f2 = aux f2 in
-      CP.And (f1, f2, loc)
+      CP.And (n_f1, n_f2, loc)
     | CP.AndList list ->
       let n_list = list |> List.map (fun (x, y) -> (x, aux y)) in
       CP.AndList n_list
@@ -560,7 +560,7 @@ let remove_exists formula =
       let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
       let n_pf = remove_exists_pf pf in
       CF.Base {bf with CF.formula_base_pure = MCP.mix_of_pure n_pf}
-    | CF.Exists ({formula_exists_qvars = qvars;
+    | CF.Exists {formula_exists_qvars = qvars;
                   formula_exists_heap =  h;
                   formula_exists_vperm = vp;
                   formula_exists_pure = p;
@@ -568,7 +568,7 @@ let remove_exists formula =
                   formula_exists_and = a;
                   formula_exists_flow = fl;
                   formula_exists_label = lbl;
-                  formula_exists_pos = pos } as bf) ->
+                  formula_exists_pos = pos } ->
       let n_pf = remove_exists_pf (MCP.pure_of_mix p) in
       let n_pf = MCP.mix_of_pure n_pf in
       CF.mkBase_w_lbl h n_pf vp t fl a pos lbl
@@ -666,60 +666,60 @@ let get_equality_pairs (formula: CP.formula) =
   Debug.no_1 "get_equality_pairs" pr_pf pr_substs
     (fun _ -> get_equality_pairs formula) formula
 
-let get_eq_max (pf: CP.formula) =
-  let aux_pf pf = match (pf: CP.p_formula) with
-    | CP.EqMax (e1, e2, e3,_) -> [(e1, e2, e3)]
-    | _ -> [] in
-  let rec aux pf = match pf with
-    | CP.BForm (bf, _) ->
-      let (p_f,_) = bf in
-      aux_pf p_f
-    | CP.And (pf1, pf2,_) ->
-      (aux pf1) @ (aux pf2)
-    | CP.AndList list ->
-      list |> List.map snd |> List.map aux |> List.concat
-    | CP.Or (pf1, pf2,_,_) ->
-      (aux pf1) @ (aux pf2)
-    | CP.Not (n_pf, _,_) -> aux n_pf
-    | CP.Forall (_, a_pf,_,_) -> aux a_pf
-    | CP.Exists (_, a_pf,_,_) -> aux a_pf in
-  aux pf
+(* let get_eq_max (pf: CP.formula) =
+ *   let aux_pf pf = match (pf: CP.p_formula) with
+ *     | CP.EqMax (e1, e2, e3,_) -> [(e1, e2, e3)]
+ *     | _ -> [] in
+ *   let rec aux pf = match pf with
+ *     | CP.BForm (bf, _) ->
+ *       let (p_f,_) = bf in
+ *       aux_pf p_f
+ *     | CP.And (pf1, pf2,_) ->
+ *       (aux pf1) @ (aux pf2)
+ *     | CP.AndList list ->
+ *       list |> List.map snd |> List.map aux |> List.concat
+ *     | CP.Or (pf1, pf2,_,_) ->
+ *       (aux pf1) @ (aux pf2)
+ *     | CP.Not (n_pf, _,_) -> aux n_pf
+ *     | CP.Forall (_, a_pf,_,_) -> aux a_pf
+ *     | CP.Exists (_, a_pf,_,_) -> aux a_pf in
+ *   aux pf *)
 
-let replace_eq_max (pf: CP.formula) (o_e1, o_e2, o_e3) =
-  let eq_exp e1 e2 = match e1, e2 with
-    | CP.Var (sv1, _), CP.Var (sv2, _) -> CP.eq_sv sv1 sv2
-    | _ -> false in
-  let eq_pair_exp (fst1, snd1) (fst2, snd2) =
-    match fst1, snd1, fst2, snd2 with
-    | CP.Var (sv1, _), CP.Var (sv2, _), CP.Var (sv3, _), CP.Var (sv4, _) ->
-      CP.eq_spec_var_list [sv1; sv2] [sv3; sv4]
-    | _ -> false in
-  let aux_pf pf = match (pf: CP.p_formula) with
-    | CP.EqMax (e1, e2, e3,loc) ->
-      if not(eq_exp e1 o_e1) && (eq_pair_exp (e2, e3) (o_e2, o_e3)) then
-        CP.Eq (e1, o_e1, loc)
-      else pf
-    | _ -> pf in
-  let rec aux (pf: CP.formula) = match pf with
-    | CP.BForm (bf, lbl1) ->
-      let (p_f,lbl2) = bf in
-      let n_p_f = aux_pf p_f in
-      CP.BForm ((n_p_f, lbl2), lbl1)
-    | CP.And (pf1, pf2,loc) ->
-      let n_pf1 = aux pf1 in
-      let n_pf2 = aux pf2 in
-      CP.And (n_pf1, n_pf2, loc)
-    | CP.AndList list ->
-      let n_list = list |> List.map (fun (x, y) -> (x, aux y)) in
-      CP.AndList n_list
-    | CP.Or (pf1, pf2,opt,loc) ->
-      let n_pf1 = aux pf1 in
-      let n_pf2 = aux pf2 in
-      CP.Or (n_pf1, n_pf2, opt, loc)
-    | CP.Not (n_pf, a,b) -> CP.Not(aux n_pf, a, b)
-    | CP.Forall (a, a_pf,b,c) -> CP.Forall (a, aux a_pf, b,c)
-    | CP.Exists (a, a_pf,b,c) -> CP.Exists (a, aux a_pf, b,c) in
-  aux pf
+(* let replace_eq_max (pf: CP.formula) (o_e1, o_e2, o_e3) =
+ *   let eq_exp e1 e2 = match e1, e2 with
+ *     | CP.Var (sv1, _), CP.Var (sv2, _) -> CP.eq_sv sv1 sv2
+ *     | _ -> false in
+ *   let eq_pair_exp (fst1, snd1) (fst2, snd2) =
+ *     match fst1, snd1, fst2, snd2 with
+ *     | CP.Var (sv1, _), CP.Var (sv2, _), CP.Var (sv3, _), CP.Var (sv4, _) ->
+ *       CP.eq_spec_var_list [sv1; sv2] [sv3; sv4]
+ *     | _ -> false in
+ *   let aux_pf pf = match (pf: CP.p_formula) with
+ *     | CP.EqMax (e1, e2, e3,loc) ->
+ *       if not(eq_exp e1 o_e1) && (eq_pair_exp (e2, e3) (o_e2, o_e3)) then
+ *         CP.Eq (e1, o_e1, loc)
+ *       else pf
+ *     | _ -> pf in
+ *   let rec aux (pf: CP.formula) = match pf with
+ *     | CP.BForm (bf, lbl1) ->
+ *       let (p_f,lbl2) = bf in
+ *       let n_p_f = aux_pf p_f in
+ *       CP.BForm ((n_p_f, lbl2), lbl1)
+ *     | CP.And (pf1, pf2,loc) ->
+ *       let n_pf1 = aux pf1 in
+ *       let n_pf2 = aux pf2 in
+ *       CP.And (n_pf1, n_pf2, loc)
+ *     | CP.AndList list ->
+ *       let n_list = list |> List.map (fun (x, y) -> (x, aux y)) in
+ *       CP.AndList n_list
+ *     | CP.Or (pf1, pf2,opt,loc) ->
+ *       let n_pf1 = aux pf1 in
+ *       let n_pf2 = aux pf2 in
+ *       CP.Or (n_pf1, n_pf2, opt, loc)
+ *     | CP.Not (n_pf, a,b) -> CP.Not(aux n_pf, a, b)
+ *     | CP.Forall (a, a_pf,b,c) -> CP.Forall (a, aux a_pf, b,c)
+ *     | CP.Exists (a, a_pf,b,c) -> CP.Exists (a, aux a_pf, b,c) in
+ *   aux pf *)
 
 (* remove common equality in the post-condition *)
 let simplify_equality gl_vars pre_cond post_cond =
@@ -1567,7 +1567,7 @@ let simplify_min_max_pf pf =
       n_f, vars
     | CP.Exists (sv, e_formula, opt, loc) ->
       let n_f, vars = aux e_formula in
-      let n_f = CP.Exists (sv, e_formula, opt, loc) in
+      let n_f = CP.Exists (sv, n_f, opt, loc) in
       (n_f, vars)
     | _ -> pf, [] in
   let n_conjuncts = conjuncts |> List.map aux in
@@ -1576,20 +1576,85 @@ let simplify_min_max_pf pf =
   let n_pf = CP.join_conjunctions n_list in
   (n_pf, e_vars)
 
-let simplify_min_max_pf formula =
+let simplify_min_max_pf (formula: CP.formula) =
   Debug.no_1 "simplify_min_max_pf" pr_pf (pr_pair pr_pf pr_vars)
     (fun _ -> simplify_min_max_pf formula) formula
+
+let remove_min_max_in_both_sides (formula: CP.formula) : CP.formula =
+  let conjuncts = formula |> CP.split_conjunctions in
+  let is_max_min_exp (pf_exp: CP.exp) = match pf_exp with
+    | CP.Max _ -> true
+    | CP.Min _ -> true
+    | _ -> false in
+  let rec aux_pf pf = match pf with
+    | CP.BForm (bf, lbl) ->
+      let (p_formula, bf_annot) = bf in
+      (* let () = x_binfo_hp (add_str "single constrant" pr_pf) pf no_pos in *)
+      begin
+        match p_formula with
+        | CP.EqMax (e1, e2, e3, loc) ->
+          let () = x_binfo_pp "EQMAX" no_pos in
+          if is_max_min_exp e1 then
+            let n_name = fresh_any_name "mm" in
+            let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+            let n_e = CP.Var (n_var, loc) in
+            let n_pf = CP.EqMax (n_e, e2, e3, loc) in
+            let added_pf = CP.Eq (n_e, e1, loc) in
+            let n_bf = (n_pf, bf_annot) in
+            let added_bf = (added_pf, bf_annot) in
+            let n_pf = CP.BForm (n_bf, lbl) in
+            let added_pf = CP.BForm (added_bf, lbl) in
+            CP.mkAnd n_pf added_pf no_pos
+          else pf
+        | CP.EqMin (e1, e2, e3, loc) ->
+          let () = x_binfo_pp "EQMAX" no_pos in
+          if is_max_min_exp e1 then
+            let n_name = fresh_any_name "mm" in
+            let n_var = CP.SpecVar (Int, n_name, VarGen.Unprimed) in
+            let n_e = CP.Var (n_var, loc) in
+            let n_pf = CP.EqMin (n_e, e2, e3, loc) in
+            let added_pf = CP.Eq (n_e, e1, loc) in
+            let n_bf = (n_pf, bf_annot) in
+            let added_bf = (added_pf, bf_annot) in
+            let n_pf = CP.BForm (n_bf, lbl) in
+            let added_pf = CP.BForm (added_bf, lbl) in
+            CP.mkAnd n_pf added_pf no_pos
+          else pf
+        | _ -> pf
+      end
+    | CP.Exists (sv, e_formula, opt, loc) ->
+      let n_f = aux_pf e_formula in
+      let n_f = CP.Exists (sv, n_f, opt, loc) in
+      n_f
+    | CP.And (f1, f2, loc) ->
+      let n_f1 = aux_pf f1 in
+      let n_f2 = aux_pf f2 in
+      CP.And (n_f1, n_f2, loc)
+    | CP.AndList list ->
+      let n_list = list |> List.map (fun (x,y) -> (x, aux_pf y)) in
+      CP.AndList n_list
+    | CP.Not (neg_pf, opt, loc) ->
+      let n_pf = aux_pf neg_pf in
+      CP.Not (n_pf, opt, loc)
+    | _ -> pf in
+  conjuncts |> List.map aux_pf |> CP.join_conjunctions
+
+let remove_min_max_in_both_sides (formula: CP.formula) =
+  Debug.no_1 "remove_min_max_in_both_sides" pr_pf pr_pf
+    (fun _ -> remove_min_max_in_both_sides formula) formula
 
 let simplify_min_max formula =
   let rec aux formula = match formula with
   | CF.Base bf ->
     let pf = bf.CF.formula_base_pure |> MCP.pure_of_mix in
-    let n_pf, e_vars = simplify_min_max_pf pf in
+    let n_pf = pf |> remove_min_max_in_both_sides in
+    let n_pf, e_vars = simplify_min_max_pf n_pf in
     let n_formula = CF.Base {bf with CF.formula_base_pure = MCP.mix_of_pure n_pf} in
     add_exists_vars n_formula e_vars
   | CF.Exists bf ->
     let pf = bf.CF.formula_exists_pure |> MCP.pure_of_mix in
-    let n_pf, e_vars = simplify_min_max_pf pf in
+    let n_pf = pf |> remove_min_max_in_both_sides in
+    let n_pf, e_vars = simplify_min_max_pf n_pf in
     let n_formula = CF.Exists {bf with CF.formula_exists_pure = MCP.mix_of_pure n_pf} in
     add_exists_vars n_formula e_vars
   | CF.Or bf ->
@@ -2245,7 +2310,9 @@ let rec synthesize_st_core st : Iast.exp option =
     | [h] -> h
     | _ -> report_error no_pos "syn_st_core: no more than one st" in
   match st.stc_rule with
-  | RlSkip -> None
+  | RlSkip ->
+    let i_exp = I.Empty no_pos in
+    Some i_exp
   (* | RlExistsRight _ *)
   | RlFramePred _ | RlFrameData _ | RlFree _
   | RlUnfoldPost _ | RlUnfoldPre _ -> helper st
@@ -2477,7 +2544,7 @@ let rec replace_cexp_aux nexp exp : C.exp =
 let replace_exp_proc n_exp proc num =
   let body = proc.I.proc_body |> Gen.unsome in
   let n_body = Some (replace_exp_aux n_exp body num) in
-  x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos;
+  x_binfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos;
   let () = x_tinfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
 
@@ -2952,8 +3019,9 @@ let compare_rule_post_assign_vs_other r1 r2 = match r2 with
   | _ -> PriHigh
 
 let compare_rule_fread_vs_frame_pred r1 r2 =
-  let frame_var = r2.rfp_rhs in
-  let fread_var = r1.rfr_value in
+  (* let frame_var = r2.rfp_rhs in *)
+  (* let fread_var = r1.rfr_value in *)
+
   (* if CP.eq_sv frame_var fread_var then PriLow
    * else PriHigh *)
   PriHigh
