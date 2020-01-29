@@ -47,6 +47,79 @@ let rec helper args = match args with
     let head = string_of_typ (fst h) ^ " " ^ (snd h) in
     head ^ "," ^ tail
 
+(* Generate repair candidates *)
+(* mutation strategy *)
+let mutate_iast_exp (input_exp: I.exp) =
+  let eq_strategy = ref false in
+  let rec aux_exp i_exp = match i_exp with
+    | I.Binary b_exp ->
+      let n_bin_op =
+        match b_exp.I.exp_binary_op with
+        | I.OpEq ->
+          let () = eq_strategy := true in
+          I.OpNeq
+        | _ -> b_exp.I.exp_binary_op in
+      I.Binary {b_exp with I.exp_binary_op = n_bin_op}
+    | I.Cond cond_exp ->
+      let n_condition = aux_exp cond_exp.I.exp_cond_condition in
+      I.Cond {cond_exp with I.exp_cond_condition = n_condition}
+    | I.Block block ->
+      I.Block {block with I.exp_block_body = aux_exp block.I.exp_block_body}
+    | I.Label (a, l_exp) -> I.Label (a, aux_exp l_exp)
+    | _ -> i_exp in
+  let eq_exp = aux_exp input_exp in
+  let not_eq_strategy = ref false in
+  let rec aux_exp i_exp = match i_exp with
+    | I.Binary b_exp ->
+      let n_bin_op =
+        match b_exp.I.exp_binary_op with
+        | I.OpNeq ->
+          let () = not_eq_strategy := true in
+          I.OpEq
+        | _ -> b_exp.I.exp_binary_op in
+      I.Binary {b_exp with I.exp_binary_op = n_bin_op}
+    | I.Block block ->
+      I.Block {block with I.exp_block_body = aux_exp block.I.exp_block_body}
+    | I.Label (a, l_exp) -> I.Label (a, aux_exp l_exp)
+    | I.Cond cond_exp ->
+      let n_condition = aux_exp cond_exp.I.exp_cond_condition in
+      I.Cond {cond_exp with I.exp_cond_condition = n_condition}
+    | _ -> i_exp in
+  let not_eq_exp = aux_exp input_exp in
+  (* (eq_exp, !eq_strategy) *)
+  (not_eq_exp, !not_eq_strategy)
+
+let mutating_proc iprog (iproc: I.proc_decl): bool =
+  let (modified, n_proc) = match iproc.I.proc_body with
+    | None -> (false, iproc)
+    | Some proc_body ->
+      let (n_body, b_modified) = mutate_iast_exp proc_body in
+      let n_proc = {iproc with I.proc_body = Some n_body} in
+      (b_modified, n_proc) in
+  if modified then
+    let aux_map i_proc =
+      if Syn.contains iproc.I.proc_name i_proc.I.proc_name
+      then n_proc else i_proc in
+    let n_procedures = iprog.I.prog_proc_decls |> List.map aux_map in
+    let n_iprog = {iprog with I.prog_proc_decls = n_procedures} in
+    try
+      let cprog, _ = Astsimp.trans_prog n_iprog in
+      let () = Typechecker.check_prog_wrapper n_iprog cprog in
+      let () = x_binfo_pp "REPAIRING BY MUTATION SUCCESSFUL" no_pos in
+      true
+    with _ -> false
+  else false
+
+let repair_iprog_by_mutation (iprog: I.prog_decl) =
+  match (!Typechecker.repair_proc) with
+  | (Some repair_proc) ->
+    let p_name = Cast.unmingle_name repair_proc in
+    let procs = iprog.I.prog_proc_decls in
+    let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
+    mutating_proc iprog r_iproc
+  | _ -> false
+
+
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
   let () = x_binfo_hp (add_str "candidate" pr_exp) candidate no_pos in
   let n_iproc, args = mk_candidate_proc iproc args candidate num in
@@ -646,15 +719,24 @@ let create_buggy_prog src (iprog : I.prog_decl)=
 let start_repair_wrapper (iprog: I.prog_decl) level =
   let start_time = get_time () in
   let res = repair_iprog iprog level in
-  let duration = get_time() -. start_time in
-  let () = if res then
-      x_binfo_pp "REPAIRING SUCCESSFUL" no_pos
+  (* repair using generic programming *)
+  let mutate_res = if res then
+      let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
+      res
     else
-      x_binfo_pp "REPAIRING FAIL" no_pos in
-  if not(!infestor) then
-    let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos in
-    res
-  else res
+      let () = x_binfo_pp "REPAIRING BY SYNTHESIS FAIL" no_pos in
+      let () = x_binfo_pp "START REPAIRING BY MUTATION" no_pos in
+      let mutate_res = repair_iprog_by_mutation iprog in
+      mutate_res in
+  let () = if mutate_res then
+      let () = x_binfo_pp "REPAIRING BY MUTATION SUCCESSFUL" no_pos in
+      let duration = get_time() -. start_time in
+      let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos in
+      () in
+  mutate_res
+  (* if not(!infestor) then
+   *   mutate_res
+   * else mutate_res *)
 
 let infest_and_repair src (iprog : I.prog_decl) =
   let buggy_progs = create_buggy_prog src iprog in
