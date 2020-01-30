@@ -790,6 +790,14 @@ let start_repair_wrapper (iprog: I.prog_decl) level =
   in
   mutate_res
 
+let infest_and_output src (iprog: I.prog_decl) =
+  let buggy_progs = create_buggy_prog src iprog in
+  let level_one_progs = buggy_progs |> List.filter (fun (_, y) -> y = 1)
+                        |> List.map fst in
+  let _ = level_one_progs |> List.map (fun buggy_prog ->
+      output_infestor_prog src buggy_prog 1) in
+  x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM\n" no_pos
+
 let infest_and_repair src (iprog : I.prog_decl) =
   let buggy_progs = create_buggy_prog src iprog in
   let () = enable_repair := true in
@@ -843,3 +851,7 @@ let infest_and_repair src (iprog : I.prog_decl) =
   let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln pr_float)) l1_stats no_pos in
   let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln pr_float)) l2_stats no_pos in
   x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos
+
+(* INFEST and OUTPUT buggy program *)
+
+

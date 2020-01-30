@@ -747,7 +747,8 @@ let process_source_full source =
 
   (* Infester *)
   let () = if !infestor then
-      Repair.infest_and_repair source intermediate_prog in
+      Repair.infest_and_output source intermediate_prog in
+      (* Repair.infest_and_repair source intermediate_prog in *)
 
   (* Stopping the prover *)
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
