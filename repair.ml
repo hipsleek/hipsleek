@@ -113,8 +113,27 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
     let rm_field_exp = aux_exp n_equal_exp in
     rm_field_exp in
   let rm_field_exp = remove_field_in_condition input_exp in
+  let add_field_strategy = ref false in
+  let add_field_in_condition n_equal_exp =
+    let rec aux_exp i_exp = match i_exp with
+      | I.Block block ->
+        I.Block {block with I.exp_block_body = aux_exp block.I.exp_block_body}
+      | I.Label (a, l_exp) -> I.Label (a, aux_exp l_exp)
+      | I.Cond cond_exp ->
+        let (removed_field_exp, is_changed, _) =
+          Repairpure.add_field_infestor cond_exp.I.exp_cond_condition 1
+            var_decls data_decls in
+        if is_changed = 0 then
+          let () = add_field_strategy := true in
+          I.Cond {cond_exp with I.exp_cond_condition = removed_field_exp}
+        else i_exp
+      | _ -> i_exp in
+    let add_field_exp = aux_exp n_equal_exp in
+    add_field_exp in
+  let add_field_exp = add_field_in_condition input_exp in
   let mutated_list = [(eq_exp, !eq_strategy); (not_eq_exp, !not_eq_strategy);
-                      (rm_field_exp, !rm_field_strategy)] in
+                      (rm_field_exp, !rm_field_strategy);
+                      (add_field_exp, !add_field_strategy)] in
   mutated_list |> List.filter (fun (_,y) -> y) |> List.map fst
 
 let mutating_proc iprog (iproc: I.proc_decl): bool =

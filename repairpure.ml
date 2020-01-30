@@ -1584,6 +1584,12 @@ let add_field_infestor body dif_num var_decls data_decls =
   let n_body, num = aux body dif_num in
   (n_body, num, !pos_list)
 
+let add_field_infestor body dif_num var_decls data_decls =
+  let pr_exp = Iprinter.string_of_exp_repair in
+  let pr_skip _ = "" in
+  Debug.no_1 "add_field_infestor"  pr_exp (pr_triple pr_exp string_of_int pr_skip)
+    (fun _ -> add_field_infestor body dif_num var_decls data_decls) body
+
 (* x->next : x->prev *)
 let modify_field_infestor body dif_num var_decls data_decls =
   let rec aux exp changed =
