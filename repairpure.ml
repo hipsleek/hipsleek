@@ -1453,7 +1453,13 @@ let remove_field_infestor body dif_num var_decls data_decls =
            type_of_exp e.I.exp_member_base var_decls data_decls then
           if changed = 1 then
             let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
-            (e.I.exp_member_base, 0)
+            if e.I.exp_member_fields = [] then
+              (e.I.exp_member_base, 0)
+            else
+              let n_fields = e.I.exp_member_fields |> List.rev |> List.tl
+                             |> List.rev in
+              let n_exp = I.Member {e with I.exp_member_fields = n_fields} in
+              (n_exp, 0)
           else (exp, changed - 1)
         else (exp, changed)
       | I.Return e ->
@@ -1471,6 +1477,12 @@ let remove_field_infestor body dif_num var_decls data_decls =
       | _ -> (exp, changed) in
   let n_body, num = aux body dif_num in
   (n_body, num, !pos_list)
+
+let remove_field_infestor body dif_num var_decls data_decls =
+  let pr_exp = Iprinter.string_of_exp_repair in
+  let pr_skip _ = "" in
+  Debug.no_1 "remove_field_infestor"  pr_exp (pr_triple pr_exp string_of_int pr_skip)
+    (fun _ -> remove_field_infestor body dif_num var_decls data_decls) body
 
 (* x->next : x -> next->next *)
 let add_field_infestor body dif_num var_decls data_decls =
