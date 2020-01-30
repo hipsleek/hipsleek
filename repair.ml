@@ -50,14 +50,14 @@ let rec helper args = match args with
 (* Generate repair candidates *)
 (* mutation strategy *)
 let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
-  let eq_strategy = ref false in
+  let to_not_eq_strategy = ref false in
   let equal_to_not_equal eq_exp =
     let rec aux_exp i_exp = match i_exp with
       | I.Binary b_exp ->
         let n_bin_op =
           match b_exp.I.exp_binary_op with
           | I.OpEq ->
-            let () = eq_strategy := true in
+            let () = to_not_eq_strategy := true in
             I.OpNeq
           | _ -> b_exp.I.exp_binary_op in
         I.Binary {b_exp with I.exp_binary_op = n_bin_op}
@@ -70,14 +70,14 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
       | _ -> i_exp in
     let not_eq_exp = aux_exp eq_exp in
     not_eq_exp in
-  let not_eq_strategy = ref false in
+  let to_eq_strategy = ref false in
   let not_equal_to_equal n_equal_exp =
     let rec aux_exp i_exp = match i_exp with
       | I.Binary b_exp ->
         let n_bin_op =
           match b_exp.I.exp_binary_op with
           | I.OpNeq ->
-            let () = not_eq_strategy := true in
+            let () = to_eq_strategy := true in
             I.OpEq
           | _ -> b_exp.I.exp_binary_op in
         I.Binary {b_exp with I.exp_binary_op = n_bin_op}
@@ -92,6 +92,8 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
     eq_exp in
   let not_eq_exp = equal_to_not_equal input_exp in
   let eq_exp = not_equal_to_equal input_exp in
+  let () = x_binfo_hp (add_str "to_eq_exp?:" pr_bool) (!to_eq_strategy) no_pos in
+  let () = x_binfo_hp (add_str "to_eq_exp" pr_exp) eq_exp no_pos in
   let var_decls = iproc.I.proc_args |> List.map
                     (fun x -> (x.I.param_type, x.I.param_name)) in
   let data_decls = iprog.I.prog_data_decls in
@@ -131,7 +133,7 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
     let add_field_exp = aux_exp n_equal_exp in
     add_field_exp in
   let add_field_exp = add_field_in_condition input_exp in
-  let mutated_list = [(eq_exp, !eq_strategy); (not_eq_exp, !not_eq_strategy);
+  let mutated_list = [(eq_exp, !to_eq_strategy); (not_eq_exp, !to_not_eq_strategy);
                       (rm_field_exp, !rm_field_strategy);
                       (add_field_exp, !add_field_strategy)] in
   mutated_list |> List.filter (fun (_,y) -> y) |> List.map fst
@@ -141,6 +143,7 @@ let mutating_proc iprog (iproc: I.proc_decl): bool =
     | None -> []
     | Some proc_body ->
       let n_exp_list = mutate_iast_exp iprog iproc proc_body in
+      let () = x_binfo_hp (add_str "mutated_body" (pr_list pr_exp)) n_exp_list no_pos in
       let n_proc_list =
         n_exp_list |> List.map (fun x -> {iproc with I.proc_body = Some x}) in
       n_proc_list in
