@@ -1453,7 +1453,7 @@ let remove_field_infestor body dif_num var_decls data_decls =
            type_of_exp e.I.exp_member_base var_decls data_decls then
           if changed = 1 then
             let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
-            if e.I.exp_member_fields = [] then
+            if List.length e.I.exp_member_fields <= 1 then
               (e.I.exp_member_base, 0)
             else
               let n_fields = e.I.exp_member_fields |> List.rev |> List.tl
