@@ -402,7 +402,8 @@ let rec replace_exp exp n_exp old_exp : I.exp =
       Block {e with exp_block_body = r_exp}
   | Cast e ->
     Cast {e with exp_cast_body = replace_exp e.exp_cast_body n_exp old_exp}
-  | Cond e -> let r1 = replace_exp e.exp_cond_condition n_exp old_exp in
+  | Cond e ->
+    let r1 = replace_exp e.exp_cond_condition n_exp old_exp in
     let r2 = replace_exp e.exp_cond_then_arm n_exp old_exp in
     let r3 = replace_exp e.exp_cond_else_arm n_exp old_exp in
     Cond {e with exp_cond_condition = r1;
@@ -1158,8 +1159,9 @@ let modify_num_infestor body dif_num =
 (* a + b -> a - b *)
 let modify_operator_infestor body dif_num =
   let pos_list = ref [] in
-  let is_plus_or_minus op = match op with
+  let is_changable_operator op = match op with
     | I.OpPlus | I.OpMinus -> true
+    | I.OpEq | I.OpNeq -> true
     | _ -> false in
   let rec aux exp changed =
     if changed = 0 then exp, 0
@@ -1180,10 +1182,12 @@ let modify_operator_infestor body dif_num =
         (I.Seq {seq with exp_seq_exp1 = n_e1;
                          exp_seq_exp2 = n_e2}, r2)
       | I.Cond cond ->
-        let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
         let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
-        let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
-                                    exp_cond_else_arm = n_e3} in
+        let n_e = I.Cond {cond with I.exp_cond_then_arm = n_e2;
+                                    I.exp_cond_condition = n_e1;
+                                    I.exp_cond_else_arm = n_e3} in
         (n_e, r3)
       | I.Assign e ->
         let n_e1, r1 = aux e.I.exp_assign_lhs changed in
@@ -1199,10 +1203,12 @@ let modify_operator_infestor body dif_num =
         (I.Return {e with exp_return_val = n_e}, res)
       | I.Binary bin ->
         let op = bin.I.exp_binary_op in
-        if changed = 1 && is_plus_or_minus op then
+        if changed = 1 && is_changable_operator op then
           let n_op = match op with
             | I.OpPlus -> I.OpMinus
             | I.OpMinus -> I.OpPlus
+            | I.OpEq -> I.OpNeq
+            | I.OpNeq -> I.OpEq
             | _ -> op in
           let () = pos_list := (bin.I.exp_binary_pos)::(!pos_list) in
           let n_exp = I.Binary {bin with I.exp_binary_op = n_op} in
@@ -1282,9 +1288,10 @@ let find_infest_level body pos_list =
       if contain_infest_pos e1 pos_list then calculate_level e2
       else aux e2
     | I.Cond cond ->
+      let l_cond = aux cond.I.exp_cond_condition in
       let l1 = aux cond.I.exp_cond_then_arm in
       let l2 = aux cond.I.exp_cond_else_arm in
-      l1 + l2
+      2 * l_cond + l1 + l2
     | I.Assign e ->
       let l1 = aux e.I.exp_assign_lhs in
       let l2 = aux e.I.exp_assign_lhs in
@@ -1357,51 +1364,51 @@ let delete_one_branch body dif_num =
   aux body dif_num
 
 (* x = y -> x != y *)
-let buggy_boolean_exp body dif_num =
-  let rec aux exp changed =
-    if changed = 0 then exp, 0
-    else
-      match exp with
-      | I.Block block ->
-        let n_block, res = aux block.I.exp_block_body changed in
-        (I.Block {block with exp_block_body = n_block}, res)
-      | I.Label (a, l) ->
-        let n_l, res = aux l changed in
-        (I.Label (a, n_l), res)
-      | I.Seq seq ->
-        let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
-        let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
-        (I.Seq {seq with exp_seq_exp1 = n_e1;
-                         exp_seq_exp2 = n_e2}, r2)
-      | I.Cond cond ->
-        let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
-        let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
-        let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
-                                    exp_cond_else_arm = n_e3} in
-        (n_e, r3)
-      | I.Assign e ->
-        let n_e1, r1 = aux e.I.exp_assign_lhs changed in
-        let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
-        (I.Assign {e with exp_assign_lhs = n_e1;
-                          exp_assign_rhs = n_e2}, r2)
-      | I.Return e ->
-        let n_e, res = match e.I.exp_return_val with
-          | None -> None, changed
-          | Some r_e ->
-            let n_r, res = aux r_e changed in
-            (Some n_r, res) in
-        (I.Return {e with exp_return_val = n_e}, res)
-      | I.Binary bin ->
-        let changed, n_op = match bin.I.exp_binary_op with
-          | I.OpEq -> (changed - 1, I.OpNeq)
-          | _ -> (changed, bin.I.exp_binary_op) in
-        let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
-        let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
-        (I.Binary {bin with exp_binary_oper1 = n_e1;
-                            exp_binary_op = n_op;
-                            exp_binary_oper2 = n_e2}, r2)
-      | _ -> (exp, changed) in
-  aux body dif_num
+(* let buggy_boolean_exp body dif_num =
+ *   let rec aux exp changed =
+ *     if changed = 0 then exp, 0
+ *     else
+ *       match exp with
+ *       | I.Block block ->
+ *         let n_block, res = aux block.I.exp_block_body changed in
+ *         (I.Block {block with exp_block_body = n_block}, res)
+ *       | I.Label (a, l) ->
+ *         let n_l, res = aux l changed in
+ *         (I.Label (a, n_l), res)
+ *       | I.Seq seq ->
+ *         let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
+ *         let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
+ *         (I.Seq {seq with exp_seq_exp1 = n_e1;
+ *                          exp_seq_exp2 = n_e2}, r2)
+ *       | I.Cond cond ->
+ *         let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
+ *         let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
+ *         let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
+ *                                     exp_cond_else_arm = n_e3} in
+ *         (n_e, r3)
+ *       | I.Assign e ->
+ *         let n_e1, r1 = aux e.I.exp_assign_lhs changed in
+ *         let n_e2, r2 = aux e.I.exp_assign_rhs r1 in
+ *         (I.Assign {e with exp_assign_lhs = n_e1;
+ *                           exp_assign_rhs = n_e2}, r2)
+ *       | I.Return e ->
+ *         let n_e, res = match e.I.exp_return_val with
+ *           | None -> None, changed
+ *           | Some r_e ->
+ *             let n_r, res = aux r_e changed in
+ *             (Some n_r, res) in
+ *         (I.Return {e with exp_return_val = n_e}, res)
+ *       | I.Binary bin ->
+ *         let changed, n_op = match bin.I.exp_binary_op with
+ *           | I.OpEq -> (changed - 1, I.OpNeq)
+ *           | _ -> (changed, bin.I.exp_binary_op) in
+ *         let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
+ *         let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
+ *         (I.Binary {bin with exp_binary_oper1 = n_e1;
+ *                             exp_binary_op = n_op;
+ *                             exp_binary_oper2 = n_e2}, r2)
+ *       | _ -> (exp, changed) in
+ *   aux body dif_num *)
 
 (* x->next : x *)
 let remove_field_infestor body dif_num var_decls data_decls =
@@ -1428,9 +1435,11 @@ let remove_field_infestor body dif_num var_decls data_decls =
         (I.Seq {seq with exp_seq_exp1 = n_e1;
                          exp_seq_exp2 = n_e2}, r2)
       | I.Cond cond ->
-        let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
         let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
-        let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
+        let n_e = I.Cond {cond with I.exp_cond_then_arm = n_e2;
+                                    I.exp_cond_condition = n_e1;
                                     exp_cond_else_arm = n_e3} in
         (n_e, r3)
       | I.Assign e ->
@@ -1474,6 +1483,14 @@ let remove_field_infestor body dif_num var_decls data_decls =
         let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
         (I.Binary {bin with exp_binary_oper1 = n_e1;
                             exp_binary_oper2 = n_e2}, r2)
+        | I.Unary u_exp ->
+        let n_e1, r1 = aux u_exp.I.exp_unary_exp changed in
+        let n_exp = I.Unary {u_exp with I.exp_unary_exp = n_e1} in
+        (n_exp, r1)
+      | I.Cast cast_exp ->
+        let n_e1, r1 = aux cast_exp.I.exp_cast_body changed in
+        let n_exp = I.Cast {cast_exp with I.exp_cast_body = n_e1} in
+        (n_exp, r1)
       | _ -> (exp, changed) in
   let n_body, num = aux body dif_num in
   (n_body, num, !pos_list)
@@ -1509,10 +1526,12 @@ let add_field_infestor body dif_num var_decls data_decls =
         (I.Seq {seq with exp_seq_exp1 = n_e1;
                          exp_seq_exp2 = n_e2}, r2)
       | I.Cond cond ->
-        let (n_e2, r2) = aux cond.I.exp_cond_then_arm changed in
+        let (n_e1, r1) = aux cond.I.exp_cond_condition changed in
+        let (n_e2, r2) = aux cond.I.exp_cond_then_arm r1 in
         let (n_e3, r3) = aux cond.I.exp_cond_else_arm r2 in
-        let n_e = I.Cond {cond with exp_cond_then_arm = n_e2;
-                                    exp_cond_else_arm = n_e3} in
+        let n_e = I.Cond {cond with I.exp_cond_then_arm = n_e2;
+                                    I.exp_cond_condition = n_e1;
+                                    I.exp_cond_else_arm = n_e3} in
         (n_e, r3)
       | I.Assign e ->
         let n_e1, r1 = aux e.I.exp_assign_lhs changed in
@@ -1540,8 +1559,9 @@ let add_field_infestor body dif_num var_decls data_decls =
             } in
           (n_member, 0)
         else (exp, changed - 1)
-      | I.Var v ->
-        let v_name = v.I.exp_var_name in
+      | I.Var var ->
+        let v_name = var.I.exp_var_name in
+        let () = x_tinfo_hp (add_str "v_name: " pr_id) v_name no_pos in
         begin
           try
             let typed_v = List.find (fun (y, x) -> eq_str x v_name &&
@@ -1560,9 +1580,9 @@ let add_field_infestor body dif_num var_decls data_decls =
                     I.exp_member_base = exp;
                     I.exp_member_fields = [field];
                     I.exp_member_path_id = None;
-                    I.exp_member_pos = v.I.exp_var_pos;
+                    I.exp_member_pos = var.I.exp_var_pos;
                   } in
-                let () = pos_list := (v.I.exp_var_pos)::(!pos_list) in
+                let () = pos_list := (var.I.exp_var_pos)::(!pos_list) in
                 (n_exp, 0)
               else (exp, changed - 1)
             else (exp, changed)
@@ -1576,10 +1596,19 @@ let add_field_infestor body dif_num var_decls data_decls =
             (Some n_r, res) in
         (I.Return {e with exp_return_val = n_e}, res)
       | I.Binary bin ->
+        let () = x_tinfo_hp (add_str "bin_exp: " pr_exp) exp no_pos in
         let n_e1, r1 = aux bin.I.exp_binary_oper1 changed in
         let n_e2, r2 = aux bin.I.exp_binary_oper2 r1 in
         (I.Binary {bin with exp_binary_oper1 = n_e1;
                             exp_binary_oper2 = n_e2}, r2)
+      | I.Unary u_exp ->
+        let n_e1, r1 = aux u_exp.I.exp_unary_exp changed in
+        let n_exp = I.Unary {u_exp with I.exp_unary_exp = n_e1} in
+        (n_exp, r1)
+      | I.Cast cast_exp ->
+        let n_e1, r1 = aux cast_exp.I.exp_cast_body changed in
+        let n_exp = I.Cast {cast_exp with I.exp_cast_body = n_e1} in
+        (n_exp, r1)
       | _ -> (exp, changed) in
   let n_body, num = aux body dif_num in
   (n_body, num, !pos_list)
@@ -1602,6 +1631,14 @@ let modify_field_infestor body dif_num var_decls data_decls =
     if changed = 0 then exp, 0
     else
       match exp with
+      | I.Unary u_exp ->
+        let n_e1, r1 = aux u_exp.I.exp_unary_exp changed in
+        let n_exp = I.Unary {u_exp with I.exp_unary_exp = n_e1} in
+        (n_exp, r1)
+      | I.Cast cast_exp ->
+        let n_e1, r1 = aux cast_exp.I.exp_cast_body changed in
+        let n_exp = I.Cast {cast_exp with I.exp_cast_body = n_e1} in
+        (n_exp, r1)
       | I.Block block ->
         let n_block, res = aux block.I.exp_block_body changed in
         (I.Block {block with exp_block_body = n_block}, res)

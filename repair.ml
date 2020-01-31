@@ -61,6 +61,12 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
             I.OpNeq
           | _ -> b_exp.I.exp_binary_op in
         I.Binary {b_exp with I.exp_binary_op = n_bin_op}
+      | I.Seq seq ->
+        let n_exp1 = aux_exp seq.I.exp_seq_exp1 in
+        let n_exp2 = if !to_not_eq_strategy then seq.I.exp_seq_exp2
+          else aux_exp seq.I.exp_seq_exp2 in
+        I.Seq {seq with I.exp_seq_exp1 = n_exp1;
+                        I.exp_seq_exp2 = n_exp2;}
       | I.Cond cond_exp ->
         let n_condition = aux_exp cond_exp.I.exp_cond_condition in
         I.Cond {cond_exp with I.exp_cond_condition = n_condition}
@@ -81,6 +87,12 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
             I.OpEq
           | _ -> b_exp.I.exp_binary_op in
         I.Binary {b_exp with I.exp_binary_op = n_bin_op}
+      | I.Seq seq ->
+        let n_exp1 = aux_exp seq.I.exp_seq_exp1 in
+        let n_exp2 = if !to_eq_strategy then seq.I.exp_seq_exp2
+          else aux_exp seq.I.exp_seq_exp2 in
+        I.Seq {seq with I.exp_seq_exp1 = n_exp1;
+                        I.exp_seq_exp2 = n_exp2;}
       | I.Block block ->
         I.Block {block with I.exp_block_body = aux_exp block.I.exp_block_body}
       | I.Label (a, l_exp) -> I.Label (a, aux_exp l_exp)
@@ -92,8 +104,8 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
     eq_exp in
   let not_eq_exp = equal_to_not_equal input_exp in
   let eq_exp = not_equal_to_equal input_exp in
-  let () = x_binfo_hp (add_str "to_eq_exp?:" pr_bool) (!to_eq_strategy) no_pos in
-  let () = x_binfo_hp (add_str "to_eq_exp" pr_exp) eq_exp no_pos in
+  let () = x_tinfo_hp (add_str "to_eq_exp?:" pr_bool) (!to_eq_strategy) no_pos in
+  let () = x_tinfo_hp (add_str "to_eq_exp" pr_exp) eq_exp no_pos in
   let var_decls = iproc.I.proc_args |> List.map
                     (fun x -> (x.I.param_type, x.I.param_name)) in
   let data_decls = iprog.I.prog_data_decls in
@@ -103,6 +115,21 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
       | I.Block block ->
         I.Block {block with I.exp_block_body = aux_exp block.I.exp_block_body}
       | I.Label (a, l_exp) -> I.Label (a, aux_exp l_exp)
+      | I.Seq seq ->
+        let n_exp1 = aux_exp seq.I.exp_seq_exp1 in
+        let n_exp2 = if !rm_field_strategy then seq.I.exp_seq_exp2
+          else aux_exp seq.I.exp_seq_exp2 in
+        I.Seq {seq with I.exp_seq_exp1 = n_exp1;
+                        I.exp_seq_exp2 = n_exp2;}
+      | I.Binary b_exp ->
+        let n_lhs = aux_exp b_exp.I.exp_binary_oper1 in
+        let n_rhs = if !rm_field_strategy then b_exp.I.exp_binary_oper2
+          else aux_exp b_exp.I.exp_binary_oper2 in
+        I.Binary {b_exp with I.exp_binary_oper1 = n_lhs;
+                             I.exp_binary_oper2 = n_rhs}
+      | I.Cast cast_exp ->
+        let n_exp = aux_exp cast_exp.I.exp_cast_body in
+        I.Cast {cast_exp with I.exp_cast_body = n_exp}
       | I.Cond cond_exp ->
         let (removed_field_exp, is_changed, _) =
           Repairpure.remove_field_infestor cond_exp.I.exp_cond_condition 1
@@ -115,9 +142,17 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
     let rm_field_exp = aux_exp n_equal_exp in
     rm_field_exp in
   let rm_field_exp = remove_field_in_condition input_exp in
+  let () = x_binfo_hp (add_str "rm_field:" pr_bool) (!rm_field_strategy) no_pos in
+  let () = x_binfo_hp (add_str "rm_field_exp" pr_exp) rm_field_exp no_pos in
   let add_field_strategy = ref false in
   let add_field_in_condition n_equal_exp =
     let rec aux_exp i_exp = match i_exp with
+      | I.Unary u_exp ->
+        let n_exp = aux_exp u_exp.I.exp_unary_exp in
+        I.Unary {u_exp with I.exp_unary_exp = n_exp}
+      | I.Cast cast_exp ->
+        let n_exp = aux_exp cast_exp.I.exp_cast_body in
+        I.Cast {cast_exp with I.exp_cast_body = n_exp}
       | I.Block block ->
         I.Block {block with I.exp_block_body = aux_exp block.I.exp_block_body}
       | I.Label (a, l_exp) -> I.Label (a, aux_exp l_exp)
@@ -677,6 +712,8 @@ let buggy_level_one body var_decls data_decls =
       let n_list = (n_body, level)::list in
       aux4 body (num+1) n_list
     else list in
+  (* let buggy_operator_progs = aux4 body 1 [] in
+   * let () = x_binfo_hp (add_str "buggy operators" (pr_list (pr_pair pr_exp pr_int))) buggy_operator_progs no_pos in *)
   let n_body_list = n_body_list @ (aux4 body 1 []) in
   n_body_list
 
@@ -792,12 +829,16 @@ let start_repair_wrapper (iprog: I.prog_decl) level =
 
 let infest_and_output src (iprog: I.prog_decl) =
   let buggy_progs = create_buggy_prog src iprog in
-  let () = x_binfo_hp (add_str "input_prog: " Iprinter.string_of_program) iprog no_pos in
-  let level_one_progs = buggy_progs |> List.filter (fun (_, y) -> y = 1)
+  let () = x_tinfo_hp (add_str "input_prog: " Iprinter.string_of_program) iprog no_pos in
+  (* buggy program with one location*)
+  let level_one_progs = buggy_progs
+                        (* |> List.filter (fun (_, y) -> y = 1) *)
                         |> List.map fst in
-  (* let _ = level_one_progs |> List.map (fun buggy_prog ->
-   *     output_infestor_prog src buggy_prog 1) in *)
-  x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM\n" no_pos
+  let _ = level_one_progs |> List.map (fun buggy_prog ->
+      output_infestor_prog src buggy_prog 1) in
+  let () = x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM\n" no_pos in
+  let injected_programs = List.length level_one_progs in
+  x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " pr_int) injected_programs no_pos
 
 let infest_and_repair src (iprog : I.prog_decl) =
   let buggy_progs = create_buggy_prog src iprog in
@@ -853,6 +894,5 @@ let infest_and_repair src (iprog : I.prog_decl) =
   let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln pr_float)) l2_stats no_pos in
   x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos
 
-(* INFEST and OUTPUT buggy program *)
 
 
