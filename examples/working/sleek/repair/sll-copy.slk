@@ -20,10 +20,19 @@ ensures res::ll<n> * x::ll<n>;.
 
 // return new node(x.val, tmp);
 
-synthesize [node x, node tmp]
- tmp::ll<n_15076> * x::ll<n_15076>&x!=null & 0<=n_15076 & n=n_15076
+// synthesize [node x, node tmp]
+//  tmp::ll<n_15076> * x::ll<n_15076>&x!=null & 0<=n_15076 & n=n_15076
+// ~>
+//  (exists f_r_15086,f_r_15087,Anon_1731,q_1732,Anon_1791,
+// q_1792: res::node<Anon_1791,q_1792> * x::node<Anon_1731,q_1732> * 
+//         q_1732::ll<f_r_15086> * q_1792::ll<f_r_15087>&
+// 1<=n_15076 & 1+f_r_15086=n_15076 & 1+f_r_15087=n_15076).
+
+
+synthesize [node x,node tmp]
+x::ll<n>&x!=null
 ~>
- (exists f_r_15086,f_r_15087,Anon_1731,q_1732,Anon_1791,
-q_1792: res::node<Anon_1791,q_1792> * x::node<Anon_1731,q_1732> * 
-        q_1732::ll<f_r_15086> * q_1792::ll<f_r_15087>&
-1<=n_15076 & 1+f_r_15086=n_15076 & 1+f_r_15087=n_15076).
+ (exists f_r_4396,f_r_4397,val_19_4367',
+next_19_4368': x::node<val_19_4367',next_19_4368'> * 
+               next_19_4368'::ll<f_r_4396> * tmp::ll<f_r_4397>&
+1<=n & 1+f_r_4396=n & 1+f_r_4397=n).

@@ -936,7 +936,8 @@ let rec string_of_form_list l = match l with
 
 (* function used to decide if parentrhesis are needed or not *)
 let need_parenthesis2 = function
-  | Var _ | BoolLit _ | IntLit _ | FloatLit _ | Member _ -> false
+  | Var _ | BoolLit _ | IntLit _ | FloatLit _ | Member _ | CallRecv _
+  | CallNRecv _ -> false
   | _  -> true
 
 let rec string_of_exp_repair = function
@@ -1044,7 +1045,9 @@ let rec string_of_exp_repair = function
     let newexp = (
       match idl with
       | _ ->
-          base_str ^ "->" ^ (concatenate_string_list idl "~~>")
+        if !repairing_ss_file then
+          base_str ^ "." ^ (concatenate_string_list idl ".")
+        else base_str ^ "->" ^ (concatenate_string_list idl "->")
     ) in newexp
 
   | Assign {exp_assign_op = op;
@@ -1091,7 +1094,8 @@ let rec string_of_exp_repair = function
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
   | FloatLit ({exp_float_lit_val = f})
       -> string_of_float f
-  | Null l                         -> "NULL"
+  | Null l                         ->
+    if !repairing_ss_file then "null" else "NULL"
   | Assert l                       ->
         snd(l.exp_assert_path_id) ^
             (match l.exp_assert_type with
@@ -1514,7 +1518,8 @@ let string_of_proc_decl_repair p =
     | None     -> ""
     | Some e   -> "{\n" ^ (string_of_exp_repair e) ^ "\n}" in
   let specs = (string_of_struc_formula_repair p.proc_static_specs) in
-  let specs = "/*@\n" ^ specs ^ "\n*/" in
+  let specs = if !repairing_ss_file then specs
+    else "/*@\n" ^ specs ^ "\n*/" in
   (if p.proc_constructor then "" else (string_of_typ_repair p.proc_return) ^ " ")
   ^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
   ^ "\n" ^ specs  ^ "\n" ^ body
@@ -1703,9 +1708,14 @@ let string_of_data_repair cdef =
     else "\n"^(String.concat ";\n"
                  (List.map (fun i -> "inv " ^ (string_of_formula i))
                     cdef.data_invs)) in
-  "struct " ^ cdef.data_name ^ " {\n"
-  ^ field_str ^ inv_str ^ meth_str ^ "\n}"
-  ^(string_of_data_pure_inv cdef.data_pure_inv) ^ ";"
+  if !repairing_ss_file then
+    "data " ^ cdef.data_name ^ " {\n"
+    ^ field_str ^ inv_str ^ meth_str ^ "\n}"
+    ^(string_of_data_pure_inv cdef.data_pure_inv)
+  else
+    "struct " ^ cdef.data_name ^ " {\n"
+    ^ field_str ^ inv_str ^ meth_str ^ "\n}"
+    ^(string_of_data_pure_inv cdef.data_pure_inv) ^ ";"
 
 (* pretty printing for program in repair case*)
 let string_of_program_repair p =
@@ -1731,7 +1741,9 @@ let string_of_program_repair p =
   let global_str = string_of_global_var_decls_repair p.prog_global_var_decls in
   let procs_str = string_of_proc_decls_repair (List.rev procs) in
   let views = string_of_view_decl_list_repair p.prog_view_decls in
-  let views = "/*@\n" ^ views ^ "\n*/" in
+  let views =
+    if !repairing_ss_file then views
+    else "/*@\n" ^ views ^ "\n*/" in
   data_str ^ "\n\n"  ^ global_str ^ "\n" ^ views  ^"\n" ^  procs_str ^ "\n"
 
 (* pretty printing for program *)

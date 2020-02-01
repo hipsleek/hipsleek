@@ -6,6 +6,7 @@ open VarGen
 (* circular with Lb *)
 
 let repaired = ref false
+let repairing_ss_file = ref false
 let sleek_num_to_verify = ref (-1)
 let sleek_print_residue = ref true
 let songbird = ref false
@@ -585,6 +586,7 @@ let rec string_of_typ_repair (x:typ) : string = match x with
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null_type"
+    else if !repairing_ss_file then ot
     else "struct " ^ ot ^ "*"
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in

@@ -749,10 +749,11 @@ let buggy_level_two body var_decls data_decls =
 
 let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
   let n_body_w_level_one = buggy_level_one body var_decls data_decls in
-  let n_body_w_level = buggy_level_two body var_decls data_decls in
+  (* let n_body_w_level = buggy_level_two body var_decls data_decls in *)
   let pr_w_level = pr_list (pr_pair pr_exp pr_int) in
-  let all_cases = n_body_w_level_one @ n_body_w_level in
-  let () = x_tinfo_hp (add_str "w_level" pr_w_level) n_body_w_level no_pos in
+  (* let all_cases = n_body_w_level_one @ n_body_w_level in *)
+  let all_cases = n_body_w_level_one in
+  (* let () = x_tinfo_hp (add_str "w_level" pr_w_level) n_body_w_level no_pos in *)
   all_cases
 
 let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
@@ -828,12 +829,24 @@ let start_repair_wrapper (iprog: I.prog_decl) level =
   mutate_res
 
 let infest_and_output src (iprog: I.prog_decl) =
+  let filter_prog i_prog =
+    let cprog, _ = Astsimp.trans_prog i_prog in
+    try
+      let _ = Typechecker.check_prog_wrapper i_prog cprog in
+      false
+    with _ -> true in
+  let file_name = Filename.basename src in
+  let suffix = Filename.extension file_name in
+  let () = if eq_str suffix ".ss"
+    then repairing_ss_file := true in
+  let () = x_binfo_pp ("suffix: " ^ suffix) no_pos in
   let buggy_progs = create_buggy_prog src iprog in
   let () = x_tinfo_hp (add_str "input_prog: " Iprinter.string_of_program) iprog no_pos in
   (* buggy program with one location*)
   let level_one_progs = buggy_progs
                         (* |> List.filter (fun (_, y) -> y = 1) *)
-                        |> List.map fst in
+                        |> List.map fst
+                        |> List.filter filter_prog in
   let _ = level_one_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 1) in
   let () = x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM\n" no_pos in
