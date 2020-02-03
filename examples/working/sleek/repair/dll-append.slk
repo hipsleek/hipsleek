@@ -1,18 +1,36 @@
 data node2 {
+  int val;
 	node2 prev;
 	node2 next;	
 }.
 
 pred dll<p,n> == self = null & n = 0 
-  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0)
+  or (exists q: self::node2<_, p , q> * q::dll<self, n-1> & n > 0)
   inv n >= 0.
 
 void append2(node2 x, node2 y)
 	requires x::dll<q, m> * y::dll<p, n> & m>0
 	ensures (exists k2: x::dll<q, k2> & k2 = m + n);.
 
+// synthesize [node2 x,node2 y]
+// x::node2<p7,q73> * q73::dll<x,flt72> * y::dll<p,n> &
+// 0<=flt72 & q73!=null & s71=x & q=p7 & m=1+flt72
+// ~>
+// (exists fr16: x::dll<p7,fr16>&fr16=1+flt72+n).
+
 synthesize [node2 x,node2 y]
-x::node2<p7,q73> * q73::dll<x,flt72> * y::dll<p,n> &
-0<=flt72 & q73!=null & s71=x & q=p7 & m=1+flt72
+ x::node2<Anon_4588,pr_4586,y> * y::dll<p,n>&
+y!=null & self_4587=x & q=pr_4586 & next_16_4600=null & q_4589=null & m=1
 ~>
-(exists fr16: x::dll<p7,fr16>&fr16=1+flt72+n).
+(exists f_r_4716: x::dll<pr_4586,f_r_4716>&f_r_4716=1+n).
+
+// synthesize [node2 x,node2 y]
+// y::node2<Anon_342,p_338,q_341> &
+// y!=null & self_4587=x & q=pr_4586 & next_16_4600=null & q_4589=null & m=1 & 
+// flted_8_340+1=n & 0<n & p_338=p & self_339=y
+// ~>
+// (exists p_416,Anon_420,self_210,flted_8_211,f_r_86:
+// y::node2<Anon_420,p_416,q_341>&
+// f_r_86=1+n & flted_8_211+1=f_r_86 & 0<f_r_86 & pr_4586=pr_4586 & 
+// self_210=x & flted_8_340+1=flted_8_211 & 0<flted_8_211 & p_416=self_210 & 
+// self_339=y).

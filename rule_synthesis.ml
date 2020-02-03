@@ -409,40 +409,59 @@ let choose_rule_heap_assign goal =
 let choose_rule_fwrite goal =
   (* if check_head_allocate_wrapper goal then []
    * else *)
-    let pre = goal.gl_pre_cond in
-    let post = goal.gl_post_cond in
-    let all_vars = goal.gl_vars in
-    let prog = goal.gl_prog in
-    let pre_nodes = pre |> get_heap |> get_heap_nodes in
-    let pr_nodes = pr_list (pr_triple pr_var pr_id pr_vars) in
-    x_tinfo_hp (add_str "pre_nodes" pr_nodes) pre_nodes no_pos;
-    let post_nodes = post |> get_heap |> get_heap_nodes in
-    x_tinfo_hp (add_str "post_nodes" pr_nodes) post_nodes no_pos;
-    let aux post_nodes (var, data_name, args) =
-      try
-        let triple = List.find (fun (y, _, _) -> CP.eq_sv y var) post_nodes in
-        let _, _, post_args = triple in
-        let data_decls = prog.Cast.prog_data_decls in
-        let data = List.find (fun x -> eq_str x.Cast.data_name data_name)
-            data_decls in
-        let fields = List.map fst data.Cast.data_fields in
-        let arg_pairs = List.combine args post_args in
-        let arg_triples = List.map2 (fun (x,y) z -> (x,y,z)) arg_pairs fields in
-        let filter_fun (x,y, z) = not(CP.eq_sv x y) in
-        let dif_fields = List.filter filter_fun arg_triples in
-        dif_fields |> List.map (fun (x, y, z) -> (var, y, z))
-      with _ -> [] in
-    let tuples = pre_nodes |> List.map (aux post_nodes) |> List.concat in
-    let filter (cur_var,n_val, _) =
-      CP.mem n_val all_vars && CP.mem cur_var all_vars in
-    let tuples = tuples |> List.filter filter in
-    let mk_fwrite_rule (var, n_val, field) =
-      RlFWrite {
-        rfw_bound_var = var;
-        rfw_field = field;
-        rfw_value = n_val;
-      } in
-    tuples |> List.map mk_fwrite_rule
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
+  let prog = goal.gl_prog in
+  let pre_nodes = pre |> get_heap |> get_heap_nodes in
+  let pr_nodes = pr_list (pr_triple pr_var pr_id pr_vars) in
+  let () = x_tinfo_hp (add_str "pre_nodes" pr_nodes) pre_nodes no_pos in
+  let post_nodes = post |> get_heap |> get_heap_nodes in
+  let () = x_tinfo_hp (add_str "post_nodes" pr_nodes) post_nodes no_pos in
+  let aux post_nodes (var, data_name, args) =
+    try
+      let triple = List.find (fun (y, _, _) -> CP.eq_sv y var) post_nodes in
+      let _, _, post_args = triple in
+      let data_decls = prog.Cast.prog_data_decls in
+      let data = List.find (fun x -> eq_str x.Cast.data_name data_name)
+          data_decls in
+      let fields = List.map fst data.Cast.data_fields in
+      let arg_pairs = List.combine args post_args in
+      let arg_triples = List.map2 (fun (x,y) z -> (x,y,z)) arg_pairs fields in
+      let filter_fun (x,y, z) = not(CP.eq_sv x y) in
+      let dif_fields = List.filter filter_fun arg_triples in
+      dif_fields |> List.map (fun (x, y, z) -> (var, y, z))
+    with _ -> [] in
+  let tuples = pre_nodes |> List.map (aux post_nodes) |> List.concat in
+  let pr_typed_id (_,b) = b in
+  let pr_tuples = pr_list (pr_triple pr_var pr_var pr_typed_id) in
+  let () = x_tinfo_hp (add_str "tuples" pr_tuples) tuples no_pos in
+  let get_new_field_val (cur_var, n_val, cur_field) =
+    let replaced_value =
+      if List.mem n_val all_vars then n_val
+      else
+        let eq_type_vars = all_vars |> List.filter (equal_type n_val) in
+        let aux_check_entail replaced_var =
+          let conseq = CP.mkEqVar n_val replaced_var no_pos in
+          let ante = CF.get_pure post in
+          SB.check_pure_entail ante conseq in
+        let new_vars = eq_type_vars |> List.filter aux_check_entail in
+        if new_vars = [] then n_val
+        else new_vars |> List.hd in
+    (cur_var, replaced_value, cur_field) in
+  let tuples = tuples |> List.map get_new_field_val in
+  let filter_tuple (cur_var,n_val, _) =
+    (* new field value has to be in the all_vars set *)
+    CP.mem n_val all_vars && CP.mem cur_var all_vars in
+  let tuples = tuples |> List.filter filter_tuple in
+  let () = x_binfo_hp (add_str "filtered tuples" pr_tuples) tuples no_pos in
+  let mk_fwrite_rule (var, n_val, field) =
+    RlFWrite {
+      rfw_bound_var = var;
+      rfw_field = field;
+      rfw_value = n_val;
+    } in
+  tuples |> List.map mk_fwrite_rule
 
 let choose_rule_fwrite goal =
   Debug.no_1 "choose_rule_fwrite" pr_goal pr_rules

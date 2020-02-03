@@ -142,8 +142,8 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
     let rm_field_exp = aux_exp n_equal_exp in
     rm_field_exp in
   let rm_field_exp = remove_field_in_condition input_exp in
-  let () = x_binfo_hp (add_str "rm_field:" pr_bool) (!rm_field_strategy) no_pos in
-  let () = x_binfo_hp (add_str "rm_field_exp" pr_exp) rm_field_exp no_pos in
+  let () = x_tinfo_hp (add_str "rm_field:" pr_bool) (!rm_field_strategy) no_pos in
+  let () = x_tinfo_hp (add_str "rm_field_exp" pr_exp) rm_field_exp no_pos in
   let add_field_strategy = ref false in
   let add_field_in_condition n_equal_exp =
     let rec aux_exp i_exp = match i_exp with
@@ -178,7 +178,7 @@ let mutating_proc iprog (iproc: I.proc_decl): bool =
     | None -> []
     | Some proc_body ->
       let n_exp_list = mutate_iast_exp iprog iproc proc_body in
-      let () = x_binfo_hp (add_str "mutated_body" (pr_list pr_exp)) n_exp_list no_pos in
+      let () = x_tinfo_hp (add_str "mutated_body" (pr_list pr_exp)) n_exp_list no_pos in
       let n_proc_list =
         n_exp_list |> List.map (fun x -> {iproc with I.proc_body = Some x}) in
       n_proc_list in
@@ -346,6 +346,7 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
         | _ -> true
       end
     | _ -> true in
+  let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let cands = cands |> List.filter not_var_decl in
   let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let cands, others = List.partition (filter_cand !repair_loc) cands in
@@ -812,7 +813,6 @@ let start_repair_wrapper (iprog: I.prog_decl) level =
   let res = repair_iprog iprog level in
   (* repair using generic programming *)
   let mutate_res = if res then
-      let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
       res
     else
       let () = x_binfo_pp "REPAIRING BY SYNTHESIS FAIL" no_pos in
@@ -820,7 +820,7 @@ let start_repair_wrapper (iprog: I.prog_decl) level =
       let mutate_res = repair_iprog_by_mutation iprog in
       mutate_res in
   let () = if mutate_res then
-      let () = x_binfo_pp "REPAIRING BY MUTATION SUCCESSFUL" no_pos in
+      let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
       let duration = get_time() -. start_time in
       x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos
     else
@@ -849,9 +849,11 @@ let infest_and_output src (iprog: I.prog_decl) =
                         |> List.filter filter_prog in
   let _ = level_one_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 1) in
-  let () = x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM\n" no_pos in
   let injected_programs = List.length level_one_progs in
-  x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " pr_int) injected_programs no_pos
+  let () = x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " pr_int)
+      injected_programs no_pos in
+  x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
+
 
 let infest_and_repair src (iprog : I.prog_decl) =
   let buggy_progs = create_buggy_prog src iprog in

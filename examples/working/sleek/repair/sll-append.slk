@@ -21,4 +21,5 @@ synthesize [node x,node y]
  x::node<f_r_4425> * y::ll<n2>&
 q_4395=null & flted_6_4394=0 & n1=1 & f_r_4425=null
 ~>
- (exists q_25: x::node<q_25> * q_25::ll<n2> & 0<=n2).
+ (exists q_25: x::node<q_25> * q_25::ll<n2> &
+ 0<=n2).

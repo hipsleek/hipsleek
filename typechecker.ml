@@ -2977,7 +2977,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     let aux fail_traces trace =
       let eq_trace t1 = t1 = trace in
       List.exists eq_trace fail_traces in
-    let () = x_tinfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
+    let () = x_binfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
     let check_post = List.map (aux fail_traces) all_traces in
     let () = Synt.check_post_list := check_post in
     let _ =
