@@ -28,11 +28,23 @@ ensures res::ll<n> * x::ll<n>;.
 //         q_1732::ll<f_r_15086> * q_1792::ll<f_r_15087>&
 // 1<=n_15076 & 1+f_r_15086=n_15076 & 1+f_r_15087=n_15076).
 
+// tmp = copy(x.next.next);;
 
-synthesize [node x,node tmp]
-x::ll<n>&x!=null
+// synthesize [node x,node tmp]
+// x::ll<n>&x!=null
+// ~>
+//  (exists f_r_4396,f_r_4397,val_19_4367',
+// next_19_4368': x::node<val_19_4367',next_19_4368'> * 
+//                next_19_4368'::ll<f_r_4396> * tmp::ll<f_r_4397>&
+// 1<=n & 1+f_r_4396=n & 1+f_r_4397=n).
+
+
+// tmp = rs0
+synthesize [node rs0,node q_83,node x,node tmp]
+ rs0::ll<n_119> * q_83::ll<n_119> * x::node<Anon_82,q_83>&
+n_119=flted_7_81 & 0<n & flted_7_81+1=n & x!=null
 ~>
- (exists f_r_4396,f_r_4397,val_19_4367',
-next_19_4368': x::node<val_19_4367',next_19_4368'> * 
-               next_19_4368'::ll<f_r_4396> * tmp::ll<f_r_4397>&
-1<=n & 1+f_r_4396=n & 1+f_r_4397=n).
+ (exists f_r_45,f_r_46,val_19_47,
+next_19_48: x::node<val_19_47,next_19_48> * next_19_48::ll<f_r_45> * 
+            tmp::ll<f_r_46>&
+1<=n & 1+f_r_45=n & 1+f_r_46=n).

@@ -2974,11 +2974,25 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   else
     let fail_traces = rs |> List.map fst |> List.concat |> List.map fst in
     let pr_paths = pr_list Cprinter.string_of_path_trace in
-    let aux fail_traces trace =
+    let rec compare_trace (fst_trace: path_trace) (snd_trace : path_trace) =
+      match (fst_trace, snd_trace) with
+      | [], [] -> 0
+      | [], _ -> +1
+      | _, [] -> -1
+      | fst_head::fst_tail, snd_head::snd_tail ->
+        let fst_head_num = snd fst_head in
+        let snd_head_num = snd snd_head in
+        if fst_head_num > snd_head_num then +1
+        else if fst_head_num < snd_head_num then -1
+        else compare_trace fst_tail snd_tail in
+    let all_traces = all_traces |> List.sort compare_trace in
+
+    let aux_trace fail_traces trace =
       let eq_trace t1 = t1 = trace in
       List.exists eq_trace fail_traces in
     let () = x_binfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
-    let check_post = List.map (aux fail_traces) all_traces in
+    let () = x_binfo_hp (add_str "all paths" pr_paths) all_traces no_pos in
+    let check_post = List.map (aux_trace fail_traces) all_traces in
     let () = Synt.check_post_list := check_post in
     let _ =
       if not !Globals.disable_failure_explaining then

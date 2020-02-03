@@ -765,11 +765,12 @@ let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   let n_body_list = create_buggy_proc_wrapper body var_decls data_decls in
   n_body_list |> List.map (fun (x, y) -> ({proc with I.proc_body = Some x}, y))
 
-let output_infestor_prog (src: string) (iprog : I.prog_decl) level : string =
+let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
   let file_name, dir = Filename.basename src, Filename.dirname src in
   let suffix = Filename.extension file_name in
   let f_name = Filename.chop_suffix file_name suffix in
-  let b_file = f_name ^ "_buggy_" ^ (pr_int level) ^ "_" ^ (pr_int !infestor_num) ^ suffix in
+  let b_file = f_name ^ "_buggy_" ^ (pr_int !infestor_num) ^ suffix in
+  (* let b_file = f_name ^ "_buggy_" ^ (pr_int level) ^ "_" ^ (pr_int !infestor_num) ^ suffix in *)
   let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
   let () = infestor_num := !infestor_num + 1 in
   let view_decls = iprog.I.prog_view_decls in
