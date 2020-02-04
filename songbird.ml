@@ -351,65 +351,65 @@ let translate_pf_wrapper pf =
 
 let translate_back_pf (pf : SBC.pure_form) =
   let rec aux pf = match pf with
-  | SBC.BConst (b, pos)
-    -> CP.BForm ((CP.BConst (b, translate_back_pos pos), None), None)
-  | SBC.BVar (var, pos) -> let hip_var = translate_back_var var in
-    let loc = translate_back_pos pos in
-    CP.BForm ((CP.BVar (hip_var, loc), None), None)
-  | SBC.BinRel (br, exp1, exp2, pos) ->
-    let exp1_hip = translate_back_exp exp1 in
-    let exp2_hip = translate_back_exp exp2 in
-    let loc = translate_back_pos pos in
-    begin
-      match br with
-      | SBC.Lt -> CP.BForm((CP.Lt (exp1_hip, exp2_hip, loc), None), None)
-      | SBC.Le -> CP.BForm((CP.Lte (exp1_hip, exp2_hip, loc), None), None)
-      | SBC.Gt -> CP.BForm((CP.Gt (exp1_hip, exp2_hip, loc), None), None)
-      | SBC.Ge -> CP.BForm((CP.Gte (exp1_hip, exp2_hip, loc), None), None)
-      | SBC.Eq ->
-        begin
-          match exp2_hip with
-          | CP.Max (max1, max2, _) ->
-            CP.BForm((CP.EqMax (exp1_hip, max1, max2, loc), None), None)
-          | CP.Min (min1, min2, _) ->
-            CP.BForm((CP.EqMin (exp1_hip, min1, min2, loc), None), None)
-          | _ ->
-            CP.BForm((CP.Eq (exp1_hip, exp2_hip, loc), None), None)
-        end
-      | SBC.Ne -> CP.BForm((CP.Neq (exp1_hip, exp2_hip, loc), None), None)
-    end
-  | SBC.PNeg (pf, pos) -> let loc = translate_back_pos pos in
-    let hip_pf = aux pf in
-    CP.mkNot hip_pf None loc
-  | SBC.PDisj (pfs, pos) ->
-    let hip_pfs = List.map aux pfs in
-    let rec list_to_or pfs = match pfs with
-      | [] -> report_error no_pos "empty"
-      | [h] -> h
-      | h::t -> let t_f = list_to_or t in
-        CP.mkOr h t_f None no_pos in
-    list_to_or hip_pfs
-  | SBC.PConj (pfs, pos) ->
-    let hip_pfs = List.map aux pfs in
-    let rec list_to_and pfs = match pfs with
-      | [] -> report_error no_pos "empty"
-      | [h] -> h
-      | h::t -> let t_f = list_to_and t in
-        CP.mkAnd h t_f no_pos in
-    list_to_and hip_pfs
-  | SBC.PForall (vars, pf, pos) ->
-    let h_vars = List.map translate_back_var vars in
-    let h_pf = aux pf in
-    let h_pos = translate_back_pos pos in
-    CP.mkForall h_vars h_pf None h_pos
-  | SBC.PExists (vars, pf, pos) ->
-    let loc = translate_back_pos pos in
-    let hip_pf = aux pf in
-    let hip_vars = List.map translate_back_var vars in
-    CP.mkExists hip_vars hip_pf None loc
-  | _ ->
-    let to_print = "aux " ^ (SBC.pr_pf pf) ^ " not handled" in
-    report_error no_pos to_print in
+    | SBC.BConst (b, pos)
+      -> CP.BForm ((CP.BConst (b, translate_back_pos pos), None), None)
+    | SBC.BVar (var, pos) -> let hip_var = translate_back_var var in
+      let loc = translate_back_pos pos in
+      CP.BForm ((CP.BVar (hip_var, loc), None), None)
+    | SBC.BinRel (br, exp1, exp2, pos) ->
+      let exp1_hip = translate_back_exp exp1 in
+      let exp2_hip = translate_back_exp exp2 in
+      let loc = translate_back_pos pos in
+      begin
+        match br with
+        | SBC.Lt -> CP.BForm((CP.Lt (exp1_hip, exp2_hip, loc), None), None)
+        | SBC.Le -> CP.BForm((CP.Lte (exp1_hip, exp2_hip, loc), None), None)
+        | SBC.Gt -> CP.BForm((CP.Gt (exp1_hip, exp2_hip, loc), None), None)
+        | SBC.Ge -> CP.BForm((CP.Gte (exp1_hip, exp2_hip, loc), None), None)
+        | SBC.Eq ->
+          begin
+            match exp2_hip with
+            | CP.Max (max1, max2, _) ->
+              CP.BForm((CP.EqMax (exp1_hip, max1, max2, loc), None), None)
+            | CP.Min (min1, min2, _) ->
+              CP.BForm((CP.EqMin (exp1_hip, min1, min2, loc), None), None)
+            | _ ->
+              CP.BForm((CP.Eq (exp1_hip, exp2_hip, loc), None), None)
+          end
+        | SBC.Ne -> CP.BForm((CP.Neq (exp1_hip, exp2_hip, loc), None), None)
+      end
+    | SBC.PNeg (pf, pos) -> let loc = translate_back_pos pos in
+      let hip_pf = aux pf in
+      CP.mkNot hip_pf None loc
+    | SBC.PDisj (pfs, pos) ->
+      let hip_pfs = List.map aux pfs in
+      let rec list_to_or pfs = match pfs with
+        | [] -> report_error no_pos "empty"
+        | [h] -> h
+        | h::t -> let t_f = list_to_or t in
+          CP.mkOr h t_f None no_pos in
+      list_to_or hip_pfs
+    | SBC.PConj (pfs, pos) ->
+      let hip_pfs = List.map aux pfs in
+      let rec list_to_and pfs = match pfs with
+        | [] -> report_error no_pos "empty"
+        | [h] -> h
+        | h::t -> let t_f = list_to_and t in
+          CP.mkAnd h t_f no_pos in
+      list_to_and hip_pfs
+    | SBC.PForall (vars, pf, pos) ->
+      let h_vars = List.map translate_back_var vars in
+      let h_pf = aux pf in
+      let h_pos = translate_back_pos pos in
+      CP.mkForall h_vars h_pf None h_pos
+    | SBC.PExists (vars, pf, pos) ->
+      let loc = translate_back_pos pos in
+      let hip_pf = aux pf in
+      let hip_vars = List.map translate_back_var vars in
+      CP.mkExists hip_vars hip_pf None loc
+    | _ ->
+      let to_print = "aux " ^ (SBC.pr_pf pf) ^ " not handled" in
+      report_error no_pos to_print in
   aux pf
 
 let translate_back_pf pf =
@@ -508,7 +508,7 @@ let translate_back_vf vf =
     then (CF.HEmp, [], [])
     else
       let h_triples = List.map translate_back_exp vargs
-                         |> List.map exp_to_var in
+                      |> List.map exp_to_var in
       let h_all_args = h_triples |> List.map (fun (x,_,_) -> x) in
       let e_vars = h_triples |> List.map (fun (_,_,x) -> x) |> List.concat in
       let pfs = h_triples |> List.map (fun (_,x,_) -> x) |> List.concat in
@@ -650,6 +650,71 @@ let translate_ent ent =
   let () = x_tinfo_hp (add_str "rhs: " (SBC.pr_pure_form)) sb_rhs no_pos in
   SBC.mk_pure_entail sb_lhs sb_rhs
 
+(* Infer type for UKNOWN variable *)
+
+let add_inferred_type_formula (formula: CF.formula) : CF.formula =
+  let vars = CF.fv formula in
+  let uk_vars = vars |> List.filter Syn.is_unk_var in
+  let typed_vars = ref [] in
+  let rec aux_exp (i_exp: CP.exp) cur_type = match i_exp with
+    | CP.Var (sv, _) ->
+      begin
+        match CP.type_of_sv sv with
+        | UNK ->
+          begin
+            match cur_type with
+            | Some specific_typ ->
+              let n_var = CP.mk_typed_sv specific_typ (CP.name_of_sv sv) in
+              let () = typed_vars := (sv, n_var)::!typed_vars in
+              cur_type
+            | _ -> cur_type
+          end
+        | _ as n_typ -> Some n_typ
+      end
+    | CP.Add (exp1, exp2, _)
+    | CP.Subtract (exp1, exp2, _) ->
+      let _ = aux_exp exp1 (Some Int) in
+      let _ = aux_exp exp2 (Some Int) in
+      Some Int
+    | _ -> cur_type in
+  let aux_pf (pf:CP.p_formula) = match pf with
+    | CP.Eq (exp1, exp2, _)
+    | CP.Lt (exp1, exp2, _)
+    | CP.Lte (exp1, exp2, _)
+    | CP.Gt (exp1, exp2, _)
+    | CP.Gte (exp1, exp2, _)
+    | CP.Neq (exp1, exp2, _)->
+      let lhs_typ = aux_exp exp1 None in
+      let _ = aux_exp exp2 lhs_typ in
+      ()
+    | _ -> () in
+  let rec aux_f (pf: CP.formula) = match pf with
+    | CP.BForm (bf, _) ->
+      let (pf, _) = bf in
+      aux_pf pf
+    | CP.And (f1, f2, _) ->
+      let () = aux_f f1 in
+      aux_f f2
+    | CP.AndList a_list ->
+      let f_list = a_list |> List.map snd in
+      let _ = f_list |> List.map aux_f in
+      ()
+    | CP.Or (f1,f2,_,_) ->
+      let () = aux_f f1 in
+      aux_f f2
+    | CP.Not (f1, _, _) -> aux_f f1
+    | CP.Forall (_, f1, _, _) -> aux_f f1
+    | CP.Exists (_, f1, _, _) -> aux_f f1 in
+  if uk_vars = [] then formula
+  else
+    let pf = CF.get_pure formula in
+    let _ = aux_f pf in
+    CF.subst !typed_vars formula
+
+
+let add_inferred_type_formula (formula: CF.formula) : CF.formula =
+  Debug.no_1 "add_inferred_type_formula" pr_formula pr_formula
+    (fun _ -> add_inferred_type_formula formula) formula
 
 let translate_data_decl (data:CA.data_decl) =
   let ident = data.CA.data_name in
@@ -689,7 +754,7 @@ let translate_back_vdefns prog (vdefns: SBC.view_defn list) =
     | [h] -> h
     | h::t -> CF.mkOr h (helper_f t) no_pos in
   let vdefns = List.filter (fun x ->
-    List.exists (fun y -> eq_str x.SBC.view_name y) hp_names) vdefns in
+      List.exists (fun y -> eq_str x.SBC.view_name y) hp_names) vdefns in
   let helper hps vdefn =
     let hp = List.find (fun x -> x.CA.hp_name = vdefn.SBC.view_name) hps in
     let body = vdefn.SBC.view_body in
@@ -699,7 +764,7 @@ let translate_back_vdefns prog (vdefns: SBC.view_defn list) =
       | SBC.VbUnknown -> CF.mkBase_simp (CF.HEmp) (MCP.mkMTrue no_pos)
       | SBC.VbDefnCases cases ->
         let formulas = List.map (fun x ->
-          translate_back_formula x.SBC.vdc_form []) cases in
+            translate_back_formula x.SBC.vdc_form []) cases in
         helper_f formulas in
     let () = x_tinfo_hp (add_str "body" pr_formula) body no_pos in
     let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
@@ -728,14 +793,14 @@ let translate_prog ?(no_unk_views = false) (prog:CA.prog_decl) =
                    "int_ptr"; "int_ptr_ptr"; "lock"; "barrier"; "thrd"; "__RET";
                    "__ArrBoundErr"; "__DivByZeroErr"; "Object"; "String"] in
     let data_decls = data_decls |> List.filter (fun x ->
-      not(Gen.BList.mem_eq eq_str x.CA.data_name prelude)) in
+        not(Gen.BList.mem_eq eq_str x.CA.data_name prelude)) in
     let pr1 = Cprinter.string_of_data_decl_list in
     let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
     let sb_data_decls = List.map translate_data_decl data_decls in
     let view_decls = prog.CA.prog_view_decls in
     let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"; "size"] in
     let view_decls = view_decls |> List.filter (fun x ->
-      not(Gen.BList.mem_eq eq_str x.CA.view_name pre_views)) in
+        not(Gen.BList.mem_eq eq_str x.CA.view_name pre_views)) in
     let pr2 = Cprinter.string_of_view_decl_list in
     let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
     let hps = if no_unk_views then prog.CA.prog_hp_decls
@@ -775,56 +840,56 @@ let disable_export_entailments () =
 let export_songbird_entailments prog ents =
   if !export_songbird_proof then (
     List.iter (fun ent ->
-      let _ = index_export_ent := !index_export_ent + 1 in
-      let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
-                     "_ent_" ^ (string_of_int !index_export_ent) ^ ".sb" in
-      let file = open_out filename in
-      let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, SBG.StsNone)] in
-      let prog = {prog with SBC.prog_commands = cmds} in
-      let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
-      let _ = close_out file in
-      x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos) ents)
+        let _ = index_export_ent := !index_export_ent + 1 in
+        let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
+                       "_ent_" ^ (string_of_int !index_export_ent) ^ ".sb" in
+        let file = open_out filename in
+        let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, SBG.StsNone)] in
+        let prog = {prog with SBC.prog_commands = cmds} in
+        let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
+        let _ = close_out file in
+        x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos) ents)
   else ()
 
 let export_songbird_entailments_results ?(always=false) prog ents results =
   if !export_songbird_proof || always then (
     let _ = print_endline "EXPORT ENTAILMENT" in
     List.iter2 (fun ent res ->
-      let _ = index_export_ent := !index_export_ent + 1 in
-      let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
-                     "_ent_" ^ (string_of_int !index_export_ent) ^ ".sb" in
-      let file = open_out filename in
-      let sts = match res with
-        | SBG.MvlTrue -> SBG.StsValid
-        | SBG.MvlFalse -> SBG.StsInvalid
-        | SBG.MvlUnkn -> SBG.StsUnkn
-        | _ -> SBG.StsNone in
-      let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, sts)] in
-      let prog = {prog with SBC.prog_commands = cmds} in
-      let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
-      let _ = close_out file in
-      x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos
-    ) ents results)
+        let _ = index_export_ent := !index_export_ent + 1 in
+        let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
+                       "_ent_" ^ (string_of_int !index_export_ent) ^ ".sb" in
+        let file = open_out filename in
+        let sts = match res with
+          | SBG.MvlTrue -> SBG.StsValid
+          | SBG.MvlFalse -> SBG.StsInvalid
+          | SBG.MvlUnkn -> SBG.StsUnkn
+          | _ -> SBG.StsNone in
+        let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, sts)] in
+        let prog = {prog with SBC.prog_commands = cmds} in
+        let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
+        let _ = close_out file in
+        x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos
+      ) ents results)
   else ()
 
 let export_songbird_satisfiability_results prog fs results =
   if !export_songbird_proof then (
     List.iter2 (fun f res ->
-      let _ = index_export_ent := !index_export_ent + 1 in
-      let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
-                     "_sat_" ^ (string_of_int !index_export_ent) ^ ".sb" in
-      let file = open_out filename in
-      let sts = match res with
-        | SBG.MvlTrue -> SBG.StsInvalid
-        | SBG.MvlFalse -> SBG.StsValid
-        | _ -> SBG.StsNone in
-      let ent = SBC.mk_entailment f (SBC.mk_ffalse SBG.no_pos) in
-      let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, sts)] in
-      let prog = {prog with SBC.prog_commands = cmds} in
-      let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
-      let _ = close_out file in
-      x_binfo_pp ("Export formula to file: " ^ filename ^ "\n") no_pos
-    ) fs results)
+        let _ = index_export_ent := !index_export_ent + 1 in
+        let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
+                       "_sat_" ^ (string_of_int !index_export_ent) ^ ".sb" in
+        let file = open_out filename in
+        let sts = match res with
+          | SBG.MvlTrue -> SBG.StsInvalid
+          | SBG.MvlFalse -> SBG.StsValid
+          | _ -> SBG.StsNone in
+        let ent = SBC.mk_entailment f (SBC.mk_ffalse SBG.no_pos) in
+        let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, sts)] in
+        let prog = {prog with SBC.prog_commands = cmds} in
+        let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
+        let _ = close_out file in
+        x_binfo_pp ("Export formula to file: " ^ filename ^ "\n") no_pos
+      ) fs results)
   else ()
 
 (*********************************************************************
@@ -837,8 +902,8 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 20)
       sb_prog sb_ents in
@@ -921,7 +986,7 @@ let get_repair_candidate prog ents cond_op =
     let vars = exp_decl.CA.exp_params in
     try
       let fun_def = List.find (fun fun_def -> String.compare ident fun_def.SBC.func_name == 0)
-                      fun_defs in
+          fun_defs in
       match fun_def.SBC.func_body with
       | SBC.FbTemplate _
       | SBC.FbUnkn -> None
@@ -1041,8 +1106,7 @@ let get_reading_nodes (bf: CF.struc_base_formula) =
   let _, holes = translate_formula formula in
   holes
 
-let check_entail_prog_state prog (es: CF.entail_state)
-      (bf:CF.struc_base_formula) =
+let check_entail_prog_state prog (es: CF.entail_state) (bf:CF.struc_base_formula) =
   let ante = es.CF.es_formula in
   let n_prog = translate_prog prog in
   let evars = bf.CF.formula_struc_implicit_inst
@@ -1246,92 +1310,95 @@ let contains_hps prog ctx (conseq:CF.struc_formula) =
 
 let get_residues ptrees =
   List.map (fun ptree ->
-    let residue_fs = SBPFE.get_ptree_residues ptree in
-    let pr_rsd = SBC.pr_fs in
-    let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
-    residue_fs |> List.rev |> List.hd
-  ) ptrees
+      let residue_fs = SBPFE.get_ptree_residues ptree in
+      let pr_rsd = SBC.pr_fs in
+      let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
+      residue_fs |> List.rev |> List.hd
+    ) ptrees
 
 let rec heap_entail_after_sat_struc (prog:CA.prog_decl)
-          (ctx:CF.context) (conseq:CF.struc_formula) =
+    (ctx:CF.context) (conseq:CF.struc_formula) =
   let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
   let () = x_tinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
   match ctx with
   | CF.Ctx es -> (match conseq with
-    | CF.EBase bf -> hentail_after_sat_ebase prog ctx es bf
-    | CF.ECase cases ->
-      let branches = cases.CF.formula_case_branches in
-      let results = List.map (fun (pf, struc) ->
-        let n_es =
-          let n_f = Syn.add_pure_formula_to_formula pf es.CF.es_formula in
-          {es with CF.es_formula = n_f} in
-        let ctx = CF.Ctx n_es in
-        heap_entail_after_sat_struc prog ctx struc) branches in
-      let rez1, _ = List.split results in
-      let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
-                   (List.hd rez1) (List.tl rez1) in
-      (rez1, Prooftracer.TrueConseq)
-    | CF.EList b ->
-      let _, struc_list = List.split b in
-      let res_list =
-        List.map (fun x -> heap_entail_after_sat_struc prog ctx x)
-          struc_list in
-      let ctx_lists = res_list |> List.split |> fst in
-      let res = CF.fold_context_left 41 ctx_lists in
-      (res, Prooftracer.TrueConseq)
-    | CF.EAssume assume ->
-      let assume_f = assume.CF.formula_assume_simpl in
-      let assume_f = CF.rename_bound_vars assume_f in
-      let f = es.CF.es_formula in
-      let assume_f =
-        let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
-        let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
-        let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-        let has_pred = Syn.get_hp_formula hp_names assume_f in
-        if has_pred != [] then
-          let pred_name = List.find (fun x -> is_substr "Q" x) has_pred in
-          let pred_name = "N_" ^ pred_name in
-          let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
-          let assume_vars = f |> CF.fv in
-          (* let assume_vars = !Syn.r_pre_vars in *)
-          let n_args = assume_vars @ syn_pre_vars in
-          let n_args = if !Syn.is_return_cand then
-              n_args @ (!Syn.syn_res_vars)
-            else n_args in
-          let n_args = if !Syn.is_return_fst && pred_name = "N_Q1" then
-              n_args @ (!Syn.syn_res_vars)
-            else n_args in
-          let n_args = if !Syn.is_return_snd && pred_name = "N_Q2" then
-              n_args @ (!Syn.syn_res_vars)
-            else n_args in
-          let n_args = n_args |> CP.remove_dups_svl in
-          let n_args = n_args |> List.filter
-                         (fun x -> Syn.is_int_var x || Syn.is_node_var x)
-                       |> CP.remove_dups_svl in
-          let var_decls =
-            if pred_name = "N_Q1" then !Syn.block_var_decls
-            else if pred_name = "N_Q2" then !Syn.block_var_decls_snd
-            else [] in
-          let var_decls = var_decls |> List.filter (fun x -> not(CP.mem_svl x n_args))
-                          |> List.map CP.to_primed in
-          let n_args = n_args @ var_decls |> CP.remove_dups_svl in
-          (* let n_args = n_args @ !Syn.syn_ref_vars in *)
-          let n_args = n_args |> CP.remove_dups_svl in
-          let () = x_tinfo_hp (add_str "n_args" pr_vars) n_args no_pos in
-          let n_pred_f = Syn.create_spec_pred n_args pred_name in
-          n_pred_f
-        else assume_f in
-      let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
-      let () = x_tinfo_hp (add_str "new_f" pr_formula) new_f no_pos in
-      let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
-      (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-    | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq)))
+      | CF.EBase bf -> hentail_after_sat_ebase prog ctx es bf
+      | CF.ECase cases ->
+        let branches = cases.CF.formula_case_branches in
+        let results = List.map (fun (pf, struc) ->
+            let n_es =
+              let n_f = Syn.add_pure_formula_to_formula pf es.CF.es_formula in
+              {es with CF.es_formula = n_f} in
+            let ctx = CF.Ctx n_es in
+            heap_entail_after_sat_struc prog ctx struc) branches in
+        let rez1, _ = List.split results in
+        let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
+            (List.hd rez1) (List.tl rez1) in
+        (rez1, Prooftracer.TrueConseq)
+      | CF.EList b ->
+        let _, struc_list = List.split b in
+        let res_list =
+          List.map (fun x -> heap_entail_after_sat_struc prog ctx x)
+            struc_list in
+        let ctx_lists = res_list |> List.split |> fst in
+        let res = CF.fold_context_left 41 ctx_lists in
+        (res, Prooftracer.TrueConseq)
+      | CF.EAssume assume ->
+        let assume_f = assume.CF.formula_assume_simpl in
+        let assume_f = CF.rename_bound_vars assume_f in
+        let f = es.CF.es_formula in
+        let assume_f =
+          let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
+          let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+          let hp_names = List.map (fun x -> x.CA.hp_name) hps in
+          let has_pred = Syn.get_hp_formula hp_names assume_f in
+          if has_pred != [] then
+            let pred_name = List.find (fun x -> is_substr "Q" x) has_pred in
+            let pred_name = "N_" ^ pred_name in
+            let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
+            let assume_vars = f |> CF.fv in
+            (* let assume_vars = !Syn.r_pre_vars in *)
+            let n_args = assume_vars @ syn_pre_vars in
+            let n_args = if !Syn.is_return_cand then
+                n_args @ (!Syn.syn_res_vars)
+              else n_args in
+            let n_args = if !Syn.is_return_fst && pred_name = "N_Q1" then
+                n_args @ (!Syn.syn_res_vars)
+              else n_args in
+            let n_args = if !Syn.is_return_snd && pred_name = "N_Q2" then
+                n_args @ (!Syn.syn_res_vars)
+              else n_args in
+            let n_args = n_args |> CP.remove_dups_svl in
+            let n_args = n_args |> List.filter
+                           (fun x -> Syn.is_int_var x || Syn.is_node_var x)
+                         |> CP.remove_dups_svl in
+            let var_decls =
+              if pred_name = "N_Q1" then !Syn.block_var_decls
+              else if pred_name = "N_Q2" then !Syn.block_var_decls_snd
+              else [] in
+            let var_decls = var_decls |> List.filter (fun x -> not(CP.mem_svl x n_args))
+                            |> List.map CP.to_primed in
+            let n_args = n_args @ var_decls |> CP.remove_dups_svl in
+            (* let n_args = n_args @ !Syn.syn_ref_vars in *)
+            let n_args = n_args |> CP.remove_dups_svl in
+            let () = x_tinfo_hp (add_str "n_args" pr_vars) n_args no_pos in
+            let n_pred_f = Syn.create_spec_pred n_args pred_name in
+            n_pred_f
+          else assume_f in
+        let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
+        let () = x_tinfo_hp (add_str "new_f" pr_formula) new_f no_pos in
+        let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
+        (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
+      | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq)))
   | CF.OCtx (c1, c2) ->
     let rs1, proof1 = heap_entail_after_sat_struc prog c1 conseq in
     let rs2, proof2 = heap_entail_after_sat_struc prog c2 conseq in
     (CF.or_list_context rs1 rs2, Prooftracer.TrueConseq)
 
 and hentail_after_sat_ebase prog ctx es bf =
+  let es_formula = es.CF.es_formula in
+  let n_formula = add_inferred_type_formula es_formula in
+  let es = {es with CF.es_formula = n_formula} in
   let conti = bf.CF.formula_struc_continuation in
   let ent_res, residue = check_entail_prog_state prog es bf in
   let aux_conti n_ctx = match conti with
@@ -1357,11 +1424,12 @@ and hentail_after_sat_ebase prog ctx es bf =
       let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv
                       |> List.filter (fun x ->
-                          Syn.is_int_var x || Syn.is_node_var x) in
+                          Syn.is_int_var x || Syn.is_node_var x
+                        ) in
       (* let ante_vars = !Syn.r_pre_vars
        *                 |> List.filter (fun x ->
        *                     Syn.is_int_var x || Syn.is_node_var x) in *)
-      let () = x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
+      let () = x_binfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
       let pred_name = List.find (fun x -> is_substr "P" x) conseq_hps in
       let pred_name = "N_" ^ pred_name in
       let var_decls =
@@ -1376,8 +1444,8 @@ and hentail_after_sat_ebase prog ctx es bf =
       let () = x_tinfo_hp (add_str "old_conseq" pr_formula) old_conseq no_pos in
       let n_conseq, residue =
         let residue = Syn.create_pred ante_vars in
-        x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos;
-        x_tinfo_hp (add_str "pure ante" pr_pf) pure_ante no_pos;
+        let () = x_binfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
+        let () = x_tinfo_hp (add_str "pure ante" pr_pf) pure_ante no_pos in
         let residue = Syn.add_pure_formula_to_formula pure_ante residue in
         (* let residue = Syn.add_formula_to_formula ante_wo_pred residue in *)
         let conseq = Syn.add_formula_to_formula residue old_conseq in

@@ -1321,7 +1321,7 @@ let choose_rule_mk_null goal : rule list =
       let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
       (* let n_rules = n_rules @ (choose_rule_func_call n_goal) in *)
       let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
-      let () = x_binfo_hp (add_str "rules" pr_rules) n_rules no_pos in
+      let () = x_tinfo_hp (add_str "rules" pr_rules) n_rules no_pos in
       let n_goal = {n_goal with gl_lookahead = n_rules} in
       let rule = {rule with rmn_lookahead = Some n_goal} in
       if List.exists (rule_use_var var) n_rules then

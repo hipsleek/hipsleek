@@ -947,7 +947,7 @@ let rec string_of_exp_repair = function
 
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Free d -> let d_exp = d.exp_free_exp in
-    "free " ^ (string_of_exp_repair d_exp)
+    "free " ^ (string_of_exp_repair d_exp) ^ ";"
   | Java ({exp_java_code = code}) -> code
 
   | Label ((pid,_),e) -> (string_of_exp_repair e)

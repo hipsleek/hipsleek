@@ -554,6 +554,10 @@ let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
     CF.Or {bf with CF.formula_or_f1 = n_f1;
                    CF.formula_or_f2 = n_f2}
 
+let remove_exists_vars formula e_vars=
+  Debug.no_2 "remove_exists_vars" pr_f pr_vars pr_f
+    (fun _ _ -> remove_exists_vars formula e_vars) formula e_vars
+
 let remove_exists formula =
   let rec aux formula = match formula with
     | CF.Base bf ->
@@ -1249,6 +1253,8 @@ let create_pred vars =
 
 let create_spec_pred vars pred_name =
   let vars = vars |> CP.remove_dups_svl in
+  let () = x_binfo_hp (add_str "predicate name" pr_id) pred_name no_pos in
+  let () = x_binfo_hp (add_str "predicate vars" pr_vars) vars no_pos in
   let all_predicates = !unk_hps in
   let name = pred_name in
   let hl_name = CP.mk_spec_var name in
@@ -1304,8 +1310,16 @@ let is_unk_type_var (var: CP.spec_var) = match CP.type_of_sv var with
   | UNK -> true
   | _ -> false
 
+let is_bool_var (var: CP.spec_var) = match CP.type_of_sv var with
+  | Bool -> true
+  | _ -> false
+
 let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Int | NUM -> true
+  | _ -> false
+
+let is_unk_var (var: CP.spec_var) = match CP.type_of_sv var with
+  | UNK -> true
   | _ -> false
 
 let is_node_or_int_var x = is_node_var x || is_int_var x
