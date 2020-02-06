@@ -2,3 +2,6 @@
 ./hip examples/working/hip/repair/benchmark3/sll-append2.ss --en-repair
 ./hip examples/working/hip/repair/benchmark3/sll-length1.ss --en-repair
 ./hip examples/working/hip/repair/benchmark3/avl-rotate-right.ss  --en-repair
+~/hg/sleekex/hip --en-repair dll-delete_buggy_14.ss
+~/hg/sleekex/hip dll-delete.ss --infestor
+
