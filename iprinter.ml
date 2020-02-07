@@ -160,11 +160,11 @@ let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
 let string_of_var (c1,c2) = c1^(string_of_primed c2);;
 
-let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
+let string_of_var_list vl = String.concat ", " (List.map string_of_var vl)
 
-let string_of_typed_var (t,id) = "(" ^ (string_of_typ t) ^ "," ^  id  ^ ")";;
+let string_of_typed_var (t,id) = "(" ^ (string_of_typ t) ^ "," ^  id  ^ ")"
 
-let rec string_of_typed_var_list l = match l with 
+let rec string_of_typed_var_list l = match l with
   | [] -> ""
   | h::[] -> (string_of_typed_var h)
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
@@ -184,9 +184,8 @@ let string_of_imm_opt imm = match imm with
   | None -> ""
 
 let string_of_id (id,p) = id ^ (string_of_primed p)
-;;
 
-let string_of_loc p = 
+let string_of_loc p =
   (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":"
   ^ (string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol)) ^ "-"
   ^ (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":"

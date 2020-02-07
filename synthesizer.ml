@@ -97,7 +97,7 @@ let process_rule_fread goal rc =
     mk_derivation_subgoals goal (RlFRead rc) [n_goal]
 
 let process_rule_func_call goal rc : derivation =
-  let n_pre = rc.rfc_new_pre in
+  let n_pre = rc.rfc_new_pre |> remove_exists in
   (* if check_entail_exact_wrapper goal.gl_prog n_pre goal.gl_post_cond then
    *   mk_derivation_success goal (RlFuncCall rc)
    * else *)

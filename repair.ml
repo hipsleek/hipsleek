@@ -707,8 +707,8 @@ let start_repair_wrapper (iprog: I.prog_decl) level =
 
 let infest_and_output src (iprog: I.prog_decl) =
   let filter_prog i_prog =
-    let cprog, _ = Astsimp.trans_prog i_prog in
     try
+      let cprog, _ = Astsimp.trans_prog i_prog in
       let _ = Typechecker.check_prog_wrapper i_prog cprog in
       false
     with _ -> true in

@@ -5,22 +5,50 @@ data node {
 
 pred sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
 	or (exists qs,ql, qmin, q:
-  self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin & n > 0)
-  inv n >= 0.
+  self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
+	inv n >= 0 & sm <= lg.
 
 node insert2(node x, node vn)
 	requires x::sll<n, sm, lg> *  vn::node<v, _>
-	ensures (exists k: res::sll<k, mi, ma> & k = n + 1 & mi=min(v, sm) & ma=max(v, lg));.
+	ensures exists k: res::sll<k, mi, ma> & k = n + 1 & mi=min(v, sm) & ma=max(v, lg);.
 
-synthesize [node x,node vn]
-vn::node<v,an12> * x::node<qm56,q57> * q57::sll<flt53,qs54,ql55> &
-qm56<=qs54 & ql55<=lg & sm<=qm56 & 0<=flt53 & v<=qm56 & n=1+flt53
+// synthesize [node x,node vn]
+
+// vn::node<v,ann11> * x::node<qm42,q43> * q43::sll<flt39,qs4,ql41> &
+// qm42<=qs4 & ql41<=lg & sm<=qm42 & (1+qm42)<=v & n=1+flt39
+// ~>
+// (exists fr24,mn27, mx28: x::sll<fr24,mn27,mx28> &
+// fr24=2+flt39 & mn27=min(v,sm) & mx28=max(v,lg)).
+
+synthesize [node rs1,node q43,node x,node vn]
+ x::node<qm42,q43>&
+k=1+n_192 & mi=min(v_195,sm_193) & ma=max(v_195,lg_194) & n_192=flt39 & 
+sm_193=qs4 & lg_194=ql41 & v_195=v & Anon_196=ann11 & n=1+flt39 & 
+(1+qm42)<=v & sm<=qm42 & ql41<=lg & qm42<=qs4
 ~>
-(exists qmin_67,q_68,qs_170,ql_171,qmin_172,q_173,qs_65,ql_66,max_4643,
-min_4644: q_68::node<qmin_172,q_173> * vn::node<qmin_67,q_68> * 
-          q_173::sll<flt53,qs_170,ql_171>&
-qmin_67<=qs_65 & ql_66<=max_4643 & max_4643=max(v,lg) & ql_171<=ql_66 & 
-qs_65<=qmin_172 & qmin_172<=qs_170 & min_4644<=qmin_67 & min_4644=min(v,sm)).
+ (exists qmin_759,fr24_92,mn27_93,mx28_94: x::node<qmin_759,rs1>&
+fr24_92=2+flt39 & mn27_93=min(v,sm) & mx28_94=max(v,lg) & k+1=fr24_92 & 
+qmin_759<=mi & ma<=mx28_94 & mn27_93<=qmin_759).
 
+// x::node<qm42,rs1> &
+// k=1+n_192 & mi=min(v_195,sm_193) & ma=max(v_195,lg_194) & n_192=flt39 & 
+// sm_193=qs4 & lg_194=ql41 & v_195=v & Anon_196=ann11 & n=1+flt39 & 
+// (1+qm42)<=v & sm<=qm42 & ql41<=lg & qm42<=qs4
 
-// vn.next = x;
+// (exists qmin_759,fr24_92,mn27_93,mx28_94: x::node<qmin_759,rs1>&
+// fr24_92=2+flt39 & mn27_93=min(v,sm) & mx28_94=max(v,lg) & k+1=fr24_92 & 
+// qmin_759<=mi & ma<=mx28_94 & mn27_93<=qmin_759 & 0<fr24_92)
+
+// checkentail
+
+// x::node<qm42,rs1> &
+// k=1+flt39 & mi=min(v_203,sm_201) & ma=max(v_203,lg_202) &
+// sm_201=qs4 & lg_202=ql41 & v_203=v & Anon_204=ann11 & n=1+flt39 & 
+// (1+qm42)<=v & sm<=qm42 & ql41<=lg & qm42<=qs4
+// |-
+// (exists qmin_771,mn27_95,mx28_96:
+// x::node<qmin_771,rs1> &
+// mn27_95=min(v,sm) &
+// max28_96=max28_96 &
+// mx28_96=max(v,lg) &
+// qmin_771<=mi & ma<=max28_96 & mn27_95<=qmin_771 & 0<2+flt39).

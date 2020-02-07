@@ -902,8 +902,8 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 20)
       sb_prog sb_ents in
@@ -1429,7 +1429,7 @@ and hentail_after_sat_ebase prog ctx es bf =
       (* let ante_vars = !Syn.r_pre_vars
        *                 |> List.filter (fun x ->
        *                     Syn.is_int_var x || Syn.is_node_var x) in *)
-      let () = x_binfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
+      let () = x_tinfo_hp (add_str "ante vars" pr_vars) ante_vars no_pos in
       let pred_name = List.find (fun x -> is_substr "P" x) conseq_hps in
       let pred_name = "N_" ^ pred_name in
       let var_decls =
