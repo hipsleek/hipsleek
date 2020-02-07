@@ -145,9 +145,9 @@ let check_var_read_perm_frac f ?(msg="") prog ctx pos v t =
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl)
     (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer:
   CF.struc_formula * (CF.formula list)
-     * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list)
-     * (CP.spec_var list) * (CP.spec_var list)
-     * ((CP.spec_var * int list) * CP.xpure_view) list * bool =
+  * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list)
+  * (CP.spec_var list) * (CP.spec_var list)
+  * ((CP.spec_var * int list) * CP.xpure_view) list * bool =
   let () = pre_ctr # reset in
   let () = post_ctr # reset in
   let f = wrap_proving_kind PK_Check_Specs
@@ -462,17 +462,17 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             if not(!Globals.print_min) then
               DD.info_pprint
                 ("WARNING : Inferable vars include some external variables!"^v) inf_pos
-          else if not(CP.subset unknown_rel vars_rel) then
-            let v1 = (add_str "unknown_rel" pr_vars) unknown_rel in
-            let v2 = (add_str "vars_rel" pr_vars) vars_rel in
-            let v = ("\n"^v1^" "^v2^"\n") in
-            report_error inf_pos ("Inferable vars do not include some unknown relation!"^v)
-          else if CP.intersect known_rel vars_rel<>[] then
-            let v1 = (add_str "known_rel" pr_vars) known_rel in
-            let v2 = (add_str "vars_rel" pr_vars) vars_rel in
-            let v = ("\n"^v1^" "^v2^"\n") in
-            report_error inf_pos ("Inferable vars include some known relation!"^v)
-          else () in
+            else if not(CP.subset unknown_rel vars_rel) then
+              let v1 = (add_str "unknown_rel" pr_vars) unknown_rel in
+              let v2 = (add_str "vars_rel" pr_vars) vars_rel in
+              let v = ("\n"^v1^" "^v2^"\n") in
+              report_error inf_pos ("Inferable vars do not include some unknown relation!"^v)
+            else if CP.intersect known_rel vars_rel<>[] then
+              let v1 = (add_str "known_rel" pr_vars) known_rel in
+              let v2 = (add_str "vars_rel" pr_vars) vars_rel in
+              let v = ("\n"^v1^" "^v2^"\n") in
+              report_error inf_pos ("Inferable vars include some known relation!"^v)
+            else () in
         () in
       let (vars_hp_rel,vars_inf) =
         List.partition (fun v -> CP.type_of_spec_var v == HpT ) vars_inf in
@@ -515,10 +515,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
     | CF.EList b ->
       let (sl,pl,rl,hprl,selhps,sel_posthps,unk_map,bl) =
         List.fold_left (fun (a1,a2,a3,a4,a5,a6,a7,a8) (l,c) ->
-          let (b1,b2,b3,b4,b5,b6,b7,b8) =
-            store_label # set l;
-            helper (CF.update_ctx_label ctx l) c in
-          (a1@[(l,b1)],a2@b2,a3@b3,a4@b4,a5@b5,a6@b6,a7@b7,a8@[b8])) ([],[],[],[],[],[],[],[]) b in
+            let (b1,b2,b3,b4,b5,b6,b7,b8) =
+              store_label # set l;
+              helper (CF.update_ctx_label ctx l) c in
+            (a1@[(l,b1)],a2@b2,a3@b3,a4@b4,a5@b5,a6@b6,a7@b7,a8@[b8])) ([],[],[],[],[],[],[],[]) b in
       x_tinfo_hp (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
       (CF.norm_specs (CF.EList sl), pl, rl, hprl,selhps,sel_posthps, unk_map,List.for_all pr_id bl)
     | CF.EAssume {
@@ -872,8 +872,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
              | _ -> let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in
                (Err.report_error1 e (Err.get_error_type_str error_type))
             )
-          |_ as e ->
-            let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
+               |_ as e ->
+                 let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in
   Wrapper.wrap_ana_ni (Some false) (helper ctx) spec
 
@@ -931,7 +931,7 @@ and infer_lock_invariant lock_var ctx pos =
    vs: arguments of the corresponding call
 *)
 and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock
-  vs ir pid pos =
+    vs ir pid pos =
   (*=========================*)
   (*=== id=FORK(fn,args) ====*)
   (*=========================*)
@@ -1548,14 +1548,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 else (CF.Ctx c1) in
               res in
             let () = x_tinfo_hp (add_str "ctx Assign before: "
-                             Cprinter.string_of_list_failesc_context) ctx1 no_pos in
+                                   Cprinter.string_of_list_failesc_context) ctx1 no_pos in
             let () = x_tinfo_hp (add_str "rhs: "
-                                     (Cprinter.string_of_exp))
-                  rhs no_pos in
+                                   (Cprinter.string_of_exp))
+                rhs no_pos in
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
             let () = CF.must_consistent_list_failesc_context "assign final" res in
             let () = x_tinfo_hp (add_str "ctx Assign final: "
-                             Cprinter.string_of_list_failesc_context) res no_pos in
+                                   Cprinter.string_of_list_failesc_context) res no_pos in
             res
         end in
       Gen.Profiling.push_time "[check_exp] Assign";
@@ -1659,14 +1659,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_free_var = (typ, name);
         exp_free_pos = pos;
       } ->
-        let (n_ctx, res) = Synthesis.free_ctx prog ctx (typ, name) in
-        if res then n_ctx
-        else if (!enable_repair) then ctx
-        else
-          let to_print = "Free variable failedxxx." in
-          raise (Err.Ppf ({
-              Err.error_loc = pos;
-              Err.error_text = to_print}, 1, 0))
+      let (n_ctx, res) = Synthesis.free_ctx prog ctx (typ, name) in
+      if res then n_ctx
+      else if (!enable_repair) then ctx
+      else
+        let to_print = "Free variable failedxxx." in
+        raise (Err.Ppf ({
+            Err.error_loc = pos;
+            Err.error_text = to_print}, 1, 0))
     | Bind ({
         exp_bind_type = body_t;
         exp_bind_bound_var = (v_t, v); (* node to bind *)
@@ -1991,7 +1991,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                            )) pos;
           let then_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 1 then_ctx in
           let () = x_tinfo_hp (add_str "then ctx: "
-                             Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
+                                 Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
           let else_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 2 else_ctx in
           let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
           let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
@@ -2196,7 +2196,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         Gen.Profiling.push_time "[check_exp] SCall";
         let () = if Cast.unmingle_name mn = "fcode" then
             Synt.tmpl_proc_name := Some proc.Cast.proc_name;
-            Synt.repair_pos := Some pos; in
+          Synt.repair_pos := Some pos; in
         let () = x_tinfo_hp (add_str "scall name" pr_id) mn no_pos in
         let () = proving_loc#set pos in
         let mn_str = Cast.unmingle_name mn in
@@ -2247,9 +2247,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             (* Termination: Stripping the "variance" feature from
              * org_spec if the call is not a recursive call *)
             x_dinfo_hp (add_str "actual_svs:" Cprinter.string_of_list_failesc_context)
-                sctx no_pos;
+              sctx no_pos;
             x_tinfo_hp (add_str "org_spec:" Cprinter.string_of_struc_formula)
-                (org_spec) no_pos;
+              (org_spec) no_pos;
             let org_spec = if !Globals.change_flow
               then CF.change_spec_flow org_spec else org_spec in
             let lbl_ctx = store_label # get in
@@ -2582,12 +2582,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       else ctx
     | Unit pos -> ctx
     | Sharp {exp_sharp_type =t;
-              exp_sharp_flow_type = ft;(*P.flow_typ*)
-              exp_sharp_val = v; (*maybe none*)
-              exp_sharp_unpack = un;
-              (*true if it must get the new flow from the second element of the current flow pair*)
-              exp_sharp_path_id = pid;
-              exp_sharp_pos = pos}	->
+             exp_sharp_flow_type = ft;(*P.flow_typ*)
+             exp_sharp_val = v; (*maybe none*)
+             exp_sharp_unpack = un;
+             (*true if it must get the new flow from the second element of the current flow pair*)
+             exp_sharp_path_id = pid;
+             exp_sharp_pos = pos}	->
       (**********INTERNAL************)
       let () = x_tinfo_hp (add_str "sharp start: " pr_failesc_ctx) ctx no_pos in
       let look_up_typ_first_fld obj_name =
@@ -2924,7 +2924,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let pr = Cprinter.string_of_list_partial_context in
   let () = x_tinfo_hp (add_str "ctx" pr) ctx no_pos in
   let all_traces = ctx |> List.map snd |> List.concat
-                    |> List.map (fun (x, _, _) -> x) in
+                   |> List.map (fun (x, _, _) -> x) in
   let pr_paths = pr_list Cprinter.string_of_path_trace in
   let () = x_tinfo_hp (add_str "paths" pr_paths) all_traces no_pos in
   let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
@@ -2946,7 +2946,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
       end
     else
       let rs_struc , prf = x_add SV.heap_entail_struc_list_partial_context_init
-            prog false false fn_state (snd posts) None None None pos (Some pid) in
+          prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf in
   let _ = x_tinfo_pp "<<<<<<<<<< finish prove post-cond <<<<<<" no_pos in
   let _ = SB.disable_export_entailments () in
@@ -2972,21 +2972,23 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   if (is_reachable_succ) then
     rs
   else
-    let fail_traces = rs |> List.map fst |> List.concat |> List.map fst in
+    let fail_traces = rs |> List.map fst |> List.concat |> List.map fst
+                      |> List.map (fun x -> List.rev x) in
     let pr_paths = pr_list Cprinter.string_of_path_trace in
     let rec compare_trace (fst_trace: path_trace) (snd_trace : path_trace) =
       match (fst_trace, snd_trace) with
       | [], [] -> 0
-      | [], _ -> +1
-      | _, [] -> -1
+      | [], _ -> failwith "compare_trace: cannot happen"
+      | _, [] -> failwith "compare_trace: cannot happen"
       | fst_head::fst_tail, snd_head::snd_tail ->
         let fst_head_num = snd fst_head in
         let snd_head_num = snd snd_head in
         if fst_head_num > snd_head_num then +1
         else if fst_head_num < snd_head_num then -1
         else compare_trace fst_tail snd_tail in
+    let all_traces = all_traces |> List.map (fun x -> List.rev x) in
+    let () = x_binfo_hp (add_str "all paths" pr_paths) all_traces no_pos in
     let all_traces = all_traces |> List.sort compare_trace in
-
     let aux_trace fail_traces trace =
       let eq_trace t1 = t1 = trace in
       List.exists eq_trace fail_traces in

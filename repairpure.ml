@@ -1549,16 +1549,25 @@ let add_field_infestor body dif_num var_decls data_decls =
         let n_exp = I.CallNRecv {e with exp_call_nrecv_arguments = n_args;} in
         (n_exp, n_changed)
       | I.Member e ->
-        if changed = 1 then
-          let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
-          let n_member = I.Member {
-              I.exp_member_base = exp;
-              I.exp_member_fields = [e.I.exp_member_fields |> List.hd];
-              I.exp_member_path_id = None;
-              I.exp_member_pos = e.I.exp_member_pos;
-            } in
-          (n_member, 0)
-        else (exp, changed - 1)
+        let filter_fun x =
+          type_of_exp exp var_decls data_decls =
+          type_of_exp x var_decls data_decls in
+        let aux_field x =
+          I.Member {
+            I.exp_member_base = exp;
+            I.exp_member_fields = [x];
+            I.exp_member_path_id = None;
+            I.exp_member_pos = e.I.exp_member_pos;
+          } in
+        let n_members = e.I.exp_member_fields |> List.map aux_field in
+        let n_members = n_members |> List.filter filter_fun in
+        if List.length n_members > 0 then
+          if changed = 1 then
+            let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
+            let n_member = List.hd n_members in
+            (n_member, 0)
+          else (exp, changed - 1)
+        else (exp, changed)
       | I.Var var ->
         let v_name = var.I.exp_var_name in
         let () = x_tinfo_hp (add_str "v_name: " pr_id) v_name no_pos in

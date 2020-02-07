@@ -1253,8 +1253,8 @@ let create_pred vars =
 
 let create_spec_pred vars pred_name =
   let vars = vars |> CP.remove_dups_svl in
-  let () = x_binfo_hp (add_str "predicate name" pr_id) pred_name no_pos in
-  let () = x_binfo_hp (add_str "predicate vars" pr_vars) vars no_pos in
+  let () = x_tinfo_hp (add_str "predicate name" pr_id) pred_name no_pos in
+  let () = x_tinfo_hp (add_str "predicate vars" pr_vars) vars no_pos in
   let all_predicates = !unk_hps in
   let name = pred_name in
   let hl_name = CP.mk_spec_var name in
