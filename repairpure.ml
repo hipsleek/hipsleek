@@ -1553,7 +1553,7 @@ let add_field_infestor body dif_num var_decls data_decls =
           let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
           let n_member = I.Member {
               I.exp_member_base = exp;
-              I.exp_member_fields = e.I.exp_member_fields;
+              I.exp_member_fields = [e.I.exp_member_fields |> List.hd];
               I.exp_member_path_id = None;
               I.exp_member_pos = e.I.exp_member_pos;
             } in
