@@ -140,7 +140,7 @@ and coq_of_exp e0 =
     illegal_format "coq_of_exp : array cannot be handled"
   (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
   | CP.NegInfConst _
-  | CP.InfConst _ -> illegal_format "coq_of_exp : \inf cannot be handled"
+  | CP.InfConst _ -> illegal_format "coq_of_exp : \\inf cannot be handled"
   | CP.Template t -> coq_of_exp (CP.exp_of_template t)
 
 (* pretty printing for a list of expressions *)
@@ -194,8 +194,8 @@ and coq_of_b_formula b =
     illegal_format "coq_of_exp : relation cannot be handled"
   | CP.ImmRel _ -> illegal_format "coq_of_exp : ImmRel cannot be handled"
   | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
-                     (* | CP.VarPerm _ -> *)
-                     illegal_format "coq_of_exp : VarPerm cannot be handled"
+  (* | CP.VarPerm _ ->
+   *                    illegal_format "coq_of_exp : VarPerm cannot be handled" *)
 
 (* pretty printing for formulas *)
 and coq_of_formula pr_w pr_s f =

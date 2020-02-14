@@ -1099,7 +1099,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
               ) in
             try
               let addr_dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
-              let addr_ddecl = Hashtbl.find tbl_data_decl addr_dtyp in
+              let _addr_ddecl = Hashtbl.find tbl_data_decl addr_dtyp in
               let addr_dname = (
                 match addr_dtyp with
                 | Globals.Named s -> s
@@ -1369,7 +1369,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
       | _ ->
         let data_base = translate_exp e  in
         let data_fields = [str_value] in
-        let typ = translate_typ base_typ in
+        let _typ = translate_typ base_typ in
         let base = Iast.mkMember data_base data_fields None pos in
         create_complex_exp base offset [] pos
 
@@ -1409,7 +1409,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
       | _ -> e in
     let unexp =
       let t = typ_of_cil_exp exp in
-      let new_t = match t with
+      let _new_t = match t with
         | Cil.TPtr (t1, _) when (is_cil_struct_pointer t) -> translate_typ t1 pos
         | _ -> translate_typ t pos in
       Iast.mkUnary o e None pos in
@@ -1639,8 +1639,8 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
             let re = translate_exp exp in
             (Iast.mkAssign Iast.OpAssign le re None pos))
       | _ ->
-        let lv_typ = typ_of_cil_lval lv in
-      	let exp_typ = typ_of_cil_exp exp in
+        let _lv_typ = typ_of_cil_lval lv in
+      	let _exp_typ = typ_of_cil_exp exp in
         let pos = translate_location l in
         let le = translate_lval lv in
         let re = translate_exp exp in

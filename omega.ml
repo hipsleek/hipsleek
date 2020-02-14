@@ -55,7 +55,8 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
         let v = if ((String.get v 0) == '_') then "v" ^ v 
           else v in
         let v =
-          let reg = Str.regexp "\." in
+          let reg = Str.regexp {|\.|} in
+              (* "\." in *)
           Str.global_replace reg "" v
         in
         let ln = (String.length v) in  

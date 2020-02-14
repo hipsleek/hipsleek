@@ -1385,7 +1385,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
     | s ->
       let () = create_failure_file mona_file_content in
       try
-        let (todo_unk:int) = Str.search_forward (Str.regexp "Error in file") answ 0 in
+        let (__todo_unk:int) = Str.search_forward (Str.regexp "Error in file") answ 0 in
         Error.report_error {
           Error.error_loc = no_pos;
           Error.error_text =("Mona translation failure: " ^ answ)
@@ -1436,7 +1436,7 @@ let read_from_file chn: string =
         | [] -> ""
         | h::t -> 
           try 
-            let (todo_unk:int) = Str.search_forward (Str.regexp h) line 0 in
+            let (_todo_unk:int) = Str.search_forward (Str.regexp h) line 0 in
             answ := h;
             raise End_of_file
           with

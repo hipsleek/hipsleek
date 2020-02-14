@@ -37,7 +37,7 @@ module IO = struct
       let data_len = input_binary_int ch in
       (* trace "read" ("len="^(string_of_int data_len)); *)
       if data_len > 0 then begin
-        let data_str = String.create data_len in
+        let data_str = Bytes.create data_len in
         let () = really_input ch data_str 0 data_len in
 
         from_string (Bytes.to_string data_str)

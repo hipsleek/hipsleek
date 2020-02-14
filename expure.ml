@@ -323,7 +323,7 @@ let rec build_ef_formula_x ?(shape=false) (cf0 : Cformula.formula) (all_views : 
     let () = Debug.ninfo_hprint (add_str "efpd_n2" (EPureI.string_of_disj)) efpd_n no_pos in
     efpd_n
   | Cformula.Exists ef ->
-    let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
+    let _ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
     let efpd_e = (* match ep with *)
       (* | Cpure.AndList _ -> *)
       (*       let eh = ef.Cformula.formula_exists_heap in *)

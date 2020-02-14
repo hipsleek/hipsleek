@@ -503,10 +503,10 @@ let translate_back_vf vf =
     (CF.HRel (hp_name, hp_args, loc), [], [])
   else
     let vargs = vf.SBC.viewf_args in
-    if List.exists (fun x -> match x with SBC.Null _ -> true
-                                        | _ -> false) vargs
-    then (CF.HEmp, [], [])
-    else
+    (* if List.exists (fun x -> match x with SBC.Null _ -> true
+     *                                     | _ -> false) vargs
+     * then (CF.HEmp, [], [])
+     * else *)
       let h_triples = List.map translate_back_exp vargs
                       |> List.map exp_to_var in
       let h_all_args = h_triples |> List.map (fun (x,_,_) -> x) in
@@ -515,6 +515,12 @@ let translate_back_vf vf =
       let h_root, h_args = List.hd h_all_args, List.tl h_all_args in
       let loc = translate_back_pos vf.SBC.viewf_pos in
       (CF.mkViewNode h_root hp_name h_args loc, pfs, e_vars)
+
+let translate_back_vf vf =
+  let pr_res (a, _, _) = pr_hf a in
+  Debug.no_1 "translate_back_vf" SBC.pr_vf pr_res
+    (fun _ -> translate_back_vf vf) vf
+
 
 let rec mkStarHList list = match list with
   | [] -> CF.HEmp    | [h] -> h
@@ -913,7 +919,7 @@ let solve_entailments_one prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_tinfo_hp (add_str "vdefns" (pr_list_mln SBC.pr_vdfs)) vdefns_list
+    let () = x_binfo_hp (add_str "vdefns" (pr_list_mln SBC.pr_vdfs)) vdefns_list
         no_pos in
     let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
     Some hps_list

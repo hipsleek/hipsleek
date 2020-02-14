@@ -23,7 +23,7 @@ let map_para_net init g input_list max =
         begin
           Tpdispatcher.Netprover.set_use_socket_map machine;
           let () = Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout in 
-          let todo_unk = Unix.close input in
+          let _todo_unk = Unix.close input in
           let output = Unix.out_channel_of_descr output in
           init ();
           Marshal.to_channel output (f head) [];
@@ -137,7 +137,7 @@ let map_para init g input_list max =
       | 0 ->
         begin
           let () = Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout in 
-          let todo_unk = Unix.close input in
+          let _todo_unk = Unix.close input in
           let output = Unix.out_channel_of_descr output in
           init ();
           Marshal.to_channel output (f head) [];

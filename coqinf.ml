@@ -23,10 +23,13 @@ let explode (s:string) : char list =
   expl (String.length s - 1) [];;
 
 let implode (l:char list) : string =
-  let result = String.create (List.length l) in
+  let result = Bytes.create (List.length l) in
   let rec imp i = function
     | [] -> result
-    | c :: l -> result.[i] <- c; imp (i + 1) l in
+    | c :: l ->
+      (* result.[i] <- c; *)
+      Bytes.set result i c;
+      imp (i + 1) l in
   imp 0 l
   |> Bytes.to_string;;
 
@@ -640,8 +643,8 @@ let rec generate_oct_inv (svl: spec_var list) : formula list =
   | x::xs -> let f1 = mk_inv_1 x in
     let f2 = (List.map (fun y -> mk_inv_2_add x y) xs) in
     let f3 = (List.map (fun y -> mk_inv_2_sub x y) xs) in
-    let f4 = (List.map (fun y -> mk_inv_2_min x y) xs) in
-    let f5 = (List.map (fun y -> mk_inv_2_max x y) xs) in
+    let _f4 = (List.map (fun y -> mk_inv_2_min x y) xs) in
+    let _f5 = (List.map (fun y -> mk_inv_2_max x y) xs) in
     (*let f4 = List.map (fun y -> Cpure.mkAnd f1 y no_pos) f3 in
       let f5 = List.map (fun y -> (mk_inv_1 y)) xs in
       let f6 = List.combine f5 f3 in

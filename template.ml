@@ -293,12 +293,12 @@ let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
         Piecewise.infer_piecewise_main prog templ_assumes in
       let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
       let estate = { estate with CF.es_infer_vars_templ = inf_ptempls; } in
-      let es = List.fold_left (fun es (ante, cons) -> 
+      let _es = List.fold_left (fun es (ante, cons) -> 
           let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
           match nes with | Some es -> es | None -> es) estate ptempl_assumes in
       (* let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in *)
       let () = prog.C.prog_templ_decls <- prog.C.prog_templ_decls @ ptempl_defs in
-      let todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
+      let _todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else ()
   | _ -> ()
 

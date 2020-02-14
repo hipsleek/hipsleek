@@ -596,12 +596,17 @@ class ['a] mut_option =
     method set (i:'a option) =
       begin
         if init_flag then ()
-        else (init_flag = true; value <- i)
+        else
+          (let () = init_flag <- true in
+           let () = value <- i in ())
       end
     method set_fn f =
       begin
         if (init_flag)  then ()
-        else (init_flag = true; value <- f ())
+        else
+          (let () = init_flag <- true in
+              let () = value <- f () in
+             ())
       end
   end;;
 
@@ -762,7 +767,7 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
       super # push ls
     method string_of =
-      let stk2 = self # get_stk(* _no_dupl *) in
+      let _stk2 = self # get_stk(* _no_dupl *) in
       Basic.pr_list_ln elem_pr stk
     method string_of_recent =
       let stk = self # get_stk_recent in
@@ -1176,7 +1181,7 @@ module EqMap =
         end
 
     let build_eset (xs:(elem * elem) list) :  emap =
-      let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
+      let _pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
       let p_aset = List.fold_left (fun eqs (x,y) ->
           add_equiv eqs x y
         ) mkEmpty xs in
@@ -2058,7 +2063,7 @@ struct
             | _ -> 1)
     done;
     if !n = String.length s then s else begin
-      let s' = String.create !n in
+      let s' = Bytes.create !n in
       n := 0;
       let skip = ref 0 in
       (try (for i = 0 to String.length s - 1 do
@@ -2067,12 +2072,26 @@ struct
                 match String.unsafe_get s (i + !skip) with
                 | '\\' when String.unsafe_get s (i+ !skip+1) != '\\' ->
                   (match String.unsafe_get s (i+ !skip+1) with
-                     'n' -> String.unsafe_set s' !n '\n'; incr skip
-                   | 'r' -> String.unsafe_set s' !n '\r'; incr skip
-                   | 't' -> String.unsafe_set s' !n '\t'; incr skip
-                   | '\\' -> String.unsafe_set s' !n '\\'; incr skip;
+                   'n' ->
+                    (* String.unsafe_set s' !n '\n'; *)
+                    Bytes.set s' !n '\n';
+                    incr skip
+                   | 'r' ->
+                     (* String.unsafe_set s' !n '\r'; *)
+                     Bytes.set s' !n '\r';
+                     incr skip
+                   | 't' ->
+                     (* String.unsafe_set s' !n '\t'; *)
+                     Bytes.set s' !n '\t';
+                     incr skip
+                   | '\\' ->
+                     (* String.unsafe_set s' !n '\\'; *)
+                     Bytes.set s' !n '\\';
+                     incr skip;
                    | _ -> raise Bad_string)
-                | c -> String.unsafe_set s' !n c
+                | c ->
+                  (* String.unsafe_set s' !n c *)
+                  Bytes.set s' !n c
               end;
               incr n
             done) with Bail -> ());

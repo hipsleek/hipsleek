@@ -36,7 +36,7 @@ let extract_inner_e e0 root val_extns rec_args=
     | Div (e1, e2, _)
     | Max (e1, e2, _)
     | Min (e1, e2, _) ->
-      let svl1 = afv e1 in
+      let _svl1 = afv e1 in
       let first_e =  initial_helper [e2;e1] false in
       let res= (e, first_e)
       (* if svl1 = [] then *)

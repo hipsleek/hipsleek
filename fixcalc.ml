@@ -44,7 +44,8 @@ let rec string_of_elems elems string_of sep = match elems with
 let gen_fixcalc_file str_fc=
   let file_name = (List.hd !Globals.source_files) in
   let out_chn =
-    let reg = Str.regexp "\(\.ss\)\|\(.slk\)" in
+    let reg = Str.regexp {|\(\.ss \|\(\.slk|} in
+        (* "\(\.ss\)\|\(.slk\)" in *)
     let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".fc" file_name) in
     (* let () = print_endline (file_name1 ^ ".fc") in *)
     let () = print_endline_quiet ("\n generating fixcalc file : " ^ file_name1) in
@@ -369,7 +370,7 @@ let syscall cmd =
        Buffer.add_channel buf ic 1
      done
    with End_of_file -> ());
-  let todo_unk = Unix.close_process (ic, oc) in
+  let _todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
 (* TODO(WN): this already performs some feature of norm_pure_result *)
@@ -979,7 +980,7 @@ let compute_def (rel_fml, pf, no) ante_vars =
     print_endline_quiet "*************************************";
   end;
   try
-    let (pf2,subs) = x_add_1 CP.extract_mult pf in
+    let (_pf2,_subs) = x_add_1 CP.extract_mult pf in
     let pf = x_add_1 CP.drop_nonlinear_formula pf in
     let rhs = x_add_1 fixcalc_of_pure_formula pf in
     let input_fixcalc =

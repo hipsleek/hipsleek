@@ -569,7 +569,7 @@ let compute_td_one (lhs,old_rhs) (rhs,new_args) pre_rel =
   (lhs,rhs)
 
 let compute_td_fml pre_rel_df pre_rel =
-  let pr = Cprinter.string_of_pure_formula in
+  let _pr = Cprinter.string_of_pure_formula in
   let rhs = match pre_rel with
     | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
       let new_args = List.map (fun x -> CP.mkVar
@@ -907,7 +907,8 @@ let gen_slk_file_4fix prog file_name pre_rel_ids post_rel_ids rel_oblgs=
   (*write to file*)
   let out_chn =
     (* TODO : Warning 14: illegal backslash escape in string *)
-    let reg = Str.regexp "\.ss" in
+    let reg = Str.regexp {|\.ss|} in
+        (* "\.ss" in *)
     let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" file_name) in
     (* let () = print_endline (file_name1 ^ ".slk") in *)
     let () = print_endline_quiet ("\n generating sleek file : " ^ file_name1) in

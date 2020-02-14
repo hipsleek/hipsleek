@@ -345,7 +345,7 @@ let add_conds_to_cex conds cex =
   let assume_conds = List.map (fun c -> CP.TAssume c) conds in
   match cex with
   | None -> Some ({ CP.tcex_trace = assume_conds })
-  | Some cex -> Some ({ cex with CP.tcex_trace = assume_conds @ cex.CP.tcex_trace })
+  | Some cex -> Some ({ CP.tcex_trace = assume_conds @ cex.CP.tcex_trace })
 
 let elim_nondet_vars f = 
   let fv_f = CP.fv f in
@@ -452,7 +452,7 @@ let add_cex_by_cond for_loop turels c cex =
     let mcex = CP.merge_term_cex cex acex in
     begin match mcex with
       | None -> if for_loop then Some ({ CP.tcex_trace = [CP.TCall cpos] }) else mcex
-      | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
+      | Some t -> Some ({CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
     end
   with Not_found ->
     if for_loop then
@@ -461,7 +461,7 @@ let add_cex_by_cond for_loop turels c cex =
         let cpos = turel.termu_pos in
         begin match cex with
           | None -> Some ({ CP.tcex_trace = [CP.TCall cpos] })
-          | Some t -> Some ({ t with CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
+          | Some t -> Some ({ CP.tcex_trace = (CP.TCall cpos)::t.CP.tcex_trace })
         end
       with Not_found -> cex
     else cex
@@ -807,7 +807,7 @@ let update_spec_proc prog proc =
   with _ -> proc
 
 let update_specs_prog prog = 
-  let n_tbl = Cast.proc_decls_map (fun proc ->
+  let _n_tbl = Cast.proc_decls_map (fun proc ->
       update_spec_proc prog proc) prog.Cast.new_proc_decls in
   (* Should not create a new prog object *)
   (* { prog with Cast.new_proc_decls = n_tbl } *)
@@ -1076,10 +1076,10 @@ let templ_rank_constr_of_rel for_lex rel =
 
   let ctx_bnd = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
-  let todo_unk = add_templ_assume (MCP.mix_of_pure ctx_bnd) bnd src_templ_id in
+  let _todo_unk = add_templ_assume (MCP.mix_of_pure ctx_bnd) bnd src_templ_id in
   let ctx_dec = if not for_lex then mkAnd ctx_bnd (CP.cond_of_term_ann rel.termu_rhs) else ctx_bnd in
   let dec = mkGt src_rank dst_rank in
-  let todo_unk = add_templ_assume (MCP.mix_of_pure ctx_dec) dec inf_templs in
+  let _todo_unk = add_templ_assume (MCP.mix_of_pure ctx_dec) dec inf_templs in
   (* let () = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in     *)
   (* let () = print_endline_quiet ("Rank synthesis: ctx_bnd: " ^ (!CP.print_formula ctx_bnd)) in *)
   (* let () = print_endline_quiet ("Rank synthesis: bnd: " ^ (!CP.print_formula bnd)) in         *)
@@ -1220,7 +1220,7 @@ let infer_abductive_cond_templ prog ann abd_ante abd_conseq =
   
   (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
   (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)
-  let todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
+  let _todo_unk = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
   
   (* let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)          *)
   (* let () = Tlutils.oc_solver := true in                                          *)
@@ -1794,7 +1794,7 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   if trrels = [] then NT_Yes (* No return *)
   else
     let ntres = List.map (proving_non_termination_one_trrel prog lhs_uids rhs_uid) trrels in
-    let ntres_w_rel = List.combine ntres trrels in
+    let _ntres_w_rel = List.combine ntres trrels in
     (* if ntres = [] then NT_No []                      *)
     (* else if List.for_all is_nt_yes ntres then NT_Yes *)
     if List.for_all is_nt_yes ntres then NT_Yes

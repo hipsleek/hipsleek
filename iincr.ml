@@ -434,11 +434,11 @@ let extend_views iprog prog rev_formula_fnc trans_view_fnc ext_pred_names proc=
   let new_vns = List.map (fun (_,(vn,_)) -> vn)  map_ext_views in
   let new_vdclrs = List.map (Cast.look_up_view_def_raw x_loc
                                prog.Cast.prog_view_decls) new_vns in
-  let todo_unk = (List.map (fun vdef -> x_add Astsimp.compute_view_x_formula
+  let _todo_unk = (List.map (fun vdef -> x_add Astsimp.compute_view_x_formula
                                prog vdef !Globals.n_xpure) new_vdclrs) in
-  let todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef)
+  let _todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef)
                     prog.Cast.prog_view_decls) in
-  let prog = Astsimp.fill_base_case prog in
+  let _prog = Astsimp.fill_base_case prog in
   let () = List.iter (fun vdef ->
       x_tinfo_hp (add_str "new view" Cprinter.string_of_view_decl) vdef no_pos)
       new_vdclrs in

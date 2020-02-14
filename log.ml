@@ -651,7 +651,7 @@ let proof_log_to_text_file fname (src_files) =
         (try Unix.mkdir "logs" 0o750 with _ -> ());
         let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
         open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
-      let string_of_log_type lt =
+      let _string_of_log_type lt =
         match lt with
         |PT_IMPLY (ante, conseq) |PT_IMPLY_TOP (ante, conseq)
           -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
@@ -732,9 +732,9 @@ let proof_log_to_text_file fname (src_files) =
 let wrap_calculate_time exec_func src_file args =
   (* if !Globals.proof_logging_txt then  *)
   let _= sleek_counter := !sleek_counter +1 in
-  let tstartlog = Gen.Profiling.get_time () in
+  let _tstartlog = Gen.Profiling.get_time () in
   let () = exec_func args in
-  let tstoplog = Gen.Profiling.get_time () in 
+  let _tstoplog = Gen.Profiling.get_time () in 
   (* let period = (tstoplog -. tstartlog) in *)
   ()
 (* if (period> 0.7) then *)

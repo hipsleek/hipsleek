@@ -114,7 +114,7 @@ let syn_hprel_x crem_hprels irem_hprels=
     | [] -> res
     | chp::rest ->
       try
-        let todo_unk = I.look_up_hp_def_raw (res@irem_hprels) chp.C.hp_name in
+        let _todo_unk = I.look_up_hp_def_raw (res@irem_hprels) chp.C.hp_name in
         process_one rest res
       with Not_found ->
         let n_ihp = {
@@ -246,8 +246,8 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
     (* let () = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
     (*convert to cview. new_views: view with annotated types*)
     let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog false) in
-    let todo_unk =  (List.map (fun vdef -> x_add Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews) in
-    let todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cprog.Cast.prog_view_decls) in
+    let _todo_unk =  (List.map (fun vdef -> x_add Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews) in
+    let _todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cprog.Cast.prog_view_decls) in
     let cprog = Astsimp.fill_base_case cprog in
     (* let () = Globals.do_infer_inv := old_flag in *)
     let () = cprog.C.prog_hp_decls <- crem_hprels in
@@ -343,7 +343,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
         | _ -> look_up_root rest hp act_args
       end
   in
-  let get_args_w_useless hp args=
+  let _get_args_w_useless hp args=
     try
       let def = CF.look_up_hp_def hpdefs hp in
       match def.CF.def_rhs with
@@ -509,14 +509,14 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
       in
       flow_partition rest1 (res@[(nf,def::part)])
   in
-  let rec partition_nf part_defs don=
-    match part_defs with
-    | [] -> raise Not_found
-    | (fl,defs)::rest ->
-      if CF.equal_flow_interval fl !norm_flow_int then
-        ((fl,defs),don@rest)
-      else partition_nf rest (don@[(fl,defs)])
-  in
+  (* let rec partition_nf part_defs don=
+   *   match part_defs with
+   *   | [] -> raise Not_found
+   *   | (fl,defs)::rest ->
+   *     if CF.equal_flow_interval fl !norm_flow_int then
+   *       ((fl,defs),don@rest)
+   *     else partition_nf rest (don@[(fl,defs)])
+   * in *)
   let rec look_up_defs hp0 args basef1 parts (is_found,res)=
     let look_up (fl:Exc.GTable.nflow) def=
       match def.CF.def_cat with
@@ -560,7 +560,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
     match ls_hpargs with
     | [] -> [(parts,iflow,f0)]
     |  [(hp,args)] -> begin
-        let pos = (CF.pos_of_formula f0) in
+        let _pos = (CF.pos_of_formula f0) in
         if CP.mem_svl hp dang_hps then
           (* let f1 = CF.formula_of_pure_N  p (\* CF.mkTrue_nf *\) pos in *)
           [(parts,iflow,f1)]
@@ -1038,7 +1038,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
   (* let () = Hashtbl.reset old_procs in                                       *)
   (* let () = List.iter (fun (i,p) -> Hashtbl.add old_procs i p) proc_decls in *)
   (* { cprog with C.new_proc_decls = old_procs; }                              *)
-  let n_tbl = Cast.proc_decls_map (fun p ->
+  let _n_tbl = Cast.proc_decls_map (fun p ->
     if eq_str p.C.proc_name proc_name then plug_views_proc p else p) cprog.Cast.new_proc_decls 
   in ()
 
@@ -1082,7 +1082,7 @@ let classify_hp_def cprog hp_defs=
              let f = CF.disj_of_list (List.map fst hp_def.CF.def_rhs) no_pos in
              let simp_hps = if not (CF.is_disj f) then r_simp_hps@[hp] else r_simp_hps in
              try
-               let todo_unk = x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls
+               let _todo_unk = x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls
                  (Cpure.name_of_spec_var hp)
                in
                (r_hp_defs, r_unk_hps, simp_hps)
@@ -1109,7 +1109,7 @@ let plug_shape_into_lemma iprog cprog pre_hps post_hps head_f body_f hp_defs=
   (new_head_f, new_body_f)
 
 let plug_shape_into_specs_x cprog iprog dang_hps proc_names pre_hps post_hps hp_defs=
-  let is_rec_f hp f=
+  let _is_rec_f hp f=
     let hps = CF.get_hp_rel_name_formula f in
     (CP.mem_svl hp hps)
   in

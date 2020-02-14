@@ -209,7 +209,7 @@ class graph =
             | [] -> -1
             | x::xs -> if x=n then i else aux xs (i+1)
           in aux nodes 0 in
-        let alpha_order e1 e2 = 
+        let _alpha_order e1 e2 = 
           match e1,e2 with
           | n1::_,n2::_ -> 
             let p1 = find_posn n1 in
@@ -231,7 +231,7 @@ class graph =
           let () = y_binfo_hp (add_str "order_scc" (pr_triple pr pr string_of_int)) (s1,s2,r) in
           r
         in
-        let sort_scc scc =
+        let _sort_scc scc =
           let r = List.sort order_scc scc in
           let pr = pr_list (pr_list pr_id) in
           let () = y_binfo_hp (add_str "sort" (pr_pair pr pr)) (scc,r) in
@@ -274,7 +274,7 @@ class graph =
         scclist
 
     method build_scc_void n  =
-      let scclist = self # build_scc n in
+      let _scclist = self # build_scc n in
       ()
 
     method get_scc  =

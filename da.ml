@@ -105,7 +105,7 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
       end
     | _ -> None,[]
   in
-  let args = List.map snd targs in
+  let _args = List.map snd targs in
   (***************************************************************)
   (***************************************************************)
   let rec helper (e:exp) (path_conds:sympath list):sympath list=
@@ -323,7 +323,7 @@ let find_rel_args_groups_x prog proc e0=
       end
     | Block b -> find_must_neq_helper b.exp_block_body neqs
     | Cond b -> (*to update neqs*)
-      let pos = b.exp_cond_pos in
+      let _pos = b.exp_cond_pos in
       let () =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
       let then_eqs = find_must_neq_helper b.exp_cond_then_arm neqs in
       (*else path*)
@@ -381,7 +381,7 @@ let find_rel_args_groups_x prog proc e0=
       let arg_groups = List.map snd pre_unk_hpargs in
       let grouped_args = List.fold_left (@) [] arg_groups in
       let id_grouped_args = List.map CP.name_of_spec_var grouped_args in
-      let rem = List.filter (fun (sv,_) -> not (Gen.BList.mem_eq  string_cmp sv id_grouped_args)) maybe_root_args in
+      let _rem = List.filter (fun (sv,_) -> not (Gen.BList.mem_eq  string_cmp sv id_grouped_args)) maybe_root_args in
       (* if rem = [] then *)
       try
         let () =  Debug.ninfo_hprint (add_str "arg_groups" (pr_list !CP.print_svl))
@@ -490,7 +490,7 @@ let find_rel_args_groups_scc prog scc0 =
                            } in
               let  ()=  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
               (* let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in *)
-              let bug = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
+              let _bug = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
               [n_proc],defs
             else [proc],[]
           end

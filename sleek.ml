@@ -91,7 +91,8 @@ module M = Lexer.Make(Token.Token)
 let proc_one_cmd c =
   match c with
   | UiDef uidef -> process_ui_def uidef
-  | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
+  | EntailCheck (iante, iconseq, etype) ->
+    let _ = process_entail_check iante iconseq etype in ()
   | SatCheck f -> (process_sat_check f; ())
   | NonDetCheck (v, f) -> (process_nondet_check v f)
   | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
@@ -149,7 +150,8 @@ let proc_one_cmd c =
     let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
     let () = x_binfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
     let () = x_binfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
-    (process_infer itype ivars iante iconseq etype;())
+    let _ = process_infer itype ivars iante iconseq etype in
+    ()
   | CaptureResidue lvar -> process_capture_residue lvar
   | PrintCmd pcmd ->
     let () = Debug.ninfo_pprint "at print" no_pos in
@@ -481,7 +483,7 @@ let main () =
         let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
         let all_files = slk_prelude_path::!Globals.source_files in
         let () = x_winfo_pp ((pr_list (fun x -> x)) all_files) no_pos in
-        let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
+        let _todo_unk = List.map (parse_file NF.list_parse) all_files in ()
       end
   with
   | End_of_file ->
@@ -518,7 +520,7 @@ let sleek_proof_log_Z3 src_files =
     begin
       Debug.info_hprint (add_str "src_files" (pr_list pr_id)) src_files no_pos;
       let tstartlog = Gen.Profiling.get_time () in
-      let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
+      let _with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
       let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
       let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
       let _= if (!Globals.proof_logging_txt)
@@ -566,7 +568,7 @@ let _ =
         ()
     in
     (*Long: gen smt *)
-    let todo_unk = if !Globals.gen_smt then
+    let _todo_unk = if !Globals.gen_smt then
 
         Slk2smt.trans_smt (List.hd !Globals.source_files) Sleekengine.iprog !Sleekengine.cprog !Slk2smt.smt_cmds else false in
     (* let () = print_endline "after main" in *)

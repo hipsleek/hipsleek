@@ -2163,7 +2163,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   if !Globals.auto_eps_flag then
     (* this is mainly for mono prover *)
     let fl = CP.split_disjunctions_deep f in
-    let f_or a b = a || b in
+    let _f_or a b = a || b in
     List.fold_left (fun k f ->  k || (tp_conj_bag_sat f old_sat_no)) false fl
     (* List.fold_left (fun k f -> f_or k (tp_conj_bag_sat f old_sat_no)) false fl *)
   else tp_is_sat f old_sat_no
@@ -2258,7 +2258,7 @@ let simplify (f : CP.formula) : CP.formula =
       | None -> f
     else
       begin
-        let tstart = Gen.Profiling.get_time () in
+        let _tstart = Gen.Profiling.get_time () in
         try
           if not !tp_batch_mode then start_prover ();
           Gen.Profiling.push_time "simplify";
@@ -2342,7 +2342,7 @@ let simplify (f : CP.formula) : CP.formula =
           in
           let res = Timelog.log_wrapper "simplify" logger fn f in
           Gen.Profiling.pop_time "simplify";
-          let tstop = Gen.Profiling.get_time () in
+          let _tstop = Gen.Profiling.get_time () in
           if not !tp_batch_mode then stop_prover ();
           (*let () = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
           (* To recreate <IL> relation after simplifying *)
@@ -3228,7 +3228,7 @@ let tp_imply ante conseq old_imp_no timeout process =
   (* let () = Log.last_proof_command # set cmd in *)
   let fn () = x_add tp_imply ante conseq imp_no timeout process in
   let logger fr tt timeout =
-    let tp = (string_of_prover !pure_tp) in
+    let _tp = (string_of_prover !pure_tp) in
     let () =  add_proof_logging timeout !cache_status old_imp_no imp_num (string_of_prover !pure_tp) cmd tt
         (match fr with Some b -> PR_BOOL b | None -> PR_exception) in
     (Others.last_tp_used # string_of,imp_no)

@@ -29,7 +29,7 @@ class timelog =
       begin
         (* timer_timeout <- false; *)
         if trace_timer then print_endline_quiet ("inside timer_stop "^pno); 
-        let r = stk_t # pop_top_no_exc in
+        let _r = stk_t # pop_top_no_exc in
         if stk_t # is_empty then 
           (if timer_val==None then timer_val <- Some s)
         else () (* is it important to output Stop msg? message? *)
@@ -39,7 +39,7 @@ class timelog =
       begin
         if trace_timer then print_endline_quiet ("inside timer_timeout "^pno);
         timer_timeout_flag <- true;
-        let r = stk_t # pop_top_no_exc in
+        let _r = stk_t # pop_top_no_exc in
         if stk_t # is_empty then 
           (if timer_val==None then timer_val <- Some s)
         else print_endline_quiet "Nested Timer(timeout)"
@@ -93,10 +93,10 @@ class timelog =
         tt
       end
     method dump = 
-      let prL = (pr_list (fun (_,f) -> string_of_float f)) in
+      let _prL = (pr_list (fun (_,f) -> string_of_float f)) in
       let prL2 = (pr_list (pr_pair pr_id string_of_float)) in
       let prL = prL2 in
-      let c = hist_stk # len in
+      let _c = hist_stk # len in
       let ls = List.rev (hist_stk # get_stk) in
       let bigger = List.rev (hist_big # get_stk) in
       let (big,small) = List.partition (fun (_,x) -> x>=(!time_limit_large)) ls in

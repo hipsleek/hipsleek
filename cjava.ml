@@ -109,7 +109,7 @@ let rec remove_block_rhs prog (bmap : bind_map) (null_vars : IdentSet.t) (lhs : 
   | Assign ({exp_assign_lhs = lhs;
              exp_assign_rhs = rhs}) ->
     if is_block rhs then
-      let todo_unk = java_of_exp prog bmap null_vars e0 java_code in
+      let _todo_unk = java_of_exp prog bmap null_vars e0 java_code in
       null_vars
     else if not(IdentSet.mem lhs null_vars) then begin
       let () = Buffer.add_string java_code (lhs ^ " = ") in
@@ -121,7 +121,7 @@ let rec remove_block_rhs prog (bmap : bind_map) (null_vars : IdentSet.t) (lhs : 
       null_vars
   | rest_e -> 
     if lhs = "" then
-      let todo_unk = java_of_exp prog bmap null_vars rest_e java_code in
+      let _todo_unk = java_of_exp prog bmap null_vars rest_e java_code in
       null_vars
     else begin
       (* make the pushed in assignment to lhs *)
@@ -202,7 +202,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
     let ddef = look_up_data_def no_pos prog.prog_data_decls (string_of_typ t) in
     let field_names = List.map snd idl in
     (* add local bind map *)
-    let todo_unk = List.map2 
+    let _todo_unk = List.map2 
         (fun id -> fun fld -> H.add bmap id (bvar, Cast.get_field_name fld))
         field_names ddef.data_fields 
     in
@@ -210,7 +210,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
 		   pretty print the body. Any null vars introduced by the bind
 		   body is local. Therefore there's no need to propagate them.
 		*)
-    let todo_unk = java_of_exp prog bmap null_vars e java_code in
+    let _todo_unk = java_of_exp prog bmap null_vars e java_code in
     (* clear local bind map *)
     ignore (List.map (fun id -> H.remove bmap id) field_names);
     null_vars

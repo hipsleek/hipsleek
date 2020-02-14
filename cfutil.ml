@@ -1854,7 +1854,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
       List.map (fun sv -> (vn.h_formula_view_node, sv)) seg_svl
     | _ -> []
   in
-  let subst_heap_node sst hf=
+  let _subst_heap_node sst hf=
     match hf with
     | ViewNode vn ->
       ViewNode {vn with h_formula_view_node = CP.subs_one sst vn.h_formula_view_node}
@@ -1952,7 +1952,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
       match fs_diffs with
       | [br, diffs] -> begin
           let () = Debug.ninfo_hprint (add_str "br" (!print_formula)) br no_pos in
-          let sst2 = List.combine vdecl.Cast.view_vars rvnode.h_formula_view_arguments in
+          let _sst2 = List.combine vdecl.Cast.view_vars rvnode.h_formula_view_arguments in
           match diffs with
           | [(mt,_,_)] ->
             (* let eqs = List.fold_left (fun r (sv2,sv) -> *)
@@ -2789,15 +2789,15 @@ let look_up_first_field prog lsctx0 dname=
         with _ -> look_up_ctxs rest
       end
   in
-  let rec look_up_esc_ctx esc_ctxs=
-    match esc_ctxs with
-    | []-> raise Not_found
-    | (_,br_ctxs)::rest -> begin
-        try
-          look_up_ctxs br_ctxs
-        with _ -> look_up_esc_ctx rest
-      end
-  in
+  (* let rec look_up_esc_ctx esc_ctxs=
+   *   match esc_ctxs with
+   *   | []-> raise Not_found
+   *   | (_,br_ctxs)::rest -> begin
+   *       try
+   *         look_up_ctxs br_ctxs
+   *       with _ -> look_up_esc_ctx rest
+   *     end
+   * in *)
   let rec process_failesc_contexts lsctx=
     match lsctx with
     | [] -> raise Not_found
@@ -3017,7 +3017,7 @@ let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
 
 let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
   let pr1 = !CP.print_sv in
-  let pr2 = !CP.print_svl in
+  let _pr2 = !CP.print_svl in
   let pr3 = !print_formula_base in
   let pr_out = (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
   Debug.no_4 "compute_eager_inst" (add_str "lhs" pr3) (add_str "rhs" pr3)

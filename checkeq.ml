@@ -983,7 +983,7 @@ and checkeq_formulas_with_diff_mt_x ivars rvars f1 f2 mtl =
         )
         in 
         if(List.length mix_mtl1  == 0) then (
-          let todo_unk = checkeq_formulas_one_with_diff ivars rvars2 f2 f1 [[]] in
+          let _todo_unk = checkeq_formulas_one_with_diff ivars rvars2 f2 f1 [[]] in
           (false, [])
         )
         else (
@@ -1027,7 +1027,7 @@ and checkeq_formulas_with_diff_x ivars f1 f2 =
         Debug.ninfo_pprint  (str) no_pos 
       in 
       if(List.length fs > 0) then (
-        let todo_unk = List.map (fun (a,b,c) -> print_triple a b c) fs in
+        let _todo_unk = List.map (fun (a,b,c) -> print_triple a b c) fs in
         ()
       )
       else 	Debug.ninfo_pprint ("no diff info") no_pos 

@@ -281,7 +281,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
 
     let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
     let es = { es with CF.es_infer_vars_templ = templ_id_list; } in 
-    let es = List.fold_left (fun es trans ->
+    let _es = List.fold_left (fun es trans ->
         let rec_cond_fv, rec_cond = List.assoc trans.trans_dst_id templ_loop_cond in
         let rec_cond = apply_par_term (List.combine rec_cond_fv trans.trans_dst_args) rec_cond in
 
@@ -402,12 +402,12 @@ let infer_rank_template_init prog (inf_templs: ident list) =
         Piecewise.infer_piecewise_main prog templ_assumes in
       let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
       let estate = { estate with CF.es_infer_vars_templ = inf_ptempls; } in
-      let es = List.fold_left (fun es (ante, cons) -> 
+      let _es = List.fold_left (fun es (ante, cons) -> 
           let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
           match nes with | Some es -> es | None -> es) estate ptempl_assumes in
       (* let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in *)
       let () = prog.C.prog_templ_decls <- prog.C.prog_templ_decls @ ptempl_defs in
-      let todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
+      let _todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else 
       let () = print_endline_quiet ("Trying to infer lexicographic termination arguments ...") in
       infer_lex_template_init prog inf_templs templ_unks templ_assumes

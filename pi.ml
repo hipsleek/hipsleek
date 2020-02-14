@@ -52,7 +52,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars =
   let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let diff = Gen.BList.difference_eq CP.eq_spec_var in
   let intersect = Gen.BList.intersect_eq CP.eq_spec_var in
-  let mem = Gen.BList.mem_eq CP.eq_spec_var in
+  let _mem = Gen.BList.mem_eq CP.eq_spec_var in
   match sf with
   | CF.EList el -> CF.EList (List.map (fun (lbl, sf) ->
       (lbl, add_post_relation prog proc sf rel_name rel_type rel_vars)) el)
@@ -93,7 +93,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars =
         let n_eb = { eb with CF.formula_struc_continuation = Some n_cont } in
         try
           (* Below for testing whether post relation has been added to EAssume or not *)
-          let rel_def = look_up_rel_def_raw (prog.prog_rel_decls # get_stk) rel_name in
+          let _rel_def = look_up_rel_def_raw (prog.prog_rel_decls # get_stk) rel_name in
           let base_all_vars = CF.all_vars eb.formula_struc_base in
           let impl_rel_vars = intersect base_all_vars rel_vars in
           let n_base = CF.remove_quantifiers impl_rel_vars n_eb.CF.formula_struc_base in
@@ -209,7 +209,7 @@ let rec is_need_to_add_post_rel sf = match sf with
       is_need_to_add_post_rel sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
-    let inf_vars = ei.CF.formula_inf_vars in
+    let _inf_vars = ei.CF.formula_inf_vars in
     (inf_obj # is_post)
   | _ -> false
 
@@ -234,7 +234,7 @@ let rec is_infer_error sf = match sf with
       is_infer_error sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
-    let inf_vars = ei.CF.formula_inf_vars in
+    let _inf_vars = ei.CF.formula_inf_vars in
     (inf_obj # is_error)
   | _ -> false
 
@@ -271,7 +271,7 @@ let rec is_infer_pre sf = match sf with
       x_add_1 is_infer_post sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
-    let inf_vars = ei.CF.formula_inf_vars in
+    let _inf_vars = ei.CF.formula_inf_vars in
     (inf_obj # is_pre)
   | _ -> false
 
@@ -287,7 +287,7 @@ let rec is_infer_others sf = match sf with
       x_add_1 is_infer_others sf) el
   | CF.EInfer ei ->
     let inf_obj = ei.CF.formula_inf_obj in
-    let inf_vars = ei.CF.formula_inf_vars in
+    let _inf_vars = ei.CF.formula_inf_vars in
     (inf_obj # is_term) (* || (inf_obj # is_shape) || (inf_obj # is_imm) *)
   | _ -> false
 
@@ -507,7 +507,7 @@ let trans_res_formula prog f =
     | _ -> p
   in
   let mk_new_formula qvars f =
-    let svl = CF.fv f in
+    let _svl = CF.fv f in
     let h,p,vp,fl,tf,a = CF.split_components f in
     let pos = CF.pos_of_formula f in
     let new_f = if exlist # is_exc_flow fl.CF.formula_flow_interval then
@@ -677,7 +677,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             in
             let target_define =
               List.map (fun (r,pf,rel) -> pf) rels in
-            let unchanged_result =
+            let _unchanged_result =
               (Trans_arr.new_get_unchanged_fixpoint target_rel target_define) in
             if rels !=[] then
               begin
@@ -715,10 +715,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
 
             (**************** Debugging ****************)
-            let pr_svl = Cprinter.string_of_spec_var_list in
+            let _pr_svl = Cprinter.string_of_spec_var_list in
             let pr = Cprinter.string_of_pure_formula in
             let pr_def = pr_list (pr_pair pr pr) in
-            let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+            let _pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
             let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
             let pre_rel_df = List.map (fun lhs_conj ->
                 let (lhs,rhs) = lhs_conj in
@@ -746,9 +746,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                   (pre_invs@new_pre_invs,post_invs@new_post_invs)
                 ) ([],[]) scc
             in
-            let post_inv = CP.join_disjunctions post_invs in
-            let pre_inv = CP.join_disjunctions pre_invs in
-            let (s1,s2) =
+            let _post_inv = CP.join_disjunctions post_invs in
+            let _pre_inv = CP.join_disjunctions pre_invs in
+            let (_s1,_s2) =
               if List.length post_rel_df_new = 0 then ("","")
               else
                 let pf1,pf2 = List.hd post_rel_df_new in

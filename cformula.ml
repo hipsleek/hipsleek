@@ -1803,7 +1803,7 @@ and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   (* let h = mkStarH h1 h2 pos in *)
   let p, _ = combine_and_pure f1 p1 p2 in
   let vp = CVP.merge_vperm_sets [vp1; vp2] in
-  let vp_2 = CVP.combine_vperm_sets [vp1; vp2] in
+  let _vp_2 = CVP.combine_vperm_sets [vp1; vp2] in
   let t = mkAndType t1 t2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
   let a = a1@a2 in (*combine a1 and a2: assuming merging a1 and a2*)
@@ -4291,7 +4291,7 @@ and get_exists (f : formula) : CP.spec_var list =
   in helper f
 
 and elim_exists (f0 : formula) : formula =
-  let pr =  !print_formula in
+  let _pr =  !print_formula in
   (* Debug.no_1 "cformula.elim_exists" pr pr *) elim_exists_x f0
 
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
@@ -4523,7 +4523,7 @@ and elim_exists_es_his_x (f0 : formula) (* (his:h_formula list) *) : formula(* *
   helper f0 (* his *) (* subst_ref *)
 
 and elim_exists_es_his (f0 : formula) : formula=
-  let pr1 = pr_list !print_h_formula in
+  let _pr1 = pr_list !print_h_formula in
   let pr_out = (* (pr_pair !print_formula pr1) *) !print_formula in
   Debug.no_1 "elim_exists_es_his"
     !print_formula  pr_out
@@ -9465,7 +9465,7 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let sel_args = get_args_from_pos dn.h_formula_data_arguments all_sel_pos in
     sel_args
   in
-  let get_last_n n args =
+  let _get_last_n n args =
     (* BUG : OCaml compiler bug when n>length args *)
     (* let args = hv.h_formula_view_arguments in *)
     let len = List.length args in
@@ -11497,7 +11497,7 @@ let remove_dupl_false (sl:branch_ctx list) =
   else nl
 
 let remove_dupl_false (sl:branch_ctx list) =
-  let pr n = string_of_int(List.length n) in
+  let _pr n = string_of_int(List.length n) in
   let pr l = pr_list !print_context (List.map (fun (_,c,_) -> c) l) in
   Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
 
@@ -12847,7 +12847,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
      | _ ->  l)
   | SuccCtx ctx_lst -> if not bug_verified then l else
       begin
-        let es = empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos in
+        let _es = empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos in
         let fc_template = {
           fc_message = "INCONSISTENCY : expected failure but success instead";
           fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos;
@@ -13753,7 +13753,7 @@ let get_node_label n =  match n with
 let trans_h_formula (e2:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
     (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
-    let pr = !print_h_formula in
+    let _pr = !print_h_formula in
     (* let () = x_tinfo_hp (add_str "helper" pr) e no_pos in *)
     let r =  f arg e in 
     match r with
@@ -14065,7 +14065,7 @@ let transform_formula_x f (e:formula):formula =
 
 
 let transform_formula f (e:formula):formula =
-  let pr = !print_formula in
+  let _pr = !print_formula in
   (* Debug.no_2 "transform_formula" (fun _ -> "f") pr pr *) transform_formula_x f e
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
@@ -17529,7 +17529,7 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
     let post_st = b.formula_assume_struc in
     (*We have (ref) vars in the post-condition*)
     let pos = pos_of_formula post_si in
-    let pvars = List.map CP.to_primed vars in
+    let _pvars = List.map CP.to_primed vars in
     if not (has_formula_and post_si) then
       (*sequential post-condition*)
       (* TODO: VPerm *)
@@ -20025,7 +20025,7 @@ let fresh_data_arg body_dn =
 let extr_exists_hprel ra = 
   let lhs = ra.hprel_lhs in
   let guard = ra.hprel_guard in
-  let kind = ra.hprel_kind in
+  let _kind = ra.hprel_kind in
   (* let () = y_tinfo_hp (add_str "lhs" !print_formula) lhs in *)
   (* let () = y_tinfo_hp (add_str "guard" (pr_option !print_formula)) guard in *)
   let (lhs_vs,lhs_h_vs) = (fv lhs,fv_heap_of lhs) in
@@ -20146,8 +20146,8 @@ let add_infer_type_to_hprel ras =
   Debug.no_1 "add_infer_type_to_hprel" pr pr add_infer_type_to_hprel ras
 
 let check_hprel ra = 
-  let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
-  let opt = check_unfold ra in
+  let (_ex_lhs_vs,_ex_guard_vs)= extr_exists_hprel ra in
+  let _opt = check_unfold ra in
   (* let () = y_tinfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in *)
   (* let () = if ex_lhs_vs!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vs in *)
   (* let () = if ex_guard_vs!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vs in *)
@@ -20182,7 +20182,7 @@ let get_view_unfold_g vd_name vl to_args f =
     (* let new_f = x_add subst_all sst f in *)
     let new_f = subst_avoid_capture (CP.self_sv::to_args) (vl.h_formula_view_node::args) f in
     let () = y_tinfo_hp pr_id (HipUtil.view_scc_obj # string_of) in
-    let grh = HipUtil.view_scc_obj # unfold_in vv vd_name in
+    let _grh = HipUtil.view_scc_obj # unfold_in vv vd_name in
     let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
     let (qv,(hf,pure_f,_,_,_,_)) = split_components_exist ~rename_flag:true new_f in
     let pure_f = MCP.pure_of_mix pure_f in
@@ -20348,7 +20348,7 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
         let new_f = build_context_with_emp orig_f hf in
         let vl = v in
         let args = vl.h_formula_view_arguments in 
-        let vv = vl.h_formula_view_name in
+        let _vv = vl.h_formula_view_name in
         let () = y_tinfo_hp (add_str "transform .. view node" !CP.print_sv) vsv in
         let () = y_tinfo_hp (add_str "transform .. view name" pr_id) vname in
         (* formulae for view name *)
@@ -20463,9 +20463,9 @@ let get_data_and_views f =
   let stk = new Gen.stack in
   let f_h_f hf = 
     match hf with
-    | ViewNode ({ h_formula_view_node = vsv; h_formula_view_name = vname; } as v) ->
+    | ViewNode ({ h_formula_view_node = vsv; h_formula_view_name = vname; }) ->
       let () = stk # push (vsv,(1,hf)) in Some hf
-    | DataNode ({ h_formula_data_node = vsv; h_formula_data_name = vname; } as v) ->
+    | DataNode ({ h_formula_data_node = vsv; h_formula_data_name = vname; } as _v) ->
       let () = stk # push (vsv,(0,hf)) in Some hf
     | _ -> None in 
   let _ = (map_h_formula f f_h_f) in
@@ -20598,7 +20598,7 @@ let struc_formula_of_formula f pos =
   Debug.no_1 "struc_formula_of_formula" pr_f pr_sf (fun _ -> struc_formula_of_formula f pos) f
 
 let normalize_struc nb b =
-  let pr_f = !print_formula in
+  let _pr_f = !print_formula in
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
 

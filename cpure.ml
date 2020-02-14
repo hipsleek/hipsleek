@@ -1525,7 +1525,7 @@ and bfv (bf : b_formula) =
   | RelForm (r, args, _) ->
     (* RelForm are assumed global *)
     let () = y_tinfo_hp (add_str "fv removes rel" !print_sv) r in
-    let vid = r in
+    let _vid = r in
     (* vid:: *)remove_dups_svl (List.fold_left List.append [] (List.map afv args))
   | ImmRel (r, cond, _) -> 
     let fvr = bfv (r, sl) in
@@ -2961,7 +2961,7 @@ and split_conjunctions_x =  function
   | z -> [z]
 
 and split_conjunctions f =
-  let pr = !print_formula in
+  let _pr = !print_formula in
   (* Debug.no_1 "split_conjunctions" pr (pr_list pr) *) split_conjunctions_x f
 
 
@@ -3985,7 +3985,7 @@ and fresh_old_name_x (s: string):string =
       let l = (slen-(n+1)) in
       if (l==0) then slen-1
       else
-        let tr = String.sub s (n+1) (slen-(n+1)) in
+        let _tr = String.sub s (n+1) (slen-(n+1)) in
         n
     with  _ -> slen in
   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
@@ -4052,7 +4052,7 @@ and nondet_prefix = "nondet"
 and is_nondet_sv sv = 
   let name = name_of_sv sv in
   if (String.length name >= 6) then
-    let prefix = String.lowercase (String.sub name 0 6) in
+    let prefix = String.lowercase_ascii (String.sub name 0 6) in
     eq_str prefix nondet_prefix
   else false
 
@@ -4086,7 +4086,7 @@ and check_non_determinism_x (var_name: ident) (f: formula) =
         | _ -> Some bf
       ) in
     (* what is this for? side-effects *)
-    let todo_var = transform_formula (fh, fm, ff, fb, fe) f in
+    let _todo_var = transform_formula (fh, fm, ff, fb, fe) f in
     !nondet_svs
   ) in
   let nondet_svs = collect_nondet_vars f in
@@ -4109,7 +4109,7 @@ and check_non_determinism_x (var_name: ident) (f: formula) =
         );
         None
       ) in
-      let todo_unknown = transform_formula (fh, fm, ff, fb, fe) simp_f in
+      let _todo_unknown = transform_formula (fh, fm, ff, fb, fe) simp_f in
       if (List.length !related_vars) <= (List.length vars) then vars
       else collect_related_vars !related_vars
     ) in
@@ -6881,7 +6881,7 @@ and simp_mult_x (e : exp) :  exp =
   in acc_mult None e
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
-  let pr1 = pr_opt !print_exp in
+  let _pr1 = pr_opt !print_exp in
   (* Debug.no_1 "split_sums" !print_exp (pr_pair pr1 pr1) *)
     split_sums_x e
 
@@ -7032,7 +7032,7 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
   (add lhs ll, add rhs rl, add qhs ql)
 
 and purge_mult (e: exp) : exp =
-  let pr = !print_exp in
+  let _pr = !print_exp in
   (* Debug.no_1 "purge_mult" pr pr *) purge_mult_x e
 
 (* TODO : must elim some multiply for MONA *)
@@ -10570,7 +10570,7 @@ let rec get_RelForm pf = match pf with
   | Exists (_,f,_,_) -> get_RelForm f
 
 let get_RelForm_arg_list_with_name pf name =
-  let rel_form_list = get_RelForm pf in
+  let _rel_form_list = get_RelForm pf in
   List.fold_left 
     (fun r rel -> 
        match rel with
@@ -10920,7 +10920,7 @@ let check_nonlinear e =
           end
     | _ -> None
   in
-  let f_Some x = Some x in
+  let _f_Some x = Some x in
   let f = (f_None, f_None, f_None, f_None, f_exp) in
   let _ = transform_formula f e in
   !flag
@@ -10973,7 +10973,7 @@ let drop_nonlinear_formula_rev (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_nonlinear_formula_ops in
   (* let pr_weak x = cnt # inc; pr_weak x in *)
   (* let pr_strong x = cnt # inc; pr_strong x in *)
-  let pr = !print_formula in
+  let _pr = !print_formula in
   let nf = drop_formula pr_strong pr_weak f in
   (* let c = cnt#get in *)
   (* if (c) > 0 then *)
@@ -11112,11 +11112,11 @@ let collect_variable_list e arg=
 ;;
 
 let fold_variable_list vclist =
-  let fold_one (sv,const) vclist =
+  let _fold_one (sv,const) vclist =
     List.filter (fun (nsv,nconst) -> if eq_spec_var sv nsv then true else false) vclist
   in
   List.map (
-    fun ((sv,const) as vc) ->
+    fun ((sv,const) as _vc) ->
       let lst = List.filter (fun (nsv,nconst) -> if eq_spec_var sv nsv then true else false) vclist in
       List.fold_left (fun (sv,const) (nsv,nconst) -> (sv,nconst+const)) (List.hd lst) (List.tl lst)
   ) vclist
@@ -11388,7 +11388,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
           (* use it as starting for RHS *)
           let rhs = rest@dislst in
           let f = extr_neg lhs in
-          let eqlist = find_eq_at_toplevel f in
+          let _eqlist = find_eq_at_toplevel f in
           let emap = em in
           (* let _ = add_eqmap_at_toplevel emap f in *)
           (* let new_em = (true,add_to_eqmap eqlist emap) in *)
@@ -11423,7 +11423,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
     | And _
     | AndList _ ->
       if start_flag then (* add to eqmap *)
-        let eqlist = find_eq_at_toplevel e in
+        let _eqlist = find_eq_at_toplevel e in
         (false,add_eqmap_at_toplevel emap e,nonlinear)
       else (* inside ; no change to eqmap *)
         (false,emap,nonlinear)
@@ -11443,7 +11443,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
     | _ -> (s,em,nonlinear)
   in
   let ff = (f_f,f_bf,f_e) in
-  let f_arg_1 a e = a in
+  let _f_arg_1 a e = a in
   let f_arg = (f_arg_f,f_arg_bf,f_arg_e) in
   let init_arg = match em with
     | None -> (true,EMapSV.mkEmpty,false) (* build_eqmap_at_toplevel (\* find_eq_all *\) f *) 
@@ -12235,7 +12235,7 @@ let split_disjunctions_deep (f:formula) : formula list =
   let (_,ans) = deep_split_disjuncts f in ans
 
 let split_disjunctions_deep (f:formula) : formula list =
-  let pr = !print_formula in
+  let _pr = !print_formula in
   (* Debug.no_1 "split_disjunctions_deep" pr (pr_list pr) *) split_disjunctions_deep f
 
 let drop_exists (f:formula) :formula = 

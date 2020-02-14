@@ -556,7 +556,7 @@ let rec icollect_output2 chn accumulated_output : string list =
     try
       let line = input_line chn in
       if (line = "unsat") then
-        let todo_var_unknown = input_line chn in
+        let _todo_var_unknown = input_line chn in
         accumulated_output @ [line]
       else if (line = ")") then
         accumulated_output @ [line]
@@ -618,7 +618,7 @@ let sat_type_from_string r input =
   else if (String.compare r "unsat" == 0) then UnSat
   else
     try
-      let todo_var_unknown:int = Str.search_forward (Str.regexp "unexpected") r 0 in
+      let _todo_var_unknown:int = Str.search_forward (Str.regexp "unexpected") r 0 in
       (print_string "Z3 translation failure!";
        Error.report_error { 
          Error.error_loc = no_pos; 
@@ -656,7 +656,7 @@ let iget_answer2 chn input =
   let () = x_tinfo_pp ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
   let () = x_tinfo_pp "model:" no_pos in
-  let unknown = List.map (fun s -> x_tinfo_pp s no_pos) model in
+  let _unknown = List.map (fun s -> x_tinfo_pp s no_pos) model in
   let _ =
     if solver_sat_result = "sat" then
       parse_model_to_pure_formula model
@@ -680,7 +680,7 @@ let iget_answer chn input =
   let last_z3_sat_type = sat_type_from_string solver_sat_result input in
   let st = if List.length output > 1 then
       try
-        let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
+        let _b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
         (* if b then Sat else *) last_z3_sat_type
       with _ -> last_z3_sat_type
     else last_z3_sat_type
@@ -917,7 +917,7 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
   let used_rels = info.relations in
-  let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) global_rel_defs # get_stk) in
+  let _rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) global_rel_defs # get_stk) in
   (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
   let eq_rel_def r1 r2 = 
     try

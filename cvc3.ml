@@ -83,7 +83,7 @@ and cvc3_of_exp a = match a with
   | CP.Bptriple _ -> failwith ("cvc3.cvc3_of_exp: Bptriple should not appear here")
   | CP.Tup2 _ -> failwith ("cvc3.cvc3_of_exp: Tup2 should not appear here")
   | CP.InfConst _ 
-  |CP.NegInfConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (\inf should not appear here)")
+  |CP.NegInfConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (\\inf should not appear here)")
   | CP.Template t -> cvc3_of_exp (CP.exp_of_template t)
 
 and cvc3_of_b_formula b =
@@ -270,7 +270,7 @@ let rec read_prompt (process: GlobProver.prover_process_t) : string =
 (*send one command to cvc3 process without expecting any answer*)
 let send_cmd (process: GlobProver.prover_process_t) (cmd: string): unit = 
   try
-    let todo_unk = read_prompt process in
+    let _todo_unk = read_prompt process in
     let () = output_string process.outchannel cmd in
     let () = log_text_to_cvc3  cmd in    
     let () = flush process.outchannel in

@@ -103,7 +103,7 @@ let add_data_tags_to_obj cdata =
       let () = HipUtil.data_scc_obj # replace x_loc dn fields in
       ()
     ) cdata in
-  let lst = HipUtil.data_scc_obj # get_scc in
+  let _lst = HipUtil.data_scc_obj # get_scc in
   let () = y_tinfo_hp (add_str "data table" pr_id) (HipUtil.data_scc_obj # string_of) in
   let () = List.iter (fun cd ->
       let dn = cd.Cast.data_name in
@@ -167,7 +167,7 @@ let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
     | Some _ -> vbc_o in
   let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
   let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
-  let unfold_once baga =
+  let _unfold_once baga =
     match baga with
     | None -> None
     | Some lst ->

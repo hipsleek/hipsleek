@@ -898,7 +898,7 @@ module BlockChunk =
       if not !allowDuplication then
         raise (Failure "cannot duplicate: disallowed by user");
       if c.cases != [] then raise (Failure "cannot duplicate: has cases") else
-      let pCount = ref (List.length c.postins) in
+      let _pCount = ref (List.length c.postins) in
       { stmts =
         Util.list_map
           (fun s ->
@@ -1908,7 +1908,9 @@ let rec setOneInit (this: preInit)
       let pMaxIdx, pArray =
         match this  with
           NoInitPre  -> (* No initializer so far here *)
-            ref idx, ref (Array.create (max 32 (idx + 1)) NoInitPre)
+          ref idx,
+          (* ref (Array.create (max 32 (idx + 1)) NoInitPre) *)
+          ref (Array.make (max 32 (idx + 1)) NoInitPre)
 
         | CompoundPre (pMaxIdx, pArray) ->
             if !pMaxIdx < idx then begin
@@ -3411,7 +3413,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
           let l = String.length str in
           fun s ->
             let ls = String.length s in
-            l >= ls && s = String.uppercase (String.sub str (l - ls) ls)
+            l >= ls && s = String.uppercase_ascii (String.sub str (l - ls) ls)
         in
         let p = convLoc loc in
         match ct with
@@ -5045,7 +5047,7 @@ and doInit
 	  (* ISO 6.7.8 para 14: final NUL added only if no size specified, or
 	   * if there is room for it; btw, we can't rely on zero-init of
 	   * globals, since this array might be a local variable *)
-          if ((isNone leno) or ((String.length s) < (integerArrayLength leno)))
+          if ((isNone leno) || ((String.length s) < (integerArrayLength leno)))
             then ref [init Int64.zero]
             else ref []
         in
@@ -5106,7 +5108,7 @@ and doInit
 	  (* ISO 6.7.8 para 14: final NUL added only if no size specified, or
 	   * if there is room for it; btw, we can't rely on zero-init of
 	   * globals, since this array might be a local variable *)
-          if ((isNone leno) or ((List.length s) < (integerArrayLength leno)))
+          if ((isNone leno) || ((List.length s) < (integerArrayLength leno)))
             then [init Int64.zero]
             else [])
 (*
@@ -6066,99 +6068,100 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
              * since  most such blocks do.  It's probably better to print an
              * unnecessary warning than to break CIL's invariant that
              * return statements are inserted properly.  *)
-            let instrFallsThrough (i : instr) = match i with
-              Set _ -> true
-            | Call (None, Lval ((Var (e, _), NoOffset, _), _), _, _) ->
-                (* See if this is exit, or if it has the noreturn attribute *)
-                if e.vname = "exit" then false
-                else if hasAttribute "noreturn" e.vattr then false
-                else true
-            | Call _ -> true
-            | Asm _ -> true
-            in
-            let rec stmtFallsThrough (s: stmt) : bool =
-              match s.skind with
-                Instr(il) ->
-                  List.fold_left (fun acc elt ->
-                                      acc && instrFallsThrough elt) true il
-              | Return _ | Break _ | Continue _ -> false
-              | Goto _ -> false
-              | If (_, b1, b2, _) ->
-                  blockFallsThrough b1 || blockFallsThrough b2
-              | Switch (e, b, targets, _) ->
-                   (* See if there is a "default" case *)
-                   if not
-                      (List.exists (fun s ->
-                         List.exists (function Default _ -> true | _ -> false)
-                                      s.labels)
-                                   targets) then begin
-(*
-                      ignore (E.log "Switch falls through because no default");
-
-*)                      true (* We fall through because there is no default *)
-                   end else begin
-                      (* We must examine all cases. If any falls through,
-                       * then the switch falls through. *)
-                      blockFallsThrough b || blockCanBreak b
-                   end
-              | Loop (b, _, _, _, _) ->
-                  (* A loop falls through if it can break. *)
-                  blockCanBreak b
-              | Block b -> blockFallsThrough b
-              | TryFinally (b, h, _) -> blockFallsThrough h
-              | TryExcept (b, _, h, _) -> true (* Conservative *)
-              | HipStmt _ -> false
-            and blockFallsThrough b =
-              let rec fall = function
-                  [] -> true
-                | s :: rest ->
-                    if stmtFallsThrough s then begin
-(*
-                        ignore (E.log "Stmt %a falls through\n" d_stmt s);
-*)
-                        fall rest
-                    end else begin
-(*
-                        ignore (E.log "Stmt %a DOES NOT fall through\n"
-                                      d_stmt s);
-*)
-                      (* If we are not falling thorough then maybe there
-                      * are labels who are *)
-                        labels rest
-                    end
-              and labels = function
-                  [] -> false
-                    (* We have a label, perhaps we can jump here *)
-                  | s :: rest when s.labels <> [] ->
-(*
-                     ignore (E.log "invoking fall %a: %a\n"
-                                      d_loc !currentLoc d_stmt s);
-*)
-                     fall (s :: rest)
-                  | _ :: rest -> labels rest
-              in
-              let res = fall b.bstmts in
-(*
-              ignore (E.log "blockFallsThrough=%b %a\n" res d_block b);
-*)
-              res
-            (* will we leave this statement or block with a break command? *)
-            and stmtCanBreak (s: stmt) : bool =
-              match s.skind with
-                Instr _ | Return _ | Continue _ | Goto _ -> false
-              | Break _ -> true
-              | If (_, b1, b2, _) ->
-                  blockCanBreak b1 || blockCanBreak b2
-              | Switch _ | Loop _ ->
-                  (* switches and loops catch any breaks in their bodies *)
-                  false
-              | Block b -> blockCanBreak b
-              | TryFinally (b, h, _) -> blockCanBreak b || blockCanBreak h
-              | TryExcept (b, _, h, _) -> blockCanBreak b || blockCanBreak h
-              | HipStmt _ -> false
-            and blockCanBreak b =
-              List.exists stmtCanBreak b.bstmts
-            in
+            (* let instrFallsThrough (i : instr) = match i with
+ *               Set _ -> true
+ *             | Call (None, Lval ((Var (e, _), NoOffset, _), _), _, _) ->
+ *                 (\* See if this is exit, or if it has the noreturn attribute *\)
+ *                 if e.vname = "exit" then false
+ *                 else if hasAttribute "noreturn" e.vattr then false
+ *                 else true
+ *             | Call _ -> true
+ *             | Asm _ -> true
+ *             in
+ *             let rec stmtFallsThrough (s: stmt) : bool =
+ *               match s.skind with
+ *                 Instr(il) ->
+ *                   List.fold_left (fun acc elt ->
+ *                                       acc && instrFallsThrough elt) true il
+ *               | Return _ | Break _ | Continue _ -> false
+ *               | Goto _ -> false
+ *               | If (_, b1, b2, _) ->
+ *                   blockFallsThrough b1 || blockFallsThrough b2
+ *               | Switch (e, b, targets, _) ->
+ *                    (\* See if there is a "default" case *\)
+ *                    if not
+ *                       (List.exists (fun s ->
+ *                          List.exists (function Default _ -> true | _ -> false)
+ *                                       s.labels)
+ *                                    targets) then begin
+ * (\*
+ *                       ignore (E.log "Switch falls through because no default");
+ * 
+ * *\)                      true (\* We fall through because there is no default *\)
+ *                    end else begin
+ *                       (\* We must examine all cases. If any falls through,
+ *                        * then the switch falls through. *\)
+ *                       blockFallsThrough b || blockCanBreak b
+ *                    end
+ *               | Loop (b, _, _, _, _) ->
+ *                   (\* A loop falls through if it can break. *\)
+ *                   blockCanBreak b
+ *               | Block b -> blockFallsThrough b
+ *               | TryFinally (b, h, _) -> blockFallsThrough h
+ *               | TryExcept (b, _, h, _) -> true (\* Conservative *\)
+ *               | HipStmt _ -> false
+ * 
+ *             and blockFallsThrough b =
+ *               let rec fall = function
+ *                   [] -> true
+ *                 | s :: rest ->
+ *                     if stmtFallsThrough s then begin
+ * (\*
+ *                         ignore (E.log "Stmt %a falls through\n" d_stmt s);
+ * *\)
+ *                         fall rest
+ *                     end else begin
+ * (\*
+ *                         ignore (E.log "Stmt %a DOES NOT fall through\n"
+ *                                       d_stmt s);
+ * *\)
+ *                       (\* If we are not falling thorough then maybe there
+ *                       * are labels who are *\)
+ *                         labels rest
+ *                     end
+ *               and labels = function
+ *                   [] -> false
+ *                     (\* We have a label, perhaps we can jump here *\)
+ *                   | s :: rest when s.labels <> [] ->
+ * (\*
+ *                      ignore (E.log "invoking fall %a: %a\n"
+ *                                       d_loc !currentLoc d_stmt s);
+ * *\)
+ *                      fall (s :: rest)
+ *                   | _ :: rest -> labels rest
+ *               in
+ *               let res = fall b.bstmts in
+ * (\*
+ *               ignore (E.log "blockFallsThrough=%b %a\n" res d_block b);
+ * *\)
+ *               res
+ *             (\* will we leave this statement or block with a break command? *\)
+ *             and stmtCanBreak (s: stmt) : bool =
+ *               match s.skind with
+ *                 Instr _ | Return _ | Continue _ | Goto _ -> false
+ *               | Break _ -> true
+ *               | If (_, b1, b2, _) ->
+ *                   blockCanBreak b1 || blockCanBreak b2
+ *               | Switch _ | Loop _ ->
+ *                   (\* switches and loops catch any breaks in their bodies *\)
+ *                   false
+ *               | Block b -> blockCanBreak b
+ *               | TryFinally (b, h, _) -> blockCanBreak b || blockCanBreak h
+ *               | TryExcept (b, _, h, _) -> blockCanBreak b || blockCanBreak h
+ *               | HipStmt _ -> false
+ *             and blockCanBreak b =
+ *               List.exists stmtCanBreak b.bstmts
+ *             in *)
             (* TRUNG: avoid automatically adding return statement when source code doesn't have *)
             (* if blockFallsThrough !currentFunctionFDEC.sbody then begin                                                                                   *)
             (*   let retval =                                                                                                                               *)

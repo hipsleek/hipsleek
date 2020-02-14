@@ -4989,7 +4989,7 @@ let mk_hprel_def_wprocess_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list
         (*make disjunction*)
         (* let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1)) *)
         (*   (List.hd defs1) (List.tl defs1) in *)
-        let todo_unk = C.set_proot_hp_def_raw (get_pos new_args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
+        let _todo_unk = C.set_proot_hp_def_raw (get_pos new_args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
         let n_id = C.get_root_typ_hprel prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
         let () = DD.ninfo_hprint (add_str "n_id: " pr_id) n_id no_pos in
         let defs_wg = if String.compare n_id "" ==0 then defs1 else
@@ -5183,7 +5183,7 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
       (*let new_hrel = mkHRel hp new_args no_pos in *)
       (*linking defs*)
       let link_f = CF.formula_of_heap old_hrel no_pos in
-      let todo_unk = C.set_proot_hp_def_raw (get_pos args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
+      let _todo_unk = C.set_proot_hp_def_raw (get_pos args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
       let link_def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras))  old_hrel [(link_f,None)] None) in
       (*end linking*)
       let subst = [(old_hrel,new_hrel)] in
@@ -7639,7 +7639,8 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
                       (!CP.print_svl (CP.remove_dups_svl (CP.diff_svl sel_pre_hps (unk_hps)) ) (* sel_pre_hps *)) ^
                       (!CP.print_svl sel_post_hps) ^"." in
   let out_chn =
-    let reg = Str.regexp "\.ss" in
+    let reg = Str.regexp {|\.ss|} in
+        (* "\.ss" in *)
     let file_name1 = (if is_proper then "logs/gen_" else "logs/mod_") ^ (Str.global_replace reg ".slk" file_name) in
     (* let () = print_endline (file_name1 ^ ".slk") in *)
     let () = print_endline_quiet ("\n generating sleek file : " ^ file_name1) in

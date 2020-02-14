@@ -437,7 +437,7 @@ let rec icollect_output2 chn accumulated_output : string list =
     try
       let line = input_line chn in
       if (line = "unsat") then
-        let todo_var_unknown = input_line chn in
+        let _todo_var_unknown = input_line chn in
         accumulated_output @ [line]
       else if (line = ")") then
         accumulated_output @ [line]
@@ -473,7 +473,7 @@ let sat_type_from_string r input =
   else if (r = "unsat") then UnSat
   else
     try
-      let todo_var_unknown:int = Str.search_forward (Str.regexp "unexpected") r 0 in
+      let _todo_var_unknown:int = Str.search_forward (Str.regexp "unexpected") r 0 in
       (print_string "Z3 translation failure!";
        Error.report_error { Error.error_loc = no_pos; Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
     with
