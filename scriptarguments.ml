@@ -694,6 +694,10 @@ let common_arguments = [
        Debug.read_main ()
      ),
    "Shorthand for -debug-regexp");
+  ("--infest-fun", Arg.String (fun s ->
+       Globals.infest_fun := Some s
+     ),
+   "infest a specific function");
   ("-show-push-list", Arg.String (fun s ->
        let _ = print_endline ("!!!-show-push-list "^s) in
        let () = Globals.show_push_list:=Some s in

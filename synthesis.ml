@@ -1174,6 +1174,9 @@ let get_pre_post (struc_f: CF.struc_formula) =
             let n_formula = CF.add_pure_formula_to_formula pf x in
           (n_formula, y)) pairs in
       branches |> List.map aux |> List.concat
+    | CF.EList list ->
+      let struct_list = list |> List.map snd in
+      struct_list |> List.map aux |> List.concat
     | _ -> report_error no_pos ("get_specs unhandled " ^ (pr_struc_f struc_f)) in
   aux struc_f
 
@@ -2744,9 +2747,10 @@ let check_hp_formula hp_names formula =
   Debug.no_1 "check_hp_formula" pr_f string_of_bool
     (fun _ -> check_hp_formula hp_names formula) formula
 
-let isHFalse (formula : CF.formula) =
+let isHFalseOrEmp (formula : CF.formula) =
   let is_hfalse hf = match hf with
     | CF.HFalse -> true
+    | CF.HEmp -> true
     | _ -> false in
   let rec aux formula = match formula with
     | CF.Base base ->

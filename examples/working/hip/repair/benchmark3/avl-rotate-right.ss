@@ -31,11 +31,17 @@ int height(node x)
 node node_error() requires true ensures false;
 
 /* function to insert a node in an avl tree (using the rotate functions) */
-node rotate_left(node x)
+node rotate_right(node x)
 	requires x::node<_, lrht+3, xleft, xright> * xright::avl<rsize, lrht> *
            xleft::node<_,lrht+2, xleftleft, xleftright>
            * xleftleft::avl<llsize, lrht + 1> * xleftright::avl<lrsize, lrht>
 	ensures res::avl<rsize + llsize + lrsize + 2, lrht + 2>;
+
+	requires x::node<_, lrht+3, xleft, xright> * xright::avl<rsize, lrht> *
+           xleft::node<_,lrht+2, xleftleft, xleftright>
+           * xleftleft::avl<llsize, lrht + 1> * xleftright::avl<lrsize, lrht>
+	ensures res::avl<rsize + llsize + lrsize + 2, lrht + 2>;
+
 
 {
    node left = x.left;
@@ -47,9 +53,8 @@ node rotate_left(node x)
       if (llht > lrht){
           x.height = lrht + 1;
           x.left = left.right;
-
           // Correct: left.height = lrht + 2;
-          left.height = lrht + 1;
+          left.height = lrht + 2;
           left.right = x;
           return left;
       }

@@ -1058,8 +1058,10 @@ let rec string_of_exp_repair = function
   | Cond {exp_cond_condition = e1;
            exp_cond_then_arm = e2;
            exp_cond_path_id = pid;
-           exp_cond_else_arm = e3} ->
-    ("if " ^ (parenthesis (string_of_exp_repair e1))
+          exp_cond_else_arm = e3} ->
+    let cond_str = string_of_exp_repair e1 in
+    let cond_str = Str.global_replace (Str.regexp ";") "" cond_str in
+    ("if " ^ (parenthesis cond_str)
      ^ " {\n  " ^ (string_of_exp_repair e2) ^ "\n}" ^
      (match e3 with
       | Empty ll -> ""
@@ -1145,7 +1147,8 @@ let rec string_of_exp_repair = function
         "par " ^ (string_of_vperm_sets vps) ^ " * " ^ (string_of_formula lh) ^
             "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }"
 
-and string_of_return exp = match exp with
+and string_of_return exp =
+  match exp with
   | Cond {exp_cond_condition = e1;
           exp_cond_then_arm = e2;
           exp_cond_path_id = pid;
@@ -1154,7 +1157,12 @@ and string_of_return exp = match exp with
     (string_of_exp_repair e2) ^ " : " ^ (string_of_exp_repair e3) ^ ";"
   | Label (_, e) -> string_of_return e
   | Cast e -> (string_of_return e.exp_cast_body)
-  | _ -> string_of_exp_repair exp ^ ";"
+  | _ ->
+    (* let replace input output =
+     *   Str.global_replace (Str.regexp_string input) output in *)
+    let return_str = string_of_exp_repair exp in
+    let return_str = Str.global_replace (Str.regexp_string ";") "" return_str in
+    return_str ^ ";"
 
 and string_of_exp_list l c = match l with
         | []                          -> ""

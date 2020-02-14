@@ -69,6 +69,7 @@ let mutating_proc iprog (iproc: I.proc_decl): bool =
         let cprog, _ = Astsimp.trans_prog n_iprog in
         let () = Typechecker.check_prog_wrapper n_iprog cprog in
         let () = x_binfo_pp "REPAIRING BY MUTATION SUCCESSFUL" no_pos in
+        let () = x_binfo_hp (add_str "mutated_proc" pr_proc) mutated_proc no_pos in
         true
       with _ -> false in
   List.fold_left aux_repair false n_proc_list
@@ -226,11 +227,6 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   let cands, others = List.partition (filter_cand !repair_loc) cands in
   let cands = ranking_suspicious_exp cands in
-  (* let cands = cands |> List.rev in *)
-  (* let cands = if List.length cands > 3 then
-   *     let elem = List.nth cands 2 in
-   *     [elem]
-   *   else [] in *)
   let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
   (* failwith "stop to debug" *)
 
@@ -654,7 +650,9 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
                   "__DivByZeroErr"; "char_star"; "int_ptr_ptr"; "int_ptr"] in
   let negate x = not x in
   let filter_fun proc = match proc.I.proc_body with
-    | None -> false
+    | None ->
+      if eq_str proc.I.proc_name "node_error"
+      then true else false
     | _ -> true in
   let view_decls = view_decls |> List.filter
                      (fun x -> List.mem x.I.view_name pre_views |> negate) in
@@ -674,7 +672,15 @@ let create_buggy_prog src (iprog : I.prog_decl)=
   let b_procs = procs |> List.filter (fun x -> x.I.proc_body != None) in
   if b_procs = [] then report_error no_pos "NO PROC WITH THE UN-EMPTY BODY"
   else
-    let b_proc = b_procs |> List.rev |> List.hd in
+    let b_proc =
+      match !Globals.infest_fun with
+      | Some fun_name ->
+        begin
+          try
+            List.find (fun x -> eq_str x.I.proc_name fun_name) b_procs
+          with _ -> failwith "wrong proc_name, choose another one"
+        end
+      | None -> b_procs |> List.rev |> List.hd in
     let buggy_procs = create_buggy_proc iprog b_proc in
     let aux_fun (b_proc, level) =
       let n_procs = procs |> List.map (fun x ->
@@ -687,20 +693,20 @@ let create_buggy_prog src (iprog : I.prog_decl)=
 let start_repair_wrapper (iprog: I.prog_decl) level =
   let start_time = get_time () in
   (* repair using generic programming *)
-  let mutated_res = repair_iprog_by_mutation iprog in
-  if mutated_res then
+  let res = repair_iprog iprog level in
+  if res then
     let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
     let duration = get_time() -. start_time in
-    let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos in
-    mutated_res
+    let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos
+    in
+    res
   else
-    let res = repair_iprog iprog level in
-    if res then
+    let mutated_res = repair_iprog_by_mutation iprog in
+    if mutated_res then
       let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
       let duration = get_time() -. start_time in
-      let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos
-      in
-      res
+      let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" pr_float) duration no_pos in
+      mutated_res
     else
       let () = x_binfo_pp "REPAIRING FAIL" no_pos in
       res

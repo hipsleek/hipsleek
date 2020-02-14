@@ -176,7 +176,7 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
     if CF.isFailCtx list_ctx then true
     else
       let residue = CF.formula_of_list_context list_ctx in
-      isHFalse residue in
+      isHFalseOrEmp residue in
   if is_fail_ctx list_ctx then false, None
   else
     let () = x_tinfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in

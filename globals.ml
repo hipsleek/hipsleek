@@ -1467,6 +1467,7 @@ let disable_failure_explaining = ref false
 let enable_repair = ref false
 let enable_frameless = ref false
 let infestor = ref false
+let infest_fun = ref (None: string option)
 
 let enable_i = ref false
 
