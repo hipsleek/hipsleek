@@ -222,7 +222,7 @@ let rec contain_array
     | Min (e1,e2,loc)
     | BagDiff (e1,e2,loc)
     | ListCons (e1,e2,loc)->
-      ((contain_array_exp e1) or (contain_array_exp e2))
+      ((contain_array_exp e1) || (contain_array_exp e2))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)
     | ListTail (e1,loc)
@@ -1877,7 +1877,7 @@ let rec drop_array_formula
     | Min (e1,e2,loc)
     | BagDiff (e1,e2,loc)
     | ListCons (e1,e2,loc)->
-      ((contain_array_exp e1) or (contain_array_exp e2))
+      ((contain_array_exp e1) || (contain_array_exp e2))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)
     | ListTail (e1,loc)

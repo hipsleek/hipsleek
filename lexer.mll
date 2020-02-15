@@ -630,7 +630,8 @@ and get_file_name = parse
         match Stream.peek s with
         | Some x ->
             Stream.junk s;
-            buff.[n] <- x;
+            (* buff.[n] <- x; *)
+            Bytes.set buff n x;
             succ n
         | _ -> n
     in

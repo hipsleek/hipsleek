@@ -247,7 +247,9 @@ let rec math_of_var_list (vars : ident list) : string =
 let normalize_var_name (varname : string) : string =
   let varname_bytes = Bytes.of_string varname in
   for i = 0 to (Bytes.length varname_bytes) - 1 do
-    if Bytes.get varname_bytes i = '_' then varname_bytes.[i] <- 'N'
+    if Bytes.get varname_bytes i = '_' then
+      (* varname_bytes.[i] <- 'N' *)
+      Bytes.set varname_bytes i 'N'
   done;
   Bytes.to_string varname_bytes
 
@@ -273,7 +275,7 @@ let math_of_spec_var (v: CP.spec_var) =
           else if (sv.[i] >= '0' && sv.[i] <= '9') then
             "N" ^ Char.escaped (sv.[i])
           else
-            Char.escaped (Char.uppercase sv.[i]) in
+            Char.escaped (Char.uppercase_ascii sv.[i]) in
         new_sv := !new_sv ^ s;
         to_uppercase := false
       )
