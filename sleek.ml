@@ -91,7 +91,8 @@ module M = Lexer.Make(Token.Token)
 let proc_one_cmd c =
   match c with
   | UiDef uidef -> process_ui_def uidef
-  | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
+  | EntailCheck (iante, iconseq, etype) -> let _ = process_entail_check iante
+  iconseq etype in ()
   | SatCheck f -> (process_sat_check f; ())
   | NonDetCheck (v, f) -> (process_nondet_check v f)
   | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
@@ -149,7 +150,7 @@ let proc_one_cmd c =
     let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
     let () = x_binfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
     let () = x_binfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
-    (process_infer itype ivars iante iconseq etype;())
+    let _ = process_infer itype ivars iante iconseq etype in ()
   | CaptureResidue lvar -> process_capture_residue lvar
   | PrintCmd pcmd ->
     let () = Debug.ninfo_pprint "at print" no_pos in

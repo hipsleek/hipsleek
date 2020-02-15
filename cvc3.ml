@@ -83,7 +83,7 @@ and cvc3_of_exp a = match a with
   | CP.Bptriple _ -> failwith ("cvc3.cvc3_of_exp: Bptriple should not appear here")
   | CP.Tup2 _ -> failwith ("cvc3.cvc3_of_exp: Tup2 should not appear here")
   | CP.InfConst _ 
-  |CP.NegInfConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (\inf should not appear here)")
+  |CP.NegInfConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (\\inf should not appear here)")
   | CP.Template t -> cvc3_of_exp (CP.exp_of_template t)
 
 and cvc3_of_b_formula b =

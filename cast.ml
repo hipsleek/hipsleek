@@ -769,7 +769,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let vs = List.map fst vars in (* where to store annotation? *)
   let vparams = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list vs) in
   (* let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in *)
-  let view_sv_vars = vs in
+  let _view_sv_vars = vs in
   (* let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in *)
   (* let _  = Immutable.split_sv in *)
   {
@@ -1448,7 +1448,7 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
 let is_hp_name prog id =
   let defs = prog.prog_hp_decls in
   try
-    let def = look_up_hp_def_raw defs id in
+    let _def = look_up_hp_def_raw defs id in
     true
   with _ -> false
 
@@ -2169,7 +2169,7 @@ let build_hierarchy (prog : prog_decl) =
       (CH.V.create {ch_node_name = cdef.data_parent_name;
                     ch_node_class = None;
                     ch_node_coercion = None}) in
-  let todo_unknown = List.map add_edge prog.prog_data_decls in
+  let _todo_unknown = List.map add_edge prog.prog_data_decls in
   if TraverseCH.has_cycle class_hierarchy then begin
     print_string ("Class hierarchy has cycles");
     failwith ("Class hierarchy has cycles");
@@ -2931,7 +2931,7 @@ let get_mut_vars_bu_x cprocs (e0 : exp): (ident list * ident list) =
     | Var { exp_var_name = id} -> Some [id]
     | _ -> None
   in
-  let get_vars e= fold_exp e f (List.concat) [] in
+  let _get_vars e= fold_exp e f (List.concat) [] in
   let rec collect_lhs_ass_vars e=
     match e with
     | Assign {exp_assign_lhs = id;
@@ -3005,7 +3005,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
       let () = if diff_args_i = [] then () else
           let () = x_tinfo_hp (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
           let hpargs = Cformula.get_hp_rel_pre_struc_formula (proc.proc_stk_of_static_specs # top) in
-          let todo_unk = List.map (fun (hp,args) ->
+          let _todo_unk = List.map (fun (hp,args) ->
               let s_args = List.map P.name_of_spec_var args in
               let inter = Gen.BList.intersect_eq string_cmp s_args diff_args_i in
               if inter = [] then () else
@@ -3134,7 +3134,7 @@ let is_complex_entailment_4graph prog ante conseq=
  *)
 let is_touching_view_x (vdecl: view_decl) : bool =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
-  let vname = vdecl.view_name in
+  let _vname = vdecl.view_name in
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_touching_branch branch = (

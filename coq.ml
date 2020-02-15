@@ -140,7 +140,7 @@ and coq_of_exp e0 =
     illegal_format "coq_of_exp : array cannot be handled"
   (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
   | CP.NegInfConst _
-  | CP.InfConst _ -> illegal_format "coq_of_exp : \inf cannot be handled"
+  | CP.InfConst _ -> illegal_format "coq_of_exp : \\inf cannot be handled"
   | CP.Template t -> coq_of_exp (CP.exp_of_template t)
 
 (* pretty printing for a list of expressions *)

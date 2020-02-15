@@ -44,7 +44,8 @@ let rec string_of_elems elems string_of sep = match elems with
 let gen_fixcalc_file str_fc=
   let file_name = (List.hd !Globals.source_files) in
   let out_chn =
-    let reg = Str.regexp "\(\.ss\)\|\(.slk\)" in
+    let reg = Str.regexp {|\(\.ss\|\(\.slk|} in
+        (* "\(\.ss\)\|\(.slk\)" in *)
     let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".fc" file_name) in
     (* let () = print_endline (file_name1 ^ ".fc") in *)
     let () = print_endline_quiet ("\n generating fixcalc file : " ^ file_name1) in

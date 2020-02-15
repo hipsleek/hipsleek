@@ -7639,7 +7639,8 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
                       (!CP.print_svl (CP.remove_dups_svl (CP.diff_svl sel_pre_hps (unk_hps)) ) (* sel_pre_hps *)) ^
                       (!CP.print_svl sel_post_hps) ^"." in
   let out_chn =
-    let reg = Str.regexp "\.ss" in
+    let reg = Str.regexp {|\.ss|} in
+        (* "\.ss" in *)
     let file_name1 = (if is_proper then "logs/gen_" else "logs/mod_") ^ (Str.global_replace reg ".slk" file_name) in
     (* let () = print_endline (file_name1 ^ ".slk") in *)
     let () = print_endline_quiet ("\n generating sleek file : " ^ file_name1) in

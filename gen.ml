@@ -2058,7 +2058,7 @@ struct
             | _ -> 1)
     done;
     if !n = String.length s then s else begin
-      let s' = String.create !n in
+      let s' = Bytes.create !n in
       n := 0;
       let skip = ref 0 in
       (try (for i = 0 to String.length s - 1 do
