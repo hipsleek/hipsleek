@@ -275,7 +275,7 @@ let math_of_spec_var (v: CP.spec_var) =
           else if (sv.[i] >= '0' && sv.[i] <= '9') then
             "N" ^ Char.escaped (sv.[i])
           else
-            Char.escaped (Char.uppercase sv.[i]) in
+            Char.escaped (Char.uppercase_ascii sv.[i]) in
         new_sv := !new_sv ^ s;
         to_uppercase := false
       )

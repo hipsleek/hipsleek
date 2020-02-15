@@ -578,7 +578,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
-  let res = x_add (Lemproving.verify_lemma ~force_pr:true) 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let _res = x_add (Lemproving.verify_lemma ~force_pr:true) 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
 (* CF.residues := (match res with *)
 (*   | None -> None; *)
@@ -887,7 +887,7 @@ let convert_data_and_pred_to_cast_x () =
   (* let _ = !cprog.Cast.prog_view_decls <-  old_view_decls@cviews2 in                                        *)
   (* x_tinfo_pp "after materialzed_prop" no_pos;                                                              *)
   (* (* END: The below code is moved to SleekUtils.norm_cview_decls *)                                        *)
-  let cviews2 = SleekUtils.norm_cview_decls iprog !cprog cviews in
+  let _cviews2 = SleekUtils.norm_cview_decls iprog !cprog cviews in
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
   let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
@@ -1291,7 +1291,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let conseq_fvs = CF.fv csq_extra in *)
   (* let _ = print_endline ("conseq vars"^(Cprinter.string_of_spec_var_list conseq_fvs)) in *)
   let fvs = CF.fv ante in
-  let fvs_mf = fv_meta_formula iante0 in
+  let _fvs_mf = fv_meta_formula iante0 in
   (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   let () = x_dinfo_hp (add_str "ante" Cprinter.string_of_formula) ante no_pos in
@@ -1427,7 +1427,7 @@ let run_infer_one_pass_set_states itype (ivars: ident list) (iante0s : meta_form
 
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
-  let is_pure_rel rel=
+  let _is_pure_rel rel=
     false
   in
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
@@ -1442,7 +1442,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   let fv_idents = (List.map CP.name_of_spec_var all_vs) in
   let (stab,lhs) = x_add meta_to_formula ilhs false fv_idents stab in
   let lhs = CF.elim_exists lhs in
-  let pr_sv = !CP.print_sv in
+  let _pr_sv = !CP.print_sv in
   let guard = match igurad_opt with
     | None -> None
     | Some iguard -> 
@@ -1466,7 +1466,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       Some guard1
       (* else report_error no_pos "Sleekengine.process_rel_assume: guard should be heaps only" *)
   in
-  let orig_vars = CF.fv lhs @ CF.fv rhs in
+  let _orig_vars = CF.fv lhs @ CF.fv rhs in
   let lhps = CF.get_hp_rel_name_formula lhs in
   let rhps = CF.get_hp_rel_name_formula rhs in
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
@@ -1474,7 +1474,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (*TODO: LOC: hp_id should be cond_path*)
   (* why not using mkHprel? *)
   let total_heap_rel_ids = lhps@rhps in
-  let res = if total_heap_rel_ids != [] then
+  let _res = if total_heap_rel_ids != [] then
       let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
       let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
       (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
@@ -1609,7 +1609,7 @@ let process_shape_infer pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps,_ =
+  let _ls_hprel, _ls_inferred_hps,_ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
           (* Sa2.infer_shapes *) Sa3.infer_shapes
@@ -1716,7 +1716,7 @@ let process_shape_merge (ids: regex_id_list) =
 
 let process_shape_trans_to_view (ids: regex_id_list) = 
   let f hps =
-    let trans_views = Syn.trans_hprel_to_view iprog !cprog hps in
+    let _trans_views = Syn.trans_hprel_to_view iprog !cprog hps in
     hps 
   in
   process_sleek_hprel_assumes "Transforming to View" ids f
@@ -1784,7 +1784,7 @@ let process_sleek_norm_preds s (ids: regex_id_list) f_norm =
     | REGEX_LIST pids -> 
       SynUtils.select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
   in
-  let n_pred_list = Wrapper.wrap_lemma_quiet f_norm sel_pred_list in
+  let _n_pred_list = Wrapper.wrap_lemma_quiet f_norm sel_pred_list in
   ()
 
 let process_pred_elim_tail (ids: regex_id_list) = 
@@ -1854,7 +1854,7 @@ let process_rel_infer pre_rels post_rels =
   (*   () *)
   (* in *)
   (*************END INTERNAL*****************)
-  let hp_lst_assume = (sleek_hprel_assumes # get) in
+  let _hp_lst_assume = (sleek_hprel_assumes # get) in
   let proc_spec = CF.mkETrue_nf no_pos in
   (* let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels = relation_pre_process hp_lst_assume pre_rels post_rels in *)
   let rels = Infer.infer_rel_stk # get_stk_no_dupl in
@@ -1880,7 +1880,7 @@ let process_rel_infer pre_rels post_rels =
 
 let process_shape_lfp sel_hps=
   (**********INTERNAL**********)
-  let transfrom_assumption hp0 ls_pdefs cs=
+  let _transfrom_assumption hp0 ls_pdefs cs=
     try
       let hp,args = CF.extract_HRel_f cs.CF.hprel_lhs in
       if CP.eq_spec_var hp0 hp then ls_pdefs@[(hp, args, cs.CF.hprel_rhs)]
@@ -1949,7 +1949,7 @@ let process_shape_rec sel_hps=
   let ls_pdefs = List.map (fun hp ->
       List.fold_left (transfrom_assumption hp) [] constrs2
     ) sel_hps in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
+  let _unk_hps = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
   (* let defs = List.map snd !sleek_hprel_defns in *)
   let hp_defs = List.map (transform_to_hpdef) ls_pdefs in
   let _ = sleek_hprel_defns := !sleek_hprel_defns@(List.map (fun a -> ([],a)) hp_defs) in
@@ -1998,7 +1998,7 @@ validation: validation)  =
     if (!Globals.print_input || !Globals.print_input_all) then pr_h string_of_meta_formula residue;
     if (!Globals.print_core || !Globals.print_core_all) then pr_h pr_f res_f;
     let res_f_str = "("^(pr_f res_f)^")" in
-    let meta_f_str = "("^(string_of_meta_formula residue)^")" in
+    let _meta_f_str = "("^(string_of_meta_formula residue)^")" in
     let () = x_tinfo_hp (add_str "expected residue(meta)" string_of_meta_formula) residue no_pos in
     let () = x_tinfo_hp (add_str "expected residue" pr_f) res_f no_pos in
     let pr_lc = Cprinter.string_of_list_context in
@@ -2089,7 +2089,7 @@ validation: validation)  =
   (*********************************)
   match validation with
   | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
-  | V_Residue None -> let hdr = "R" in print_endline "No residue."
+  | V_Residue None -> let _hdr = "R" in print_endline "No residue."
   | V_Infer (hdr,Some inference) -> (* let hdr = "I" in *) validate_with_residue hdr inference 
   | V_Infer (hdr,None) -> (* let hdr = "I" in *) print_endline "No inference."
   | _ -> print_endline "RA etc. not yet implemented"
@@ -2129,7 +2129,7 @@ let process_validate exp_res opt_fl ils_es=
     let validate_id = "Validate " ^ (string_of_int nn) ^": " in
     let res_str = ref "" in
     (*get current residue -> FAIL? VALID*)
-    let rs = !CF.residues in
+    let _rs = !CF.residues in
     let a_r, ls_a_es, act_vars = 
       match !CF.residues with
       | None -> begin
@@ -2183,7 +2183,8 @@ let process_validate exp_res opt_fl ils_es=
                   match opt_fl with
                   | None -> res_str := "OK" (*do not compare expect flow *)
                   | Some id -> if not !Globals.enable_error_as_exc then res_str := "OK" else
-                      let reg = Str.regexp "\#E" in
+                      (* let reg = Str.regexp "\#E" in *)
+                      let reg = Str.regexp {|\#E|} in
                       let res_fl_ids = List.map (fun ff ->
                           let fl_w_sharp = exlist # get_closest ff.CF.formula_flow_interval in
                           Str.global_replace reg "" fl_w_sharp
@@ -2250,7 +2251,7 @@ let process_validate exp_res opt_fl ils_es=
         let _ = iprog.I.prog_hp_decls <- (iprog.I.prog_hp_decls@inew_hprels) in
         (*for each succ context: validate residue + inferred results*)
         let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
-        let b, es_opt, ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in
+        let _b, _es_opt, _ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in
         (* let _ = if b then *)
         (*   print_endline (validate_id ^ "SUCCast.") *)
         (* else *)
@@ -2428,9 +2429,9 @@ let process_shape_sante pre_hps post_hps=
 let process_norm_seg ids=
   let _ = Debug.info_hprint (add_str "process_pred_norm_seg" pr_id) "\n" no_pos in
   let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  let _unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
   (*find all sel pred def*)
-  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+  let _sel_hp_defs = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
       | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
         if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
@@ -2449,7 +2450,7 @@ let process_pred_norm_disj ids=
   (* let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in *)
   (* let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in *)
   (*find all sel pred def*)
-  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+  let _sel_hp_defs = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
       | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
         if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
@@ -2464,7 +2465,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, (* ls_inferred_hps *) _ ,_=
+  let _ls_hprel, (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
         (* Sa2 *)Sa3.infer_shapes
       else Sa3.infer_shapes (* Sa.infer_hps *)
@@ -2606,7 +2607,7 @@ let process_pred_split ids=
     let vdefs = get_sorted_view_decls () in
     let cands = Norm.norm_split iprog !cprog vdefs ids in
     (* proving lemmas *)
-    let split_vns = List.fold_left (fun acc cand -> acc@(lem_proving cand)) [] cands in
+    let _split_vns = List.fold_left (fun acc cand -> acc@(lem_proving cand)) [] cands in
     ()
   in ()
 
@@ -2900,7 +2901,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
   let nn = (sleek_proof_counter#inc_and_get) in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 & pnum!=nn then
+  if pnum>0 && pnum!=nn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
     let num_id = "\nEntail "^(string_of_int nn) in
@@ -3063,13 +3064,13 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula)
   let pn = sleek_proof_counter#inc_and_get in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 & pnum!=pn then
+  if pnum>0 && pnum!=pn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
     let nn = "("^(string_of_int (pn))^") " in
     let is_tnt_flag = List.mem INF_TERM itype in
-    let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
-    let is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
+    let _is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
+    let _is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
     let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
     let opt_pure_field =
       if List.mem INF_PURE_FIELD itype
