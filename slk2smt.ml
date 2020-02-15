@@ -335,12 +335,12 @@ let process_entail (iante, iconseq, etype) iprog cprog =
 let process_entail_new cprog iprog start_pred_abs_num 
     (iantes, iconseq, etype, cante, cconseq, res) header data_decl =
   let iante = List.hd iantes in
-  let spl1 = match iante with
+  let _spl1 = match iante with
     | MetaForm f ->
       x_add Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []
   in
-  let spl2 = match iconseq with
+  let _spl2 = match iconseq with
     | MetaForm f ->
       x_add Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []

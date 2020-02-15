@@ -447,7 +447,7 @@ let subtype_ann_gen
   let pr1 = !CP.print_svl in
   let pr2 = (Cprinter.string_of_imm)  in
   let pr2a = pr_list !CP.print_formula in
-  let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
+  let _prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
   let pr_f =  Cprinter.string_of_formula in
   Debug.no_6 "subtype_ann_gen" (add_str "impl" pr1) (add_str "evars" pr1) pr2 pr2 
@@ -486,7 +486,7 @@ let subtype_ann_list
   let pr1 = !CP.print_svl in
   let pr2 = pr_list (Cprinter.string_of_imm)  in
   let pr2a = pr_list !CP.print_formula in
-  let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
+  let _prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
   let pr_f =  Cprinter.string_of_formula in
   Debug.no_6 "subtype_ann_list" (add_str "impl" pr1) (add_str "evars" pr1) pr2 pr2
@@ -1192,7 +1192,7 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
       (*f*)
       ViewNode({f1 with h_formula_view_imm = get_weakest_imm ~strong_subtype:true (imm::[f1.CF.h_formula_view_imm]);})
     else
-      let new_node_imm = imm in
+      let _new_node_imm = imm in
       let new_args_imm = List.fold_left (fun acc (fr,t) ->
           if (Gen.BList.mem_eq CP.eq_annot_arg fr (CF.get_node_annot_args f)) then acc@[t] else acc) []  imm_p in
       (* andreeac: why was below needed? *)
@@ -1443,7 +1443,7 @@ and remaining_ann_x (annl: CP.ann) emap: CP.ann=
 
 and remaining_ann (ann_l: CP.ann) emap(* : ann  *)=
   let pr = Cprinter.string_of_imm in
-  let pr_out  = pr_triple  pr pr_none pr_none in
+  let _pr_out  = pr_triple  pr pr_none pr_none in
   Debug.no_1 "remaining_ann" pr pr (fun _-> remaining_ann_x ann_l emap) ann_l
 
 (* restore ann for residue * consumed *)
@@ -2102,7 +2102,7 @@ let collect_view_imm_from_struc_formula sf param_ann data_name =
     | EList l   -> List.fold_left (fun acc l ->  merge_imm_for_view CP.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c param_ann data_name) l)
     | ECase f   -> List.fold_left (fun acc l ->  merge_imm_for_view CP.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c param_ann data_name)  f.formula_case_branches)
     | EAssume f ->
-      let v_imm_lst = collect_view_imm_from_formula f.formula_assume_simpl param_ann data_name in
+      let _v_imm_lst = collect_view_imm_from_formula f.formula_assume_simpl param_ann data_name in
       merge_imm_for_view CP.eq_ann_list [] (helper  f.formula_assume_struc param_ann data_name);
     | EInfer f  -> helper f.formula_inf_continuation param_ann data_name
   in helper sf param_ann data_name 
@@ -2239,7 +2239,7 @@ let collect_imm_from_struc_iformula sf data_name =
     | IF.EList l   -> List.fold_left (fun acc l ->  merge_imm_for_view Ipure.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c data_name) l)
     | IF.ECase f   -> List.fold_left (fun acc l ->  merge_imm_for_view Ipure.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c data_name)  f.IF.formula_case_branches)
     | IF.EAssume f ->
-      let v_imm_lst = collect_view_imm_from_iformula f.IF.formula_assume_simpl data_name in
+      let _v_imm_lst = collect_view_imm_from_iformula f.IF.formula_assume_simpl data_name in
       merge_imm_for_view Ipure.eq_ann_list [] (helper  f.IF.formula_assume_struc data_name);
     | IF.EInfer f  -> helper f.IF.formula_inf_continuation data_name
   in helper sf data_name
@@ -2377,7 +2377,7 @@ let crop_incompatible_disjuncts unfolded_f dn emap =
 
 let unfold_and_norm vn vh dn emap unfold_fun qvars emap =
   let v =  vn.h_formula_view_node in
-  let aset = v::(CP.EMapSV.find_equiv_all v emap) in           
+  let _aset = v::(CP.EMapSV.find_equiv_all v emap) in           
   let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
   let unfolded_f = unfold_fun vh v uf in
   (* let ret_f = push_exists qvars unfolded_f in *)
@@ -2792,7 +2792,7 @@ let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars =
 
 let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun qvars =
   let rec helper heapf puref = 
-    let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
+    let (_subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
     (* let emap = CP.EMapSV.build_eset subs in *)
     let emap = Imm.build_eset_of_imm_formula (MCP.pure_of_mix puref) in
     let new_f, new_p, fixpoint, struc = x_add merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
@@ -2821,8 +2821,8 @@ let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f r
 
 let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
   let rec helper f =
-    let fl  = flow_formula_of_formula f in 
-    let pos = pos_of_formula f in
+    let _fl  = flow_formula_of_formula f in 
+    let _pos = pos_of_formula f in
     match f with
     | Base bf ->
       let mk_base f p = Base { bf with formula_base_heap = f;  formula_base_pure = p; } in

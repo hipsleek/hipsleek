@@ -515,7 +515,7 @@ let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_m
           let () = y_tinfo_hp (add_str "derv_from" (string_of_regex_list (pr_pair pr_id string_of_bool)))  rgx in
           let pr = pr_list pr_id in
           let () = y_tinfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) derv.Iast.view_derv_extns in
-          let sel = List.map (fun mr -> List.filter (fun e -> true) mr) scc in
+          let _sel = List.map (fun mr -> List.filter (fun e -> true) mr) scc in
           let () = y_tinfo_hp (add_str "scc selected" (pr_list (pr_list pr_id))) scc in
           failwith x_tbi
         | None ->
@@ -903,7 +903,7 @@ let extend_size pname (* name of extn *) ?(vn_of_pname=None) scc_vdecls (* selec
     let new_f = CF.map_formula_heap_only map_h f in
     (* collected pure property and extended predicates *)
     (* base cases for size here *)
-    let base_vars = p_tab # mk_undef_zero in
+    let _base_vars = p_tab # mk_undef_zero in
     let pure_lst = p_tab # get_pure in
     let qv = p_tab # get_quan in
     let () = y_binfo_hp (add_str "f" (!CF.print_formula)) f in

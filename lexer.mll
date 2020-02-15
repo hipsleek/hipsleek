@@ -12,8 +12,6 @@ module Make (Token : SleekTokenS)
   module Token = Token
 
   open Lexing
-  
-
   (* Error report *)
   module Error = struct
 
@@ -42,9 +40,13 @@ module Make (Token : SleekTokenS)
       | Comment_start -> fprintf ppf "this is the start of a comment"
       | Comment_not_end -> fprintf ppf "this is not the end of a comment"
 
-    let to_string x =
+    let to_string x : string =
       let b = Buffer.create 50 in
-      let () = bprintf b "%a" print x in Buffer.contents b
+      (* let () = bprintf b "%a" print x in *)
+      let to_b = Format.formatter_of_buffer b in
+      fprintf to_b "%a" print x;
+      (* fprintf p (print x); *)
+      Buffer.contents b
   end;;
 
   let module M = Camlp4.ErrorHandler.Register(Error) in ()
@@ -630,7 +632,8 @@ and get_file_name = parse
         match Stream.peek s with
         | Some x ->
             Stream.junk s;
-            buff.[n] <- x;
+            (* buff.[n] <- x; *)
+            Bytes.set buff n x;
             succ n
         | _ -> n
     in

@@ -863,7 +863,7 @@ module EPURE =
         (imply ep1 ([],f2)) && (imply ep2 ([],f1))
       else false
 
-    let is_eq_epure_syn ((b1,f1) as ep1) ((b2,f2) as ep2) =
+    let is_eq_epure_syn ((b1,f1)) ((b2,f2)) =
       if Elt.is_eq_baga b1 b2 then
         (* Cpure.checkeq (List.map Cpure.name_of_spec_var (Elt.conv_var b1))  f1 f2 [] *)
         Cpure.equalFormula f1 f2
@@ -921,7 +921,7 @@ module EPURE =
     (* TODO : sst should be of type (sv,sv) list  and not (elem,elem) list *)
     let subst_epure sst ((baga,f) as ep) =
       try
-        let subs_fn = subst_elem sst in
+        let _subs_fn = subst_elem sst in
         let new_baga = List.map (subst_elem sst) baga in
         let new_f = subst (sst) f in
         (new_baga,new_f)

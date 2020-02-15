@@ -137,9 +137,9 @@ let rec trans_ints_exp_lst (exps: ints_exp list) (last_exp: I.exp): I.exp =
 
 let trans_ints_block (blk: ints_block): I.exp =
   let exps = blk.ints_block_commands in
-  let fr = blk.ints_block_from in
+  let _fr = blk.ints_block_from in
   let t = blk.ints_block_to in
-  let pos = blk.ints_block_pos in
+  let _pos = blk.ints_block_pos in
   (* Translate to_label to a method call *)
   let to_exp = I.mkCallNRecv (name_of_ints_loc t) None [] None (fresh_branch_point_id "") (pos_of_ints_loc t) in
   (* Translate ints_exp list *)

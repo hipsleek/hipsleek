@@ -301,33 +301,33 @@ let rec read_until substr chn : string =
 
 let read_prompt () = 
   let chn = !process.inchannel in 
-  let (todo_unk:char) = input_char chn in (*reads '>'*)
-  let (todo_unk:char) = input_char chn in (*reades space*)
+  let (_todo_unk:char) = input_char chn in (*reads '>'*)
+  let (_todo_unk:char) = input_char chn in (*reades space*)
   ()
 
 let prelude ()  =
   let ichn = !process.inchannel in 
   let ochn = !process.outchannel in 
-  let (todo_unk:string) = read_until "Welcome to Isabelle" ichn in (*welcome text*)
+  let (_todo_unk:string) = read_until "Welcome to Isabelle" ichn in (*welcome text*)
   let () = read_prompt () in
   if !bag_flag then
     ( output_string ochn "theory isabelle_proofs imports Multiset Main\n"; flush ochn;
-      let (todo_unk:string) = get_answer ichn in (*reads "theory#"*)
-      let (todo_unk:char) = input_char ichn in (*reads space*)
+      let (_todo_unk:string) = get_answer ichn in (*reads "theory#"*)
+      let (_todo_unk:char) = input_char ichn in (*reads space*)
       output_string ochn "begin\n"; flush ochn;
-      let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
+      let (_todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
       let () = read_prompt() in 
       output_string ochn ("declare union_ac [simp]\n");
-      let (todo_unk:string) = read_until "declare#" ichn in (*declare#*)
+      let (_todo_unk:string) = read_until "declare#" ichn in (*declare#*)
       if!log_all_flag==true then
         output_string log_all ("theory isabelle_proofs imports Multiset Main\nbegin\ndeclare union_ac [simp]\n")
     )
   else
     (output_string ochn "theory isabelle_proofs imports Main\n"; flush ochn;
-     let (todo_unk:string) = get_answer ichn in (*reads "theory#"*)
-     let (todo_unk:char) = input_char ichn in (*reads space*)
+     let (_todo_unk:string) = get_answer ichn in (*reads "theory#"*)
+     let (_todo_unk:char) = input_char ichn in (*reads space*)
      output_string ochn "begin\n"; flush ochn;
-     let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
+     let (_todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
      let () = read_prompt() in 
      if!log_all_flag==true then
        output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
@@ -372,7 +372,7 @@ let restart reason =
 (* checking the result given by Isabelle *)
 let rec check str : bool=
   try
-    let (todo_unk:int) = Str.search_forward (Str.regexp "No subgoals") str 0 in
+    let (_todo_unk:int) = Str.search_forward (Str.regexp "No subgoals") str 0 in
     if!log_all_flag==true then
       output_string log_all (" [isabelle.ml]: --> SUCCESS\n");
     true
@@ -395,11 +395,11 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
     let fnc () = 
       (* communication protocol with interactive isabelle *)
       output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
-      let (todo_unk:string) = get_answer ichn in (*lemma#*)
-      let (todo_unk:char) = input_char ichn in (*space*)
+      let (_todo_unk:string) = get_answer ichn in (*lemma#*)
+      let (_todo_unk:char) = input_char ichn in (*space*)
 
       output_string ochn "apply(auto)\n"; flush ochn;
-      let (todo_unk:string) = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
+      let (_todo_unk:string) = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
 
       output_string ochn "oops\n"; flush ochn;
       let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)

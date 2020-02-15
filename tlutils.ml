@@ -851,7 +851,7 @@ let rec partition_by_assoc eq ls =
 let rec partition_by_assoc_to_pair eq ls =
   match ls with
   | [] -> []
-  | ((k, v) as x)::xs -> 
+  | (k, v)::xs -> 
     let k_xs, nk_xs = List.partition (fun (ks, _) -> eq k ks) xs in
     (k, v::(snd (List.split k_xs)))::(partition_by_assoc_to_pair eq nk_xs)
 

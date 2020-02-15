@@ -2183,8 +2183,7 @@ let process_validate exp_res opt_fl ils_es=
                   match opt_fl with
                   | None -> res_str := "OK" (*do not compare expect flow *)
                   | Some id -> if not !Globals.enable_error_as_exc then res_str := "OK" else
-                      let reg = Str.regexp {|\#E|} in
-                      (* let reg = Str.regexp "\#E" in *)
+                      let reg = Str.regexp "\#E" in
                       let res_fl_ids = List.map (fun ff ->
                           let fl_w_sharp = exlist # get_closest ff.CF.formula_flow_interval in
                           Str.global_replace reg "" fl_w_sharp
@@ -2901,7 +2900,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
   let nn = (sleek_proof_counter#inc_and_get) in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 && pnum!=nn then
+  if pnum>0 & pnum!=nn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
     let num_id = "\nEntail "^(string_of_int nn) in
@@ -3064,7 +3063,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula)
   let pn = sleek_proof_counter#inc_and_get in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 && pnum!=pn then
+  if pnum>0 & pnum!=pn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
     let nn = "("^(string_of_int (pn))^") " in

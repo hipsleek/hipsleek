@@ -343,10 +343,10 @@ let count_br_specialized prog cl =
   (*let f_fail e = e in*)
   let f_ctx e =
     let f = e.es_formula in
-    let todo_unk = transform_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula,
+    let _todo_unk = transform_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula,
                                                        f_b_formula, f_exp)) f in
     Ctx e in
-  let todo_unk = transform_context f_ctx cl in
+  let _todo_unk = transform_context f_ctx cl in
   ()
 
 let prune_branch_ctx prog (pt,bctx,oft) =
@@ -497,7 +497,7 @@ let elim_exists_pure_branch (i:int) (w : CP.spec_var list) (f0 : CP.formula) pos
 *)
 let entail_state_elim_exists_x es =
   let pr_f = Cprinter.string_of_formula in
-  let pr_h = Cprinter.string_of_h_formula in
+  let _pr_h = Cprinter.string_of_h_formula in
   let ff = es.es_formula in
   let f_prim = elim_exists_es_his ff in
   (* we also try to eliminate exist vars for which a find a substitution of the

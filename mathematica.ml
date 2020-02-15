@@ -247,7 +247,9 @@ let rec math_of_var_list (vars : ident list) : string =
 let normalize_var_name (varname : string) : string =
   let varname_bytes = Bytes.of_string varname in
   for i = 0 to (Bytes.length varname_bytes) - 1 do
-    if Bytes.get varname_bytes i = '_' then varname_bytes.[i] <- 'N'
+    if Bytes.get varname_bytes i = '_' then
+      (* varname_bytes.[i] <- 'N' *)
+      Bytes.set varname_bytes i 'N'
   done;
   Bytes.to_string varname_bytes
 

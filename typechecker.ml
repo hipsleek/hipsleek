@@ -236,7 +236,7 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl)
   ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
   let pr0 = Cprinter.string_of_context in
   let pr1 = Cprinter.string_of_struc_formula in
-  let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in
+  let _pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in
   let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
@@ -1841,10 +1841,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   Err.error_loc = pos;
                   Err.error_text = (to_print ^ s)
                 }, 1, 0))
-                raise (Err.Ppf ({
-                    Err.error_loc = pos;
-                    Err.error_text = (to_print ^ s)
-                  }, 1, 0))
           else
             let () = stk_vars # push_list lsv in
             let () = x_tinfo_hp (add_str "inside bind" pr_id)
@@ -2004,7 +2000,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
                 let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
                 x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos;
-                (x_add check_exp prog proc else_ctx1 e2) post_start_label;
+                let _ = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
                 raise e) in
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
@@ -2202,7 +2198,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         let mn_str = Cast.unmingle_name mn in
         let proc0 = proc in
         (*clear history*)
-        let farg_types, _ (* farg_names *) = List.split proc.proc_args in
+        let _farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let () = x_tinfo_hp (add_str "mn: " pr_id) mn no_pos in
         x_tinfo_hp (add_str "ctx scall start: " pr_failesc_ctx) ctx no_pos;
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
@@ -2329,7 +2325,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 (* Only check termination of a recursive call *)
                 let () = x_tinfo_hp (add_str ">>>>>>> Termination Checking" pr_id) mn no_pos in
                 if not (CF.isNonFalseListFailescCtx sctx) then
-                  let todo_unk = Term.add_unreachable_res sctx pos in ()
+                  let _todo_unk = Term.add_unreachable_res sctx pos in ()
                 else ()
               else () in
 
@@ -2465,7 +2461,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                         ) res no_pos in
                     let () = Debug.ninfo_hprint (add_str "s" pr_id) s no_pos in
                     if (String.length s) >  0 then
-                      let pr = pr_list_ln Cprinter.string_of_hprel_short in
+                      let _pr = pr_list_ln Cprinter.string_of_hprel_short in
                       if not(Infer.rel_ass_stk# is_empty) then
                         begin
                           if (* !VarGen.sap *) true then begin
@@ -2490,7 +2486,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                             let pr = pr_list_ln (fun x ->
                                 Cprinter.string_of_hprel_short_inst prog [] x)
                             in
-                            let pr_len x = string_of_int (List.length x) in
+                            let _pr_len x = string_of_int (List.length x) in
                             print_endline_quiet (pr (ras1));
                             print_endline_quiet "*************************************";
                             if !Globals.testing_flag
@@ -2905,7 +2901,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         Tpdispatcher.unsuppress_imply_output ();
       end in
   (* Termination: Poststate of Loop must be unreachable (soundness) *)
-  let todo_unk =
+  let _todo_unk =
     if !Globals.dis_term_chk || !Globals.dis_post_chk then true
     else
       let check_falsify ctx = SV.heap_entail_one_context 17 prog false ctx
@@ -3067,7 +3063,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (* ************************************ *)
     (* *************INTENAL********************* *)
     (* inter form *)
-    let print_hp_defs_one_flow hp_defs flow_int=
+    let _print_hp_defs_one_flow hp_defs flow_int=
       begin
         let defs0 = List.sort CF.hp_def_cmp hp_defs in
         let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d ->
@@ -3149,7 +3145,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
             in
             (r1,r2,r3)
           else
-            let todo_unk = x_add Sa3.infer_shapes iprog prog "" hprels
+            let _todo_unk = x_add Sa3.infer_shapes iprog prog "" hprels
                 scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                                                 (fun ((hp1,_),_) ((hp2, _),_) ->
                                                    (CP.eq_spec_var hp1 hp2 ))
@@ -3240,7 +3236,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     let scc_procs_names = (Gen.BList.remove_dups_eq (fun s1 s2 ->
         String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name)
                                      scc_procs)) in
-    let new_scc_procs =
+    let _new_scc_procs =
       if !Globals.pred_trans_view then
         let nprog, is_print_inferred_spec =
           if not !Globals.new_pred_syn then (* --old-pred-synthesis *)
@@ -3251,7 +3247,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
                     dang_hps scc_procs_names
                     (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
                     scc_inferred_hps in
-                let new_scc_procs =
+                let _new_scc_procs =
                   List.map (fun pn -> Cast.look_up_proc_def_raw
                                nprog.new_proc_decls pn) scc_procs_names in
                 nprog,true
@@ -3260,7 +3256,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
               let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps
                   scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps)
                   scc_sel_post_hps scc_inferred_hps in
-              let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw
+              let _new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw
                                                nprog.new_proc_decls pn)
                   scc_procs_names in
               nprog,true
@@ -3268,7 +3264,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           if is_empty scc_sel_hps || is_empty scc_hprel_ass then prog, false
           else
             let () = Norm.find_rec_data iprog prog REGEX_STAR in
-            let extn_pred_lsts = Syn.extn_pred_scc iprog prog scc_procs_names in
+            let _extn_pred_lsts = Syn.extn_pred_scc iprog prog scc_procs_names in
             let prog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
             let prog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
             prog, true
@@ -3446,7 +3442,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
                     let pr = pr_list_ln (fun x ->
                         Cprinter.string_of_hprel_short_inst prog
                           sel_post_hp_rels x) in
-                    let pr_len x = string_of_int (List.length x) in
+                    let _pr_len x = string_of_int (List.length x) in
                     let old_print_imm = !print_ann in
                     let _= if !print_html then let () = print_ann:= false in () else () in
                     let _  = print_endline_quiet (pr (ras1)) in
@@ -3545,7 +3541,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
     end else true
 
 let check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
-  let pr p = pr_id (name_of_proc p)  in
+  let _pr p = pr_id (name_of_proc p)  in
   let pr p = !Cast.print_proc_decl_no_body p in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
     "check_proc" pr string_of_bool (fun _ -> check_proc iprog prog proc cout_option mutual_grp) proc
@@ -3700,7 +3696,7 @@ let check_coercion (prog : prog_decl) =
   1 or 2 coercions."}
       in
       (* Andrea : why is hip not using process_lemma in sleekengine.ml *)
-      let todo_unk = x_add (Lemproving.verify_lemma ~force_pr:true) 1 l2r r2l
+      let _todo_unk = x_add (Lemproving.verify_lemma ~force_pr:true) 1 l2r r2l
           prog coerc_name coerc_type in ()
     ) lemmas
 
@@ -3802,7 +3798,7 @@ let print_infer_scc loc scc =
   ()
 
 let ext_pure_check_procs iprog prog proc_names error_traces=
-  let  todo_unk = Sap.extend_specs_views_pure_ext iprog prog proc_names error_traces in
+  let  _todo_unk = Sap.extend_specs_views_pure_ext iprog prog proc_names error_traces in
   []
 
 let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
@@ -3971,7 +3967,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
                                 (Cprinter.string_of_struc_formula
                                    p.proc_stk_of_static_specs #top))))
         scc no_pos in
-    let rem_pure_inf_prog_rel_decls = List.filter (fun rel_decl ->
+    let _rem_pure_inf_prog_rel_decls = List.filter (fun rel_decl ->
         let r1 = Str.regexp "post_" in
         let r2 = Str.regexp "pre_" in
         not(Str.string_match r1 rel_decl.rel_name 0) && not(Str.string_match r2 rel_decl.rel_name 0)
@@ -4044,7 +4040,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
           let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
           ()
         else if is_inf_size then
-          let niscc = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
+          let _niscc = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
           ()
         else () in
       let res = verify_scc_incr cprog verified_sccs iscc in

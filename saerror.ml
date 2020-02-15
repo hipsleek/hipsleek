@@ -133,7 +133,7 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
                        ) constrs0 in
                      (List.hd cps, [], filted_hprel)) cpl in
   let () = print_endline_quiet "\n*************************************" in
-  let todo_unk = List.map (fun (_, _, hprel_list) -> let () = print_endline_quiet "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in
+  let _todo_unk = List.map (fun (_, _, hprel_list) -> let () = print_endline_quiet "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in
   let () = print_endline_quiet "*************************************" in
   a
 
@@ -202,14 +202,14 @@ let get_case struc_formula prog args hprel_defs =
     | Cformula.EList el -> let (_, sf) = List.hd el in helper sf prog
     | Cformula.ECase _ | Cformula.EInfer _ | Cformula.EAssume _ -> raise (Failure "fail get_case")
   in
-  let rec split_case case =
-    match case with
-    | Cpure.And(f1, f2, _) -> (Cpure.break_formula1 f1) :: (split_case f2)
-    | Cpure.Or(f1, f2, _, pos) -> [Cpure.break_formula1 case]
-    | Cpure.BForm _ -> [[case]]
-    | _ -> raise (Failure "fail split_case")
-  in
-  let filter_case case_list_list args =
+  (* let rec split_case case =
+   *   match case with
+   *   | Cpure.And(f1, f2, _) -> (Cpure.break_formula1 f1) :: (split_case f2)
+   *   | Cpure.Or(f1, f2, _, pos) -> [Cpure.break_formula1 case]
+   *   | Cpure.BForm _ -> [[case]]
+   *   | _ -> raise (Failure "fail split_case")
+   * in *)
+  let _filter_case case_list_list args =
     let rec helper case_list args =
       match case_list with
       | [] -> []

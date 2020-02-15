@@ -244,7 +244,7 @@ let mk_num_args args =
 
 let find_root_hprel_formula_base prog hprel_name num_args f =
   let f_fv = CF.fv f in
-  let args = List.map fst num_args in
+  let _args = List.map fst num_args in
   (* let ni_args = get_non_inst_args_hprel_id prog hprel_name args in *)
   let feasible_num_args = List.filter (fun (sv, _) -> 
     (CP.is_node_typ sv) && 
@@ -347,7 +347,7 @@ let find_root_hprel prog hprel =
     (List.nth hprel_args root_pos, root_pos)
   with _ -> 
     let root_var, root_pos = find_root_one_hprel prog hprel in
-    let hp_decl = C.set_proot_hp_def_raw root_pos prog.C.prog_hp_decls hprel_id in
+    let _hp_decl = C.set_proot_hp_def_raw root_pos prog.C.prog_hp_decls hprel_id in
     (root_var, root_pos)
 
 let find_root_hprel prog hprel =
@@ -710,7 +710,7 @@ let trans_spec_proc trans_f cprog proc =
   nproc
 
 let trans_spec_scc trans_f cprog scc_procs =
-  let n_tbl = Cast.proc_decls_map (fun proc ->
+  let _n_tbl = Cast.proc_decls_map (fun proc ->
       if mem_id proc.C.proc_name scc_procs then
         trans_spec_proc trans_f cprog proc
       else proc) cprog.Cast.new_proc_decls in
@@ -1009,13 +1009,13 @@ let unfolding_view iprog cprog view =
 (*******************)
 let is_not_global_hp_def prog i =
   try
-    let todo_unk = C.look_up_hp_def_raw prog.C.prog_hp_decls i
+    let _todo_unk = C.look_up_hp_def_raw prog.C.prog_hp_decls i
     in false
   with _ -> true
 
 let is_not_global_rel prog i =
   try
-    let todo_unk = C.look_up_rel_def_raw (prog.C.prog_rel_decls # get_stk) i
+    let _todo_unk = C.look_up_rel_def_raw (prog.C.prog_rel_decls # get_stk) i
     in false
   with _ -> true
 

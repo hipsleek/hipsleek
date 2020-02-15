@@ -243,7 +243,7 @@ let unfold_body_lemma iprog ldef ulst =
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
 let process_one_lemma unfold_flag iprog cprog ldef =
-  let pr = Iprinter.string_of_coerc_decl      in
+  let _pr = Iprinter.string_of_coerc_decl      in
   (* let () = y_tinfo_pp "unfold RHS of lemma" in *)
   let vdefs = Cprog_sleek.get_sorted_view_decls () in
   let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
@@ -255,7 +255,7 @@ let process_one_lemma unfold_flag iprog cprog ldef =
 
   (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
-  let pr = Cprinter.string_of_coerc_decl_list in
+  let _pr = Cprinter.string_of_coerc_decl_list in
   let l2r, r2l = Astsimp.trans_one_coercion iprog cprog ldef in
   (* let () = y_tinfo_hp (add_str "l2r" pr) l2r in *)
   (* let () = y_tinfo_hp (add_str "r2l" pr) r2l in *)
@@ -441,8 +441,8 @@ let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog
 let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog = 
   let pr1 = pr_list Iprinter.string_of_coerc_decl in
   let pr2 = pr_list !CF.print_list_context in
-  let pr3 = Iprinter.string_of_program in
-  let pr4 = Cprinter.string_of_program in
+  let _pr3 = Iprinter.string_of_program in
+  let _pr4 = Cprinter.string_of_program in
   (* Debug.no_3 "manage_infer_lemmas_x" pr3 pr4 pr1 (pr_pair string_of_bool (pr_opt pr2))               *)
   (*   (fun _ _ _ -> manage_infer_lemmas_x ~force_pr:force_pr ~pop_all:pop_all str repo iprog cprog)  *)
   (*   iprog cprog repo                                                                                 *)
@@ -451,8 +451,10 @@ let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog
     repo (check_is_classic ())
 
 (* for lemma_test, we do not return outcome of lemma proving *)
-let manage_test_lemmas repo iprog cprog = 
-  manage_infer_lemmas_x "proved" repo iprog cprog; None (*Loc: while return None? instead full result*)
+let manage_test_lemmas repo iprog cprog =
+  let _ =  manage_infer_lemmas_x "proved" repo iprog cprog in
+  None
+(*Loc: while return None? instead full result*)
 
 let manage_test_lemmas1 ?(force_pr=false) repo iprog cprog = 
   manage_infer_lemmas_x ~force_pr:force_pr "proved" repo iprog cprog
@@ -543,7 +545,7 @@ let preprocess_fixpoint_computation cprog xpure_fnc lhs oblgs rel_ids post_rel_i
     CF.get_pre_post_vars [] xpure_fnc (CF.struc_formula_of_formula bare no_pos) cprog in
   let () = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
   let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
-  let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
+  let _pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
   let pre_vnodes = CF.get_views bare in
   let ls_rel_args = CP.get_list_rel_args (CF.get_pure bare) in
   let () = Debug.ninfo_hprint (add_str "coercion_body" !CF.print_formula) bare no_pos in
@@ -764,7 +766,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
                         CF.get_pre_post_vars [] xpure_fnc (CF.struc_formula_of_formula bare no_pos) cprog in
                       let () = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
                       let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
-                      let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
+                      let _pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                       let pre_vnodes = CF.get_views coer.C.coercion_body in
                       let ls_rel_args = CP.get_list_rel_args (CF.get_pure bare) in
                       let () = Debug.ninfo_hprint (add_str "coercion_body" !CF.print_formula) bare no_pos in
@@ -812,7 +814,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
       r2
     ) [] rec_fixs in
   (*update for Z3*)
-  let todo_unk = List.map (fun (rel_name, rel_f) ->
+  let _todo_unk = List.map (fun (rel_name, rel_f) ->
       let rel_args_opt = CP.get_relargs_opt rel_name in
       match rel_args_opt with
       | Some (rel, args) ->
@@ -887,9 +889,9 @@ let sort_list_lemma iprog =
 let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct =
   let lst = ldef_lst.Iast.coercion_list_elems in
   (* why do we check residue for ctx? do we really need a previous context? *)
-  let enable_printing = (!Globals.dump_lem_proc) && ( List.length lst > 0 ) in
+  let _enable_printing = (!Globals.dump_lem_proc) && ( List.length lst > 0 ) in
   (* let () = if enable_printing then Debug.ninfo_pprint "=============== Processing lemmas ===============" no_pos else () in *)
-  let ctx = match !CF.residues with
+  let _ctx = match !CF.residues with
     | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
     | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
     | Some (CF.FailCtx ctx, _) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
@@ -905,7 +907,7 @@ let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct =
     | LEM_SAFE       -> manage_safe_lemmas ~force_pr:true  lst iprog cprog 
     | LEM_INFER      -> snd (manage_infer_lemmas lst iprog cprog)
     | LEM_INFER_PRED      -> let r1,r2,r3 = manage_infer_pred_lemmas lst iprog cprog Cvutil.xpure_heap in 
-      let todo_unk = lem_infer_fnct r1 r2 in
+      let _todo_unk = lem_infer_fnct r1 r2 in
       r3
     | RLEM           -> manage_unsafe_lemmas lst iprog cprog
   in
@@ -1405,7 +1407,7 @@ let collect_inductive_view_nodes (hf: CF.h_formula) (vd: C.view_decl)
       | CF.HTrue | CF.HFalse | CF.HEmp | CF.DataNode _ -> Some hf
       | _ -> None
     ) in
-  let todo_unk = CF.transform_h_formula f_hf hf in
+  let _todo_unk = CF.transform_h_formula f_hf hf in
   !view_nodes
 
 let remove_view_node_from_formula (f: CF.formula) (vn: CF.h_formula_view) : CF.formula =
@@ -1472,7 +1474,7 @@ let refine_tail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_fo
           let () = (
             if List.exists (fun v -> String.compare v hnode = 0) view_vars then (
               try 
-                let todo_unk = List.find (fun subs ->
+                let _todo_unk = List.find (fun subs ->
                     let v = fst subs in IP.eq_var (hnode,prim) v
                   ) !subs_list in
                 ()
@@ -1487,7 +1489,7 @@ let refine_tail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_fo
         | IF.HeapNode2 _ -> None (* Trung: check later *)
         | _ -> None
       ) in
-    let todo_unk = IF.transform_h_formula collect_subs_list hf in
+    let _todo_unk = IF.transform_h_formula collect_subs_list hf in
     let subs_heap_node hf = (match hf with
         | IF.HeapNode hn ->
           let (hnode,prim) = hn.IF.h_formula_heap_node in
@@ -1797,7 +1799,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
     let subst_sv_one_seq sst sv0=
       List.fold_left (fun sv ss -> CP.subs_one [ss] sv) sv0 sst
     in
-    let cp_subst_seq sst p0=
+    let _cp_subst_seq sst p0=
       List.fold_left (fun p ss -> CP.subst [ss] p) p0 sst
     in
     let subst_list_var_seq sst svl= List.map (subst_sv_one_seq sst) svl
@@ -1943,11 +1945,11 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
     ) cprog.C.prog_view_decls) in
   let gen_lemmas = lemmas@rev_rec_lemmas in
   if (!Globals.lemma_gen_unsafe) || (!Globals.lemma_gen_unsafe_fold) then
-    let todo_unk = manage_unsafe_lemmas (gen_lemmas) iprog cprog in ()
+    let _todo_unk = manage_unsafe_lemmas (gen_lemmas) iprog cprog in ()
   else if (!Globals.lemma_gen_safe) || (!Globals.lemma_gen_safe_fold) then
-    let todo_unk = manage_safe_lemmas gen_lemmas iprog cprog in ()
+    let _todo_unk = manage_safe_lemmas gen_lemmas iprog cprog in ()
   else if (!Globals.lemma_rev_unsafe) then
-    let todo_unk = manage_unsafe_lemmas rev_rec_lemmas iprog cprog in ()
+    let _todo_unk = manage_unsafe_lemmas rev_rec_lemmas iprog cprog in ()
   else ();
   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->
       "    " ^ (Cprinter.string_of_coerc_med lem)

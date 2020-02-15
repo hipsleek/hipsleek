@@ -22,9 +22,9 @@ let build_eset_of_imm_formula f =
            (match conv_ann_exp_to_var ex with
             | Some (v2,_) -> EMapSV.add_equiv acc v1 v2
             | None -> acc)
-         | (SubAnn (Var (v1,_), (AConst(Mutable,_) as exp), _),_) -> (* bot *)
+         | (SubAnn (Var (v1,_), (AConst(Mutable,_) as _exp), _),_) -> (* bot *)
            let v2 = mkAnnSVar Mutable in EMapSV.add_equiv acc v1 v2
-         | (SubAnn(AConst(Accs,_) as exp, Var (v1,_), _),_) -> (* top *)
+         | (SubAnn(AConst(Accs,_) as _exp, Var (v1,_), _),_) -> (* top *)
            let v2 = mkAnnSVar Accs in EMapSV.add_equiv acc v1 v2
          | _ -> acc)
       | _ -> acc

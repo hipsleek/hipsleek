@@ -3349,7 +3349,7 @@ hprogn:
               let () = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
               proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
-    let todo_unk = List.map choose t in
+    let _todo_unk = List.map choose t in
     let obj_def = { data_name = "Object";
                     data_pos = no_pos;
                     data_fields = [];
@@ -3497,7 +3497,7 @@ class_decl:
                    data_pure_inv = None;
                    data_is_template = false;
                    data_methods = t3 } in
-      let todo_unk = List.map (fun d -> set_proc_data_decl d cdef) t3 in
+      let _todo_unk = List.map (fun d -> set_proc_data_decl d cdef) t3 in
       cdef]];
 
 extends: [[`EXTENDS; `IDENTIFIER id -> id]];
@@ -4405,7 +4405,7 @@ cp_list:
       | Hpdecl hpdef  -> hp_defs2 # push hpdef 
       | ProcERes t -> proc_tcomps := t :: !proc_tcomps
     in
-    let todo_unk = List.map choose t in
+    let _todo_unk = List.map choose t in
     let hp_lst = hp_defs2 # get_stk in
     (hp_lst, !proc_tcomps)]];
 
@@ -4427,7 +4427,7 @@ test_list: [[t = LIST0 test_ele ->
       | ExpectedAss t  ->  ass := Some t
       | ExpectedHpDef t ->  hpdefs := Some t
     in
-    let todo_unk = List.map choose t in
+    let _todo_unk = List.map choose t in
     {expected_ass = !ass;
       expected_hpdefs = !hpdefs}]];
 

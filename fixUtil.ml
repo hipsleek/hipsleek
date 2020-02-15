@@ -108,7 +108,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                 ) vd.Cast.view_un_struc_formula in
               {vd with Cast.view_un_struc_formula = new_un_struc_formula}
             ) view_list_num0 in
-          let todo_unk = Wrapper.wrap_infer_inv Expure.fix_ef view_list_baga cviews0 in
+          let _todo_unk = Wrapper.wrap_infer_inv Expure.fix_ef view_list_baga cviews0 in
           let () = x_binfo_pp ("Omega call after infer baga inv" ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let view_list_num_with_inv = x_add Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
 

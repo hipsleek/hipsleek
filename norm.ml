@@ -357,9 +357,9 @@ let norm_complex_unfold iprog
     (to_vns:ident list) (* pred to transform *) =
     (* let unfold_set0 = C.get_unfold_set vdefs (\* set of unfoldable views *\) in *)
     let unfold_set1 = C.get_unfold_set_gen vdefs (* set of unfoldable views *) in
-    let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
-    let pr2 = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
-    let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
+    let _pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
+    let _pr2 = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
+    let _pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
     let pr2 = pr_list (pr_triple pr_id !CP.print_svl (pr_list !CF.print_formula)) in
     (* unfold_set0 - single disj unfold set *)
     (* let () = y_tinfo_hp (add_str "unfold_set0" pr) unfold_set0 in *)
@@ -507,11 +507,11 @@ let norm_unfold_formula vdefs f =
   let pr2 = pr_list_ln !C.print_view_decl_short in
   Debug.no_2 "norm_unfold_formula" pr2 pr1 pr1 
     norm_unfold_formula vdefs f
- 
+
 let norm_reuse_subs iprog cprog vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in
   let eq_lst = List.map (fun (m,_) -> m) equiv_set in
-  let in_equiv_set n = List.exists (string_eq n) eq_lst in 
+  let _in_equiv_set n = List.exists (string_eq n) eq_lst in 
   let uses_eq_view f = uses_views eq_lst f
       (* f uses views from eq_lst? *) 
     (* if eq_lst ==[] then false *)
@@ -1013,7 +1013,7 @@ let update_scc_view_args prog vdecl=
     let () = Debug.ninfo_hprint (add_str "f1" (Cprinter.string_of_formula)) f1 no_pos in
     let ( _,mf,_,_,_,_) = CF.split_components f1 in
     let eqs = (MCP.ptr_equations_without_null mf) in
-    let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mf) in
+    let _eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mf) in
     let hns, hvs, _ = CF.get_hp_rel_formula f1 in
     let () =  update_scc_view_args_alias args eqs in
     let () =  List.iter (fun sv -> update_scc_view_args_ptos sv eqs hns hvs) args in
@@ -1452,17 +1452,17 @@ let norm_extract_common_one_view iprog cprog cur_m cviews vdecl=
     (fun _ -> norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl) vdecl
 
 let norm_extract_common iprog cprog cviews sel_vns=
-  let rec process_helper rem_vs done_vs=
-    match rem_vs with
-    | [] -> done_vs
-    | vdecl::rest ->
-      let n_vdecls =
-        if List.exists (fun vn -> String.compare vn vdecl.Cast.view_name = 0) sel_vns then
-          norm_extract_common_one_view iprog cprog [] (done_vs@rest) vdecl
-        else [vdecl]
-      in
-      process_helper rest (done_vs@n_vdecls)
-  in
+  (* let rec process_helper rem_vs done_vs=
+   *   match rem_vs with
+   *   | [] -> done_vs
+   *   | vdecl::rest ->
+   *     let n_vdecls =
+   *       if List.exists (fun vn -> String.compare vn vdecl.Cast.view_name = 0) sel_vns then
+   *         norm_extract_common_one_view iprog cprog [] (done_vs@rest) vdecl
+   *       else [vdecl]
+   *     in
+   *     process_helper rest (done_vs@n_vdecls)
+   * in *)
   (*not sure it is necessary*)
   (* process_helper cviews [] *)
   cviews
@@ -1486,7 +1486,7 @@ let cont_para_analysis_view cprog vdef other_vds=
       let _, reach_dns, reach_vns = CFU.look_up_reachable_ptrs_w_alias cprog f [self_sv] 3 in
       let ( _,mix_f,_,_,_,_) = CF.split_components f in
       let eqs = (MCP.ptr_equations_without_null mix_f) in
-      let rec_vns, other_vns = List.partition (fun vn ->
+      let _rec_vns, _other_vns = List.partition (fun vn ->
           String.compare vn.CF.h_formula_view_name vname = 0
         ) vns in
       (*cont paras are para not changed, just forwarded*)
@@ -2102,7 +2102,7 @@ let find_rec_data iprog cprog ids =
   let () = y_tinfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
   (* let sel_scc = List.map List.concat sel_scc in *)
   let com_scc = List.combine sel_data_d sel_scc in
-  let com_scc = List.map (fun (d_lst, vns) ->
+  let _com_scc = List.map (fun (d_lst, vns) ->
       List.iter (fun dd ->
           let lst = dd.Cast.data_fields in
           let new_lst = List.map (fun (id, acc) ->

@@ -100,12 +100,12 @@ class graphFindBCC =
                     parents <- MapDFS.add w v1 parents;
                     (* print_endline ("pushed:" ^ w ^ " " ^ v1); *)
                     Stack.push temp_edge stack;
-                    loopFindBCC graph w v2;
+                    let _ = loopFindBCC graph w v2 in
                     (*													print_endline ("new here with current temp" ^temp_edge.ver1^temp_edge.ver2);*)
                     (*													let w_high = MapDFS.find w high in*)
                     let wc = (self)#find_cell w map_list in	
                     (*													let _= print_endline ("w_high: "^ (string_of_int w_high) ^ "of "^w^" v_dfs_num: " ^(string_of_int v_dfs_num)^" of "^v1) in*)													
-                    let _= if(wc.high_num <= v_dfs_num & G.is_empty bcc) then
+                    let _= if(wc.high_num <= v_dfs_num && G.is_empty bcc) then
                         begin
                           (*modified here*)
                           (*																		 let bcp=G.create() in*)
@@ -120,7 +120,7 @@ class graphFindBCC =
                               let _= led := !led@[e] in   
                               let _= if(e.ver1=temp_edge.ver1 && e.ver2=temp_edge.ver2) then 
                                   (let  
-                                    _= if(Stack.is_empty stack & (List.length !led)>1) then
+                                    _= if(Stack.is_empty stack && (List.length !led)>1) then
                                       let _= List.map (fun e-> G.add_edge bcc e.ver1 e.ver2 ) !led in()
                                       (* else print_endline ("stack not empty")		 *)
                                    in break := true)
@@ -198,7 +198,7 @@ class graphFindBCC =
       else (*let _= print_endline "No BCC found..." in*) false				
 
     method add_diseq_edgev2 (graph:G.t) e =
-      if ((G.mem_vertex graph (G.E.src e)) &(G.mem_vertex graph (G.E.dst e))) then
+      if ((G.mem_vertex graph (G.E.src e)) &&(G.mem_vertex graph (G.E.dst e))) then
         begin
           let _= G.add_edge_e graph e in true 
         end

@@ -107,7 +107,7 @@ let default_value (t :typ) pos : exp =
 let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =
   match t with
   | Named c ->
-    (try let todo_unk = look_up_enum_def_raw prog.prog_enum_decls c in "int"
+    (try let _todo_unk = look_up_enum_def_raw prog.prog_enum_decls c in "int"
      with | Not_found -> c)
   |t -> string_of_typ t
 
@@ -1085,7 +1085,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
       (* let () = print_endline ("Vardecl : " ^ (string_of_exp e)) in *)
       (* let () = print_endline ("Vardecl : before E.add") in *)
       let org_t = v.exp_var_decl_type in
-      let todo_unk = List.map (fun (v,_,_) ->
+      let _todo_unk = List.map (fun (v,_,_) ->
           let alpha = E.alpha_name v in
           (E.add v (E.VarInfo{
                E.var_name = v;
@@ -1142,7 +1142,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
     | ConstDecl c ->
       (*Add variables into current scope*)
       (*let org_t = c.exp_const_decl_type in*)
-      let todo_unk = List.map (fun (v,_,_) ->
+      let _todo_unk = List.map (fun (v,_,_) ->
           let alpha = E.alpha_name v in
           (E.add v (E.VarInfo{
                E.var_name = v;
@@ -1266,7 +1266,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
       (*addr vars of the inner scope*)
       let addr_vars = find_addr b.exp_bind_body in
       let () = E.push_scope () in
-      let todo_unk = List.map (fun v ->
+      let _todo_unk = List.map (fun v ->
           let alpha = E.alpha_name v in
           E.add v (E.VarInfo{
               E.var_name = v;
@@ -1988,7 +1988,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
        E.var_type = UNK; } (*Do not care about typ when translating*)
      in
      let vinfos = List.map p2v all_args in
-     let todo_unk = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
+     let _todo_unk = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
      (*Need to trans_exp_addr of
        addressable reference variables  : rvars (from hashtbl h)
        and addressable local variables

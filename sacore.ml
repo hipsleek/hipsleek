@@ -2550,7 +2550,7 @@ let do_entail_check_x vars iprog cprog cs=
     let r_vns = CF.get_views rhs in
     lookup_and_subst l_vns r_vns
   in
-  let update_explicit_root lhs rhs=
+  let _update_explicit_root lhs rhs=
     let pr1 = Cprinter.prtt_string_of_formula in
     Debug.no_2 "update_explicit_root" pr1 pr1 (pr_pair pr1 pr1)
       (fun _ _ -> update_explicit_root_x lhs rhs) lhs rhs
@@ -3780,7 +3780,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
       (*new declaration for cprog*)
       let n_hpcl = Cast.look_up_hp_def_raw cprog.Cast.prog_hp_decls (CP.name_of_spec_var n_hp) in
       (*new declaration for iprog*)
-      let todo_unk = Iast.mkhp_decl iprog n_hpcl.Cast.hp_name
+      let _todo_unk = Iast.mkhp_decl iprog n_hpcl.Cast.hp_name
           (List.map (fun (CP.SpecVar (t,id,_) ,ins) -> (t,id, ins)) n_hpcl.Cast.hp_vars_inst)
           n_hpcl.Cast.hp_part_vars n_hpcl.Cast.hp_root_pos n_hpcl.Cast.hp_is_pre (IF.mkTrue IF.n_flow no_pos)
       in
@@ -4233,7 +4233,7 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
     let sst0 = List.combine (List.map fst orig_hpcl.Cast.hp_vars_inst) orig_all_args in
     let seg_def_lhs = CF.h_subst sst0 seg_def_lhs0 in
     let n_hpcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var n_hp) in
-    let todo_unk = Iast.mkhp_decl iprog n_hpcl.Cast.hp_name
+    let _todo_unk = Iast.mkhp_decl iprog n_hpcl.Cast.hp_name
           (List.map (fun (CP.SpecVar (t,id,_) ,ins) -> (t,id, ins)) n_hpcl.Cast.hp_vars_inst)
           n_hpcl.Cast.hp_part_vars n_hpcl.Cast.hp_root_pos n_hpcl.Cast.hp_is_pre (IF.mkTrue IF.n_flow no_pos)
     in

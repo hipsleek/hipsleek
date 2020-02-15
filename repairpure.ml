@@ -596,16 +596,16 @@ let normalize_arith_exp exp =
   let pr_exp = Iprinter.string_of_exp in
   let () = x_tinfo_hp (add_str "n_exp: " pr_exp) n_exp no_pos in
   let () = x_tinfo_hp (add_str "var decls: " pr_exps) var_decls no_pos in
-  let rec find_main exp vars = match (exp:I.exp) with
-    | Block e -> find_main e.exp_block_body vars
-    | Label (_, el) -> find_main el vars
-    | Seq e -> if (List.mem e.exp_seq_exp1 vars) then e.exp_seq_exp2
-      else if (List.mem e.exp_seq_exp2 vars) then e.exp_seq_exp1
-      else let e1 = find_main e.exp_seq_exp1 vars in
-        let e2 = find_main e.exp_seq_exp2 vars in
-        Seq {e with exp_seq_exp1 = e1;
-                    exp_seq_exp2 = e2}
-    | _ -> exp in
+  (* let rec find_main exp vars = match (exp:I.exp) with
+   *   | Block e -> find_main e.exp_block_body vars
+   *   | Label (_, el) -> find_main el vars
+   *   | Seq e -> if (List.mem e.exp_seq_exp1 vars) then e.exp_seq_exp2
+   *     else if (List.mem e.exp_seq_exp2 vars) then e.exp_seq_exp1
+   *     else let e1 = find_main e.exp_seq_exp1 vars in
+   *       let e2 = find_main e.exp_seq_exp2 vars in
+   *       Seq {e with exp_seq_exp1 = e1;
+   *                   exp_seq_exp2 = e2}
+   *   | _ -> exp in *)
   let rec sequencing_exp exp_list = match exp_list with
     | [] -> report_error no_pos "cannot sequencing empty list"
     | [x] -> x
@@ -694,8 +694,9 @@ let rec normalize_logical_exp exp : I.exp = match (exp:I.exp) with
 let normalize_proc iprog proc_decl =
   let n_proc_body = match proc_decl.I.proc_body with
     | None -> None
-    | Some body_exp -> let n_exp = body_exp in
-      let n_exp = normalize_logical_exp body_exp in
+    | Some body_exp ->
+      let n_exp = body_exp in
+      let n_exp = normalize_logical_exp n_exp in
       Some n_exp in
   let nprog = {proc_decl with proc_body = n_proc_body} in
   nprog
@@ -741,16 +742,16 @@ let output_repaired_iprog src pos repaired_exp =
 
 let repair_prog_with_templ iprog cond_op =
   let () = Typechecker.repair_proc := None in
-  let contains s1 s2 = let re = Str.regexp_string s2 in
-    try ignore (Str.search_forward re s1 0); true
-    with Not_found -> false in
+  (* let contains s1 s2 = let re = Str.regexp_string s2 in
+   *   try ignore (Str.search_forward re s1 0); true
+   *   with Not_found -> false in *)
   let () = x_tinfo_pp "marking \n" no_pos in
   let cprog, _ = Astsimp.trans_prog iprog in
   try
     let () = Typechecker.check_prog_wrapper iprog cprog in
     let () = next_proc := false in
     None
-  with _ as e -> None
+  with _ -> None
 
 let create_block_exp (block: C.exp list) =
   match block with
@@ -790,8 +791,8 @@ let repair_one_statement (iprog:I.prog_decl) proc exp is_cond vars heuristic =
     | Some (templ_proc, unk_exp, replaced_pos) ->
       let () = x_tinfo_hp (add_str "new proc: " pr_exp)
           (Gen.unsome templ_proc.proc_body) no_pos in
-      let var_names = List.map fst vars in
-      let var_typs = List.map snd vars in
+      let _var_names = List.map fst vars in
+      let _var_typs = List.map snd vars in
       let n_proc_decls =
         List.map (fun x -> if (x.I.proc_name = templ_proc.proc_name)
                    then templ_proc else x) iprog.I.prog_proc_decls in
@@ -865,7 +866,7 @@ let mk_specs (pre_cond, post_cond) =
   specs
 
 let mk_block_proc (proc: C.proc_decl) block_exp specs =
-  let args = proc.C.proc_args in
+  let _args = proc.C.proc_args in
   let pf = MCP.mix_of_pure (CP.mkFalse no_pos) in
   let dynamic_f = CF.mkBase_simp CF.HFalse pf in
   let dynamic_specs = CF.mkEBase dynamic_f None no_pos in
@@ -1034,11 +1035,11 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl)
   let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
   let n_hp_decls = iprog.I.prog_hp_decls @ fcode_prog.I.prog_hp_decls in
   let eq_data_decl x y = eq_str x.I.data_name y.I.data_name in
-  let n_data_decls = iprog.I.prog_data_decls
+  let _n_data_decls = iprog.I.prog_data_decls
                      @ fcode_prog.I.prog_data_decls
                      |> Gen.BList.remove_dups_eq eq_data_decl in
   let eq_proc x y = eq_str x.I.proc_name y.I.proc_name in
-  let procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
+  let _procs = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls
               |> Gen.BList.remove_dups_eq eq_proc in
   let fcode_prog = {iprog with
                     I.prog_hp_decls = fcode_prog.I.prog_hp_decls;

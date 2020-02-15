@@ -289,7 +289,7 @@ let reverify_with_hp_rel cprog iprog =
       match hp_kind with
       |  Cpure.HPRelDefn (hp,r,args) -> begin
           try
-            let todo_unk = x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls
+            let _todo_unk = x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls
                 (Cpure.name_of_spec_var hp)
             in
             (r_hp_defs, r_unk_hps)
@@ -349,8 +349,8 @@ let saved_prim_names = ref None
 
 (*Working*)
 let process_source_full source =
-  let en_repair = !Globals.enable_repair in
-  let en_repair_templ = !Globals.enable_repair_template in
+  let _en_repair = !Globals.enable_repair in
+  let _en_repair_templ = !Globals.enable_repair_template in
   if (not !Globals.web_compile_flag) then flush stdout;
   let () = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
@@ -464,7 +464,7 @@ let process_source_full source =
       let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
       if b then Globals.allow_locklevel := true in
   let () = if !Globals.web_compile_flag then
-      let todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+      let _todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
       () in
 
   (**************************************)
@@ -661,7 +661,7 @@ let process_source_full source =
       close_out oc;
       print_endline ("Complete the proof in "^file);
     else () in
-  let todo_unk = List.map (fun cadef ->
+  let _todo_unk = List.map (fun cadef ->
       let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis
           Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
@@ -887,7 +887,7 @@ let process_source_full_after_parser source (prog, prims_list) =
         Globals.allow_locklevel := true
   in
   let () = if !Globals.web_compile_flag then
-      let todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+      let _todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
       ()
   in
   (**************************************)
@@ -898,14 +898,14 @@ let process_source_full_after_parser source (prog, prims_list) =
 
   (* Forward axioms and relations declarations to SMT solver module *)
   (* L2: not-in-used *)
-  let todo_unk = List.map (fun crdef ->
+  let _todo_unk = List.map (fun crdef ->
       let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars
           crdef.Cast.rel_formula in
       Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
     )
       (List.rev (cprog.Cast.prog_rel_decls # get_stk)) in
 
-  let todo_unk = List.map (fun cadef ->
+  let _todo_unk = List.map (fun cadef ->
       let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES
           cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
@@ -1014,7 +1014,7 @@ let main1 () =
       print_string "Source file(s) not specified\n"
     end;
     let () = Gen.Profiling.push_time "Overall" in
-    let todo_unk:unit list = process_source_list !Globals.source_files in
+    let _todo_unk:unit list = process_source_list !Globals.source_files in
     let () = Gen.Profiling.pop_time "Overall" in
     ()
 
@@ -1033,7 +1033,7 @@ let pre_main () =
                in process_source_full_parse_only x) !Globals.source_files
 
 let loop_cmd parsed_content =
-  let todo_unk = List.map2 (fun s t -> process_source_full_after_parser s t) !
+  let _todo_unk = List.map2 (fun s t -> process_source_full_after_parser s t) !
       Globals.source_files parsed_content in
   ()
 

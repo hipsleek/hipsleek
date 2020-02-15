@@ -270,7 +270,7 @@ let rec read_prompt (process: GlobProver.prover_process_t) : string =
 (*send one command to cvc3 process without expecting any answer*)
 let send_cmd (process: GlobProver.prover_process_t) (cmd: string): unit = 
   try
-    let todo_unk = read_prompt process in
+    let _todo_unk = read_prompt process in
     let () = output_string process.outchannel cmd in
     let () = log_text_to_cvc3  cmd in    
     let () = flush process.outchannel in

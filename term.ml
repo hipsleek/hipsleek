@@ -726,16 +726,16 @@ let check_term_assume prog lhs rhs =
     let t_ann_d, dst_il = (dst_tinfo.lex_ann, dst_tinfo.lex_tmp) in
 
     begin match t_ann_d with
-      | TermR _ -> let trel = Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d pos in ()
-      | _ -> 
+      | TermR _ -> let _trel = Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d pos in ()
+      | _ ->
         let t_ann_s, _, _ = match lhs_lex with 
           | Some (t_ann, el, il) -> (t_ann, el, il)
           | None -> raise LexVar_Not_found in
         begin match t_ann_s with
-          | TermU _ -> let trel = Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos in ()
+          | TermU _ -> let _trel = Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos in ()
           | Term -> 
             begin match t_ann_d with
-              | TermU _ -> let trel = Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos in ()
+              | TermU _ -> let _trel = Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos in ()
               | _ -> () 
             end
           | _ -> () 
@@ -1146,7 +1146,7 @@ let phase_num_infer_by_scc () =
       let cl = List.concat (List.map (fun (_, l) -> l) pl) in
       x_tinfo_hp (add_str ("scc " ^ (string_of_int i))
                     (pr_list !CP.print_formula)) cl no_pos;
-      let todo_unk = phase_num_infer_one_scc cl in ()
+      let _todo_unk = phase_num_infer_one_scc cl in ()
     ) phase_constr_tbl
 
 let phase_num_infer_by_scc () =
@@ -1330,7 +1330,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
               x_tinfo_hp (add_str "Phase Numbering"
                             (pr_list (pr_pair !print_sv string_of_int))) subst no_pos
             end;
-            let n_tbl = Cast.proc_decls_map (fun proc ->
+            let _n_tbl = Cast.proc_decls_map (fun proc ->
                 if (List.mem proc.Cast.proc_name mutual_grp) 
                 then subst_phase_num_proc rp subst proc
                 else proc

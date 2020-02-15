@@ -723,7 +723,7 @@ struct
               (* let () = y_binfo_hp (self # string_of) in *)
               (get elist)
           in
-          let pr = pr_pair string_of_int string_of_int in
+          let _pr = pr_pair string_of_int string_of_int in
           (* Debug.no_1 "get_hash2" pr_id pr *) foo f
         end
       method get_exc_hash (f:string) : nflow option =
@@ -996,7 +996,7 @@ struct
         let first = List.hd ls in
         let last = List.nth ls (len-1) in
         ((first,last),(list_pair_of_set s3))
-  let union_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow = f2 (*for testing*)
+  let union_flow  ((((s1,b1),lst1):dflow) as _f1) ((((s2,b2),lst2):dflow) as f2) : dflow = f2 (*for testing*)
   let remove_dups1 (n:flow_entry list) = Gen.BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
   let compute_hierarchy_aux cnt elist =
     let rec lrr (f1:string)(f2:string):(((string*string*dflow) list)*dflow) =
