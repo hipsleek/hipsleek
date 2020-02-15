@@ -369,7 +369,7 @@ let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
 let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
  let pr = pr_list (fun p -> Cprinter.string_of_struc_formula (p.C.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *)) in
  let pr2 =  (pr_list (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula (p.C.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *))))) in
-  let pr_out (a,b) = (pr_pair
+  let _pr_out (a,b) = (pr_pair
     (fun a -> a.Cast.prog_rel_decls # string_of) 
     pr2 )  (a,b)
   in 

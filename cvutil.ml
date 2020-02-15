@@ -117,7 +117,7 @@ let pr_svl = pr_list pr_sv
 let elim_absent_nodes view_xpure h0 which_xpure =
   if !Globals.old_keep_absent then (h0,[])
   else
-    let pf = CP.mkTrue no_pos in
+    let _pf = CP.mkTrue no_pos in
     let f a hf = match hf with
       | DataNode ({ h_formula_data_node = pn;
                     (* h_formula_data_arguments = args; *)
@@ -496,7 +496,7 @@ let rec view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vi
   | ((vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) as vis)::rest -> begin
       try
         (* let todo_unk = List.find (fun (vname1,_,_,_,_,_,_) -> String.compare vname vname1 = 0) (unsat_vis@sat_vis@unknown_vis) in *)
-        let todo_unk = List.find (fun (vname1) -> String.compare vname vname1 = 0) done_vnames in
+        let _todo_unk = List.find (fun (vname1) -> String.compare vname vname1 = 0) done_vnames in
         view_unsat_check_topdown_x prog rest (sat_vis) (unsat_vis)
           unknown_vis term_first_sat (done_vnames)
       (* false *)
@@ -1816,7 +1816,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
             then (List.hd (CP.get_rel_args (List.hd lookup_rel)))
             else  (List.hd rel_vars) in
           (*let r_sv = (List.hd rel_vars) in*)
-          let link_var = (last args) in
+          let _link_var = (last args) in
           (*let () = print_endline (Cprinter.string_of_h_formula h) in*)
           let view_heaps = List.filter CF.is_view (CF.split_star_conjunctions h) in
           (*let () = (print_endline (string_of_int (List.length view_heaps))) in*)

@@ -208,7 +208,7 @@ let rec fv_intersect_no_inter (fl1 : (ident * (CP.exp list)) list) (fl2: (ident 
   : (ident * (CP.exp list)) list =
   match fl2 with
   | [] -> fl1
-  | x::xs -> let (todo_unk) = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+  | x::xs -> let _todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
                                          then (fst c), intersect_list_val (snd c) (snd x) 
                                          else c) fl1 in fv_intersect_no_inter fl1 xs
 
@@ -216,7 +216,7 @@ let rec fv_intersect (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp
   : (ident * (CP.exp list)) list =
   match fl2 with
   | [] -> fl1
-  | x::xs -> let (todo_unk) = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+  | x::xs -> let _todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
                                          then (fst c), intersect_list_val (snd c) (snd x) 
                                          else c) fl1 in fv_intersect fl1 xs				
 
@@ -224,32 +224,28 @@ let rec fv_diff (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list
   : (ident * (CP.exp list)) list =
   match fl2 with
   | [] -> fl1
-  | x::xs -> let todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+  | x::xs -> let _todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
                                        then (fst c),intersect_list_val (snd c) (snd x) 
                                        else c) fl1 in fv_diff fl1 xs
 
 let rec fl_intersect_no_inter (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list) : (ident * (CP.ann list)) list =
   match fl2 with
   | [] -> fl1
-  | x::xs -> let todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+  | x::xs -> let _todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
                                        then (fst c), intersect_list_ann_no_inter (snd c) (snd x) 
                                        else c) fl1 in fl_intersect_no_inter fl1 xs
 
 let rec fl_intersect (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list) : (ident * (CP.ann list)) list =
   match fl2 with
   | [] -> fl1
-  | x::xs -> let todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+  | x::xs -> let _todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
                                        then (fst c), intersect_list_ann (snd c) (snd x) 
                                        else c) fl1 in fl_intersect fl1 xs				
 
 let rec fl_diff (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list) : (ident * (CP.ann list)) list =
   match fl2 with
   | [] -> fl1
-  | x::xs -> let todo_unk = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
-                                       then 
-                                         let (an,_), _, _ = Imm.replace_list_ann_mem (snd c) (snd x) [] [][] in
-                                         (fst c),an
-                                       else c) fl1 in fl_diff fl1 xs
+  | x::xs -> fl_diff fl1 xs
 
 let get_field_name (fl : (ident * (CP.ann list)) list) : ident = 
   try fst (List.hd fl)
@@ -1141,7 +1137,6 @@ let rec compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.
       res,p
     | CF.Phase h ->  let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rd aset in
       let h2_h,h2_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rw aset in
-      let todo_unk = CP.mkAnd h1_p h2_p h.CF.h_formula_phase_pos in
       CF.Phase {h with CF.h_formula_phase_rd = h1_h;
                        CF.h_formula_phase_rw = h2_h;},(CP.mkTrue no_pos)
     | _ -> f,(CP.mkTrue no_pos)
@@ -1386,7 +1381,7 @@ let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spe
   : bool * (CP.formula option) * (CP.formula option)  * (CP.formula option)=
   let l = CP.Var(l,no_pos) in
   let r = CP.Var(r,no_pos) in
-  let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+  let _c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
   (* implicit instantiation of @v made stronger into an equality *)
   (* two examples in ann1.slk fail otherwise; unsound when we have *)
   (* multiple implicit being instantiated ; use explicit if needed *)

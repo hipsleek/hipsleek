@@ -275,7 +275,7 @@ let collect_prim_args_base_formula ptr_vars h p =
           List.exists (fun pta -> mem pta ptr_vars) pt_aliases
       in
       if is_mem_ptr_vars then 
-        let prim_args = List.filter is_prim_type args in 
+        let _prim_args = List.filter is_prim_type args in 
         Some (h_f, args)
       else Some (h_f, [])
     | _ -> None

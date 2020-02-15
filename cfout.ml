@@ -67,13 +67,13 @@ let get_all_data_fields prog=
 let shorten_svl_avoid_field prog fv =
   let fields = get_all_data_fields prog in
   let () = Debug.ninfo_hprint (add_str "fields" (pr_list pr_id)) fields no_pos in
-  let pad = "0" in
+  let _pad = "0" in
   (* let n_tbl = Hashtbl.create 1 in *)
   let reg = Str.regexp "[0-9]*_.*" in
   let n_svl = List.map (fun sv ->
       match sv with
         CP.SpecVar(t,id,pr) ->
-        let cut_id0 = Str.global_replace reg "" (id ) in
+        let _cut_id0 = Str.global_replace reg "" (id ) in
         (* let cut_id = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) cut_id0 fields then *)
         (*   cut_id0 ^ pad *)
         (* else cut_id0 *)

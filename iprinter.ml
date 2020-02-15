@@ -1461,12 +1461,12 @@ let string_of_view_decl v =
   ^ "\nextends" ^ extn_str
 
 let string_of_view_decl_repair v =
-  let extn_str =
+  let _extn_str =
     match v.view_derv_from with
     | None -> ""
     | Some regex_ids -> string_of_regex_id_star_list regex_ids in
   let pr_exp = string_of_formula_exp in
-  let pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
+  let _pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
   v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^
   (string_of_struc_formula_view v.view_formula)
 
@@ -1702,7 +1702,7 @@ let string_of_data_repair cdef =
     let dd=cdef.data_methods in
     if dd==[] then ""
     else "\n"^(String.concat "\n" (List.map string_of_proc_decl dd)) in
-  let data_name = cdef.data_name in
+  let _data_name = cdef.data_name in
   let helper f =
     let tmp = string_of_decl_repair f in tmp in
     (* if is_substr data_name tmp then "struct " ^ tmp

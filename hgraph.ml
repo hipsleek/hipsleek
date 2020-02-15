@@ -594,7 +594,7 @@ and check_overlapping_sccs_nested arr_adjs scc=
     (* let () = Debug.info_pprint (" ls_ones: " ^ (pr1 ls_ones)) no_pos in *)
     let ls_ones1 = List.filter (fun id -> not (List.mem id mul_ins)) ls_ones in
     (* let () = Debug.info_pprint (" ls_ones1: " ^ (pr1 ls_ones1)) no_pos in *)
-    let (todo_unk:int list) = List.map (fun i -> let () =  arr_adjs.(i) <- [] in i) ls_ones1 in
+    let (_todo_unk:int list) = List.map (fun i -> let () =  arr_adjs.(i) <- [] in i) ls_ones1 in
     (* let () = Debug.info_pprint (" scc: down 1 ") no_pos in *)
     let nested_eqs,_,_= build_scc_arr arr_adjs in
     let used_mul_outs,used_mul_ins = List.split nested_eqs in
@@ -1873,7 +1873,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     let e = look_up_edge edges b_id e_id in
     if e.he_kind then [(b_id)] else []
   in
-  let check_non_touch tar_non_touch required_b_non_touch_ids e_non_touch_id=
+  let _check_non_touch tar_non_touch required_b_non_touch_ids e_non_touch_id=
     let b_non_touch_ids = List.fold_left (fun r (b_id, e_id)->
         if e_id = e_non_touch_id then r@[b_id] else r
       ) [] tar_non_touch in
@@ -1909,7 +1909,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         pto_nontouch
     else true
   in
-  let is_non_touch_two_way tar_edges tar_e_seg (b_id, e_id)=
+  let _is_non_touch_two_way tar_edges tar_e_seg (b_id, e_id)=
     let () = Debug.ninfo_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
     let e = look_up_edge tar_edges b_id e_id in
     if e.he_kind then
@@ -1932,13 +1932,13 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       if e.he_kind then is_touchable rest edges else true
       (* if e.he_kind then false else is_touchable rest edges *)
   in
-  let rec look_up_touch_edges edges vs res=
-    match vs with
-    | [] -> res
-    | v::rest ->
-      let e_vs = look_up_end_of_edges edges v in
-      look_up_touch_edges edges rest (res@e_vs)
-  in
+  (* let rec look_up_touch_edges edges vs res=
+   *   match vs with
+   *   | [] -> res
+   *   | v::rest ->
+   *     let e_vs = look_up_end_of_edges edges v in
+   *     look_up_touch_edges edges rest (res@e_vs)
+   * in *)
   let consistent_two_way_touch fwd_path tar_edges src_edges fwd_edge rev_edge=
     let rev_tar_b = subst map rev_edge.he_b_id in
     let rev_tar_e = subst map rev_edge.he_e_id in
@@ -1964,7 +1964,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       (*end 11-01*)
   in
   (*for each edge of src*)
-  let check_one_src_edge_old_x sedge=
+  let _check_one_src_edge_old_x sedge=
     (*map to id of tar edge*)
     let tar_b = subst map sedge.he_b_id in
     let tar_e = subst map sedge.he_e_id in
@@ -2008,7 +2008,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             (*  let is_non_touch = check_non_touch hg_tar.hg_non_touch_edges required_tar_non_touch_b_ids tar_e in *)
             let check_rev =
               try
-                let todo_unk = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
+                let _todo_unk = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
                 true
               with _ -> false
             in
@@ -2038,18 +2038,18 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
               end
   in
   (*waiting = (v1...vi * vi) list *)
-  let rec dfs e waiting done_vs=
-    match waiting with
-    | (path, v)::rest -> (*v != e*)
-      let v_children = look_up_children v hg_tar.hg_adjg2 hg_tar.hg_adj1 hg_tar.hg_adj0 in
-      if List.mem e v_children then
-        (true, path@[e])
-      else
-        let not_trav = Gen.BList.difference_eq (=) v_children done_vs in
-        let path_children = List.map (fun v_child -> (path@[(v_child)], v_child)) not_trav in
-        dfs e (path_children@rest) (done_vs@not_trav)
-    | [] -> false,[]
-  in
+  (* let rec dfs e waiting done_vs=
+   *   match waiting with
+   *   | (path, v)::rest -> (\*v != e*\)
+   *     let v_children = look_up_children v hg_tar.hg_adjg2 hg_tar.hg_adj1 hg_tar.hg_adj0 in
+   *     if List.mem e v_children then
+   *       (true, path@[e])
+   *     else
+   *       let not_trav = Gen.BList.difference_eq (=) v_children done_vs in
+   *       let path_children = List.map (fun v_child -> (path@[(v_child)], v_child)) not_trav in
+   *       dfs e (path_children@rest) (done_vs@not_trav)
+   *   | [] -> false,[]
+   * in *)
   let has_non_emp_path path=
     List.exists (fun (b,e) ->
         let tedge = look_up_edge hg_tar.hg_edges b e in
@@ -2085,7 +2085,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         let () = Debug.ninfo_hprint (add_str "last" string_of_int) e no_pos in
         let next_edges = look_up_next_edges hg_tar.hg_edges e in
         try
-          let e = List.find (fun e -> e.he_kind) next_edges in
+          let _e = List.find (fun e -> e.he_kind) next_edges in
           true
         with _ ->
           (*remove vertexes which travesed*)
@@ -2122,7 +2122,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         is_valid
       end
   in
-  let check_two_way_may_emp_tar_paths sedge tar_path=
+  let _check_two_way_may_emp_tar_paths sedge tar_path=
     (*rev:*)
     let tar_b = sedge.he_e_id in
     let tar_e = sedge.he_b_id in
@@ -2234,19 +2234,19 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
   in
   (******************)
   (*testcase: ?*)
-  let rec check_non_overlap_paths map_sedge_paths=
-    match map_sedge_paths with
-    | [_] -> true
-    | (_,path1)::rest ->
-      let () = Debug.ninfo_hprint (add_str "path1" (pr_list (pr_pair string_of_int string_of_int) )) path1 no_pos in
-      if List.exists (fun (_,path2) ->
-          let () = Debug.ninfo_hprint (add_str "path2" (pr_list (pr_pair string_of_int string_of_int) )) path2 no_pos in
-          List.exists (fun id -> List.mem id path2) path1
-        ) rest
-      then false
-      else check_non_overlap_paths rest
-    | [] -> true
-  in
+  (* let rec check_non_overlap_paths map_sedge_paths=
+   *   match map_sedge_paths with
+   *   | [_] -> true
+   *   | (_,path1)::rest ->
+   *     let () = Debug.ninfo_hprint (add_str "path1" (pr_list (pr_pair string_of_int string_of_int) )) path1 no_pos in
+   *     if List.exists (fun (_,path2) ->
+   *         let () = Debug.ninfo_hprint (add_str "path2" (pr_list (pr_pair string_of_int string_of_int) )) path2 no_pos in
+   *         List.exists (fun id -> List.mem id path2) path1
+   *       ) rest
+   *     then false
+   *     else check_non_overlap_paths rest
+   *   | [] -> true
+   * in *)
   (*******************************)
   (* List.for_all check_one_src_edge hg_src.hg_edges *)
   let b, map_src_edge_path = loop_helper hg_src.hg_edges [] in
@@ -2290,7 +2290,7 @@ let check_homomorphism_x non_touch_check hg_src hg_tar=
         check_loop first_sv sv1 rest1 src_edges (res@[(cur_sv, sv1)])
       else []
   in
-  let look_up_touch_chains src_edges scc=
+  let _look_up_touch_chains src_edges scc=
     match scc with
     | [] | [_] -> []
     | v1::v2::rest -> begin

@@ -95,7 +95,7 @@ let norm_mult_exp in_lhs e =
             (mkIConst (if in_lhs then c else -c) pos) el), 0
 
 let norm_add_exp in_lhs e =
-  let pos = pos_of_exp e in
+  let _pos = pos_of_exp e in
   let el = split_add e in
   let cl, el = List.partition is_int el in
   let c = List.fold_left (fun a c -> a + (to_int_const c Ceil)) 0 cl in
@@ -155,7 +155,7 @@ let syscall cmd =
        Buffer.add_channel buf in_chn 1
      done
    with End_of_file -> ());
-  let todo_unk = Unix.close_process (in_chn, out_chn) in
+  let _todo_unk = Unix.close_process (in_chn, out_chn) in
   Buffer.contents buf
 
 let search_backward keyword str pos = 
@@ -169,11 +169,11 @@ exception Parse_error
 let clp_process_output lp_output =
   let len = String.length lp_output in
   try
-    let todo_unk = search_backward "ERROR" lp_output (len - 1) in
+    let _todo_unk = search_backward "ERROR" lp_output (len - 1) in
     Aborted
   with Not_found ->
     try 
-      let todo_unk = search_backward "infeasible" lp_output (len - 1) in
+      let _todo_unk = search_backward "infeasible" lp_output (len - 1) in
       Unsat
     with Not_found -> 
       try

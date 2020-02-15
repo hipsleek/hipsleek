@@ -148,7 +148,7 @@ let syscall cmd =
        Buffer.add_channel buf ic 1
      done
    with End_of_file -> ());
-  let todo_unk = Unix.close_process (ic, oc) in
+  let _todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
 

@@ -95,7 +95,7 @@ let write_to_file java_code file_name : unit =
 let rec compile_prog (prog : C.prog_decl) source : unit =
   let java_code = Buffer.create 10240 in
   (* Compile data declarations *)
-  let todo_unk = List.map 
+  let _todo_unk = List.map 
       (fun ddef -> compile_data prog ddef java_code) 
       prog.C.prog_data_decls 
   in
@@ -211,7 +211,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
     let output_vars = Gen.BList.difference_eq CP.eq_spec_var pre_fv farg_spec_vars in
     (* build vmap *)
     let vmap = H.create 103 in
-    let todo_unk = List.map 
+    let _todo_unk = List.map 
         (fun fname -> H.add vmap fname (HExp ("this", fname, false))) farg_names in
     let () = Predcomp.precond_output := output_vars in
     let combined_exp, disj_procs, _ = 
@@ -288,7 +288,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
     let field_names = farg_names @ (List.map CP.name_of_spec_var pre_outvars) in
     (* build vmap *)
     let vmap = H.create 103 in
-    let todo_unk = List.map 
+    let _todo_unk = List.map 
         (fun fname -> H.add vmap fname (HExp ("this", fname, false))) field_names in
     (* compile formula *)
     let combined_exp, disj_procs, _ = gen_formula prog post vmap [] in

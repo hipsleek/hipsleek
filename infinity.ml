@@ -945,9 +945,9 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
                  | Var(sv1,_),IConst(_,_)
                  | IConst(_,_),Var(sv1,_) ->  
                    if BList.mem_eq eq_spec_var sv vl || BList.mem_eq eq_spec_var sv1 vl
-                   then            
+                   then
                      let e1_conv = sub_inf_list_exp e1 vl is_neg in
-                     let e2_conv = sub_inf_list_exp e2 vl is_neg in
+                     let _e2_conv = sub_inf_list_exp e2 vl is_neg in
                      Gt(e1_conv,e1_conv,pos),p_f
                    else p_f,tbf
                  | _, _ -> p_f,tbf)         

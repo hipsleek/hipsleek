@@ -769,7 +769,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let vs = List.map fst vars in (* where to store annotation? *)
   let vparams = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list vs) in
   (* let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in *)
-  let view_sv_vars = vs in
+  let _view_sv_vars = vs in
   (* let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in *)
   (* let _  = Immutable.split_sv in *)
   {
@@ -1448,7 +1448,7 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
 let is_hp_name prog id =
   let defs = prog.prog_hp_decls in
   try
-    let def = look_up_hp_def_raw defs id in
+    let _def = look_up_hp_def_raw defs id in
     true
   with _ -> false
 
@@ -2169,7 +2169,7 @@ let build_hierarchy (prog : prog_decl) =
       (CH.V.create {ch_node_name = cdef.data_parent_name;
                     ch_node_class = None;
                     ch_node_coercion = None}) in
-  let todo_unknown = List.map add_edge prog.prog_data_decls in
+  let _todo_unknown = List.map add_edge prog.prog_data_decls in
   if TraverseCH.has_cycle class_hierarchy then begin
     print_string ("Class hierarchy has cycles");
     failwith ("Class hierarchy has cycles");
@@ -2931,7 +2931,7 @@ let get_mut_vars_bu_x cprocs (e0 : exp): (ident list * ident list) =
     | Var { exp_var_name = id} -> Some [id]
     | _ -> None
   in
-  let get_vars e= fold_exp e f (List.concat) [] in
+  let _get_vars e= fold_exp e f (List.concat) [] in
   let rec collect_lhs_ass_vars e=
     match e with
     | Assign {exp_assign_lhs = id;
@@ -3005,7 +3005,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
       let () = if diff_args_i = [] then () else
           let () = x_tinfo_hp (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
           let hpargs = Cformula.get_hp_rel_pre_struc_formula (proc.proc_stk_of_static_specs # top) in
-          let todo_unk = List.map (fun (hp,args) ->
+          let _todo_unk = List.map (fun (hp,args) ->
               let s_args = List.map P.name_of_spec_var args in
               let inter = Gen.BList.intersect_eq string_cmp s_args diff_args_i in
               if inter = [] then () else
@@ -3134,7 +3134,7 @@ let is_complex_entailment_4graph prog ante conseq=
  *)
 let is_touching_view_x (vdecl: view_decl) : bool =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
-  let vname = vdecl.view_name in
+  let _vname = vdecl.view_name in
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_touching_branch branch = (
@@ -3331,7 +3331,7 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
           Some hf
         | _ -> None
       ) in
-    let todo_unk = F.transform_h_formula f_hf hf in
+    let _todo_unk = F.transform_h_formula f_hf hf in
     !views
   ) in
   let is_tail_recursive_branch (f: F.formula) = (
@@ -3408,7 +3408,7 @@ let collect_subs_from_view_formula_x (f: F.formula) (vd: view_decl)
     | _ -> None
   ) in
   let f_e _ = None in
-  let todo_unk = F.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_pf, f_b, f_e)) f in
+  let _todo_unk = F.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_pf, f_b, f_e)) f in
   !subs_list
 
 let collect_subs_from_view_formula (f: F.formula) (vd: view_decl)
@@ -3490,7 +3490,7 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
  * they are the pointer from self to the last nodes in predicates
  *)
 let compute_view_residents_x (vd: view_decl) : P.spec_var list =
-  let vname = vd.view_name in
+  let _vname = vd.view_name in
   let dname = vd.view_data_name in
   let self_var = P.SpecVar (Named dname, self, Unprimed) in
   let branches, _ = List.split vd.view_un_struc_formula in
@@ -3510,7 +3510,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
       ) in
     let () = List.iter (fun f->
         let (hf,pf,_,_,_,_) = F.split_components f in
-        let todo_unk = F.transform_h_formula collect_node hf in
+        let _todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
         residents := F.find_close !residents eqs;
       ) branches in
@@ -3519,7 +3519,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
         (* unfold the inductive formulathen collect residents *)
         let new_f = unfold_base_case_formula f vd base_f in
         let (hf,pf,_,_,_,_) = F.split_components new_f in
-        let todo_unk = F.transform_h_formula collect_node hf in
+        let _todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
         residents := F.find_close !residents eqs;
       ) induct_fs in
@@ -3685,7 +3685,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
     let pos = vdecl.view_pos in
     let vname = vdecl.view_name in
     let dname = vdecl.view_data_name in
-    let self_sv = P.SpecVar (Named dname, self, Unprimed) in
+    let _self_sv = P.SpecVar (Named dname, self, Unprimed) in
     let () = if (eq_str dname "") then (
         report_warning pos "compute_view_fw_bw: data name in view is empty";
       ) in
@@ -3871,7 +3871,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
        * P.spec_var list * (data_decl * ident) list ) option =
   let pr_vd = !print_view_decl in
   let pr_svl = pr_list !P.print_sv in
-  let pr_idl = pr_list idf in
+  let _pr_idl = pr_list idf in
   let pr_out (fwp,fwf,bwp,bwf) = (
     let fwp_s = pr_svl fwp in
     let fwf_s = pr_list (fun(d,f) -> d.data_name^"."^f) fwf in
@@ -4192,7 +4192,7 @@ let get_sorted_view_decls prog =
 (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
 let repl_unfold_lemma u_lst lem =
   let body = lem.coercion_body in
-  let body_norm = lem.coercion_body_norm in
+  let _body_norm = lem.coercion_body_norm in
   let () = y_tinfo_hp (add_str "body" !F.print_formula) body in
   let body = repl_unfold_formula "" u_lst body in
   let () = y_tinfo_hp (add_str "unfolded body" !F.print_formula) body in

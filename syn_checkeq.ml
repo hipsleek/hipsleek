@@ -448,7 +448,7 @@ let syntax_nodes_match_x lhs0 rhs0 =
     List.length dn1.Cformula.h_formula_data_arguments = List.length dn2.Cformula.h_formula_data_arguments &&
     CP.diff_svl dn1.Cformula.h_formula_data_arguments dn2.Cformula.h_formula_data_arguments = []
   in
-  let check_eq_data_node dn1 dn2=
+  let _check_eq_data_node dn1 dn2=
     CP.eq_spec_var dn1.Cformula.h_formula_data_node dn2.Cformula.h_formula_data_node
   in
   let xpure_dnode pos dn=
@@ -492,7 +492,7 @@ let syntax_nodes_match_x lhs0 rhs0 =
     (*data nodes that not in a cicle*)
     let r_hds = List.filter (fun hd ->
         try
-          let todo_unk = List.find (fun sv -> CP.mem_svl sv root_ptrs) hd.Cformula.h_formula_data_arguments in
+          let _todo_unk = List.find (fun sv -> CP.mem_svl sv root_ptrs) hd.Cformula.h_formula_data_arguments in
           false
         with _ -> true
       ) r_hds0 in
@@ -537,8 +537,8 @@ let syntax_vnodes_match_x lhs0 rhs0 =
   let l_hvs = Cformula.get_views lhs0 in
   let r_hvs = Cformula.get_views rhs0 in
   let matched_view_nodes = Gen.BList.intersect_eq check_exact_eq_view_node l_hvs r_hvs in
-  let l_hvs = Gen.BList.intersect_eq check_eq_view_node l_hvs matched_view_nodes in
-  let r_hvs = Gen.BList.intersect_eq check_eq_view_node r_hvs matched_view_nodes in
+  let _l_hvs = Gen.BList.intersect_eq check_eq_view_node l_hvs matched_view_nodes in
+  let _r_hvs = Gen.BList.intersect_eq check_eq_view_node r_hvs matched_view_nodes in
   let matched_svl = (List.map (fun hv -> hv.Cformula.h_formula_view_node) matched_view_nodes) in
   if matched_svl = [] then (false, lhs0, rhs0)
   else

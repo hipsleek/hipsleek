@@ -100,7 +100,7 @@ class graphFindBCC =
                     parents <- MapDFS.add w v1 parents;
                     (* print_endline ("pushed:" ^ w ^ " " ^ v1); *)
                     Stack.push temp_edge stack;
-                    loopFindBCC graph w v2;
+                    let _ = loopFindBCC graph w v2 in
                     (*													print_endline ("new here with current temp" ^temp_edge.ver1^temp_edge.ver2);*)
                     (*													let w_high = MapDFS.find w high in*)
                     let wc = (self)#find_cell w map_list in	

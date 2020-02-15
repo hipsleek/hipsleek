@@ -369,7 +369,7 @@ let unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs=
   (*   | CP.HPRelDefn (hp, root, args) -> r@[(hp, def, root::args, Sautil.is_top_guard_hp_def link_hps def)] *)
   (*   | _ -> r *)
   (* ) [] hp_defs in *)
-  let unfold_lhs_one (b, r) cs=
+  let _unfold_lhs_one (b, r) cs=
     let lhps = Cformula.get_hp_rel_name_formula cs.Cformula.hprel_lhs in
     let rhps = Cformula.get_hp_rel_name_formula cs.Cformula.hprel_rhs in
     let l_inter = CP.intersect_svl lhps to_unfold_hps in
@@ -1456,7 +1456,7 @@ let def_subst_fix_x prog post_hps unk_hps prefix_hps hpdefs=
       (*may be wrong: should reevauate root*)
       if b then
         let r, others = Sautil.find_root prog (hp::unk_hps) args (List.map fst fs1_wg) in
-        let todo_unk = CA.set_proot_hp_def_raw (Sautil.get_pos args 0 r) prog.CA.prog_hp_decls (CP.name_of_spec_var hp) in
+        let _todo_unk = CA.set_proot_hp_def_raw (Sautil.get_pos args 0 r) prog.CA.prog_hp_decls (CP.name_of_spec_var hp) in
         (b , Cformula.mk_hp_rel_def1 (* hpdef.Cformula.def_cat *) (CP.HPRelDefn (hp, r, others )) hprel (* [(Cformula.disj_of_list fs1 no_pos, g)] *) fs1_wg None)
       else (false, hpdef)
     else
@@ -2458,7 +2458,7 @@ and infer_shapes_from_obligation_x iprog prog iflow proc_name callee_hps is_pre 
           (*for each oblg, subst + simplify*)
           let rem_constr2 = Sacore.trans_constr_hp_2_view iprog prog proc_name is.CF.is_hp_defs
               in_hp_names chprels_decl rem_constr in
-          let todo_unk = List.fold_left (fun (r1,r2) cs ->
+          let _todo_unk = List.fold_left (fun (r1,r2) cs ->
               collect_ho_ass iprog prog is_pre def_hps unk_hps (r1,r2) cs
             ) ([],[]) rem_constr2 in
           ()
@@ -2720,7 +2720,7 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
         def_subst_fix prog is_post2a.CF.is_post_hps dang_hps is_post2a.CF.is_prefix_hps (hp_defs2)
       else (hp_defs2)
     in
-    let hp_defs4 = List.map (fun def ->
+    let _hp_defs4 = List.map (fun def ->
         let hp0,args0 = CF.extract_HRel def.CF.def_lhs in
         if CP.mem_svl hp0 is_post2a.CF.is_sel_hps then
           let n_rhs = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) def.CF.def_rhs in
@@ -2891,7 +2891,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
         let unfold_fnc f sv = Solver.unfold_nth 45 (prog, None) f sv true 0 no_pos in
         let helper f = Cfutil.unfold_non_rec_views prog unfold_fnc (Cast.is_rec_view_def prog) f in
         let hp_defs4 = List.map (fun def ->
-            let n_def = match def.CF.def_cat with
+            let _n_def = match def.CF.def_cat with
               | CP.HPRelDefn (hp, r, args) ->
                 if CP.mem_svl hp post_hps then
                   let n_rhs = List.map (fun (f, og) ->
@@ -2985,8 +2985,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps iflow=
     in
     (* let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in *)
     let () = Debug.ninfo_hprint (add_str "    link_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl)))  link_hpargs no_pos in
-    let hp_defs1,tupled_defs = Sautil.partition_tupled is.CF.is_hp_defs in
-    let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_dang_hpargs in
+    let _hp_defs1,_tupled_defs = Sautil.partition_tupled is.CF.is_hp_defs in
+    let _dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_dang_hpargs in
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_link_hpargs in
     let () = DD.ninfo_hprint (add_str "   is.Cformula.is_dang_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.Cformula.is_dang_hpargs no_pos in
     let () = DD.ninfo_hprint (add_str "   is.Cformula.is_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.Cformula.is_link_hpargs no_pos in

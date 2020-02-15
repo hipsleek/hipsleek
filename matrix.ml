@@ -141,7 +141,7 @@ let extract_answer input =
     | [] -> false
   in
   let extract_anwer_helper line =
-    let sum = List.fold_left (fun r i -> r+.i) 0. line in
+    let _sum = List.fold_left (fun r i -> r+.i) 0. line in
     let last = List.nth line ((List.length line)-1) in
     if has_solution line && is_int last
     then

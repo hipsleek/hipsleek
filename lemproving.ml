@@ -76,7 +76,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   (* let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
   (* let ctx = CF.build_context ctx ante no_pos in *)
 
-  let ctx = match ctx with
+  let _ctx = match ctx with
     | CF.SuccCtx l -> 
       let newl = List.map (fun ct -> 
           let nctx = CF.set_context_formula ct ante in

@@ -44,7 +44,7 @@ let cleanUpFormulas_x (ante:CF.formula) (conseq:CF.formula) : (CF.formula*CF.for
   else 
     (*  H_lhs & p1 |- ex v . H_rhs & p2*)
     let aev, ah, ap, avp, _, _, _, _, pos = CF.all_components ante in
-    let cev, ch, cp, cvp, _, _, _, _, _ = CF.all_components conseq in
+    let _cev, _ch, _cp, _cvp, _, _, _, _, _ = CF.all_components conseq in
     let a_fv = CF.fv ante in
     let com_vars = Gen.BList.intersect_eq CP.eq_spec_var a_fv (CF.fv conseq) in
     let a_h_fv = CF.h_fv ah in

@@ -651,7 +651,7 @@ let xpure_sym = ref ((fun p h mf xp -> failwith x_tbi):prog_decl -> h_formula ->
 let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   let hrel_stk = new Gen.stack in
-  let aset = posib_r_aliases in
+  let _aset = posib_r_aliases in
   let lhs_pure = MCP.pure_of_mix lhs_p in
   let rhs_pure = MCP.pure_of_mix rhs_p in
   let eqns' = MCP.ptr_equations_without_null lhs_p in
@@ -748,7 +748,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let asets = x_add_1 Csvutil.alias_nth 3 ((root_ptr, root_ptr) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets root_ptr in (* find the alias set containing p *)
     let () = y_tinfo_hp (add_str "paset:1" (pr_list (!CP.print_sv))) paset in
-    let view_root_flag = match view_root_rhs with
+    let _view_root_flag = match view_root_rhs with
       | None -> false
       | Some _ -> true in
     let rhs_ptr = root_ptr in
@@ -887,7 +887,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* extr_ptr_eqn inp1 : 0<=i:NUM & a:arrI=2+i:NUM & x:arrI=2+i:NUM *)
                 (* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
                 (* if implicit inst, use weaker same_base instead *)
-                let impl_flag = same_base && is_es_inst_vars rhs_ptr  in
+                let _impl_flag = same_base && is_es_inst_vars rhs_ptr  in
                 let () =  y_tinfo_hp (add_str "same_base" string_of_bool) same_base  in
                 if true (* same_base *) (* !Globals.adhoc_flag_6 || same_base *)  then
                   (* let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in *)
@@ -995,7 +995,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         if lst==[] then paset
         else (List.map fst lst)@paset
        else paset in
-    let paset_with_reason =
+    let _paset_with_reason =
       let orgin_set = List.map (fun v -> (v,None)) paset in
       (orgin_set)@(List.map (fun (f,s,t) -> (f,s))lst_with_reason)
     in
@@ -1228,7 +1228,7 @@ and choose_full_mater_coercion estate l_vname l_vargs r_vname r_aset (c:coercion
   let pr = Cprinter.string_of_h_formula in
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
-  let pr2 ls = pr_list pr4 ls in
+  let _pr2 ls = pr_list pr4 ls in
   (* let pr (c,_) = string_of_coercion c in *)
   Debug.no_3 "choose_full_mater_coercion" pr_id pr_svl pr_svl (* (pr_option pr) *) (pr_option pr_none) (fun _ _ _  -> choose_full_mater_coercion_x estate l_vname l_vargs  r_vname r_aset c) l_vname l_vargs  r_aset 
 
@@ -1727,7 +1727,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
                  h_formula_view_imm = imm1;
                  h_formula_view_perm = perm1;
                  h_formula_view_arguments = vs1;
-                 h_formula_view_name = c}) as v -> (
+                 h_formula_view_name = c}) as _v -> (
         let view_root_lhs = get_root_view prog c p1 vs1 in
         let anns = get_node_annot_args f in
         match rhs_node with
@@ -1800,7 +1800,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
             let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
             let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
             let pr4 = (add_str "match_type" string_of_match_type) in
-            let pr = pr_quad pr1 pr2 pr3 pr4 in
+            let _pr = pr_quad pr1 pr2 pr3 pr4 in
             let args = p1::vs1 in
             let vmm = view_mater_match prog c args (* (p1::vs1) *) aset imm f anns in
             let () = x_tinfo_hp (add_str "view_mater_match" (pr_list pr_helper_res)) vmm no_pos in
@@ -1962,7 +1962,7 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
   let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l_x no_pos in
-  let pr_stack = (add_str "stack" (pr_list (pr_pair Cprinter.string_of_h_formula (pr_pair !CP.print_sv !CP.print_formula)))) in
+  let _pr_stack = (add_str "stack" (pr_list (pr_pair Cprinter.string_of_h_formula (pr_pair !CP.print_sv !CP.print_formula)))) in
   let lst = stk # get_stk in
   let find r = try
       Some (fst (snd (List.find (fun (hf,_) -> hf==r) lst)))
@@ -2179,7 +2179,7 @@ and filter_lemmas_by_kind l k =
 
 and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs)
     (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res lhs rhs remap=
-  let extract_node_info hnode=
+  let _extract_node_info hnode=
     match hnode with
     | ViewNode vn -> (vn.h_formula_view_node, vn.h_formula_view_arguments)
     | DataNode dn -> (dn.h_formula_data_node, dn.h_formula_data_arguments)
@@ -2599,7 +2599,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let a2 = (
                   if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
                      (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
-                    let a21 = (1,M_match m_res) in
+                    let _a21 = (1,M_match m_res) in
                     let () = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
                     let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
                     (* (1,Cond_action [a21;a22]) *) a22
@@ -2866,7 +2866,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                       else
                         let vl = List.hd lvs in
                         if syn_lem_typ=3 || (syn_lem_typ=1 && check_lemma_not_exist vl vr) then
-                          let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                          let _new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                           (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
                           let unfold_view_opt = if syn_lem_typ = 3 then
                               None
@@ -3006,7 +3006,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             in
             let () = x_tinfo_hp (add_str "cyclic " pr_id) " 4" no_pos in
             let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
-            let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
+            let _new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
             let uf_i = if new_orig_l then 0 else 1 in
             (* WN_all_lemma - is this overriding of lemmas? *)
             (* let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) vl_name dr.h_formula_data_name) in *)
@@ -3067,7 +3067,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
 
             let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name h_name) in
             (* let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) h_name vl_name) in *)
-            let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls in
+            let _left_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls in
             (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) right_ls in *)
             (* already handled by MaterializedArg (see ex16d2a.slk) *)
             let right_act = [] in 
@@ -3085,11 +3085,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               | _      -> (-1, x_add_1 norm_cond_action l)
             in res
           (* TODO:old_infer_heap *)
-          | HRel (hn1, args1, _) as lhs, (HRel (hn2, args2, _) as rhs) -> 
+          | HRel (hn1, args1, _) as _lhs, (HRel (hn2, args2, _) as rhs) -> 
             let () = y_tinfo_pp "HREL vs HREL" in
             let pr_sv = Cprinter.string_of_spec_var in
-            let pr_res = add_str "act" pr_act in
-            let eq_fst_ptr ls1 ls2= match ls1,ls2 with
+            let _pr_res = add_str "act" pr_act in
+            let _eq_fst_ptr ls1 ls2= match ls1,ls2 with
               | sv1::_,sv2::_ -> CP.eq_spec_var sv1 sv2
               | _ -> false
             in
@@ -3109,7 +3109,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let l_vs = List.concat (List.map CP.afv args1) in
                 let r_vs = List.concat (List.map CP.afv args2) in
                 let flag = CF.is_exists_hp_rel hn1 estate in
-                let new_rhs_inst = check_compatible_eb ~inst_rhs:true emap l_vs r_vs lhs_b (* () *) rhs_b (* () *) in
+                let _new_rhs_inst = check_compatible_eb ~inst_rhs:true emap l_vs r_vs lhs_b (* () *) rhs_b (* () *) in
                 if flag then
                   let m_res_w_inst = {m_res with match_res_compatible = m_res.match_res_compatible@rhs_inst;} in
                   (2,M_infer_unfold (m_res_w_inst,rhs,HEmp))
@@ -3158,7 +3158,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             (* TODO : check if h_esname in the infer_vars *)
             (* let act1 = M_unfold (m_res, 1) in *)
             let act2 = M_infer_unfold (m_res,rhs,HEmp) in
-            let act3 = M_fold (m_res) in
+            let _act3 = M_fold (m_res) in
             let wt = 2 in 
             (* (wt,Search_action [(wt,act3);(wt,act2)]) *)
             (wt,act2)
@@ -3209,7 +3209,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | DataNode dl, _ -> (1,M_Nothing_to_do ("1matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ThreadNode dt, _ -> (1,M_Nothing_to_do ("2matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ViewNode vl, ViewNode vr ->
-         let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vl.CF.h_formula_view_name in
+         let _vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vl.CF.h_formula_view_name in
          let vl_name = vl.h_formula_view_name in
          let vr_name = vr.h_formula_view_name in
          let vl_view_orig = vl.h_formula_view_original in
@@ -3465,11 +3465,11 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         let vr_name = vr.h_formula_view_name in
         let vl_vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls vl_name in
         let vr_vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls vr_name in
-        let vl_is_rec = vl_vdef.view_is_rec in
-        let vl_is_prim = vl_vdef.view_is_prim in
-        let vr_is_rec = vr_vdef.view_is_rec in
-        let vl_self_pts = vl_vdef.view_pt_by_self in
-        let vr_self_pts = vr_vdef.view_pt_by_self in
+        let _vl_is_rec = vl_vdef.view_is_rec in
+        let _vl_is_prim = vl_vdef.view_is_prim in
+        let _vr_is_rec = vr_vdef.view_is_rec in
+        let _vl_self_pts = vl_vdef.view_pt_by_self in
+        let _vr_self_pts = vr_vdef.view_pt_by_self in
         let vl_view_orig = vl.h_formula_view_original in
         let vr_view_orig = vr.h_formula_view_original in
         let vl_view_origs = vl.h_formula_view_origins in
@@ -3536,14 +3536,14 @@ and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h
     (fun _ _ _ _ -> process_infer_heap_match_x ~vperm_set:vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (lhs_node_opt, rhs_node,rhs_rest)) lhs_h lhs_p rhs_node rhs_rest 
 
 
-and process_matches_norm prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
+and process_matches_norm prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as _ks) =
   let r = process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p)) in
   norm_single_action r 
 
 and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
   let pr = Cprinter.string_of_h_formula   in
   let pr1 = pr_list string_of_match_res in
-  let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
+  let _pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
   Debug.no_4 "process_matches" (add_str "lhs_h" pr)
     (add_str "matches" pr1)
@@ -3554,13 +3554,13 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:ma
 
 and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))=
   let eqns' = MCP.ptr_equations_without_null lhs_p in
-  let emap = CP.EMapSV.build_eset eqns' in
+  let _emap = CP.EMapSV.build_eset eqns' in
   if !Debug.devel_debug_steps then
     begin
       let pr = Cprinter.string_of_h_formula   in
       let pr1 = pr_list string_of_match_res in
-      let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
-      let pr3 = string_of_action_wt_res0 in
+      let _pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
+      let _pr3 = string_of_action_wt_res0 in
       let pr_estate = Cprinter.string_of_entail_state_short in
       x_info_zp (lazy ("process_matches (steps) :"
                        ^ ((add_str "\n ### LHS " pr) lhs_h)
@@ -3726,30 +3726,30 @@ and recalibrate_wt (w,a) =
     | _ -> if (w == -1) then (0,a) else (w,a) 
 
 and sort_wt_x (ys: action_wt list) : action_wt list =
-  let rec uncertain (_,a) = match a with 
-    | M_infer_heap _
-    | M_infer_unfold _
-    | M_infer_fold _
-    | M_base_case_fold _
-    | M_rd_lemma _
-    | M_lemma  _
-    | M_ramify_lemma _
-    | M_base_case_unfold _ 
-    | M_unfold _
-    | M_fold _
-    | M_seg_fold _
-    | M_acc_fold _
-    | M_split_match _ 
-    | M_match _ 
-    | M_cyclic _
-    | M_lhs_case _ -> false
-    | M_Nothing_to_do _ 
-    | Undefined_action _ 
-    | M_unmatched_rhs_data_node _ -> true
-    | Search_action l
-    | Seq_action l
-    | Cond_action l ->
-      List.exists uncertain l  in
+  (* let rec uncertain (_,a) = match a with 
+   *   | M_infer_heap _
+   *   | M_infer_unfold _
+   *   | M_infer_fold _
+   *   | M_base_case_fold _
+   *   | M_rd_lemma _
+   *   | M_lemma  _
+   *   | M_ramify_lemma _
+   *   | M_base_case_unfold _ 
+   *   | M_unfold _
+   *   | M_fold _
+   *   | M_seg_fold _
+   *   | M_acc_fold _
+   *   | M_split_match _ 
+   *   | M_match _ 
+   *   | M_cyclic _
+   *   | M_lhs_case _ -> false
+   *   | M_Nothing_to_do _ 
+   *   | Undefined_action _ 
+   *   | M_unmatched_rhs_data_node _ -> true
+   *   | Search_action l
+   *   | Seq_action l
+   *   | Cond_action l ->
+   *     List.exists uncertain l  in *)
   let ls = List.map recalibrate_wt ys in
   let () = y_tinfo_hp (add_str "ls, after recalibrate weight: " (pr_list string_of_action_wt_res_simpl)) ls in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
@@ -4032,12 +4032,12 @@ and compute_actions_y prog estate es (* list of right aliases *)
       is_normalizing (conseq:CF.formula) pos in
   if !Debug.devel_debug_steps then
     begin
-      let pr = Cprinter.string_of_h_formula   in
+      let _pr = Cprinter.string_of_h_formula   in
       (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
-      let pr3 = Cprinter.string_of_mix_formula in
+      let _pr3 = Cprinter.string_of_mix_formula in
       let pr1 x = pr_list (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) x in
-      let pr4 = pr_list Cprinter.string_of_spec_var in
-      let pr2 = string_of_action_res_simpl in
+      let _pr4 = pr_list Cprinter.string_of_spec_var in
+      let _pr2 = string_of_action_res_simpl in
       x_info_zp (lazy ("compute_action (steps) :"
                        (* ^ ((add_str "\n ### LHS " pr) lhs_h) *)
                        ^ ((add_str "\n ### RHS Cand " pr1) rhs_lst)

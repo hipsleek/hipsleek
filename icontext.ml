@@ -98,7 +98,7 @@ let ranking_frozen_mutrec_preds_x pr_hp_cs=
       let is_lhs_emp = (CF.extract_hrel_head cs.CF.hprel_lhs <> None) in
       let is_rhs_emp = (CF.extract_hrel_head cs.CF.hprel_rhs <> None) in
       let is_pure = try
-          let todo_unk = CF.extract_HRel_f cs.CF.hprel_lhs in
+          let _todo_unk = CF.extract_HRel_f cs.CF.hprel_lhs in
           Sautil.is_empty_f cs.CF.hprel_rhs
         with _ -> false
       in

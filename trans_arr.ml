@@ -729,7 +729,7 @@ let rec process_quantifier
 
 let process_quantifier
     (f:formula) : (formula) =
-  let pfo = function
+  let _pfo = function
     | Some fo -> !print_pure fo
     | None -> "None"
   in
@@ -1140,7 +1140,7 @@ let rec translate_array_relation
         then
           begin
             match (List.nth elst 0), (List.nth elst 1) with
-            | Var (SpecVar (t0,id0,p0) as old_array_sv,_), Var (SpecVar (t1,id1,p1) as new_array_sv,_) ->
+            | Var (SpecVar (t0,id0,p0) as _old_array_sv,_), Var (SpecVar (t1,id1,p1) as _new_array_sv,_) ->
               let new_array_at = ArrayAt (SpecVar (t1,id1,p1),[List.nth elst 3],no_pos) in
               let new_eq = BForm ((Eq (new_array_at,List.nth elst 2,no_pos),None),None )in
               let new_q = mk_spec_var "i" in
@@ -1319,7 +1319,7 @@ let translate_array_equality
     in
     List.fold_left (fun s item -> (string_of_item item)^" "^s) "" ts
   in
-  let pfo = function
+  let _pfo = function
     | Some f -> !print_pure f
     | None -> "None"
   in
@@ -2584,7 +2584,7 @@ let instantiate_forall
         | Exists (n_sv,sub_f,fl,loc)->
               Exists(n_sv,instantiate_with_one_sv_helper sub_f sv index,fl,loc)
     in
-    let contains_arr f arr=
+    let _contains_arr f arr=
       (* To Be Implemented *)
       true
     in
@@ -2915,15 +2915,15 @@ let rec translate_back_array_in_one_formula
               try
                 let const = int_of_string index in
                 IConst (const,no_pos)
-              with
-                Failure "int_of_string" ->
+              with _ ->
+                (* Failure "int_of_string" -> *)
                 let prefix_regexp = Str.regexp "PRI.*" in
                 if Str.string_match prefix_regexp index 0
                 then
                   let sv = SpecVar (Int,(List.nth (Str.split (Str.regexp "PRI") index) 0),Primed) in
                   Var (sv,no_pos)
-                  else
-                    Var (SpecVar (Int,index,Unprimed),no_pos)
+                else
+                  Var (SpecVar (Int,index,Unprimed),no_pos)
             in
             ArrayAt (n_sv,[n_exp],no_pos)
           else
@@ -3148,7 +3148,7 @@ let unchanged_fixpoint (rel:formula) (define:formula list) =
             List.fold_left (fun result rlst1 -> (List.map (fun rlst2 -> rlst1@rlst2) dres2)@result) (dres1@dres2) dres1
           | _ -> []
         in
-        let equal_unchanged (f1,t1,clst1) (f2,t2,clst2) =
+        let _equal_unchanged (f1,t1,clst1) (f2,t2,clst2) =
           (is_same_exp f1 f2)&&(is_same_exp t1 t2)
         in
         let list_of_list = List.flatten (List.map new_fun_helper flst) in

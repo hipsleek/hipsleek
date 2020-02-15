@@ -171,7 +171,7 @@ let should_merge_pre_hprels prog hprels =
         (heap_entail_exact_formula prog ex_hpr_lhs ex_hp_lhs) &&
         (heap_entail_exact_formula prog ex_hp_lhs ex_hpr_lhs)
       in
-      let equiv_guard () = 
+      let _equiv_guard () = 
         match hpr.CF.hprel_guard, hp.CF.hprel_guard with
         | None, None -> true
         | Some gr, Some g ->
@@ -357,7 +357,7 @@ let unfolding_one_hrel prog ctx hrel hrel_defs =
   else unfolding_ctx_cond_list
 
 let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
-  let pos = no_pos in
+  let _pos = no_pos in
   let hrd_lhs = hrel_def.hprel_lhs in
   let hrel_name, hrel_args = sig_of_hrel hrel in
   (* Prevent self-recursive pred to avoid infinite folding *)
@@ -416,7 +416,7 @@ let folding_one_hrel prog ctx hrel hrel_defs =
   else folding_ctx_list
 
 let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =
-  let pos = no_pos in
+  let _pos = no_pos in
   let hrel_name, hrel_args = sig_of_hrel hrel in
   if CP.eq_spec_var hprel_name hrel_name then
     [(add_back_hrel prog ctx hrel, MCP.mkMTrue no_pos)]
@@ -606,9 +606,9 @@ let unfolding prog hprels =
 let remove_dangling_heap_formula (f: CF.formula) = 
   let f_h_f _ hf = 
     match hf with
-    | CF.ViewNode ({ 
+    | CF.ViewNode ({
         h_formula_view_node = view_node;
-        h_formula_view_name = view_name; } as v) ->
+        h_formula_view_name = view_name; }) ->
       if eq_id view_name dangling_view_name then
         Some (CF.HEmp, [view_node])
       else Some (hf, [])
@@ -834,7 +834,7 @@ let derive_view_norm prog other_hprels hprels =
 let derive_view iprog cprog other_hprels hprels = 
   let hprels = Gen.BList.remove_dups_eq CF.eq_hprel_defn hprels in
   let other_hprels = Gen.BList.remove_dups_eq CF.eq_hprel_defn other_hprels in
-  let pr = Cprinter.string_of_hprel_list_short in
+  let _pr = Cprinter.string_of_hprel_list_short in
   (* let () = y_binfo_hp (add_str "hprels" pr) hprels in *)
   (* let () = y_binfo_hp (add_str "other hprels" pr) other_hprels in *)
   let simplified_selective_hprels = derive_view_norm cprog other_hprels hprels in
@@ -898,7 +898,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     (* let () = y_binfo_hp (add_str "XXX reuse found .." (pr_list (pr_pair pr_id pr_id))) lst in   *)
     (* let () = y_tinfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short))  *)
     (*     all_d_views in                                                                          *)
-    let lst = aux_pred_reuse iprog cprog all_d_views in
+    let _lst = aux_pred_reuse iprog cprog all_d_views in
     (* Equiv test to form new pred *)
     let r_cbody, _ = x_add trans_hrel_to_view_formula cprog l_body in
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
@@ -1055,7 +1055,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
     cprog.C.prog_view_decls extn_iview in
   let () = y_tinfo_hp (add_str "extn_cview_lst"
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
-  let extn_cview_aset = aux_pred_reuse iprog cprog extn_cview_lst in
+  let _extn_cview_aset = aux_pred_reuse iprog cprog extn_cview_lst in
   let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_pred.C.view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
   let () = x_add (C.update_view_decl ~caller:x_loc) cprog extn_cview in

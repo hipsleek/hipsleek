@@ -1908,7 +1908,9 @@ let rec setOneInit (this: preInit)
       let pMaxIdx, pArray =
         match this  with
           NoInitPre  -> (* No initializer so far here *)
-            ref idx, ref (Array.make (max 32 (idx + 1)) NoInitPre)
+          ref idx,
+          (* ref (Array.create (max 32 (idx + 1)) NoInitPre) *)
+          ref (Array.make (max 32 (idx + 1)) NoInitPre)
 
         | CompoundPre (pMaxIdx, pArray) ->
             if !pMaxIdx < idx then begin
@@ -5106,7 +5108,7 @@ and doInit
 	  (* ISO 6.7.8 para 14: final NUL added only if no size specified, or
 	   * if there is room for it; btw, we can't rely on zero-init of
 	   * globals, since this array might be a local variable *)
-          if ((isNone leno) or ((List.length s) < (integerArrayLength leno)))
+          if ((isNone leno) || ((List.length s) < (integerArrayLength leno)))
             then [init Int64.zero]
             else [])
 (*

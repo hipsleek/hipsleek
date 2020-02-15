@@ -651,7 +651,7 @@ class removeUnusedGoto = object(self)
   method vinst _ = SkipChildren
   method vtype _ = SkipChildren
 end
-          
+
 class markUsedLabels (labelMap: (string, unit) H.t) = object
   inherit nopCilVisitor
 

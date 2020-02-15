@@ -36,7 +36,7 @@ let checkeq_sem ?(force_pr=false) ?(lemtyp=I.Equiv) iprog0 cprog0 f1 f2  hpdefs 
         match hpdef.Cformula.def_cat with
         | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
             (*to remove after improve the algo with nested*)
-            let todo_unk = List.map (fun (f,_) ->
+            let _todo_unk = List.map (fun (f,_) ->
                 let hps = Cformula.get_hp_rel_name_formula f in
                 if CP.diff_svl hps [hp] != [] then
                   raise Not_found

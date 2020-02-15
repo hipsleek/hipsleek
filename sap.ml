@@ -77,7 +77,7 @@ let extend_specs_views_pure_ext iprog cprog sccs error_traces =
       ) [] rele_vnames1 in
     (*for each view, do extn*)
     (*subst new der views into the specs*)
-    let exted_sst0 = List.fold_left (fun r v ->
+    let _exted_sst0 = List.fold_left (fun r v ->
         let ss = view_pure_ext iprog cprog view_extn extn_sv v in
         r@ss
       ) [] rele_views in

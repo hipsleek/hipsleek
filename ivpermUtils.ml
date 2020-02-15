@@ -87,8 +87,7 @@ let rec vperm_sets_of_anns ann_list =
 
 let subst_f f sst vps = 
   let f_list vl = List.map (fun v -> f sst v) vl in
-  { vps with
-    vperm_zero_vars = f_list vps.vperm_zero_vars;
+  { vperm_zero_vars = f_list vps.vperm_zero_vars;
     vperm_lend_vars = f_list vps.vperm_lend_vars;
     vperm_value_vars = f_list vps.vperm_value_vars;
     vperm_full_vars = f_list vps.vperm_full_vars;

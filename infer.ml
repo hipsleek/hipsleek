@@ -360,7 +360,7 @@ let to_unprimed_view_root aset h =
 
 (* get exactly one root of h_formula *)
 let get_args_h_formula aset (h:h_formula) =
-  let av = CP.fresh_spec_var_ann () in
+  let _av = CP.fresh_spec_var_ann () in
   match h with
   | DataNode h -> 
     let h = to_unprimed_data_root aset h in
@@ -651,7 +651,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let f_orig = MCP.pure_of_mix lhs_xpure in
       let f = simplify_contra 1 f_orig ivars in
       let () = x_tinfo_hp (add_str "lhs_contra:f(after simplify)" !print_formula) f pos in
-      let eqs0 = (MCP.ptr_equations_without_null lhs_xpure) in
+      let _eqs0 = (MCP.ptr_equations_without_null lhs_xpure) in
       (* let eqs1 = List.map (fun (sv1, sv2) -> *)
       (*     if CP.mem_svl sv1 ivars then (sv2,sv1) *)
       (*     else (sv1,sv2) *)
@@ -813,7 +813,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                       List.concat (List.map (fun x -> 
                           let lhs_conjs = List.filter (fun y -> 
                               CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f) in
-                          let rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
+                          let _rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
                           (* see ex64s7a.slk *)
                           if true (* CP.remove_dups_svl rel_ids = rel_ids *) then
                             [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
@@ -842,12 +842,12 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
 
 let wrap_check_lhs_contra f a = 
   let pr0 = !print_entail_state_short in
-  let pr1 = !print_mix_formula in
+  let _pr1 = !print_mix_formula in
   (* let pr_f = Cprinter.string_of_formula in *)
   let pr_es (es,e) =  pr_pair pr0 Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
   let pr3 (es,lr,b) =  pr_triple pr0 (pr_list pr) string_of_bool (es,lr,b) in
-  let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
+  let _pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
   let (fst,_) as res = f a in
   let () = x_ninfo_hp (pr_option pr_es) fst no_pos in
   let () = match fst with
@@ -4395,7 +4395,7 @@ let syscall cmd =
        Buffer.add_channel buf ic 1
      done
    with End_of_file -> ());
-  let todo_unk = Unix.close_process (ic, oc) in
+  let _todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
 let print_spec spec file_name =
@@ -4470,8 +4470,8 @@ let get_shape_from_file view_node keep_vars proc_name =
   let input_c = file_name ^ ".c" in
   (*  let todo_unk:string = syscall ". ./../../predator/src/register-paths.sh" in*)
   let input_shape = file_name ^ ".shape" in
-  let todo_unk:string = syscall ("rm -f " ^ input_shape) in
-  let todo_unk:string = syscall ("gcc -fplugin=libsl.so -DPREDATOR " ^ input_c) in
+  let _todo_unk:string = syscall ("rm -f " ^ input_shape) in
+  let _todo_unk:string = syscall ("gcc -fplugin=libsl.so -DPREDATOR " ^ input_c) in
   let input_str = syscall ("cat " ^ input_shape) in
   infer_shape input_str file_name view_node keep_vars proc_name
 
