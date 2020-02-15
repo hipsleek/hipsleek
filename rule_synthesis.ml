@@ -55,17 +55,17 @@ let check_mk_null pre post =
   let post_vars = post |> get_heap |> get_heap_nodes in
   List.length post_vars - List.length pre_vars = 1
 
-let find_equal_var formula var =
-  let pf = formula |> CF.get_pure |> remove_exists_pf in
-  let eq_pairs = get_equality_pairs pf in
-  let find_fun (x,y) = CP.eq_sv x var || CP.eq_sv y var in
-  let pair = List.find find_fun eq_pairs in
-  let (fst, snd) = pair in
-  if CP.eq_sv fst var then snd else fst
-
-let find_equal_var formula var =
-  Debug.no_2 "find_equal_var" pr_f pr_var pr_var
-    (fun _ _ -> find_equal_var formula var) formula var
+(* let find_equal_var formula var =
+ *   let pf = formula |> CF.get_pure |> remove_exists_pf in
+ *   let eq_pairs = get_equality_pairs pf in
+ *   let find_fun (x,y) = CP.eq_sv x var || CP.eq_sv y var in
+ *   let pair = List.find find_fun eq_pairs in
+ *   let (fst, snd) = pair in
+ *   if CP.eq_sv fst var then snd else fst
+ * 
+ * let find_equal_var formula var =
+ *   Debug.no_2 "find_equal_var" pr_f pr_var pr_var
+ *     (fun _ _ -> find_equal_var formula var) formula var *)
 
 let check_goal_procs goal =
   let procs = goal.gl_proc_decls in
@@ -144,6 +144,17 @@ let rename_conseq conseq =
   Debug.no_1 "rename_conseq" pr_f pr_f
     (fun _ -> rename_conseq conseq) conseq
 
+let get_prefix (s:string) : string =
+  let slen = (String.length s) in
+  let ri =
+    try
+      let n = (String.rindex s '_') in
+      let l = (slen-(n+1)) in
+      if (l==0) then slen-1
+      else n
+    with  _ -> slen in
+  String.sub s 0 ri
+
 let check_entail_sleek prog ante (conseq:CF.formula) =
   let conseq = rename_conseq conseq in
   let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
@@ -155,16 +166,6 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
   let conseq = CF.struc_formula_of_formula conseq no_pos in
   let list_ctx, _ = Solver.heap_entail_struc_init prog false true
       (CF.SuccCtx[ctx]) conseq no_pos None in
-  let get_prefix (s:string) =
-    let slen = (String.length s) in
-    let ri =
-      try
-        let n = (String.rindex s '_') in
-        let l = (slen-(n+1)) in
-        if (l==0) then slen-1
-        else n
-      with  _ -> slen in
-    String.sub s 0 ri in
   let common_prefix fst snd =
     let fst_prefix = fst |> CP.name_of_sv |> get_prefix in
     let snd_prefix = snd |> CP.name_of_sv |> get_prefix in
@@ -172,6 +173,9 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
   let get_exists_pair old_vars n_evar =
     let old_evar = List.find (common_prefix n_evar) old_vars in
     (old_evar, n_evar) in
+  let get_exists_pair old_vars n_var =
+    Debug.no_2 "get_exists_pair" pr_vars pr_var (pr_pair pr_var pr_var)
+      (fun _ _ -> get_exists_pair old_vars n_var) old_vars n_var in
   let is_fail_ctx list_ctx =
     if CF.isFailCtx list_ctx then true
     else
@@ -179,7 +183,7 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
       isHFalseOrEmp residue in
   if is_fail_ctx list_ctx then false, None
   else
-    let () = x_tinfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in
+    let () = x_binfo_hp (add_str "list ctx" pr_ctxs) list_ctx no_pos in
     let residue = CF.formula_of_list_context list_ctx in
     let evars_residue = get_evars_from_list_context list_ctx in
     let evar_substs = exists_vars |> List.map (get_exists_pair evars_residue) in

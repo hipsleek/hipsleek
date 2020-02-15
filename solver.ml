@@ -11358,7 +11358,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a
       let coer_l = Lem_store.all_lemma # get_left_coercion in
       let r1,r2 = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"
         else let lc = List.map (fun coer -> helper coer estate) coer_l in
-          try List.find (fun (sc,pf) -> match sc with
+          try
+            List.find (fun (sc,pf) -> match sc with
               | FailCtx _ -> false
               | SuccCtx _ -> true) lc
           with _ -> let err_msg = "failed ramify lemma application" in
