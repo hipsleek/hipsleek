@@ -2747,9 +2747,24 @@ let check_hp_formula hp_names formula =
   Debug.no_1 "check_hp_formula" pr_f string_of_bool
     (fun _ -> check_hp_formula hp_names formula) formula
 
-let isHFalseOrEmp (formula : CF.formula) =
+
+let isHFalse (formula : CF.formula) : bool =
   let is_hfalse hf = match hf with
     | CF.HFalse -> true
+    (* | CF.HEmp -> true *)
+    | _ -> false in
+  let rec aux formula = match formula with
+    | CF.Base base ->
+      let hf = base.CF.formula_base_heap in
+      is_hfalse hf
+    | CF.Exists base ->
+      let hf = base.CF.formula_exists_heap in
+      is_hfalse hf
+    | CF.Or base -> aux base.CF.formula_or_f1 || aux base.CF.formula_or_f2 in
+  aux formula
+
+let isHEmp (formula : CF.formula) : bool =
+  let is_hfalse hf = match hf with
     | CF.HEmp -> true
     | _ -> false in
   let rec aux formula = match formula with
@@ -2761,6 +2776,14 @@ let isHFalseOrEmp (formula : CF.formula) =
       is_hfalse hf
     | CF.Or base -> aux base.CF.formula_or_f1 || aux base.CF.formula_or_f2 in
   aux formula
+
+let isHFalseOrEmp pre (post : CF.formula) =
+  if isHFalse post then true
+  else
+  if isHEmp post then
+    if isHEmp pre then false
+    else true
+  else false
 (*********************************************************************
  * Rule utilities
  *********************************************************************)

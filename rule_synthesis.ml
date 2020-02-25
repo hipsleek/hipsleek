@@ -181,7 +181,7 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
     if CF.isFailCtx list_ctx then true
     else
       let residue = CF.formula_of_list_context list_ctx in
-      Syn.isHFalseOrEmp residue in
+      Syn.isHFalse residue in
   if is_fail_ctx list_ctx then false, None
   else
     let () = x_binfo_hp (add_str "list ctx" Syn.pr_ctxs) list_ctx no_pos in
@@ -1057,7 +1057,7 @@ let choose_rule_fread goal =
       let rule = {rule with rfr_lookahead = Some n_goal} in
       (true, rule)
     else (false, rule) in
-  List.map helper_triple triples |> List.concat
+  triples |> List.map helper_triple |> List.concat
   |> List.filter (fun x -> Syn.is_fread_called goal.Syn.gl_trace x
                            |> Syn.negate)
   |> List.filter filter_fread_int

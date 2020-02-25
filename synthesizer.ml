@@ -427,7 +427,7 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
     let helper (pre, post) =
       if !stop then ()
       else
-        if Syn.isHFalseOrEmp post then
+        if Syn.isHFalseOrEmp pre post then
           let () = x_binfo_hp (add_str "post" Syn.pr_f) post no_pos in
           ()
         else

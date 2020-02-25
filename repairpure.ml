@@ -1563,11 +1563,11 @@ let add_field_infestor body dif_num var_decls data_decls =
         let n_members = e.I.exp_member_fields |> List.map aux_field in
         let n_members = n_members |> List.filter filter_fun in
         if List.length n_members > 0 then
-          if changed = 1 then
+          if changed <= (List.length n_members) then
             let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
-            let n_member = List.hd n_members in
+            let n_member = List.nth n_members (changed - 1) in
             (n_member, 0)
-          else (exp, changed - 1)
+          else (exp, changed - (List.length n_members))
         else (exp, changed)
       | I.Var var ->
         let v_name = var.I.exp_var_name in
@@ -1584,8 +1584,8 @@ let add_field_infestor body dif_num var_decls data_decls =
             let fields = data.I.data_fields |> List.map (fun (x,_,_,_) -> x) in
             let fields = fields |> List.filter (fun (x, _) -> is_node_type x) in
             if fields != [] then
-              if changed = 1 then
-                let field = List.hd fields |> snd in
+              if changed <= (List.length fields) then
+                let field = List.nth fields (changed - 1) |> snd in
                 let n_exp = I.Member {
                     I.exp_member_base = exp;
                     I.exp_member_fields = [field];
@@ -1594,7 +1594,7 @@ let add_field_infestor body dif_num var_decls data_decls =
                   } in
                 let () = pos_list := (var.I.exp_var_pos)::(!pos_list) in
                 (n_exp, 0)
-              else (exp, changed - 1)
+              else (exp, changed - (List.length fields))
             else (exp, changed)
           with _ -> (exp, changed)
         end

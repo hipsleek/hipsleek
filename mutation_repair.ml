@@ -316,7 +316,7 @@ let remove_field_in_cond_two_right n_equal_exp var_decls data_decls =
   let rm_field_exp = aux_exp n_equal_exp in
   (rm_field_exp, !rm_field_strategy)
 
-let add_field_in_condition n_equal_exp var_decls data_decls =
+let add_field_in_condition n_equal_exp var_decls data_decls num =
   let add_field_strategy = ref false in
   let rec aux_exp i_exp = match i_exp with
     | I.Unary u_exp ->
@@ -329,18 +329,18 @@ let add_field_in_condition n_equal_exp var_decls data_decls =
       I.Block {block with I.exp_block_body = aux_exp block.I.exp_block_body}
     | I.Label (a, l_exp) -> I.Label (a, aux_exp l_exp)
     | I.Cond cond_exp ->
-      let (removed_field_exp, is_changed, _) =
-        Repairpure.add_field_infestor cond_exp.I.exp_cond_condition 1
+      let (add_field_exp, is_changed, _) =
+        Repairpure.add_field_infestor cond_exp.I.exp_cond_condition num
           var_decls data_decls in
       if is_changed = 0 then
         let () = add_field_strategy := true in
-        I.Cond {cond_exp with I.exp_cond_condition = removed_field_exp}
+        I.Cond {cond_exp with I.exp_cond_condition = add_field_exp}
       else i_exp
     | _ -> i_exp in
   let add_field_exp = aux_exp n_equal_exp in
   (add_field_exp, !add_field_strategy)
 
-let add_field_in_cond_two_left n_equal_exp var_decls data_decls =
+let add_field_in_cond_two_left n_equal_exp var_decls data_decls num =
   let add_field_strategy = ref false in
   let activated = ref false in
   let rec aux_exp i_exp = match i_exp with
@@ -356,7 +356,7 @@ let add_field_in_cond_two_left n_equal_exp var_decls data_decls =
     | I.Cond cond_exp ->
       if !activated then
         let (removed_field_exp, is_changed, _) =
-          Repairpure.add_field_infestor cond_exp.I.exp_cond_condition 1
+          Repairpure.add_field_infestor cond_exp.I.exp_cond_condition num
             var_decls data_decls in
         if is_changed = 0 then
           let () = add_field_strategy := true in
@@ -370,7 +370,7 @@ let add_field_in_cond_two_left n_equal_exp var_decls data_decls =
   let add_field_exp = aux_exp n_equal_exp in
   (add_field_exp, !add_field_strategy)
 
-let add_field_in_cond_two_right n_equal_exp var_decls data_decls =
+let add_field_in_cond_two_right n_equal_exp var_decls data_decls num =
   let add_field_strategy = ref false in
   let activated = ref false in
   let rec aux_exp i_exp = match i_exp with
@@ -386,7 +386,7 @@ let add_field_in_cond_two_right n_equal_exp var_decls data_decls =
     | I.Cond cond_exp ->
       if !activated then
         let (removed_field_exp, is_changed, _) =
-          Repairpure.add_field_infestor cond_exp.I.exp_cond_condition 1
+          Repairpure.add_field_infestor cond_exp.I.exp_cond_condition num
             var_decls data_decls in
         if is_changed = 0 then
           let () = add_field_strategy := true in
@@ -412,9 +412,33 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
   let var_decls = iproc.I.proc_args |> List.map
                     (fun x -> (x.I.param_type, x.I.param_name)) in
   let data_decls = iprog.I.prog_data_decls in
-  let list = (add_field_in_condition input_exp var_decls data_decls)::list in
-  let list = (add_field_in_cond_two_left input_exp var_decls data_decls)::list in
-  let list = (add_field_in_cond_two_right input_exp var_decls data_decls)::list in
+  let rec aux_mutate1 body num list =
+    let n_exp, is_changed = add_field_in_condition body var_decls
+        data_decls num in
+    if is_changed then
+      let n_list = (n_exp, true)::list in
+      aux_mutate1 body (num+1) n_list
+    else list in
+  let rec aux_mutate2 body num list =
+    let n_exp, is_changed = add_field_in_cond_two_left body var_decls
+        data_decls num in
+    if is_changed then
+      let n_list = (n_exp, true)::list in
+      aux_mutate2 body (num+1) n_list
+    else list in
+  let rec aux_mutate3 body num list =
+    let n_exp, is_changed = add_field_in_cond_two_right body var_decls
+        data_decls num in
+    if is_changed then
+      let n_list = (n_exp, true)::list in
+      aux_mutate3 body (num+1) n_list
+    else list in
+
+  let list = (aux_mutate1 input_exp 1 [])@list in
+  let list = (aux_mutate2 input_exp 1 [])@list in
+  let list = (aux_mutate3 input_exp 1 [])@list in
+  (* let list = (add_field_in_cond_two_left input_exp var_decls data_decls)::list in
+   * let list = (add_field_in_cond_two_right input_exp var_decls data_decls)::list in *)
 
   let list = (remove_field_in_condition input_exp var_decls data_decls)::list in
   let list = (remove_field_in_cond_two_left input_exp var_decls data_decls)::list in
