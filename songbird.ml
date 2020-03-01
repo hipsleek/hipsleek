@@ -1119,9 +1119,10 @@ let check_entail_prog_state prog (es: CF.entail_state) (bf:CF.struc_base_formula
               @ bf.CF.formula_struc_explicit_inst
               @ bf.CF.formula_struc_exists @ es.CF.es_evars
               |> CP.remove_dups_svl in
-  x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos;
-  x_tinfo_hp (add_str "es" Cprinter.string_of_entail_state) es no_pos;
-  x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos;
+  let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
+  let () = x_tinfo_hp (add_str "es" Cprinter.string_of_entail_state) es no_pos in
+  let () = x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base
+      no_pos in
   let hps = prog.CA.prog_hp_decls @ !Syn.unk_hps in
   let hps = Gen.BList.remove_dups_eq Syn.eq_hp_decl hps in
   let hp_names = List.map (fun x -> x.CA.hp_name) hps in
@@ -1139,8 +1140,8 @@ let check_entail_prog_state prog (es: CF.entail_state) (bf:CF.struc_base_formula
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
-  let () = x_tinfo_hp (add_str "prog" SBC.pr_program) n_prog no_pos in
-  let () = x_tinfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
+  let () = x_binfo_hp (add_str "prog" SBC.pr_program) n_prog no_pos in
+  let () = x_binfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
   (* let () = List.iter (fun ent ->
    *     export_songbird_entailments_results n_prog [ent] [SBG.MvlUnkn]) ents in *)
   let check_fun = SBPH.check_entailment ~interact:false ~disproof:!songbird_disproof
@@ -1148,6 +1149,7 @@ let check_entail_prog_state prog (es: CF.entail_state) (bf:CF.struc_base_formula
   let ptrees = List.map (fun ent -> check_fun ent) ents in
   let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
   if List.for_all is_valid ptrees then
+    let () = x_binfo_hp (add_str "result: " pr_id) "valid" no_pos in
     let () = if !songbird_disproof then
         valid_num := !valid_num + (List.length ents)
       else () in
@@ -1157,6 +1159,8 @@ let check_entail_prog_state prog (es: CF.entail_state) (bf:CF.struc_base_formula
     (true, Some residue)
   else if conseq_hps || ante_hps then false, None
   else
+    let () = x_binfo_hp (add_str "result: " pr_id) "invalid" no_pos in
+
     (* let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
      * let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
      * let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in

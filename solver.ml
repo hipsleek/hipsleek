@@ -2640,7 +2640,8 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
       if Synthesis.contains_lseg prog ||            (* SLEEK does not handle lseg well *)
         SB.contains_hps prog ctx conseq then (* unknown predicate *)
         SB.heap_entail_after_sat_struc prog ctx conseq
-      else if !songbird || !songbird_disproof then
+      else
+      if !songbird || !songbird_disproof then
         SB.heap_entail_after_sat_struc prog ctx conseq
       else
         let res = x_add heap_entail_after_sat_struc 1 prog is_folding
