@@ -79,6 +79,22 @@ case {
 }
  */;
 
+int parse_mavlink_msg(char *buf, int len, mavlink_message_t *msg)
+{
+    if (buf[1] + 8 != len)
+        return 0;
+    msg->magic = buf[0];
+    msg->len = buf[1];
+    msg->seq = buf[2];
+    msg->sysid = buf[3];
+    msg->compid = buf[4];
+    msg->msgid = buf[5];
+    msg->checksum = buf[msg->len + 7];
+    char *payload_buf = ((const char *)(&((msg)->payload[0])));
+    memcpy(payload_buf, &buf[6], msg->len);
+    return 1;
+}
+
 // int parse_mavlink_msg(char ma,
 //                       char l,
 //                       char se,
