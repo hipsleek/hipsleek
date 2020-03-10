@@ -1858,7 +1858,7 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (* let () = Debug.info_hprint (add_str "    fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id)))) *)
   (*     fields no_pos in *)
   let inv_pf = match ddef.I.data_pure_inv with
-      Some f -> Some (x_add trans_pure_formula f [])  (* WN : where is type table? *)
+      Some f -> Some (x_add trans_pure_formula f [] prog)  (* WN : where is type table? *)
     | None -> None
   in
   let res = {
@@ -2451,13 +2451,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let () = Mem.check_mem_formula vdef prog.I.prog_data_decls in
         let (new_typ_mem,n_tl) = fresh_tvar n_tl in
         let (n_tl,_) = x_add gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in
-        (n_tl,x_add trans_view_mem vdef.I.view_mem n_tl)
+        (n_tl,x_add trans_view_mem vdef.I.view_mem n_tl prog)
       | None -> (n_tl,None)
     ) in
     y_tinfo_hp (add_str "inv" !IP.print_formula) inv;
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in
-    let inv_pf = x_add trans_pure_formula inv n_tl in
+    let inv_pf = x_add trans_pure_formula inv n_tl prog in
     (* Thai : pf - user given invariant in core form *)
     let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
     let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
@@ -2471,8 +2471,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       report_error (IF.pos_of_struc_formula view_formula1) "res is not allowed in view definition or invariant"
     else(
       let pos = IF.pos_of_struc_formula view_formula1 in
-      let view_sv_vars = List.map (fun c-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
-      let view_prop_extns =  List.map (fun (t,c)-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_prop_extns in
+      let view_sv_vars = List.map (fun c-> x_add trans_var (c,Unprimed) n_tl prog pos) vdef.I.view_vars in
+      let view_prop_extns =  List.map (fun (t,c)-> x_add trans_var (c,Unprimed) n_tl prog pos) vdef.I.view_prop_extns in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
       let null_c_var = Cpure.null_var in
       let extr_exist_vars f vs =
@@ -2594,7 +2594,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             | _ -> ()
           end
       in
-      let conv_id c = x_add trans_var (c,Unprimed) n_tl pos in
+      let conv_id c = x_add trans_var (c,Unprimed) n_tl prog pos in
       let conv_baga_inv baga_inv =
         let () = y_tinfo_hp (add_str "baga_inv" (Iprinter.string_of_opt_baga)) baga_inv in
         match baga_inv with
@@ -2604,14 +2604,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               let svl = List.map (fun (c,c_o) ->
                   let nc = conv_id c in
                   let nc_o = map_opt (fun (e1,e2) ->
-                      let ne1 = x_add trans_pure_exp e1 n_tl in
-                      let ne2 = x_add trans_pure_exp e2 n_tl in
+                      let ne1 = x_add trans_pure_exp e1 n_tl prog in
+                      let ne2 = x_add trans_pure_exp e2 n_tl prog in
                       (ne1,ne2)
                     ) c_o in
                   (nc,nc_o)
                   ) idl in
               (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
-              let cpf = x_add trans_pure_formula pf n_tl in
+              let cpf = x_add trans_pure_formula pf n_tl prog in
               let cpf = x_add Cpure.arith_simplify 1 cpf in
               (svl,cpf)
             ) lst in
@@ -3306,7 +3306,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let n_tl = List.map (fun (var_type, var_name) -> (var_name,{ sv_info_kind = (x_add trans_type prog var_type pos);id = fresh_int () })) rdef.I.rel_typed_vars in
   (* Need to collect the type information before translating the formula *)
   let n_tl = x_add gather_type_info_pure prog rdef.I.rel_formula n_tl in
-  let crf = x_add trans_pure_formula rdef.I.rel_formula n_tl in
+  let crf = x_add trans_pure_formula rdef.I.rel_formula n_tl prog in
   let crdef = {C.rel_name = rdef.I.rel_name;
                C.rel_vars = rel_sv_vars;
                C.rel_formula = crf; }
@@ -3336,7 +3336,7 @@ and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
       Some body
     | Some bd ->
       let n_tl = x_add gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
-      Some (x_add trans_pure_exp bd (fst n_tl))
+      Some (x_add trans_pure_exp bd (fst n_tl) prog)
   in
   let c_templ = {
     C.templ_name = tdef.I.templ_name;
@@ -3424,8 +3424,8 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let n_tl = x_add gather_type_info_pure prog adef.I.axiom_hypothesis [] in
   let n_tl = x_add gather_type_info_pure prog adef.I.axiom_conclusion n_tl in
   (* Translate the hypothesis and conclusion *)
-  let chyp = x_add trans_pure_formula adef.I.axiom_hypothesis n_tl in
-  let ccln = x_add trans_pure_formula adef.I.axiom_conclusion n_tl in
+  let chyp = x_add trans_pure_formula adef.I.axiom_hypothesis n_tl prog in
+  let ccln = x_add trans_pure_formula adef.I.axiom_conclusion n_tl prog in
   (* let () = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
   let cadef = { C.axiom_id=adef.I.axiom_id;
                 C.axiom_hypothesis = chyp;
@@ -6778,7 +6778,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             snd (x_add trans_formula prog false free_vars true f n_tl false)) c.I.exp_par_case_cond
         in
         let body, _ = helper c.I.exp_par_case_body in
-        let vp = x_add trans_vperm_sets c.I.exp_par_case_vperm n_tl cpos in
+        let vp = x_add trans_vperm_sets c.I.exp_par_case_vperm n_tl prog cpos in
         { C.exp_par_case_cond = cond;
           C.exp_par_case_vperm = vp;
           C.exp_par_case_body = body;
@@ -6788,7 +6788,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       let trans_lend_heap = snd (x_add trans_formula prog false free_vars true p.I.exp_par_lend_heap n_tl false) in
       if CF.isLend_formula trans_lend_heap then
         (C.Par {
-            C.exp_par_vperm = x_add trans_vperm_sets p.I.exp_par_vperm n_tl pos;
+            C.exp_par_vperm = x_add trans_vperm_sets p.I.exp_par_vperm n_tl prog pos;
             C.exp_par_lend_heap = trans_lend_heap;
             C.exp_par_cases = List.map (x_add_1 trans_par_case) p.I.exp_par_cases;
             C.exp_par_pos = pos; }, C.void_type)
@@ -7269,14 +7269,42 @@ and trans_case_coverage_x  prepost_flag (instant:Cpure.spec_var list)(f:CF.struc
       CF.EList (List.map (fun (l,c) -> (l,struc_case_coverage in_pre instant ctx c)) b)
   in struc_case_coverage true instant (CP. mkTrue no_pos) f
 
-and trans_var p (tlist: spec_var_type_list) pos =
+and trans_var p (tlist: spec_var_type_list) prog pos =
   let pr = pr_var_prime in
-  Debug.no_1 "trans_var" pr Cprinter.string_of_spec_var (fun _ -> trans_var_x p tlist pos) p
+  Debug.no_1 "trans_var" pr Cprinter.string_of_spec_var (fun _ -> trans_var_x p tlist prog pos) p
 
 (* TODO WN : need to test how type checking handle # vars *)
-and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
+and trans_var_x (ve, pe) (tlist: spec_var_type_list) prog pos =
+  if BatString.contains ve '.' then
+    let field_access_seq = BatString.split_on_char '.' ve in
+    let root = List.hd field_access_seq in
+    let _, var_info =
+      try
+        List.find (fun (v, _) -> v = root) tlist
+      with
+      | Not_found ->
+          try
+            let possible_typ = List.hd (List.tl field_access_seq) in
+            let data = I.look_up_data_def_raw prog.I.prog_data_decls possible_typ in
+            (ve, { sv_info_kind = Named data.I.data_name; id = -1})
+          with
+          | Not_found ->
+              report_error pos ("Unknown type for " ^ ve)
+    in
+    let root_type =
+      match var_info.sv_info_kind with
+      | Named t -> t
+      | _ -> report_error pos (root ^ " is not a pointer")
+    in
+    try
+      let _ = I.compute_field_seq_offset prog.I.prog_data_decls root_type (List.tl field_access_seq) in
+      CP.SpecVar (var_info.sv_info_kind, ve, pe)
+    with
+    | Not_found ->
+        let _ = I.compute_field_seq_offset prog.I.prog_data_decls root_type (List.tl field_access_seq |> List.tl) in
+        CP.SpecVar (var_info.sv_info_kind, ve, pe)
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
-  if (ve.[0] = '#') then
+  else if (ve.[0] = '#') then
     CP.SpecVar (UNK,"_2_",Unprimed)
     (* if (is_dont_care_var ve) then  *)
     (*   CP.SpecVar (UNK,"_",Unprimed) *)
@@ -7291,7 +7319,8 @@ and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
        (*               Err.error_loc = pos; *)
        (*               Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n"; *)
        (*           } *)
-       | t -> CP.SpecVar (t, ve, pe)
+       | t ->
+          CP.SpecVar (t, ve, pe)
 
       )
     with Not_found ->
@@ -7305,9 +7334,37 @@ and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
 (*         Err.error_text = "type table does not contain an entry for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n, could it be an unused var?\n"; *)
 (*     } *)
 
-and trans_var_safe (ve, pe) et tlist pos =
+and trans_var_safe (ve, pe) et tlist prog pos =
+  if BatString.contains ve '.' then
+    let field_access_seq = BatString.split_on_char '.' ve in
+    let root = List.hd field_access_seq in
+    let _, var_info =
+      try
+        List.find (fun (v, _) -> v = root) tlist
+      with
+      | Not_found ->
+          try
+            let possible_typ = List.hd (List.tl field_access_seq) in
+            let data = I.look_up_data_def_raw prog.I.prog_data_decls possible_typ in
+            (ve, { sv_info_kind = Named data.I.data_name; id = -1})
+          with
+          | Not_found ->
+              report_error pos ("Unknown type for " ^ ve)
+    in
+    let root_type =
+      match var_info.sv_info_kind with
+      | Named t -> t
+      | _ -> report_error pos (root ^ " is not a pointer")
+    in
+    try
+      let _ = I.compute_field_seq_offset prog.I.prog_data_decls root_type (List.tl field_access_seq) in
+      CP.SpecVar (var_info.sv_info_kind, ve, pe)
+    with
+    | Not_found ->
+        let _ = I.compute_field_seq_offset prog.I.prog_data_decls root_type (List.tl field_access_seq |> List.tl) in
+        CP.SpecVar (var_info.sv_info_kind, ve, pe)
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
-  if (ve.[0] = '#')
+  else if (ve.[0] = '#')
   then   CP.SpecVar (UNK,"_3_",Unprimed)
   (* if (is_dont_care_var ve) then  *)
   (*   CP.SpecVar (UNK,"_",Unprimed) *)
@@ -7428,7 +7485,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
           match clist with
           | []->(tlist,[])
           | (c1,c2)::tl ->
-            let cf1 = x_add trans_pure_formula c1 tlist in
+            let cf1 = x_add trans_pure_formula c1 tlist prog in
             let (n_tl,cf2) = x_add trans_struc_formula fvars tlist c2 in
             let f1 = x_add Cpure.arith_simplify 2 cf1 in
             let f2 = cf2 in
@@ -7449,9 +7506,9 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
             (n_tl,Some cf)
         ) in
         let (n_tl,nb) = x_add trans_formula prog quantify fvars false b.IF.formula_struc_base n_tl false in
-        let ex_inst = List.map (fun c-> trans_var_safe c UNK n_tl b.IF.formula_struc_pos) b.IF.formula_struc_explicit_inst in
-        let ext_impl = List.map (fun c-> trans_var_safe c UNK n_tl b.IF.formula_struc_pos) b.IF.formula_struc_implicit_inst in
-        let ext_exis = List.map (fun c-> trans_var_safe c UNK n_tl b.IF.formula_struc_pos) b.IF.formula_struc_exists in
+        let ex_inst = List.map (fun c-> trans_var_safe c UNK n_tl prog b.IF.formula_struc_pos) b.IF.formula_struc_explicit_inst in
+        let ext_impl = List.map (fun c-> trans_var_safe c UNK n_tl prog b.IF.formula_struc_pos) b.IF.formula_struc_implicit_inst in
+        let ext_exis = List.map (fun c-> trans_var_safe c UNK n_tl prog b.IF.formula_struc_pos) b.IF.formula_struc_exists in
         let () = y_tinfo_hp (add_str "new_base" !CF.print_formula) nb in
         let () = y_tinfo_hp (add_str "impl_vars" !CP.print_svl) ext_impl in
         let cf = CF.EBase { CF.formula_struc_explicit_inst = ex_inst;
@@ -7519,7 +7576,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
   let n_tl = x_add gather_type_info_struc_f prog f0 tlist in
   let (n_tl,r) = trans_struc_formula fvars n_tl f0 in
   let () = x_tinfo_hp (add_str "fvars" (pr_list pr_id)) fvars no_pos in
-  let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl (IF.pos_of_struc_formula f0)) fvars in
+  let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl prog (IF.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun sv -> match sv with | CP.SpecVar (t,v,_) -> CP.SpecVar(t,v,Unprimed)) cfvhp1 in
   let cfvhp = (cfvhp1@cfvhp2) in
   let r = x_add trans_case_coverage prepost_flag cfvhp r in
@@ -7758,8 +7815,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         (*     IF.formula_base_pos = pos; }) in *)
         let (n_tl,ch, newvars) = x_add linearize_formula prog f1 n_tl in
         (* let () = print_string ("Cform ch: "^(Cprinter.string_of_formula ch) ^"\n" ) in *)
-        let qsvars = List.map (fun qv -> trans_var qv n_tl pos) qvars in
-        let newvars = List.map (fun qv -> trans_var qv n_tl pos) newvars in
+        let qsvars = List.map (fun qv -> trans_var qv n_tl prog pos) qvars in
+        let newvars = List.map (fun qv -> trans_var qv n_tl prog pos) newvars in
         let ch = CF.push_exists (qsvars @ newvars) ch in
         let n_tlist = (
           if sep_collect && quantify then
@@ -7803,7 +7860,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist
     prR linearize_formula_x prog f0 tlist
 
-and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
+and match_exp tlist prog (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
   let pos = no_pos in
   (* IF.pos_of_formula f0 in *)
   let rec aux hargs =
@@ -7811,15 +7868,15 @@ and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
     | (e, _) :: rest ->
       let str = (Iprinter.string_of_formula_exp e) in
       let e_hvars = match e with
-        | IP.Var ((ve, pe), pos_e) ->   [CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)]
+        | IP.Var ((ve, pe), pos_e) ->   [CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist prog pos_e)]
         | IP.AConst (a, pos_e )    -> [CP.imm_to_view_arg a]
         (* | IP.Ann_Exp (IP.AConst ((ve, pe), pos_e ), t, _) -> CP *)
-        | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, l) -> [CP.sv_to_view_arg (trans_var_safe (ve, pe) t tlist pos_e)] (*annotated self*)
+        | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, l) -> [CP.sv_to_view_arg (trans_var_safe (ve, pe) t tlist prog pos_e)] (*annotated self*)
         | IP.Bptriple ((ec,et,ea), pos_e) ->
           (* WN: what is Bptriple? *)
           let apply_one e =
             (match e with
-             | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)
+             | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist prog pos_e)
              | _ -> report_error (* (IF.pos_of_formula f0) *) pos ("linearize_formula : match_exp : Expecting Var in Bptriple "^(str(* Iprinter.string_of_formula f0 *))))
           in
           List.map apply_one [ec;et;ea]
@@ -7833,7 +7890,7 @@ and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list)
   : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
-  let match_exp hargs = match_exp tlist hargs in
+  let match_exp hargs = match_exp tlist prog hargs in
   (* let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.view_arg list) = *)
   (*   match hargs with *)
   (*   | (e, _) :: rest -> *)
@@ -7990,7 +8047,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                        IF.h_formula_thread_label = pi;} ->
         let dataNode = IF.mkHeapNode (v,p) c [] 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
         let dataNode2, t_f, pf, n_tl1, sv1 = linearize_heap dataNode pos tl in
-        let new_dl = x_add trans_pure_formula dl tl in
+        let new_dl = x_add trans_pure_formula dl tl prog in
         let new_dl = x_add Cpure.arith_simplify 5 new_dl in
         let sv2, rsr2, n_tl2 = x_add linearize_formula prog rsr tlist in
         let newNode = CF.ThreadNode {
@@ -8261,6 +8318,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                              CF.h_formula_data_pruning_conditions = [];
                              CF.h_formula_data_pos = pos;} in
               (* let new_h = x_add_1 Immutable.normalize_field_ann_heap_node new_h in *)
+              let ptr_rel_fs = generate_pointer_relation_f prog v c in
               (new_h, CF.TypeTrue, ptr_rel_fs, [], tl)
           )
         )
@@ -8301,9 +8359,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let tmp_pf = CP.mkAnd pf1 pf2 no_pos in
         (tmp_h, tmp_type, tmp_pf, newvars1 @ newvars2, n_tl)
       | IF.HRel (r, args, pos) ->
-        let nv = trans_var_safe (r,Unprimed) HpT tl pos in
+        let nv = trans_var_safe (r,Unprimed) HpT tl prog pos in
         (* Match types of arguments with relation signature *)
-        let cpargs = trans_pure_exp_list args tl in
+        let cpargs = trans_pure_exp_list args tl prog in
         if !Globals.hrel_as_view_flag then
           let () = x_tinfo_hp (add_str "HRel(nv)" !CP.print_sv) nv no_pos in
           let () = x_tinfo_hp (add_str "HRel(cpargs)" (pr_list !CP.print_exp)) cpargs no_pos in
@@ -8367,13 +8425,13 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     (*let () = print_string("Heap: "^(Cprinter.string_of_h_formula new_h)^"\n") in*)
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars@new_vars in
-    let new_p = x_add trans_pure_formula p n_tl in
+    let new_p = x_add trans_pure_formula p n_tl prog in
     let new_p = CP.mkAnd new_p pf pos in
     let new_p = CP.join_disjunctions (new_p::new_constr) in
     let new_p = x_add Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
     (*formula_delayed*)
-    let new_dl = x_add trans_pure_formula dl tlist in
+    let new_dl = x_add trans_pure_formula dl tlist prog in
     let new_dl = x_add Cpure.arith_simplify 5 new_dl in
     let mix_dl = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_dl) in
     let id_var = (match id with
@@ -8388,7 +8446,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
           let vv1 = Gen.BList.difference_eq CP.eq_spec_var vv [thread_var] in
           if (vv1==[]) then Error.report_error {Error.error_loc = pos;Error.error_text = "linearize_one_formula: could not find thread id"}
           else List.hd vv1
-        | Some (ve,pe) -> (trans_var (ve, pe) n_tl pos))
+        | Some (ve,pe) -> (trans_var (ve, pe) n_tl prog pos))
     in
     let new_f = { CF.formula_heap = new_h;
                   CF.formula_pure = mix_p;
@@ -8420,8 +8478,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let (new_h, type_f, pf, newvars1, n_tl) = x_add linearize_heap h pos tl in
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars1 = newvars1@new_vars in
-    let new_vp = trans_vperm_sets vp n_tl pos in
-    let new_p = x_add trans_pure_formula p n_tl in
+    let new_vp = trans_vperm_sets vp n_tl prog pos in
+    let new_p = x_add trans_pure_formula p n_tl prog in
     let new_p = CP.mkAnd new_p pf pos in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = CP.conj_of_list (new_p::new_constr) pos in
@@ -8470,7 +8528,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let nh,np,nvp,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
     let np = memoise_add_pure_N (mkMTrue pos) np in
     let qvars = qvars @ newvars in
-    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na pos, [])
+    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist prog pos) qvars) nh np nvp nt nfl na pos, [])
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula =
   { CF.formula_flow_interval = exlist #  get_hash f0;
@@ -8493,9 +8551,9 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
     | _ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1))
   else ()
 
-and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) pos: CVP.vperm_sets =
+and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) prog pos: CVP.vperm_sets =
   let trans_v (v, p) =
-    let v_type = CP.type_of_spec_var (trans_var (v, Unprimed) tlist pos) in
+    let v_type = CP.type_of_spec_var (trans_var (v, Unprimed) tlist prog pos) in
     let sv = CP.SpecVar (v_type, v, p) in
     sv
   in
@@ -8511,95 +8569,95 @@ and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) pos: CVP.
   CVP.norm_vperm_sets vp
 
 
-and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
+and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) prog : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
   let f1 = Ipure.transform_bexp_form f0 in
   match f1 with
-  | IP.BForm (bf,lbl) -> CP.BForm (x_add trans_pure_b_formula bf tlist , lbl)
+  | IP.BForm (bf,lbl) -> CP.BForm (x_add trans_pure_b_formula bf tlist prog , lbl)
   | IP.And (f1, f2, pos) ->
-    let pf1 = x_add trans_pure_formula f1 tlist in
-    let pf2 = x_add trans_pure_formula f2 tlist in CP.mkAnd pf1 pf2 pos
-  | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> x_add trans_pure_formula c tlist) b)
+    let pf1 = x_add trans_pure_formula f1 tlist prog in
+    let pf2 = x_add trans_pure_formula f2 tlist prog in CP.mkAnd pf1 pf2 pos
+  | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> x_add trans_pure_formula c tlist prog) b)
   | IP.Or (f1, f2,lbl, pos) ->
-    let pf1 = x_add trans_pure_formula f1 tlist in
-    let pf2 = x_add trans_pure_formula f2 tlist in CP.mkOr pf1 pf2 lbl pos
-  | IP.Not (f, lbl, pos) -> let pf = x_add trans_pure_formula f tlist in CP.mkNot pf lbl pos
+    let pf1 = x_add trans_pure_formula f1 tlist prog in
+    let pf2 = x_add trans_pure_formula f2 tlist prog in CP.mkOr pf1 pf2 lbl pos
+  | IP.Not (f, lbl, pos) -> let pf = x_add trans_pure_formula f tlist prog in CP.mkNot pf lbl pos
   | IP.Forall ((v, p), f, lbl, pos) ->
-    let pf = x_add trans_pure_formula f tlist in
-    let v_type = Cpure.type_of_spec_var (x_add trans_var (v,Unprimed) tlist pos) in
+    let pf = x_add trans_pure_formula f tlist prog in
+    let v_type = Cpure.type_of_spec_var (x_add trans_var (v,Unprimed) tlist prog pos) in
     let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
   | IP.Exists ((v, p), f, lbl, pos) ->
-    let pf = x_add trans_pure_formula f tlist in
-    let sv = trans_var (v,p) tlist pos in
+    let pf = x_add trans_pure_formula f tlist prog in
+    let sv = trans_var (v,p) tlist prog pos in
     CP.mkExists [ sv ] pf lbl pos
 
-and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
+and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) prog : CP.formula =
   let pr_f = !IP.print_formula in
   let pr_tlist = string_of_tlist in
   let pr_out = !CP.print_formula in
-  (* Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out *) trans_pure_formula_x f0 tlist
+  (* Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out *) trans_pure_formula_x f0 tlist prog
 
-and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
-  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0
+and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) prog : CP.b_formula =
+  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist prog) b0
 
-and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
+and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) prog : CP.b_formula =
   let (pf, sl) = b0 in
   let npf =  let rec helper pf =
                match pf with
                | IP.Frm ((v,p),pos) ->
-                 let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
+                 let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist prog pos) in
                  let sv = CP.SpecVar (v_type, v, p) in
                  CP.Frm (sv, pos)
                | IP.BConst (b, pos) -> CP.BConst (b, pos)
                | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
                | IP.LexVar (t_ann, ls1, ls2, pos) ->
-                 let cle = List.map (fun e -> x_add trans_pure_exp e tlist) ls1 in
-                 let clt = List.map (fun e -> x_add trans_pure_exp e tlist) ls2 in
+                 let cle = List.map (fun e -> x_add trans_pure_exp e tlist prog) ls1 in
+                 let clt = List.map (fun e -> x_add trans_pure_exp e tlist prog) ls2 in
                  CP.LexVar {
-                   CP.lex_ann = trans_term_ann t_ann tlist;
+                   CP.lex_ann = trans_term_ann t_ann tlist prog;
                    CP.lex_exp = cle;
                    CP.lex_fid = "";
                    CP.lex_tmp = clt;
                    CP.lex_loc = pos; }
-               | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann cond tlist, pos)
+               | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann cond tlist prog, pos)
                | IP.Lt (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.mkLt pe1 pe2 pos
                | IP.Lte (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.mkLte pe1 pe2 pos
                | IP.SubAnn (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.SubAnn(pe1,pe2,pos)
                | IP.Gt (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.mkGt pe1 pe2 pos
                | IP.Gte (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.mkGte pe1 pe2 pos
                | IP.Eq (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in
                  (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
                | IP.Neq (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.mkNeq pe1 pe2 pos
                | IP.EqMax (e1, e2, e3, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in
-                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in
+                 let pe3 = x_add trans_pure_exp e3 tlist prog in CP.EqMax (pe1, pe2, pe3, pos)
                | IP.EqMin (e1, e2, e3, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in
-                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in
+                 let pe3 = x_add trans_pure_exp e3 tlist prog in CP.EqMin (pe1, pe2, pe3, pos)
                | IP.BagIn ((v, p), e, pos) ->
-                 let pe = x_add trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
+                 let pe = x_add trans_pure_exp e tlist prog in CP.BagIn ((trans_var (v,p) tlist prog pos), pe, pos)
                | IP.BagNotIn ((v, p), e, pos) ->
-                 let pe = x_add trans_pure_exp e tlist in
-                 CP.BagNotIn ((trans_var (v,p) tlist pos), pe, pos)
+                 let pe = x_add trans_pure_exp e tlist prog in
+                 CP.BagNotIn ((trans_var (v,p) tlist prog pos), pe, pos)
                | IP.BagSub (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.BagSub (pe1, pe2, pos)
                | IP.BagMax ((v1, p1), (v2, p2), pos) ->
                  CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
                | IP.BagMin ((v1, p1), (v2, p2), pos) ->
@@ -8611,28 +8669,28 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                (*       let ls1 = List.map func ls in                         *)
                (*       CP.VarPerm (ct,ls1,pos)                               *)
                | IP.ListIn (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.ListIn (pe1, pe2, pos)
                | IP.ListNotIn (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.ListNotIn (pe1, pe2, pos)
                | IP.ListAllN (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.ListAllN (pe1, pe2, pos)
                | IP.ListPerm (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp e1 tlist prog in
+                 let pe2 = x_add trans_pure_exp e2 tlist prog in CP.ListPerm (pe1, pe2, pos)
                | IP.RelForm (r, args, pos) ->
-                 let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist pos in
+                 let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist prog pos in
                  (* Match types of arguments with relation signature *)
-                 let cpargs = x_add trans_pure_exp_list args tlist in
+                 let cpargs = x_add trans_pure_exp_list args tlist prog in
                  CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
                | IP.XPure ({IP.xpure_view_node = vn ;
                             IP.xpure_view_name = r;
                             IP.xpure_view_arguments = args;
                             IP.xpure_view_remaining_branches = brs;
                             IP.xpure_view_pos = pos}) ->
-                 let nargs = List.map (fun arg -> trans_var (arg,Unprimed) tlist pos) args in
+                 let nargs = List.map (fun arg -> trans_var (arg,Unprimed) tlist prog pos) args in
                  CP.XPure {CP.xpure_view_node = None ;
                            CP.xpure_view_name = r;
                            CP.xpure_view_arguments = nargs;
@@ -8643,9 +8701,9 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
   | None -> (npf, None)
-  | Some (il,lbl,el) -> let nel = trans_pure_exp_list el tlist in (npf, Some (il,lbl,nel))
+  | Some (il,lbl,el) -> let nel = trans_pure_exp_list el tlist prog in (npf, Some (il,lbl,nel))
 
-and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
+and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list) prog : CP.term_ann =
   let trans_term_fail f = match f with
     | IP.TermErr_May -> CP.TermErr_May
     | IP.TermErr_Must -> CP.TermErr_Must in
@@ -8654,8 +8712,8 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_sid = uid.IP.tu_sid;
     CP.tu_fname = uid.IP.tu_fname;
     CP.tu_call_num = 0;
-    CP.tu_args = List.map (fun e -> x_add trans_pure_exp e tlist) uid.IP.tu_args;
-    CP.tu_cond = x_add trans_pure_formula uid.IP.tu_cond tlist;
+    CP.tu_args = List.map (fun e -> x_add trans_pure_exp e tlist prog) uid.IP.tu_args;
+    CP.tu_cond = x_add trans_pure_formula uid.IP.tu_cond tlist prog;
     CP.tu_icond = CP.mkTrue no_pos;
     CP.tu_sol = None;
     CP.tu_pos = uid.IP.tu_pos; } in
@@ -8667,63 +8725,63 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
   | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
   | IP.Fail f -> CP.Fail (trans_term_fail f)
 
-and trans_imm_ann (ann: IP.imm_ann) (tlist:spec_var_type_list): CP.imm_ann =
+and trans_imm_ann (ann: IP.imm_ann) (tlist:spec_var_type_list) prog : CP.imm_ann =
   let helper p_f =
-    let (p,_) = x_add trans_pure_b_formula (p_f, None) tlist in
+    let (p,_) = x_add trans_pure_b_formula (p_f, None) tlist prog in
     p in
   match ann with
   | IP.PreImm  uid -> CP.PreImm (helper uid)
   | IP.PostImm uid -> CP.PostImm (helper uid)
 
-and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
+and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) prog : CP.exp =
   Debug.no_1 "trans_pure_exp"
     (Iprinter.string_of_formula_exp)
     (Cprinter.string_of_formula_exp)
-    (fun e -> trans_pure_exp_x e tlist) e0
+    (fun e -> trans_pure_exp_x e tlist prog) e0
 
-and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
+and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) prog : CP.exp =
   match e0 with
   | IP.Null pos -> CP.Null pos
   | IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
   | IP.Bptriple ((pc,pt,pa),pos) ->
     (match pc,pt,pa with
      | Ipure.Var (vc,posc), Ipure.Var (vt,post),Ipure.Var (va,posa) ->
-       let pc = trans_var vc tlist posc in
-       let pt = trans_var vt tlist post in
-       let pa = trans_var va tlist posa in
+       let pc = trans_var vc tlist prog posc in
+       let pt = trans_var vt tlist prog post in
+       let pa = trans_var va tlist prog posa in
        CP.Bptriple ((pc,pt,pa),pos)
      | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
-  | IP.Tup2 ((e1, e2), pos) -> CP.Tup2 ((trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist), pos)
+  | IP.Tup2 ((e1, e2), pos) -> CP.Tup2 ((trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog), pos)
   | IP.AConst(a,pos) -> CP.AConst(a,pos)
   | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
   | IP.NegInfConst(a,pos) -> CP.NegInfConst(a,pos)
   | IP.Var ((v, p), pos) ->
-    CP.Var ((trans_var (v,p) tlist pos),pos)
+    CP.Var ((trans_var (v,p) tlist prog pos),pos)
   | IP.Level ((v, p), pos) ->
-    CP.Level ((trans_var (v,p) tlist pos),pos)
-  | IP.Ann_Exp (e, t, pos) -> trans_pure_exp_x e tlist
+    CP.Level ((trans_var (v,p) tlist prog pos),pos)
+  | IP.Ann_Exp (e, t, pos) -> trans_pure_exp_x e tlist prog
   | IP.IConst (c, pos) -> CP.IConst (c, pos)
   | IP.FConst (c, pos) -> CP.FConst (c, pos)
-  | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.TypeCast (ty, e1, pos) -> CP.TypeCast (ty, trans_pure_exp_x e1 tlist, pos)
-  | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist tlist, pos)
-  | IP.BagUnion (elist, pos) -> CP.BagUnion (trans_pure_exp_list elist tlist, pos)
-  | IP.BagIntersect (elist, pos) -> CP.BagIntersect (trans_pure_exp_list elist tlist, pos)
-  | IP.BagDiff (e1, e2, pos) -> CP.BagDiff (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.List (elist, pos) -> CP.List (trans_pure_exp_list elist tlist, pos)
-  | IP.ListAppend (elist, pos) -> CP.ListAppend (trans_pure_exp_list elist tlist, pos)
-  | IP.ListCons (e1, e2, pos) -> CP.ListCons (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.ListHead (e, pos) -> CP.ListHead (trans_pure_exp_x e tlist, pos)
-  | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp_x e tlist, pos)
-  | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp_x e tlist, pos)
-  | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp_x e tlist, pos)
+  | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.TypeCast (ty, e1, pos) -> CP.TypeCast (ty, trans_pure_exp_x e1 tlist prog, pos)
+  | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist tlist prog, pos)
+  | IP.BagUnion (elist, pos) -> CP.BagUnion (trans_pure_exp_list elist tlist prog, pos)
+  | IP.BagIntersect (elist, pos) -> CP.BagIntersect (trans_pure_exp_list elist tlist prog, pos)
+  | IP.BagDiff (e1, e2, pos) -> CP.BagDiff (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.List (elist, pos) -> CP.List (trans_pure_exp_list elist tlist prog, pos)
+  | IP.ListAppend (elist, pos) -> CP.ListAppend (trans_pure_exp_list elist tlist prog, pos)
+  | IP.ListCons (e1, e2, pos) -> CP.ListCons (trans_pure_exp_x e1 tlist prog, trans_pure_exp_x e2 tlist prog, pos)
+  | IP.ListHead (e, pos) -> CP.ListHead (trans_pure_exp_x e tlist prog, pos)
+  | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp_x e tlist prog, pos)
+  | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp_x e tlist prog, pos)
+  | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp_x e tlist prog, pos)
   | IP.Func (id, es, pos) ->
-    let es = List.map (fun e -> trans_pure_exp_x e tlist) es in
+    let es = List.map (fun e -> trans_pure_exp_x e tlist prog) es in
     CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
   | IP.Template t ->
     let pos = t.IP.templ_pos in
@@ -8732,7 +8790,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     let tparams = tdef.C.templ_params in
     let tbody = tdef.C.templ_body in
 
-    let templ_args = List.map (fun a -> trans_pure_exp_x a tlist) t.IP.templ_args in
+    let templ_args = List.map (fun a -> trans_pure_exp_x a tlist prog) t.IP.templ_args in
     let sst = List.combine tparams templ_args in
     let templ_unks, templ_body = match tbody with
       | Some cb ->
@@ -8743,23 +8801,23 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
         (unk_exps, Some inst_cb)
       | None -> ([], None)
     in CP.Template {
-      CP.templ_id = trans_var (t.IP.templ_id, Unprimed) tlist pos;
+      CP.templ_id = trans_var (t.IP.templ_id, Unprimed) tlist prog pos;
       CP.templ_args = templ_args;
       CP.templ_unks = templ_unks;
       CP.templ_body = templ_body;
       CP.templ_pos = pos; }
   | IP.ArrayAt ((a, p), ind, pos) ->
-    let cpind = List.map (fun i -> trans_pure_exp_x i tlist) ind in
+    let cpind = List.map (fun i -> trans_pure_exp_x i tlist prog) ind in
     let dim = List.length ind in (* currently only support int type array *)
     CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
   | IP.BExpr f1 -> report_error no_pos "trans_pure_exp BExpr"
 (* let nf1 = IP.transform_bexp f1 in *)
 (* BExpr (trans_pure_formula nf1 tlist) *)
 
-and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
+and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) prog : CP.exp list =
   match elist with
   | [] -> []
-  | e :: rest -> (x_add trans_pure_exp e tlist) :: (trans_pure_exp_list rest tlist)
+  | e :: rest -> (x_add trans_pure_exp e tlist prog) :: (trans_pure_exp_list rest tlist prog)
 
 
 (*MERGE CHECK*)
@@ -11181,7 +11239,7 @@ and trans_bdecl_x prog bd =
     CF.mkEList_no_flatten (List.fold_left (fun a (_,_,l)-> List.fold_left fct a l) [] l) in
   { C.barrier_thc = bd.I.barrier_thc;
     C.barrier_name = bd.I.barrier_name;
-    C.barrier_shared_vars = List.map (fun (_,c)-> trans_var (c,Unprimed) n_tl no_pos) bd.I.barrier_shared_vars;
+    C.barrier_shared_vars = List.map (fun (_,c)-> trans_var (c,Unprimed) n_tl prog no_pos) bd.I.barrier_shared_vars;
     C.barrier_tr_list = l;
     C.barrier_def = bdef;
     C.barrier_prune_branches = [];
@@ -11198,14 +11256,14 @@ and trans_bdecl prog bd =
 
 and trans_field_layout (iann : IP.ann list) : CP.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
 
-and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.mem_perm_formula =
-  let mem_exp = x_add trans_pure_exp imem.IF.mem_formula_exp tlist in
+and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) prog : CF.mem_perm_formula =
+  let mem_exp = x_add trans_pure_exp imem.IF.mem_formula_exp tlist prog in
   let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
   let helpl2 = List.map trans_field_layout helpl2 in
-  let guards = List.map (fun c -> x_add trans_pure_formula c tlist) imem.IF.mem_formula_guards in
+  let guards = List.map (fun c -> x_add trans_pure_formula c tlist prog) imem.IF.mem_formula_guards in
   let field_values = List.map (fun c -> (fst c),
                                         (List.map (fun a -> match a with
-                                             | IP.Var ((ve, pe), pos_e) -> CP.Var(trans_var_safe (ve, pe) UNK tlist pos_e,pos_e)
+                                             | IP.Var ((ve, pe), pos_e) -> CP.Var(trans_var_safe (ve, pe) UNK tlist prog pos_e,pos_e)
                                              | IP.IConst(i,pos) -> CP.IConst(i,pos)
                                              | _ -> raise Not_found
                                            ) (snd c))) imem.IF.mem_formula_field_values in
@@ -11216,9 +11274,9 @@ and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.me
    CF.mem_formula_field_layout =  meml;
    CF.mem_formula_guards = guards}
 
-and trans_view_mem (vmem : IF.mem_formula option) (tlist:spec_var_type_list) : CF.mem_perm_formula option =
+and trans_view_mem (vmem : IF.mem_formula option) (tlist:spec_var_type_list) prog : CF.mem_perm_formula option =
   match vmem with
-  | Some a -> Some(trans_mem_formula a tlist)
+  | Some a -> Some(trans_mem_formula a tlist prog)
   | None -> None
 
 and compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) (pos: loc) =
