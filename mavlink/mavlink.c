@@ -29,10 +29,9 @@ pred_prim strbuf<hd,bsize,sl:int,zeroflag:bool>
 
 pred arr_buf<root,end,max_size,size,v> == self::int_star<v> * q::arr_buf<root,end,max_size,size-1,_> & q=self+1
   or self::int_star<v> & self=end & size = 1
-  or self = null & root = null & end = null & max_size = 0 & size = 0
   inv root <= self <= end
   & end - root + 1 = max_size
-  &  0 <= size <= max_size;
+  &  1 <= size <= max_size;
 */
 
 void *memcpy(int *dest, int *src, int length) __attribute__((noreturn))
@@ -108,7 +107,7 @@ int parse_mavlink_msg_buggy(int *buf, int length, mavlink_message_t *msg)
     * buf3::int_star<sy>
     * buf4::int_star<co>
     * buf5::int_star<ms>
-    * buf6::arr_buf<buf, end, length, length-6, _>
+    * buf6::arr_buf<buf, end, length, n, _>
     * crc::_checksum<f,s>
     * end1::int_star<f1>
     * end::int_star<s1>
@@ -120,6 +119,30 @@ int parse_mavlink_msg_buggy(int *buf, int length, mavlink_message_t *msg)
     & buf4 = buf + 4
     & buf5 = buf + 5
     & buf6 = buf + 6
+  ensures
+    msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
+    * crc::_checksum<f1,s1>
+    & res = 1;
+  requires
+    msg::__mavlink_message<crc,magic,_,seq,sysid,compid,msgid,payl>@M
+    * buf::int_star<ma>
+    * buf1::int_star<n>
+    * buf2::int_star<se>
+    * buf3::int_star<sy>
+    * buf4::int_star<co>
+    * buf5::int_star<ms>
+    * crc::_checksum<f,s>
+    * end1::int_star<f1>
+    * end::int_star<s1>
+    & end1 = end - 1
+    & length = n + 8
+    & buf1 = buf + 1
+    & buf2 = buf + 2
+    & buf3 = buf + 3
+    & buf4 = buf + 4
+    & buf5 = buf + 5
+    & end1 = buf + 6
+    & n = 0
   ensures
     msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
     * crc::_checksum<f1,s1>
@@ -143,14 +166,15 @@ int parse_mavlink_msg_buggy(int *buf, int length, mavlink_message_t *msg)
     msg->compid = buf[4];
     msg->msgid = buf[5];
 
+    // msg->checksum = buf[msg->len + 7]; // if we count the bytes, this should be buf[msg->len + 6]
+    msg->checksum.first = buf[msg->len + 7];
+    msg->checksum.second = buf[msg->len + 8];
+
     // char *payload_buf = ((const char *)(&((msg)->payload[0])));
     // memcpy(payload_buf, &buf[6], msg->len);
     msg->payload = malloc(msg->len);
     memcpy(msg->payload, buf + 6, msg->len);
 
-    // msg->checksum = buf[msg->len + 7]; // if we count the bytes, this should be buf[msg->len + 6]
-    msg->checksum.first = buf[msg->len + 7];
-    msg->checksum.second = buf[msg->len + 8];
     return 1;
 }
 
@@ -164,7 +188,7 @@ int parse_mavlink_msg_fixed(int *buf, int length, mavlink_message_t *msg)
     * buf3::int_star<sy>
     * buf4::int_star<co>
     * buf5::int_star<ms>
-    * buf6::arr_buf<buf, end, length, length-6, _>
+    * buf6::arr_buf<buf, end, length, n, _>
     * crc::_checksum<f,s>
     * end1::int_star<f1>
     * end::int_star<s1>
@@ -176,6 +200,30 @@ int parse_mavlink_msg_fixed(int *buf, int length, mavlink_message_t *msg)
     & buf4 = buf + 4
     & buf5 = buf + 5
     & buf6 = buf + 6
+  ensures
+    msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
+    * crc::_checksum<f1,s1>
+    & res = 1;
+  requires
+    msg::__mavlink_message<crc,magic,_,seq,sysid,compid,msgid,payl>@M
+    * buf::int_star<ma>
+    * buf1::int_star<n>
+    * buf2::int_star<se>
+    * buf3::int_star<sy>
+    * buf4::int_star<co>
+    * buf5::int_star<ms>
+    * crc::_checksum<f,s>
+    * end1::int_star<f1>
+    * end::int_star<s1>
+    & end1 = end - 1
+    & length = n + 8
+    & buf1 = buf + 1
+    & buf2 = buf + 2
+    & buf3 = buf + 3
+    & buf4 = buf + 4
+    & buf5 = buf + 5
+    & end1 = buf + 6
+    & n = 0
   ensures
     msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
     * crc::_checksum<f1,s1>
@@ -199,13 +247,14 @@ int parse_mavlink_msg_fixed(int *buf, int length, mavlink_message_t *msg)
     msg->compid = buf[4];
     msg->msgid = buf[5];
 
+    // msg->checksum = buf[msg->len + 7]; // if we count the bytes, this should be buf[msg->len + 6]
+    msg->checksum.first = buf[msg->len + 6];
+    msg->checksum.second = buf[msg->len + 7];
+
     // char *payload_buf = ((const char *)(&((msg)->payload[0])));
     // memcpy(payload_buf, &buf[6], msg->len);
     msg->payload = malloc(msg->len);
     memcpy(msg->payload, buf + 6, msg->len);
 
-    // msg->checksum = buf[msg->len + 7]; // if we count the bytes, this should be buf[msg->len + 6]
-    msg->checksum.first = buf[msg->len + 6];
-    msg->checksum.second = buf[msg->len + 7];
     return 1;
 }
