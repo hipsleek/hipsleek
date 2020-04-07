@@ -1,0 +1,34 @@
+data int_star {
+  int value;
+}.
+
+data _checksum {
+  int first;
+  int second;
+}.
+
+data __mavlink_message {
+  _checksum cs;
+  int l;
+  int_star payload;
+}.
+
+pred arr_buf<root,end,max_size,size> == self::int_star<_> * q::arr_buf<root,end,max_size,size-1> & q=self+1
+  or self::int_star<_> & self=end & size = 1 & max_size >= size
+  inv
+    end - root + 1 = max_size
+    & root <= self <= end
+    & 1 <= size <= max_size.
+
+lemma self::arr_buf<root, end, m, s> & s = a + b & a > 0 & b > 0 -> self::arr_buf<root, end, m, a> * q::arr_buf<root, end, m, b> & q=self+a.
+
+lemma self::arr_buf<root, end, m, s> -> self::arr_buf<root, end, m, s-1> * end::int_star<_>.
+
+checkentail x::arr_buf<x, end, m, s> & s = a + c & a > 0 & c > 0 & b = x + a |- x::arr_buf<x,end,m,a> * b::arr_buf<x,end,m,c>.
+print residue.
+
+checkentail x::arr_buf<x, end, m, s> |- x <= end.
+print residue.
+
+checkentail x::arr_buf<x, end, m, s> |- end::int_star<_>.
+print residue.
