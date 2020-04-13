@@ -1,5 +1,12 @@
-S .
+# Source directories
+S src/
+S cil/
 
-B _build/
+# Build directories
+B _build/**/*
 
+# Dependencies
+PKG extlib batteries ocamlgraph camlp4 camlp4.lib xml-light
+
+# Extra flags
 FLG -debug locate,/tmp/merlin-debug

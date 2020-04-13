@@ -1,0 +1,36 @@
+data pair {
+	int x;
+	int y;
+}.
+
+data quad {
+     inline pair p1;
+     pair p2;
+}.
+
+//checkentail q::quad<x1,y1,p1> |- true.
+//print residue.
+//
+//
+//checkentail q::quad<x1,y1,p1> |- true.
+//print residue.
+//
+//checkentail q::quad<x1,y1,p1> |- q.p2 = q+2.
+//print residue.
+//
+//
+//checkentail q::quad<x1,y1,p1> |- q.quad.p1 = q.
+//print residue.
+//
+//checkentail q::quad<x1,y1,p1> |- q.quad.p1.y = q+1.
+//print residue.
+//
+//
+//checkentail q.quad.p1.y::<_>  |- q.quad.p1.y = q+1.
+//print residue.
+
+//checkentail q::quad<x1,y1,p1> |- q.quad.p1.x = q.
+//print residue.
+
+checkentail q::quad<x1,y1,p1> |- v.pair.x::<x1> & v = q + 1.
+print residue.
