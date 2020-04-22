@@ -45,9 +45,9 @@ let check_allocate goal pre post =
   let pre_vars = pre |> Syn.get_heap |> Syn.get_heap_nodes in
   let post_vars = post |> Syn.get_heap |> Syn.get_heap_nodes in
   let all_vars = goal.Syn.gl_vars |> List.filter Syn.is_node_var in
-  let () = x_tinfo_hp (add_str "all vars" Syn.pr_vars) all_vars no_pos in
+  let () = x_binfo_hp (add_str "all vars" Syn.pr_vars) all_vars no_pos in
   let pre_node_vars = pre |> CF.fv |> List.filter Syn.is_node_var in
-  let () = x_tinfo_hp (add_str "pre nodes" Syn.pr_vars) pre_node_vars no_pos in
+  let () = x_binfo_hp (add_str "pre nodes" Syn.pr_vars) pre_node_vars no_pos in
   (CP.diff_svl all_vars pre_node_vars != []) ||
   (List.length post_vars = 2 && List.length pre_vars = 1)
 
@@ -184,7 +184,7 @@ let check_entail_sleek prog ante (conseq:CF.formula) =
       Syn.isHFalse residue in
   if is_fail_ctx list_ctx then false, None
   else
-    let () = x_binfo_hp (add_str "list ctx" Syn.pr_ctxs) list_ctx no_pos in
+    let () = x_tinfo_hp (add_str "list ctx" Syn.pr_ctxs) list_ctx no_pos in
     let residue = CF.formula_of_list_context list_ctx in
     let evars_residue = get_evars_from_list_context list_ctx in
     let evar_substs = exists_vars |> List.map (get_exists_pair evars_residue) in
@@ -1276,12 +1276,18 @@ let choose_rule_allocate goal : Syn.rule list =
     rules in
   if check_allocate goal pre post then
     let rules = data_decls |> List.map aux |> List.concat in
+    let () = x_binfo_hp (add_str "rules before" (pr_list Syn.pr_rule_alloc)) rules no_pos in
     let rules = rules |> List.filter filter_eq_var in
-    let () = x_tinfo_hp (add_str "rules" (pr_list Syn.pr_rule_alloc)) rules no_pos in
-    let rules = List.map filter_rule rules |> List.filter (fun (x,_) -> x)
-                |> List.map snd in
+    let () = x_binfo_hp (add_str "rules after" (pr_list Syn.pr_rule_alloc)) rules no_pos in
+    (* let rules = List.map filter_rule rules |> List.filter (fun (x,_) -> x)
+     *             |> List.map snd in *)
     rules |> List.map (fun x -> Syn.RlAllocate x)
   else []
+
+let choose_rule_allocate goal : Syn.rule list =
+  Debug.no_1 "choose_rule_allocate" Syn.pr_goal Syn.pr_rules
+    (fun _ -> choose_rule_allocate goal) goal
+
 
 let aux_post_assign goal =
   let post = goal.Syn.gl_post_cond in
@@ -1346,7 +1352,8 @@ let choose_rule_mk_null goal : Syn.rule list =
         let rule = {rule with rmn_lookahead = Some n_goal} in
         if List.exists (Syn.rule_use_var var) n_rules then
           (true, rule)
-        else (false, rule) in
+        else (false, rule)
+      in
       let aux_rule data_decl =
         let data_name = data_decl.CA.data_name in
         let typ = Globals.Named data_name in
@@ -1358,13 +1365,16 @@ let choose_rule_mk_null goal : Syn.rule list =
           Syn.rmn_var = var;
           Syn.rmn_lookahead = None;
         } in
-        rule in
+        rule
+      in
       let list1 = data_decls |> List.map aux_rule in
       let list2 = aux_post_assign goal in
       let list = list1 @ list2 |> List.map filter_rule
                  |> List.filter (fun (x,y) -> x)
                  |> List.map snd in
       list |> List.map (fun x -> Syn.RlMkNull x)
+
+
 
 let rec choose_rule_interact goal rules =
   if rules = [] then
@@ -1467,8 +1477,16 @@ let choose_rule_frame_pred goal =
   let helper var =
     let eq_vars = find_instantiate_var goal var in
     eq_vars |> List.map (fun x -> (var, x)) in
-  exists_vars |> List.map helper |> List.concat |> List.map filter
-  |> List.concat
+  let pairs = exists_vars |> List.map helper |> List.concat in
+  let () = x_binfo_hp (add_str "instantiate_pairs"
+                         (pr_list (pr_pair Syn.pr_var Syn.pr_var))) pairs no_pos in
+  let n_pairs = pairs |> List.map filter in
+  n_pairs |> List.concat
+
+let choose_rule_frame_pred goal =
+  Debug.no_1 "choose_rule_frame_pred" Syn.pr_goal Syn.pr_rules
+    (fun _ -> choose_rule_frame_pred goal) goal
+
 
 let choose_rule_free goal residue =
   let free_vars = Syn.get_heap_variables residue in

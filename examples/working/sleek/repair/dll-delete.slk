@@ -24,9 +24,22 @@ void delete(node2 x, int a)
 // 3+fr67=n).
 
 
-synthesize [node2 x,int a,node2 tmp, node2 f_r_4823]
-s92::node2<x,fr22> * x::node2<p67,s92> &
-p=p67 & self_4668=x & q_4670=s92 & q_4694=null & flted_7_4693=0 & 
-flt69=1 & n=2 & a=1 & fr22=null & f_r_4823=null
+// synthesize [node2 x,int a,node2 tmp, node2 f_r_4823]
+// s92::node2<x,fr22> * x::node2<p67,s92> &
+// p=p67 & self_4668=x & q_4670=s92 & q_4694=null & flted_7_4693=0 & 
+// flt69=1 & n=2 & a=1 & fr22=null & f_r_4823=null
+// ~>
+// x::node2<p67,f_r_4823>&f_r_4823=null.
+
+// x.next.next.prev = x
+
+synthesize [node2 x,int a]
+
+x::node2<p,q12> * q12::node2<x,q24> * q24::dll<q12,fr25> &
+1<=flt99 & q24!=null &
+1+flt99=n & 2+flted_8_12423=n &
+a=1 & 1+fr25=flt99
 ~>
-x::node2<p67,f_r_4823>&f_r_4823=null.
+(exists fr24,nxt49,pr57, nxt58:
+nxt49::node2<pr57,nxt58> * x::node2<p,nxt49> * 
+nxt58::dll<x,fr24> & 1+fr24=flt99).

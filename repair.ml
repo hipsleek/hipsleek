@@ -416,7 +416,7 @@ let repair_iprog (iprog:I.prog_decl) level : bool =
   match (!Typechecker.repair_proc) with
   | (Some repair_proc) ->
     let p_name = Cast.unmingle_name repair_proc in
-    let () = x_tinfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
+    let () = x_binfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
     let () = start_repair := true in
     let procs = iprog.I.prog_proc_decls in
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
@@ -688,22 +688,22 @@ let create_buggy_prog src (iprog : I.prog_decl)=
     let n_progs = List.map aux_fun buggy_procs in
     n_progs
 
-let start_repair_wrapper (iprog: I.prog_decl) level =
-  let start_time = get_time () in
+let start_repair_wrapper (iprog: I.prog_decl) level start_time =
+  (* let start_time = get_time () in *)
   (* repair using generic programming *)
   let res = repair_iprog iprog level in
   if res then
-    let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
     let duration = get_time() -. start_time in
-    let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" RP.pr_float) duration no_pos
-    in
+    let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" RP.pr_float)
+        duration no_pos in
+    let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
     res
   else
     let mutated_res = repair_iprog_by_mutation iprog in
     if mutated_res then
-      let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
       let duration = get_time() -. start_time in
       let () = x_binfo_hp (add_str "TOTAL REPAIR TIME" RP.pr_float) duration no_pos in
+      let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
       mutated_res
     else
       let () = x_binfo_pp "REPAIRING FAIL" no_pos in
@@ -736,7 +736,7 @@ let infest_and_output src (iprog: I.prog_decl) =
   x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
 
 
-let infest_and_repair src (iprog : I.prog_decl) =
+let infest_and_repair src (iprog : I.prog_decl) start_time =
   let buggy_progs = create_buggy_prog src iprog in
   let () = enable_repair := true in
   let () = RP.infestor_num := 0 in
@@ -751,8 +751,8 @@ let infest_and_repair src (iprog : I.prog_decl) =
       let () = x_binfo_pp "INFESTED PROGRAM IS NOT BUGGY W.R.T THE SPECIFICATION" no_pos in
       (0, 0)
     with _ ->
-      let start_time = get_time () in
-      let r_iprog = start_repair_wrapper buggy_prog level in
+      (* let start_time = get_time () in *)
+      let r_iprog = start_repair_wrapper buggy_prog level start_time in
       let () = Syn.check_post_list := [] in
       let duration = get_time () -. start_time in
       (* to kill process *)

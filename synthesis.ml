@@ -41,6 +41,7 @@ let sb_ent_time = ref 0.0
 let fail_branch_num = ref 0
 let check_entail_num = ref 0
 let r_pre = ref 0
+
 let inference_time = ref 0.0
 let synthesis_time = ref 0.0
 let allocate_list = ref ([]: CP.spec_var list list)

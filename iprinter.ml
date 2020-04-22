@@ -919,7 +919,7 @@ and string_of_struc_formula_view c = match c with
       | [] -> ""
       | [h] -> h
       | h::t -> h ^ " or " ^ (aux_str t)
-    in (aux_str strs) ^ ";"
+    in (aux_str strs)
 
 (* pretty printing for a list of formulae (f * f) list *)
 let rec string_of_form_list l = match l with
@@ -1469,6 +1469,8 @@ let string_of_view_decl_repair v =
   let _pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
   v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^
   (string_of_struc_formula_view v.view_formula)
+  ^ "\ninv " ^ (string_of_pure_formula v.view_invariant)
+  ^ ";"
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 

@@ -349,6 +349,7 @@ let saved_prim_names = ref None
 
 (*Working*)
 let process_source_full source =
+  let start_time = get_time () in
   let _en_repair = !Globals.enable_repair in
   let _en_repair_templ = !Globals.enable_repair_template in
   if (not !Globals.web_compile_flag) then flush stdout;
@@ -714,7 +715,7 @@ let process_source_full source =
             let () = Z3.stop () in
             if (!Globals.enable_repair) then
               let () = x_binfo_pp "START REPAIR" no_pos in
-              let r_iprog = Repair.start_repair_wrapper intermediate_prog 1 in
+              let r_iprog = Repair.start_repair_wrapper intermediate_prog 1 start_time in
               match r_iprog with
               | false -> raise e
               | true ->

@@ -1140,8 +1140,8 @@ let check_entail_prog_state prog (es: CF.entail_state) (bf:CF.struc_base_formula
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
-  let () = x_binfo_hp (add_str "prog" SBC.pr_program) n_prog no_pos in
-  let () = x_binfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
+  (* let () = x_binfo_hp (add_str "prog" SBC.pr_program) n_prog no_pos in *)
+  let () = x_tinfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
   (* let () = List.iter (fun ent ->
    *     export_songbird_entailments_results n_prog [ent] [SBG.MvlUnkn]) ents in *)
   let check_fun = SBPH.check_entailment ~interact:false ~disproof:!songbird_disproof
@@ -1149,7 +1149,7 @@ let check_entail_prog_state prog (es: CF.entail_state) (bf:CF.struc_base_formula
   let ptrees = List.map (fun ent -> check_fun ent) ents in
   let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
   if List.for_all is_valid ptrees then
-    let () = x_binfo_hp (add_str "result: " pr_id) "valid" no_pos in
+    let () = x_tinfo_hp (add_str "result: " pr_id) "valid" no_pos in
     let () = if !songbird_disproof then
         valid_num := !valid_num + (List.length ents)
       else () in
