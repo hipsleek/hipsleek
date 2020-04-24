@@ -220,6 +220,7 @@ and goal = {
   gl_vars: CP.spec_var list;
   gl_trace: rule list;
   gl_lookahead: rule list;
+  (* gl_is_call: bool; *)
 }
 
 type derivation = {

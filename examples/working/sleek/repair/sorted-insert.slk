@@ -3,9 +3,14 @@ data node {
 	node next;	
 }.
 
+// pred sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
+// 	or (exists qs,ql, qmin, q:
+//   self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
+// 	inv n >= 0 & sm <= lg.
+
 pred sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
-	or (exists qs,ql, qmin, q:
-  self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
+	or (exists qs, q:
+  self::node<sm, q> * q::sll<n-1, qs, lg> & sm <= qs)
 	inv n >= 0 & sm <= lg.
 
 node insert2(node x, node vn)
@@ -20,15 +25,37 @@ node insert2(node x, node vn)
 // (exists fr24,mn27, mx28: x::sll<fr24,mn27,mx28> &
 // fr24=2+flt39 & mn27=min(v,sm) & mx28=max(v,lg)).
 
-synthesize [node rs1,node q43,node x,node vn]
- x::node<qm42,q43>&
-k=1+n_192 & mi=min(v_195,sm_193) & ma=max(v_195,lg_194) & n_192=flt39 & 
-sm_193=qs4 & lg_194=ql41 & v_195=v & Anon_196=ann11 & n=1+flt39 & 
-(1+qm42)<=v & sm<=qm42 & ql41<=lg & qm42<=qs4
-~>
- (exists qmin_759,fr24_92,mn27_93,mx28_94: x::node<qmin_759,rs1>&
-fr24_92=2+flt39 & mn27_93=min(v,sm) & mx28_94=max(v,lg) & k+1=fr24_92 & 
-qmin_759<=mi & ma<=mx28_94 & mn27_93<=qmin_759).
+
+checkentail
+
+vn'::node<v,v_null_type_16_1920'>&
+x'=null & vn'=vn & x'=x & v_null_type_16_1920'=null & 
+next_16_1955=Anon_11 & res=vn'
+
+
+// nv8::sll<flt16,mi17,ma18> *
+// x::node<sm,nv8> & n21+1=n & sm<=qs84 & x!=null & sm<v &
+// 0<=n21 & qs84<=lg & vn!=null &
+// flt16=1+n21 & mi17=min(v,qs84) & ma18=max(v,
+// lg) & next_25_2019=q_1985 & res=x
+
+|-
+(exists flt7,mi,ma: res::sll<flt7,mi,ma>
+&
+flt7=1+n & mi=min(v,sm) & ma=max(v,lg)
+).
+
+
+
+// synthesize [node rs1,node q43,node x,node vn]
+//  x::node<qm42,q43>&
+// k=1+n_192 & mi=min(v_195,sm_193) & ma=max(v_195,lg_194) & n_192=flt39 & 
+// sm_193=qs4 & lg_194=ql41 & v_195=v & Anon_196=ann11 & n=1+flt39 & 
+// (1+qm42)<=v & sm<=qm42 & ql41<=lg & qm42<=qs4
+// ~>
+//  (exists qmin_759,fr24_92,mn27_93,mx28_94: x::node<qmin_759,rs1>&
+// fr24_92=2+flt39 & mn27_93=min(v,sm) & mx28_94=max(v,lg) & k+1=fr24_92 & 
+// qmin_759<=mi & ma<=mx28_94 & mn27_93<=qmin_759).
 
 // x::node<qm42,rs1> &
 // k=1+n_192 & mi=min(v_195,sm_193) & ma=max(v_195,lg_194) & n_192=flt39 & 
