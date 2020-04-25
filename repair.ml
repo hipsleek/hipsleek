@@ -129,11 +129,23 @@ let repair_heap_template () =
   ()
 
 let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
-    (r_iproc: I.proc_decl) args candidate =
+    (r_iproc: I.proc_decl) args (candidate: I.exp) =
   if !Syn.repair_res != None then None
   else
+    let rec aux_typ (e: I.exp) = match e with
+      | I.CallRecv _
+      | I.CallNRecv _ -> true
+      | I.Return ret_e ->
+        begin
+          match ret_e.I.exp_return_val with
+          | None -> false
+          | Some return_e -> aux_typ return_e
+        end
+      | _ -> false in
+    let candidate_type = aux_typ candidate in
     let iprog = mk_candidate_iprog iprog r_iproc args candidate 1 in
     let () = Syn.entailments := [] in
+    let () = Syn.syn_is_call_stmt := candidate_type in
     let () = Syn.rel_num := 0 in
     let () = Syn.res_num := 0 in
     let () = Syn.repair_res := None in

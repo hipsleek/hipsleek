@@ -109,7 +109,22 @@ let process_rule_func_call goal rc : Syn.derivation =
                           gl_lookahead = [];
                           gl_vars = n_vars;
                           gl_pre_cond = n_pre} in
-  Syn.mk_derivation_subgoals goal (RlFuncCall rc) [n_goal]
+  match rc.Syn.rfc_return with
+  | Some _ ->
+    Syn.mk_derivation_subgoals goal (RlFuncCall rc) [n_goal]
+  | None ->
+    let prog, pre, post = n_goal.Syn.gl_prog,
+                          n_goal.Syn.gl_pre_cond,
+                          n_goal.Syn.gl_post_cond in
+    let sk, residue = check_entail_wrapper prog pre post in
+    if sk then
+      let residue = Gen.unsome residue in
+      if CF.is_emp_formula residue then
+        Syn.mk_derivation_success goal (RlFuncCall rc)
+      else
+        Syn.mk_derivation_fail goal (RlFuncCall rc)
+    else
+      Syn.mk_derivation_fail goal (RlFuncCall rc)
 
 let process_rule_unfold_pre goal rc =
   (* let n_pres = rc.Syn.n_pre in *)
@@ -247,6 +262,17 @@ let rec synthesize_one_goal goal : Syn.synthesis_tree =
       Syn.mk_synthesis_tree_fail goal [] "TIMEOUT"
     else
       let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+      let rec simplify goal =
+        let unfold_post_rules = choose_rule_unfold_post goal in
+        if List.length unfold_post_rules = 1 then
+          let rule = List.hd unfold_post_rules in
+          let n_goal = match rule with
+            | Syn.RlUnfoldPost rc ->
+              {goal with Syn.gl_post_cond = rc.Syn.rp_case_formula}
+            | _ -> goal in
+          simplify n_goal
+        else goal in
+      let goal = simplify goal in
       let rules = choose_synthesis_rules goal in
       process_all_rules goal rules
 

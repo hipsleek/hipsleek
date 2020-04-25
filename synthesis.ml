@@ -68,7 +68,7 @@ let entailments = ref ([] : (CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
 let syn_res_vars = ref ([] : CP.spec_var list)
 let syn_ref_vars = ref ([] : CP.spec_var list)
-
+let syn_is_call_stmt = ref false
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -220,7 +220,6 @@ and goal = {
   gl_vars: CP.spec_var list;
   gl_trace: rule list;
   gl_lookahead: rule list;
-  (* gl_is_call: bool; *)
 }
 
 type derivation = {
@@ -2932,6 +2931,9 @@ let eliminate_useless_rules goal rules =
   (* let is_rule_unfold_post_usable rules =
    *   not (List.exists contain_sym_rules rules) in *)
   let n_rules = rules in
+  (* DELETE FUNCTION-CALL RULE WHEN IT'S NOT FUNCTION STATEMENT *)
+
+
   (* let get_func_calls rules =
    *   let rec aux rules set = match rules with
    *     | [] -> set

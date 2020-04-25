@@ -21,9 +21,29 @@ void insert(node x, int a)
 // x.next = new node(a, null);
 
 synthesize [node x, int a]
-
 x::node<ann11,fr32> & n=1 & fr32=null
-
 ~>
-
 (exists fr31: x::ll<fr31>&fr31=2).
+
+
+// synthesize [node f_r_82,node x,int a]
+
+// x::node<ann11,fr32>&f_r_82=null & n=1 & fr32=null
+
+// ~>
+
+// (exists flt66,v67,q68,flt63,v64,q_65,
+// fr59: q_65::node<v67,q68> * x::node<v64,q_65>&
+// fr59=2 & flt63+1=fr59 & 0<fr59 & flt66+1=flt63 & 
+// 0<flt63 & q68=null & flt66=0).
+
+
+// checkentail
+
+// x::node<ann11,f_r_98>&f_r_82=null & n=1 & fr32=null
+
+// |-
+
+// (exists flt66_63,flted_7_66,v64_67,fr31_69: x::node<v64_67,f_r_98> &
+// fr31_69=2 & 1+flted_7_66=fr31_69 & 1<=fr31_69 & 1+flt66_63=flted_7_66 & 
+// 1<=flted_7_66 & f_r_98=null & flt66_63=0).

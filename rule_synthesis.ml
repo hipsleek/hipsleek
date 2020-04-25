@@ -1293,7 +1293,6 @@ let choose_rule_allocate goal : Syn.rule list =
   Debug.no_1 "choose_rule_allocate" Syn.pr_goal Syn.pr_rules
     (fun _ -> choose_rule_allocate goal) goal
 
-
 let aux_post_assign goal =
   let post = goal.Syn.gl_post_cond in
   (* let all_vars = goal.gl_vars in *)
@@ -1348,16 +1347,16 @@ let choose_rule_mk_null goal : Syn.rule list =
                                 Syn.gl_post_cond = n_post;
                                 gl_trace = (RlMkNull rule)::goal.gl_trace} in
         let () = x_tinfo_hp (add_str "var" Syn.pr_var) var no_pos in
-        let n_rules = [] in
-        let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
-        (* let n_rules = n_rules @ (choose_rule_func_call n_goal) in *)
-        let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
-        let () = x_tinfo_hp (add_str "rules" Syn.pr_rules) n_rules no_pos in
-        let n_goal = {n_goal with gl_lookahead = n_rules} in
-        let rule = {rule with rmn_lookahead = Some n_goal} in
-        if List.exists (Syn.rule_use_var var) n_rules then
-          (true, rule)
-        else (false, rule)
+        (* let n_rules = [] in
+         * let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
+         * (\* let n_rules = n_rules @ (choose_rule_func_call n_goal) in *\)
+         * let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
+         * let () = x_tinfo_hp (add_str "rules" Syn.pr_rules) n_rules no_pos in
+         * let n_goal = {n_goal with gl_lookahead = n_rules} in
+         * let rule = {rule with rmn_lookahead = Some n_goal} in
+         * if List.exists (Syn.rule_use_var var) n_rules then *)
+        (true, rule)
+        (* else (false, rule) *)
       in
       let aux_rule data_decl =
         let data_name = data_decl.CA.data_name in
@@ -1373,13 +1372,16 @@ let choose_rule_mk_null goal : Syn.rule list =
         rule
       in
       let list1 = data_decls |> List.map aux_rule in
-      let list2 = aux_post_assign goal in
+      (* let list2 = aux_post_assign goal in *)
+      let list2 = [] in
       let list = list1 @ list2 |> List.map filter_rule
                  |> List.filter (fun (x,y) -> x)
                  |> List.map snd in
       list |> List.map (fun x -> Syn.RlMkNull x)
 
-
+let choose_rule_mk_null goal : Syn.rule list =
+  Debug.no_1 "choose_rule_mk_null" Syn.pr_goal Syn.pr_rules
+    (fun _ -> choose_rule_mk_null goal) goal
 
 let rec choose_rule_interact goal rules =
   if rules = [] then
@@ -1493,9 +1495,11 @@ let choose_rule_frame_pred goal =
     (fun _ -> choose_rule_frame_pred goal) goal
 
 
-let choose_rule_free goal residue =
+let choose_rule_free (goal: Syn.goal) residue =
   let free_vars = Syn.get_heap_variables residue in
-  if List.length free_vars = 1 then
+  if List.length free_vars = 1 &&
+     List.for_all (fun x -> List.mem x goal.Syn.gl_vars) free_vars
+  then
     let rule = Syn.RlFree {
         rd_vars = free_vars;
       } in
@@ -1589,7 +1593,7 @@ let choose_main_rules goal =
       else
         let head = List.hd goal.gl_trace in
         match head with
-        | RlMkNull _ -> choose_rules_after_mk_null rs goal
+        (* | RlMkNull _ -> choose_rules_after_mk_null rs goal *)
         | RlNewNum _ -> choose_rules_after_new_num rs goal
         | RlAllocate _ -> choose_rules_after_allocate rs goal
         | RlFRead _ -> choose_rules_after_fread rs goal
