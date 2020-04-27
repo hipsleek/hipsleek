@@ -8,10 +8,8 @@ pred lseg<n, p> == case {
      inv n >= 0.
 
 
-/*
 lemma_safe  self::lseg<n, p> & n = a + b & a,b >=0 
        ->  (exists r:self::lseg<a, r> * r::lseg<b, p>).
-*/
 
 checkentail x::lseg<4,p> |- x::lseg<3,q>.
 print residue.
