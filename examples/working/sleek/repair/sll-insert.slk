@@ -11,19 +11,19 @@ void insert(node x, int a)
 	requires x::ll<n> & n > 0 
 	ensures exists k: x::ll<k> & k = n+1;.
 
-// synthesize [node x,int a]
-// x::node<ann5,fr36> & q6=null & flt4=0 & n=1 & fr36=null
-// ~>
-// (exists fr37,an29,q3,ann7: q3::node<ann7,fr37> * x::node<an29,q3> &
-// fr37=null).
+synthesize [node x,int a]
+x::node<ann5,fr36> & q6=null & flt4=0 & n=1 & fr36=null
+~>
+(exists fr37,an29,q3,ann7: q3::node<ann7,fr37> * x::node<an29,q3> &
+fr37=null).
 
 
 // x.next = new node(a, null);
 
-synthesize [node x, int a]
-x::node<ann11,fr32> & n=1 & fr32=null
-~>
-(exists fr31: x::ll<fr31>&fr31=2).
+// synthesize [node x, int a]
+// x::node<ann11,fr32> & n=1 & fr32=null
+// ~>
+// (exists fr31: x::ll<fr31>&fr31=2).
 
 
 // synthesize [node f_r_82,node x,int a]
@@ -47,3 +47,15 @@ x::node<ann11,fr32> & n=1 & fr32=null
 // (exists flt66_63,flted_7_66,v64_67,fr31_69: x::node<v64_67,f_r_98> &
 // fr31_69=2 & 1+flted_7_66=fr31_69 & 1<=fr31_69 & 1+flt66_63=flted_7_66 & 
 // 1<=flted_7_66 & f_r_98=null & flt66_63=0).
+
+// checkentail
+
+// f_r_190=null & n=1 & fr32=null & 
+//  fr31_59=2 & 
+//                                                                 flted_7_63+1=fr31_59 & 
+//                                                                 0<fr31_59 & 
+//                                                                 flted_7_66+1=flted_7_63 & 
+//                                                                 0<flted_7_63 & 
+//                                                                 q_68=null & 
+//                                                                 flted_7_66=0
+// |- v_64 = a.

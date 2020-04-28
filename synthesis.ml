@@ -317,6 +317,8 @@ let pr_goal goal =
 let pr_rule_assign rule =
   let lhs, rhs = rule.ra_lhs, rule.ra_rhs in
   (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (pr_exp rhs)
+  ^ ";" ^ (string_of_bool rule.ra_numeric)
+
 
 let pr_rule_pre_assign rule =
   let lhs, rhs = rule.rpa_lhs, rule.rpa_rhs in

@@ -1241,23 +1241,6 @@ let check_unsat prog (formula:CF.formula) =
   Debug.no_1 "SB.check_unsat" pr_formula string_of_bool
     (fun _ -> check_unsat_x prog formula) formula
 
-let check_pure_entail_x ante conseq =
-  let sb_ante = translate_pf ante in
-  let sb_conseq = translate_pf conseq in
-  let sb_ante_f = SBC.mk_fpure sb_ante in
-  let sb_conseq_f = SBC.mk_fpure sb_conseq in
-  let sb_prog = SBC.mk_program "check_pure_entail" in
-  let ent = SBC.mk_entailment sb_ante_f sb_conseq_f in
-  let ptree = SBPH.check_entailment ~timeout:5 sb_prog ent in
-  let res = ptree.SBPA.enr_validity in
-  match res with
-  | SBG.MvlTrue -> true
-  | _ -> false
-
-let check_pure_entail ante conseq =
-  Debug.no_2 "check_pure_entail" pr_pf pr_pf string_of_bool
-    (fun _ _ -> check_pure_entail_x ante conseq) ante conseq
-
 let infer_templ_defn prog pre post fun_name args =
   let sb_prog = translate_prog prog in
   let sb_args = List.map translate_var args in
