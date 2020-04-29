@@ -262,17 +262,6 @@ let rec synthesize_one_goal goal : Syn.synthesis_tree =
       Syn.mk_synthesis_tree_fail goal [] "TIMEOUT"
     else
       let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
-      let rec simplify goal =
-        let unfold_post_rules = choose_rule_unfold_post goal in
-        if List.length unfold_post_rules = 1 then
-          let rule = List.hd unfold_post_rules in
-          let n_goal = match rule with
-            | Syn.RlUnfoldPost rc ->
-              {goal with Syn.gl_post_cond = rc.Syn.rp_case_formula}
-            | _ -> goal in
-          simplify n_goal
-        else goal in
-      let goal = simplify goal in
       let rules = choose_synthesis_rules goal in
       process_all_rules goal rules
 
@@ -350,6 +339,18 @@ and process_one_derivation drv : Syn.synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let goal = Syn.simplify_goal goal in
+  let rec simplify goal =
+    let unfold_post_rules = choose_rule_unfold_post goal in
+    if List.length unfold_post_rules = 1 then
+      let rule = List.hd unfold_post_rules in
+      match rule with
+      | Syn.RlUnfoldPost rc ->
+        let n_goal =
+          {goal with Syn.gl_post_cond = rc.Syn.rp_case_formula} in
+        simplify n_goal
+      | _ -> goal
+    else goal in
+  let goal = simplify goal in
   let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = Syn.get_synthesis_tree_status st in

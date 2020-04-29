@@ -33,13 +33,41 @@ void delete(node2 x, int a)
 
 // x.next.next.prev = x
 
-synthesize [node2 x,int a]
+// synthesize [node2 x,int a]
 
-x::node2<p,q12> * q12::node2<x,q24> * q24::dll<q12,fr25> &
-1<=flt99 & q24!=null &
-1+flt99=n & 2+flted_8_12423=n &
-a=1 & 1+fr25=flt99
+// x::node2<p,q12> * q12::node2<x,q24> * q24::dll<q12,fr25> &
+// 1<=flt99 & q24!=null &
+// 1+flt99=n & 2+flted_8_12423=n &
+// a=1 & 1+fr25=flt99
+// ~>
+// (exists fr24,nxt49,pr57, nxt58:
+// nxt49::node2<pr57,nxt58> * x::node2<p,nxt49> * 
+// nxt58::dll<x,fr24> & 1+fr24=flt99).
+
+
+synthesize [node2 x,int a,node2 tmp]
+
+slf2::node2<x,fr37> * x::node2<p77,slf2> &
+p=p77 & self_4678=x & x=x & q_4680=slf2 & q_4704=null & 
+flted_8_4703=0 & flted_8_4679=1 & n=2 & a=1 & fr37=null
 ~>
-(exists fr24,nxt49,pr57, nxt58:
-nxt49::node2<pr57,nxt58> * x::node2<p,nxt49> * 
-nxt58::dll<x,fr24> & 1+fr24=flt99).
+ (exists f_r_4836: x::dll<p77,f_r_4836>&f_r_4836=1).
+
+// synthesize [node2 f_r_136,node2 x,int a,node2 tmp]
+// slf2::node2<x,fr37> * x::node2<p77,slf2>&
+// f_r_136=null & p=p77 & self_4678=x & q_4680=slf2 & q_4704=null & 
+// flted_8_4703=0 & flted_8_4679=1 & n=2 & a=1 & fr37=null
+// ~>
+
+// (exists p_98,self_99,flted_7_100,q_101,f_r_94: x::node2<p_98,q_101>&
+// f_r_94=1 & flted_7_100+1=f_r_94 & 0<f_r_94 & p_98=p77 & self_99=x & 
+// q_101=null & flted_7_100=0).
+
+// synthesize [node2 f_r_136,node2 x,int a,node2 tmp]
+//  slf2::node2<x,fr37> * x::node2<p77,slf2>&
+// f_r_136=null & p=p77 & self_4678=x & q_4680=slf2 & q_4704=null & 
+// flted_8_4703=0 & flted_8_4679=1 & n=2 & a=1 & fr37=null
+// ~>
+//  (exists p_98,self_99,flted_7_100,q_101,f_r_94: x::node2<p_98,q_101>&
+// f_r_94=1 & flted_7_100+1=f_r_94 & 0<f_r_94 & p_98=p77 & self_99=x & 
+// q_101=null & flted_7_100=0).

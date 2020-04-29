@@ -26,24 +26,6 @@ node insert2(node x, node vn)
 // fr24=2+flt39 & mn27=min(v,sm) & mx28=max(v,lg)).
 
 
-checkentail
-
-vn'::node<v,v_null_type_16_1920'>&
-x'=null & vn'=vn & x'=x & v_null_type_16_1920'=null & 
-next_16_1955=Anon_11 & res=vn'
-
-
-// nv8::sll<flt16,mi17,ma18> *
-// x::node<sm,nv8> & n21+1=n & sm<=qs84 & x!=null & sm<v &
-// 0<=n21 & qs84<=lg & vn!=null &
-// flt16=1+n21 & mi17=min(v,qs84) & ma18=max(v,
-// lg) & next_25_2019=q_1985 & res=x
-
-|-
-(exists flt7,mi,ma: res::sll<flt7,mi,ma>
-&
-flt7=1+n & mi=min(v,sm) & ma=max(v,lg)
-).
 
 
 
@@ -79,3 +61,61 @@ flt7=1+n & mi=min(v,sm) & ma=max(v,lg)
 // max28_96=max28_96 &
 // mx28_96=max(v,lg) &
 // qmin_771<=mi & ma<=max28_96 & mn27_95<=qmin_771 & 0<2+flt39).
+
+
+// vn.next = x
+// synthesize [node x,node vn]
+// vn::node<v,Anon_11> * x::node<qmin38,q39> *
+// q39::sll<flt35,qs_8736,ql37> &
+// qmin38<=qs_8736 & ql37<=lg & sm<=qmin38 & v<=qmin38 & 
+// n=1+flt35
+// ~>
+// (exists fr25,fr26,fr27,mn28,mx29: vn::sll<fr25,fr26,fr27> &
+// fr25=2+flt35 & fr26=mn28 & mn28=min(v,sm) & 
+// fr27=mx29 & mx29=max(v,lg)).
+
+
+// synthesize [node x,node vn]
+// vn::node<v,Anon_11> * x::node<qmin38,q39> &
+// qmin38<=qs_8736 & ql37<=lg & sm<=qmin38 & v<=qmin38 & n=1+flt35
+// ~>
+// (exists sm48,sm_332,lg_333,flted_13_334,qs35,q_336,fr25_96,
+// fr26_97, fr27_98,mn28_99,mx29_100:
+// q_336::node<sm48,q39> * vn::node<sm_332,q_336> &
+// fr25_96=2+flt35 & fr26_97=mn28_99 & mn28_99=min(v,sm) & fr27_98=mx29_100 & 
+// mx29_100=max(v,lg) & flted_13_334+1=fr25_96 & fr26_97<=qs35 & 
+// sm_332=fr26_97 & lg_333=fr27_98 & flt35+1=flted_13_334 & qs35<=qs_8736 & 
+// sm48=qs35 & ql37=lg_333).
+
+
+// return x;
+// synthesize [node x,node vn]
+
+// x::node<qm2,vn54> * vn54::sll<n,fr1,fr11> &
+// qm2<=qs_4600 & ql_4601<=lg & sm<=qm2 & (1+qm2)<=v & 
+// vn!=null & Anon_11=Anon_4623 & mi_4635=min(v,qs_4600) & ma_4636=max(v,
+// ql_4601) & q_4603=next_22_4637 & 1+flted_8_4599=n & n_4619=flted_8_4599 & 
+// 1+n_4619=flted_12_4634 & qs_4600=sm_4620 & v=v_4622 & lg_4621=ql_4601 & 
+// fr1=min_4712 & min_4712=min(v,qs_4600) & fr11=max_4713 & 
+// max_4713=max(v,ql_4601)
+// ~>
+
+// (exists fr7,fr8,fr9,mn14,mx15: res::sll<fr7,fr8,fr9>&
+// fr7=1+n & fr8=mn14 & mn14=min(v,sm) & fr9=mx15 & 
+// mx15=max(v,lg)).
+
+synthesize [node x,node vn]
+
+x::node<qm2,vn54>&
+qm2<=qs_4600 & ql_4601<=lg & sm<=qm2 & (1+qm2)<=v & vn!=null & 
+Anon_11=Anon_4623 & mi_4635=min(v,qs_4600) & ma_4636=max(v,ql_4601) & 
+q_4603=next_22_4637 & 1+flted_8_4599=n & n_4619=flted_8_4599 & 
+1+n_4619=flted_12_4634 & qs_4600=sm_4620 & v=v_4622 & lg_4621=ql_4601 & 
+fr1=min_4712 & min_4712=min(v,qs_4600) & fr11=max_4713 & max_4713=max(v,
+ql_4601)
+~>
+ (exists sm_241,fr7_120,fr8_121,fr9_122,mn14_123,
+mx15_124: res::node<sm_241,vn54>&
+fr7_120=1+n & fr8_121=mn14_123 & mn14_123=min(v,sm) & fr9_122=mx15_124 & 
+mx15_124=max(v,lg) & n+1=fr7_120 & fr8_121<=fr1 & sm_241=fr8_121 & 
+fr11=fr9_122).
