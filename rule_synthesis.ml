@@ -419,7 +419,7 @@ let choose_rule_assign goal : Syn.rule list =
     let var = CP.mkVar var no_pos in
     let conseq = CP.mkEqExp var exp no_pos in
     let n_pre = CF.add_pure_formula_to_formula conseq ante in
-    not(check_pure_entail ante_pf conseq) &&
+    not(check_pure_entail_sleek goal.gl_prog ante_pf conseq) &&
     (check_sat_wrapper goal.Syn.gl_prog n_pre) in
   let eq_pairs = eq_pairs |> List.filter (ante_filter goal.Syn.gl_pre_cond) in
   let mk_rule (var, exp) =
