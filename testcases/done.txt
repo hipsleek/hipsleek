@@ -1,4 +1,4 @@
-done:
+===============================================================
 ex1
   HIP manages to detect the error with a modification to update___1d in the prelude, that enforces array access to within its bounds. Without it, the error is undetected.
   Updated function spec:
@@ -20,6 +20,7 @@ ex1
 
   Exception Failure("Proving precond failed") Occurred!
 
+===============================================================
 WN : dom make use of SMT monolothic array logic
      it isn't as flexible as those based on array segments
      in separation logic form
@@ -51,6 +52,7 @@ ex2a
 
   Exception Failure("Proving precond failed") Occurred!
 
+===============================================================
 ex2b
   Same caveats as ex2a
 
@@ -61,6 +63,7 @@ ex2b
 
   Last Proving Location: testcases/ex2b.c_29:11_29:19
 
+===============================================================
 ex3
   Proving precondition in method free$T Failed.
     (must) cause: do_unmatched_rhs : x'::T<Anon_2031>@M(must)
@@ -69,6 +72,7 @@ ex3
 
   Last Proving Location: testcases/invalid-ptr-ref.c_37:3_37:10
 
+===============================================================
 ex8
   Proving binding in method main$ for spec  EAssume
     emp&{FLOW,(4,5)=__norm#E}[]
@@ -96,6 +100,7 @@ ex8
 
   Last Proving Location: testcases/ex8.c_18:11_-1:-1
 
+===============================================================
 ex12
   Proving precondition in method free$int_star Failed.
     (must) cause: do_unmatched_rhs : p'::int_star<Anon_12>@M(must)
