@@ -26,8 +26,8 @@ void addFirst(struct node** head_ref, int d1)
 /*@
   requires head_ref::node_star<v> 
   ensures head_ref::node_star<q> * q::node<d1,v>;
-  requires head_ref::node_star<v> * v::ll<n>
-  ensures head_ref::node_star<v1> * v1::ll<n + 1>;
+  requires head_ref::node_star<v> * v::ll<m>
+  ensures head_ref::node_star<v1> * v1::ll<m + 1>;
 */
 {
    struct node* newNode = (struct node*) malloc(sizeof(struct node));
