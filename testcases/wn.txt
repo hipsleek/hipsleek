@@ -1,0 +1,20 @@
+
+ex12.c
+
+  x=10;
+  loop(x,a,p)
+   
+  void loop(ref x,ref a,p)
+    case {
+      x>=1 -> requires p::node<_>
+             ensures x'=0 & a'=p
+      x<1  -> requires emp
+              ensures x'=x
+    }
+    if x>0 then
+       a=p
+       if x==1 then free(p)
+       x=x-1
+       loop(x,a,p)
+    else
+       ()
