@@ -96,3 +96,6 @@ ex12
 
 
   Error(s) detected when checking procedure while_15_3$int~int_star~int_star
+
+Working on:
+ex4 - Benedict
