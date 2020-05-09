@@ -1,6 +1,4 @@
 //Ex.5: Memory Leak
-#include <stdio.h>
-#include <stdlib.h>
 
 struct node {
    int data;
@@ -26,8 +24,8 @@ struct node *malloc(int size)
 
 void addFirst(struct node** head_ref, int data)
 /*@
-    requires head_ref::node_star<v>
-    ensures head_ref::node_star<q> * q::node<data,v>;
+ requires head_ref::node_star<v> * v::ll<n>
+  ensures head_ref::node_star<v1> * v1::ll<n + 1>;
 */
 {
    struct node* newNode = (struct node*) malloc(sizeof(struct node));
