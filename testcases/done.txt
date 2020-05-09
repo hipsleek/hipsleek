@@ -122,6 +122,9 @@ WN: For this example, we need to write pre/post for the loop
 
 =========================================================================
 ex6 - Benedict
+
+  WN : Please see ex6.ss and ex7.ss for improved translation
+  
   The translation of the address-of operator on primitive values seems wrong. The address variable is not created, and
   the translation attempts to dereference a primitive:
 

@@ -14,3 +14,11 @@ int main()
       //  printf("%d\n",*a);
        return 0;
 }
+
+/*
+
+W:
+
+Is it safe to return stack allocated memory?
+
+*/
