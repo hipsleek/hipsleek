@@ -1,3 +1,6 @@
+//Ex.3: a possible double free
+//      if the conditional statement is executed
+
 struct T {
     struct T* next;
 };

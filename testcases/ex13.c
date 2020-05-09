@@ -5,6 +5,7 @@
 #define BLANK -1
 #define LEFT -2
 #define RIGHT -3
+
 typedef struct BINARY_TREE
 {
   struct BINARY_TREE *left;

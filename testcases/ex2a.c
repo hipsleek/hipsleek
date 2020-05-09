@@ -1,3 +1,4 @@
+// Ex2a: Double free
 #define N 10
 /*@
 pred arr_seg<p,n> == self=p & n=0
@@ -26,8 +27,8 @@ int* malloc(int size)
 /*@
   case {
     size <= 0 -> requires true ensures res = null;
-    size >  0 -> 
-      requires true 
+    size >  0 ->
+      requires true
       ensures res::int_star<_>;
   }
 */;

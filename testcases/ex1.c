@@ -1,3 +1,5 @@
+//Ex.1: array inside a struct
+
 typedef struct _overflow {
   int a[9];
   double c;
@@ -11,13 +13,13 @@ overflow* malloc(int size)
 /*@
   case {
     size <= 0 -> requires true ensures res = null;
-    size >  0 -> 
-      requires true 
+    size >  0 ->
+      requires true
       ensures res::buf<a, c>;
   }
 */;
 
-int main() 
+int main()
 {
   overflow* s = malloc(sizeof(overflow));
 
@@ -25,7 +27,7 @@ int main()
   /*
   HIP manages to detect the error with a modification to update___1d in the prelude, that enforces array access to within its bounds. Without it, the error is undetected.
   Updated function spec:
-  
+
   int[] update___1d(int v, ref int[] a, int i)
     requires dom(a, l, h) & l <= i <= h
     ensures update_array_1d(a,res,v,i);

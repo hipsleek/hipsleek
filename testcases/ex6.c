@@ -1,3 +1,5 @@
+//Ex.6: return the address of a local variable
+
 int* foo()
 {
    int p = 1;
@@ -9,6 +11,6 @@ int* foo()
 int main()
 {
        int *a = foo(); // pointer a points to local variable;
-       printf("%d\n",*a);
+      //  printf("%d\n",*a);
        return 0;
 }

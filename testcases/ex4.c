@@ -1,3 +1,4 @@
+//Ex.4: Memory Leak
 struct node {
    int data;
    struct node* next;
@@ -20,12 +21,12 @@ void addFirst(struct node* head_ref, int data)
    newNode -> data = data;
    // newNode -> next = *head_ref;
    newNode -> next = head_ref;
-   // head_ref = newNode;
-   *head_ref = newNode;
+   // *head_ref = newNode;
+   head_ref = newNode;
 }
 
-// void addLast(struct node** head_ref, int data)
-void addLast(struct node* head_ref, int data)
+void addLast(struct node** head_ref, int data)
+// void addLast(struct node* head_ref, int data)
 {
    struct node* newNode = (struct node*) malloc(sizeof(struct node));
    newNode -> data = data;
