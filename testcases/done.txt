@@ -119,7 +119,74 @@ ex12
 
 WN: For this example, we need to write pre/post for the loop
   spec added to allow code to verify without false double free
-  
+
+=========================================================================
+ex6 - Benedict
+  The translation of the address-of operator on primitive values seems wrong. The address variable is not created, and
+  the translation attempts to dereference a primitive:
+
+  class int_star extends Object {
+    int value@
+  }
+
+  int_star foo()[]
+  static EList
+  dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+  {
+    {local: int p,int_star q
+      int p
+      int_star q
+      {member access p~~>value = 1
+        q = p
+        (101, ):return q}}
+  }
+
+  int main()[]
+  static EList
+  dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+  {
+    {local: int_star a,int_star tmp
+      int_star a
+      int_star tmp
+      {tmp = (103, ):foo()
+        a = tmp
+        (105, ):return 0}}
+  }
+  void free(int_star p)[]
+  static EBase: [][](emp ; (emp ; (p::int_star{}<Anon_11>[HeapNode1]))) * ([] & true)( FLOW __norm) {EAssume: 1,:(emp ; (emp ; emp)) * ([] & true)( FLOW __norm)}
+  dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+
+  I've manually translated the code to what I expect it to be in ss in ex6.ss. With my translation, it fails as expected with:
+
+  Checking procedure main$...
+  Proving binding in method main$ for spec  EAssume
+    emp&{FLOW,(4,5)=__norm#E}[]
+    struct:EBase
+              emp&{FLOW,(4,5)=__norm#E}[], Line 0
+
+  ( []) bind: node  a'::int_star<v_17_1857'>@L&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+  1 File "testcases/ex6.ss",Line:17,Col:8
+
+  (Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+  Failed States:
+  [
+    Label: []
+    State:
+      fe_kind: MAY
+      fe_name: separation entailment
+      fe_locs: {
+          fc_message: do_unmatched_rhs : a'::int_star<v_17_1857'>@L(may)
+          fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+        }
+      [[ SEARCH ==>  UnmatchedRHSData]]
+    ]1 File "testcases/ex6.ss",Line:17,Col:8
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex6.ss_17:8_17:11
+
+  Procedure main$ FAIL.(2)
+
 =========================================================================
 Working on:
 ex4 - Benedict
