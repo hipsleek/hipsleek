@@ -117,8 +117,48 @@ WN: For this example, we need to write pre/post for the loop
 =========================================================================
 Working on:
 ex4 - Benedict
+  I can't figure out a spec for the loop in addLast, so I've treated the function as primitive for the sake of
+  verification
+
+  While --classic in theory allows us to detect the leak, the problem is the use of the address-of
+  operator ends up creating a variable addr_head, initialised to a node_star, which is never freed. freeList would
+  remove the list addr_head points to from the heap, but addr_head still remains, and that violates the no residue
+  condition for --classic. Will need more work to insert the free calls.
+
+  State with freeList called:
+  dprint(simpl): testcases/ex4.c:125: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+    Successful States:
+    [
+      Label: []
+      State:
+        (htrue) * addr_head'::node_star<v1_2336>@M&addr_head'!=null&
+    {FLOW,(4,5)=__norm#E}[]
+        es_gen_impl_vars(E): []
+        es_heap(consumed): emp
+        es_subst (from,to): []:[]
+        es_cond_path: [0]
+        es_var_measures 1: Some(MayLoop[]{})
+
+      Exc:None
+      ]
+
+  State without freeList called:
+  dprint(simpl): testcases/ex4.c:125: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+    Successful States:
+    [
+      Label: []
+      State:
+        (htrue) * addr_head'::node_star<v1_2332>@M * v1_2332::ll<n_2336>@M&
+    n_2336=2 & addr_head'!=null&{FLOW,(4,5)=__norm#E}[]
+        es_gen_impl_vars(E): []
+        es_heap(consumed): emp
+        es_subst (from,to): []:[]
+        es_cond_path: [0]
+        es_var_measures 1: Some(MayLoop[]{})
+
+      Exc:None
+      ]
 
 =========================================================================
 ex5
   in progress (Andreea)
-  
