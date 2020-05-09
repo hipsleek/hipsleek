@@ -20,6 +20,18 @@ ex1
 
   Exception Failure("Proving precond failed") Occurred!
 
+WN : dom make use of SMT monolothic array logic
+     it isn't as flexible as those based on array segments
+     in separation logic form
+to
+ex1b : changing Line 26 to i=8 still reports
+    a spurious error (when it should not). need to see what info
+     is lost
+
+Proving precondition in method update___1d$int~int[]~int Failed.
+  (may) cause: AndR[ dom(v_int_arr_27_1897',0,8) |-  dom(v_int_arr_27_1897',l_1953,h_1954). LOCS:[9;26;27];  dom(v_int_arr_27_1897',0,8) & i'=8 |-  l_1953<=i'. LOCS:[9;26;27];  dom(v_int_arr_27_1897',0,8) & i'=8 |-  i'<=h_1954. LOCS:[9;26;27] (may-bug).]
+
+===============================================================
 ex2a
   HIP manages to detect the error if malloc's spec returns an int_star. If malloc's spec returns an arr_seg, the first free will result in a false heap and pure, and the verification will
   mistakenly succeed.
