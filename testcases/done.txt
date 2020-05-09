@@ -164,6 +164,11 @@ ex4 - Benedict
       Exc:None
       ]
 
+  While I can't find where in cilparser to add this free() call at the end, adding free(&head) at the end before the
+  return can free the generated addr_head. However, addr_head != null is still in the residue, and so --classic still
+  fails. And I can't figure out how to remove addr_head != null even if I can add in the free(addr_head), because free()
+  doesn't touch the pure.
+
 =========================================================================
 ex5
   in progress (Andreea)
