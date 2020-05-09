@@ -28,11 +28,10 @@ struct node *malloc(int size)
 void addFirst(struct node **head_ref, int d)
 /*@
   requires head_ref::node_star<v>
-  ensures head_ref::node_star<q> * q::node<d,v>;
+  ensures head_ref::node_star<q> * q::node<d1,v>;
+  requires head_ref::node_star<v> * v::ll<m>
+  ensures head_ref::node_star<v1> * v1::ll<m + 1>;
 */
-// requires head_ref::node_star<v> * v::ll<m>
-// ensures head_ref::node_star<v1> * v1::ll<m + 1>;
-
 {
   struct node *newNode = malloc(sizeof(struct node));
   newNode->data = d;
@@ -43,9 +42,9 @@ void addFirst(struct node **head_ref, int d)
 void addLast(struct node **head_ref, int d1)
 /*@
    requires head_ref::node_star<null>
-   ensures  head_ref::node_star<q> * q::node<d1,null>;
-   requires head_ref::node_star<q>@L * q::lseg<n,r>@L * r::node<a,null>
-   ensures  r::node<a,s> * s::node<d1,null>;
+   ensures  head_ref::node_star<q> * q::node<_,null>;
+   requires head_ref::node_star<q> * q::lseg<n,r> * r::node<_,null>
+   ensures  head_ref::node_star<q> * q::lseg<n,r> * r::node<_,s> *s::node<d1,null>;
 */
 {
    struct node* newNode = (struct node*) malloc(sizeof(struct node));
@@ -58,8 +57,8 @@ void addLast(struct node **head_ref, int d1)
        struct node* ptr = *head_ref;
        while (ptr -> next != NULL)
          /*@
-           requires ptr::lseg<n,q>@L*q::node<_,null>@L
-           ensures  ptr'=q;
+           requires ptr::lseg<n,q>*q::node<_,null>
+           ensures  ptr::lseg<n,q>*q::node<_,null> & ptr'=q;
           */
           ptr = ptr -> next;
        ptr -> next = newNode;
@@ -84,7 +83,7 @@ void freeList(struct node *hd)
   {
     p2 = p1;
     p1 = p1->next;
-    free(p2);
+    //free(p2);
   }
 }
 
@@ -114,14 +113,8 @@ int main()
 */
 {
   struct node *head = NULL;
-  /*@
-    dprint;
-  */
-
   addLast(&head, 1);
-  
   addFirst(&head, 0);
-
   // 2. if also comment out the printList() line,
   // which accesses the structure in a loop,
   // error can be found even with --unroll 1 in SMACK

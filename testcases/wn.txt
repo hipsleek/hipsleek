@@ -61,6 +61,22 @@ Error3(s) detected at main
 16:1-24:4: Error: Error in collectFunction malloc: Errormsg.Error
 c
 ==================================
+ex4.c
+
+Information on head' is missing..
+We need head'=v_node_116_2319'
+
+dprint(simpl): ex4.c:118: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+ Successful States:
+ [
+  Label: []
+  State:
+     (exists v_node_116_2319': (htrue) * 
+                           addr_head'::node_star<v_node_116_2319'>@M&
+v_node_116_2319'=null&{FLOW,(4,5)=__norm#E}[])
+
+
+===========================================================
 ===========================================================
 ===========================================================
 ===========================================================
