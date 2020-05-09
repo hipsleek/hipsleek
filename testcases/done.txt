@@ -118,7 +118,8 @@ ex12
   Error(s) detected when checking procedure while_15_3$int~int_star~int_star
 
 WN: For this example, we need to write pre/post for the loop
-
+  spec added to allow code to verify without false double free
+  
 =========================================================================
 Working on:
 ex4 - Benedict

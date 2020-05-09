@@ -14,7 +14,7 @@ int main() {
    int x, *a;
    int *p = malloc(sizeof(int));
    for (x = 10; x > 0; x--)
-       /*@
+     /*@
        case {
           x>0 -> requires p::int_star<_>
                  ensures x'=0 
@@ -23,9 +23,9 @@ int main() {
                   ensures x'=x & a'=a & p'=p;
        }
      */
-
    {
        a = p;
+       /* dprint; */
        if (x == 1) {
            free(p);
        }

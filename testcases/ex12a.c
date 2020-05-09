@@ -17,7 +17,7 @@ int main() {
      /*@
        case {
           x>0 -> requires p::int_star<_>
-                 ensures x'=0 & p=x;
+                 ensures x'=0 ;
           x<=0 -> requires emp
                   ensures x'=x;
        }

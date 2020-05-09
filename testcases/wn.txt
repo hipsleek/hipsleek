@@ -1,5 +1,14 @@
 
-ex12.c
+ex12a.c
+
+Checking procedure main$...
+
+Procedure main$ SUCCESS.
+
+Stop z3... 168 invocations 
+Stop Omega... 100 invocations 
+9 false contexts at: ( (16,3)  (0,0)  (26,11)  (27,7)  (27,16)  (28,11)  (16,23)  (16,23)  (22,26) )
+
 
   x=10;
   loop(x,a,p)
@@ -7,7 +16,7 @@ ex12.c
   void loop(ref x,ref a,p)
     case {
       x>=1 -> requires p::node<_>
-             ensures x'=0 & a'=p
+             ensures x'=0 & a=p
       x<1  -> requires emp
               ensures x'=x
     }
@@ -18,3 +27,41 @@ ex12.c
        loop(x,a,p)
     else
        ()
+
+===========================================================
+ex12b.c
+
+fixed with more precise spec
+
+       case {
+          x>0 -> requires p::int_star<_>
+                 ensures x'=0 
+                         & a'=p & p'=p;
+          x<=0 -> requires emp
+                  ensures x'=x & a'=a & p'=p;
+       }
+     */
+ 
+this spec fixes ex12.c
+
+===========================================================
+ex4a.c
+
+GCC Preprocessing...
+gcc -I ../  -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/   -C -E ex4a.c -o ex4a.c.prep
+old type = TFun(TPtr(TVoid(), ), size: TInt(int, ), )
+new type = TFun(TPtr(TComp(struct node, data : TInt(int, ),
+                           next : TPtr(TCompLoop(struct node, _, ), ), , ), ),
+                size: TInt(int, ), )
+caught
+
+Exception occurred: Errormsg.Error
+Error3(s) detected at main 
+16:1-24:4: Error: Declaration of malloc does not match previous declaration from 9:1-15:4 (different type constructors).
+16:1-24:4: Error: Error in collectFunction malloc: Errormsg.Error
+c
+==================================
+===========================================================
+===========================================================
+===========================================================
+
