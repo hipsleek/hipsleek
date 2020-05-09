@@ -49,3 +49,23 @@ http://petio.org/tools/gmp.html
 sudo ap-get install libffi6
 sudo cp /usr/lib/x86_64-linux-gnu/libffi.so.6.0.1 /usr/lib/libffi.so.5
 
+
+**********************
+*** For Mac users: ***
+**********************
+
+1. OPAM + OCaml
+======================
+# install opam + latest Ocaml version
+brew install gpatch
+brew install opam
+# environment setup
+opam init
+eval `opam env`
+
+2. Install some of the dependencies for OCaml:
+opam install  ocamlgraph
+opam install --root=/usr/.opam batteries
+sudo opam install --root=/usr/.opam camlp4
+sudo opam install --root=/usr/.opam extlib
+sudo opam install --root=/usr/.opam merlin
