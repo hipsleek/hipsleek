@@ -52,7 +52,7 @@ ex3
 
   Context of Verification Failure: _0:0_0:0
 
-  Last Proving Location: testcases/invalid-ptr-ref.c_43:3_43:10
+  Last Proving Location: testcases/invalid-ptr-ref.c_37:3_37:10
 
 ex8
   Proving binding in method main$ for spec  EAssume

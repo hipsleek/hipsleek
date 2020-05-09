@@ -7,15 +7,6 @@ struct T {
 
 typedef long int intptr_t;
 
-/*
-Proving precondition in method free$T Failed.
-  (must) cause: do_unmatched_rhs : x'::T<Anon_2031>@M(must)
-
-Context of Verification Failure: _0:0_0:0
-
-Last Proving Location: testcases/invalid-ptr-ref.c_43:3_43:10
-*/
-
 struct T* malloc(int size)
 /*@
   case {
