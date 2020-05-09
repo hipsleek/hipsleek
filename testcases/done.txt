@@ -31,6 +31,9 @@ ex1b : changing Line 26 to i=8 still reports
 Proving precondition in method update___1d$int~int[]~int Failed.
   (may) cause: AndR[ dom(v_int_arr_27_1897',0,8) |-  dom(v_int_arr_27_1897',l_1953,h_1954). LOCS:[9;26;27];  dom(v_int_arr_27_1897',0,8) & i'=8 |-  l_1953<=i'. LOCS:[9;26;27];  dom(v_int_arr_27_1897',0,8) & i'=8 |-  i'<=h_1954. LOCS:[9;26;27] (may-bug).]
 
+A problem is that l_1953,h_1954 are existential variables that need to be
+instantiated to 0,8 but that is not being done. Hence, we cannot
+prove it even if it was within bound.
 ===============================================================
 ex2a
   HIP manages to detect the error if malloc's spec returns an int_star. If malloc's spec returns an arr_seg, the first free will result in a false heap and pure, and the verification will
