@@ -1,0 +1,7 @@
+done:
+ex1
+ex2a
+ex2b
+ex3
+ex8
+ex12
