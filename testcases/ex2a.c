@@ -6,23 +6,6 @@ pred arr_seg<p,n> == self=p & n=0
   inv n>=0.
 */
 
-/*
-HIP manages to detect the error if malloc's spec returns an int_star. If malloc's spec returns an arr_seg, the first free will result in a false heap and pure, and the verification will
-mistakenly succeed.
-
-Proving precondition in method free$int_star Failed.
-  (must) cause: do_unmatched_rhs : array'::int_star<Anon_1934>@M(must)
-
-Context of Verification Failure: _0:0_0:0
-
-Last Proving Location: double-free.c_44:2_44:13
-
-Procedure main$ FAIL.(2)
-
-
-Exception Failure("Proving precond failed") Occurred!
-*/
-
 int* malloc(int size)
 /*@
   case {

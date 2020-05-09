@@ -1,7 +1,98 @@
 done:
 ex1
+  HIP manages to detect the error with a modification to update___1d in the prelude, that enforces array access to within its bounds. Without it, the error is undetected.
+  Updated function spec:
+
+  int[] update___1d(int v, ref int[] a, int i)
+    requires dom(a, l, h) & l <= i <= h
+    ensures update_array_1d(a,res,v,i);
+
+
+  Proving precondition in method update___1d$int~int[]~int Failed.
+  (may) cause: AndR[ dom(v_int_arr_25_1897',0,8) |-  dom(v_int_arr_25_1897',l_1953,h_1954). LOCS:[7;24;25];  dom(v_int_arr_25_1897',0,8) & i'=10 |-  l_1953<=i'. LOCS:[7;24;25];  dom(v_int_arr_25_1897',0,8) & i'=10 |-  i'<=h_1954. LOCS:[7;24;25] (may-bug).]
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: array-inside-struct.c_27:12_27:13
+
+  Procedure main$ FAIL.(2)
+
+
+  Exception Failure("Proving precond failed") Occurred!
+
 ex2a
+  HIP manages to detect the error if malloc's spec returns an int_star. If malloc's spec returns an arr_seg, the first free will result in a false heap and pure, and the verification will
+  mistakenly succeed.
+
+  Proving precondition in method free$int_star Failed.
+    (must) cause: do_unmatched_rhs : array'::int_star<Anon_1934>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: double-free.c_28:2_28:13
+
+  Procedure main$ FAIL.(2)
+
+
+  Exception Failure("Proving precond failed") Occurred!
+
 ex2b
+  Same caveats as ex2a
+
+  Proving precondition in method __pointer_add__int_star__int__$int_star~int Failed.
+    (must) cause: do_unmatched_rhs : array'::int_star<val>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex2b.c_29:11_29:19
+
 ex3
+  Proving precondition in method free$T Failed.
+    (must) cause: do_unmatched_rhs : x'::T<Anon_2031>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/invalid-ptr-ref.c_43:3_43:10
+
 ex8
+  Proving binding in method main$ for spec  EAssume
+    emp&{FLOW,(4,5)=__norm#E}[]
+    struct:EBase
+              emp&{FLOW,(4,5)=__norm#E}[], Line 0
+
+  ( []) bind: node  tmp'::P<a_17_2020',b_17_2021'>@L&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+  1 File "testcases/ex8.c",Line:18,Col:11
+
+  (Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+  Failed States:
+  [
+    Label: []
+    State:
+      fe_kind: MAY
+      fe_name: separation entailment
+      fe_locs: {
+          fc_message: do_unmatched_rhs : tmp'::P<a_17_2020',b_17_2021'>@L(may)
+          fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+        }
+      [[ SEARCH ==>  UnmatchedRHSData]]
+    ]1 File "testcases/ex8.c",Line:18,Col:11
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex8.c_18:11_-1:-1
+
 ex12
+  Proving precondition in method free$int_star Failed.
+    (must) cause: do_unmatched_rhs : p'::int_star<Anon_12>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex12.c_19:11_19:18
+
+  Procedure while_15_3$int~int_star~int_star FAIL.(2)
+
+
+  Exception Failure("Proving precond failed") Occurred!
+
+
+  Error(s) detected when checking procedure while_15_3$int~int_star~int_star

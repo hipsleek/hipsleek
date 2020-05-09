@@ -32,12 +32,3 @@ int main() {
    // printf("%d", i);
    return 0;
 }
-
-/*
-Proving precondition in method __pointer_add__int_star__int__$int_star~int Failed.
-  (must) cause: do_unmatched_rhs : array'::int_star<val>@M(must)
-
-Context of Verification Failure: _0:0_0:0
-
-Last Proving Location: testcases/ex2b.c_29:11_29:19
-*/
