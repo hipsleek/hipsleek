@@ -28,15 +28,33 @@ void *memcpy(int *dest, int *src, int length) __attribute__ ((noreturn))
   ensures  dest::arr_seg<_, n2> * src::arr_seg<_, n2>;
 */;
 
+void *memcpy2(int *dest, int *src, int length) __attribute__ ((noreturn))
+/*@
+  requires dest=null & src = null
+  ensures  true;
+  requires src::arr_seg<_, _> & dest=null
+  ensures  true;
+  requires dest::arr_seg<_, _> & src=null
+  ensures  true;
+  requires dest::arr_seg<_, n1> * src::arr_seg<_, n2>  & length>=0 & n1>=length & n2>=length
+  ensures  dest::arr_seg<_, n2> * src::arr_seg<_, n2>;
+*/;
+
 // char a[sizeof(int*)];
 int *a;
 
 void foo(void)
 {
+  /*@ dprint; */
   int *p = (int *)malloc(10); // This p will leak
-  memcpy(a, &p, sizeof p);
+  /*@ dprint; */
+  int** x = &p;
+  //memcpy(a, &p, sizeof p);    // `a` stores the address of `p`
+  // printf("address of d: %p \n",p);
+  // printf("value stored at a: %p \n",*((unsigned int*)a));
 }
 
+/*  
 int main(void)
 {
   a = malloc(sizeof(int*));
@@ -46,3 +64,13 @@ int main(void)
   memcpy(&p, a, sizeof p);
   free(p);
 }
+*/
+
+
+/*
+  Q1. are we planning to converge to actual sizes of teh primitive types?
+  memcpy(a, &p, sizeof p);
+  ===>
+  in HIP: memcpy(a_78, p, 1)
+  in C:   memcpy(a_78, p, 8)
+*/
