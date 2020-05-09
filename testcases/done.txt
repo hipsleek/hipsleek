@@ -188,6 +188,41 @@ ex6 - Benedict
   Procedure main$ FAIL.(2)
 
 =========================================================================
+ex7 - Benedict
+  The same issue for ex6 appears in ex7. My expected translation is in ex7.ss. I'm less certain of this translation, and
+  I'm not that sure the spec for foo() is correct either. That said, we do get a failure:
+
+  Checking procedure main$...
+
+  Proving binding in method main$ for spec  EAssume
+    emp&{FLOW,(4,5)=__norm#E}[]
+    struct:EBase
+              emp&{FLOW,(4,5)=__norm#E}[], Line 0
+
+  ( []) bind: node  v_int_star_23_1894'::int_star<v_23_1895'>@L&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+  1 File "testcases/ex7.ss",Line:23,Col:15
+
+  (Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+  Failed States:
+  [
+    Label: []
+    State:
+      fe_kind: MAY
+      fe_name: separation entailment
+      fe_locs: {
+          fc_message: do_unmatched_rhs : v_int_star_23_1894'::int_star<v_23_1895'>@L(may)
+          fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+        }
+      [[ SEARCH ==>  UnmatchedRHSData]]
+    ]1 File "testcases/ex7.ss",Line:23,Col:15
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex7.ss_23:15_23:25
+
+  Procedure main$ FAIL.(2)
+
+=========================================================================
 Working on:
 ex4 - Benedict
   I can't figure out a spec for the loop in addLast, so I've treated the function as primitive for the sake of

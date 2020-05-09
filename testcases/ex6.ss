@@ -14,6 +14,6 @@ int_star foo()
 int main()
 {
   int_star a = foo();
-  a.v = a.v; //simulate access to a.v that is required for printing in original
+  a.v = a.v; //simulate access to *a that is required for printing in original
   return 0;
 }
