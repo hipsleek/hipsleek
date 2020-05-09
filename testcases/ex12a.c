@@ -16,7 +16,10 @@ int main() {
    for (x = 10; x > 0; x--)
      /*@
        case {
-
+          x>0 -> requires p::int_star<_>
+                 ensures x'=0 & p=x;
+          x<=0 -> requires emp
+                  ensures x'=x;
        }
      */
    {
