@@ -6960,14 +6960,14 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
            (* let () =  Debug.info_hprint (add_str "rhs_e" !Cast.print_prog_exp) rhs_e no_pos in *)
            (*Loc: should type checking be postponed to after typeinfer? *)
            let rhs_t = C.type_of_exp rhs_e in
-           if (Gen.is_some rhs_t) && (sub_type (Gen.unsome rhs_t) ct) then
+           (* if (Gen.is_some rhs_t) && (sub_type (Gen.unsome rhs_t) ct) then *)
              ((C.Assign {
                   C.exp_assign_lhs = fresh_v;
                   C.exp_assign_rhs = rhs_e;
                   C.exp_assign_pos = pos;}), C.void_type)
-           else Err.report_error {
-               Err.error_loc = pos;
-               Err.error_text = ("lhs and rhs do not match 1. Subtype between " ^ (string_of_typ ct) ^ " and " ^  (string_of_typ (Gen.unsome rhs_t)) ^ " doesn't hold."); }
+           (* else Err.report_error {
+            *     Err.error_loc = pos;
+            *     Err.error_text = ("lhs and rhs do not match 1. Subtype between " ^ (string_of_typ ct) ^ " and " ^  (string_of_typ (Gen.unsome rhs_t)) ^ " doesn't hold."); } *)
            (* let () = print_string ("\n(andreeac)astsimp.ml flatten_to_bind_x, vs to become lent ann: " ^ (List.fold_left (fun x y -> x ^ " " ^ y) "" fresh_names) ^ ("\n   annf: " ^ (List.fold_left (fun x y -> x ^ (Cprinter.string_of_imm y)  ) ""  ann_list))) *) in
        let bind_fields =  List.combine field_types fresh_names in
        (* let bind_e = create_bind_exp bind_type ((Named dname), fn)  bind_fields  bind_body read_only pos pid_s in *)

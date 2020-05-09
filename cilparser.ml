@@ -659,7 +659,7 @@ let is_pointer_typ_name (typ_name: string) : bool =
     eq_str suffix "_star"
 
 
-let rec create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
+let create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
   : Iast.proc_decl =
   let proc_name = "__cast_" ^ in_typ_name ^ "_to_" ^ out_typ_name ^ "__" in
   let proc_decl = (
@@ -676,6 +676,18 @@ let rec create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
             "                 ensures res::" ^ out_typ_name ^ "<_,o> & o>=0;\n" ^
             "  }\n"
           ) in
+          (* overwrites the the above version which contains the extra 0 argument *)
+          (* TODO: we need to check how many paramenters the actual data type has
+             and create the specs accordingly. Currently the heap is hardcoded to
+             one anonymous parameter. *)
+          let cast_proc = (
+            out_typ_name ^ " " ^ proc_name ^ " (" ^ in_typ_name ^ " p)\n" ^
+            "  case { \n" ^
+            "    p =  null -> ensures res = null; \n" ^
+            "    p != null -> requires p::" ^ in_typ_name ^ "<_> \n" ^
+            "                 ensures res::" ^ out_typ_name ^ "<_> & res=p;\n" ^
+            "  }\n"
+          ) in
           let proc_decl = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
           Hashtbl.add tbl_aux_proc proc_name proc_decl;
           proc_decl
@@ -689,7 +701,11 @@ let rec create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
   (* return *)
   proc_decl
 
-and create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_decl =
+let create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
+  : Iast.proc_decl =
+  Debug.no_2 "create_pointer_casting_proc" pr_id pr_id Iprinter.string_of_proc_decl create_pointer_casting_proc in_typ_name out_typ_name
+
+let rec create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_decl =
   let proc_name = "__cast_" ^ pointer_typ_name ^ "_to_int__" in
   let proc_decl = (
     try
@@ -1188,7 +1204,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               let value_typ = translate_typ core_type pos in
               let value_field = ((value_typ, str_value), no_pos, false, (gen_field_ann value_typ) (* Iast.F_NO_ANN *)) in
               let dname = match ty with
-		| Cil.TInt(Cil.IChar, _) -> "char_star"
+		            | Cil.TInt(Cil.IChar, _) -> "char_star"
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star"
               in
               let dtype = Globals.Named dname in
@@ -1202,8 +1218,8 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-              x_ninfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
-              x_ninfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
+              x_binfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
+              x_binfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
               Hashtbl.add tbl_data_decl dtype ddecl;
               (* return new type*)
               dtype
