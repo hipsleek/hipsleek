@@ -93,7 +93,22 @@ int main(void)
   in HIP: memcpy(a_78, p, 1)
   in C:   memcpy(a_78, p, 8)
 
-  Q2. What should be the type of & pointer? 
+  Q2. We should be able to preserve more information for the cast to void* and back.
+  e.g.
+  int_star __cast_void_pointer_to_int_star__(void_star p)
+    case{ p != null -> requires p::void_star<_>
+                         ensures  res::int_star<_> & res = p;
+         p = null   -> requires true ensures res = null
+    }
+
+  =====>
+
+  int_star __cast_void_pointer_to_int_star__(void_star p)
+    case{ p != null -> requires p::void_star<q>
+                       ensures  res::int_star<q> & res = p;
+    p = null   -> requires true ensures res = null;
+    }
+
 */
 
 

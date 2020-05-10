@@ -37,7 +37,7 @@ void foo(void)
   /*@ dprint;*/
   p = (int *)malloc(10); // This p will leak
   /*@ dprint;*/
-  memcpy(a, &p, sizeof p);
+  memcpy(a, &p, sizeof p); // TODO: addr_p is not declared
 }
 
 
