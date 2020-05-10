@@ -4,15 +4,23 @@ struct int_s {
   int value;
 };
 
+struct int_s *malloc_int_s (int s)
+/*@
+  requires emp
+  ensures res::int_s<_>;
+*/;
+
+
 void foo(struct int_s **a)
 /*@
   requires a::int_s_star<v>
   ensures a::int_s_star<v1> * v1::int_s<1>;
 */
 {
-  struct int_s b;
-  b.value = 1;
-  *a = &b;
+  struct int_s *addr_b;
+  addr_b = malloc_int_s(3);
+  (*addr_b).value = 1;
+  *a = addr_b;
 }
 
 /*
