@@ -35,4 +35,13 @@ member access a~~>value = b}
 free(addr_b)
 
 
+{local: int_star addr_b,int_star tmp
+int_star addr_b
+int_star tmp
+tmp = (102, ):malloc(1)
+addr_b = tmp
+member access addr_b~~>value = 1
+member access a~~>value = addr_b}
+}
+
 */
