@@ -597,7 +597,7 @@ let remove_goto (fd: Cil.fundec) : Cil.fundec =
 (****** create intermediate procedures  *******)
 (**********************************************)
 
-let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
+let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   let proc_name = "__cast_void_pointer_to_" ^ typ_name ^ "__" in
   let proc_decl = (
     try
@@ -638,13 +638,19 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                       "    p != null -> requires p::memLoc<h,s> & h\n" ^
                       "                 ensures res::WFSegN<q,s>; \n" ^
                       "  }\n"
+          (* | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+           *        "  case { \n" ^
+           *        "    p =  null -> ensures res = null; \n" ^
+           *        "    p != null -> requires p::memLoc<h,s> & h\n" ^
+           *        "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
+           *        (\* "                 ensures res::" ^ data_name ^ param ^ (\* " & o>=0; \n" *\) "; \n" ^ *\)
+           *        "  }\n" *)
           | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
-                 "  case { \n" ^
-                 "    p =  null -> ensures res = null; \n" ^
-                 "    p != null -> requires p::memLoc<h,s> & h\n" ^
-                 "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
-                 (* "                 ensures res::" ^ data_name ^ param ^ (* " & o>=0; \n" *) "; \n" ^ *)
-                 "  }\n"
+            "  case { \n" ^
+            "    p =  null -> ensures res = null; \n" ^
+            "    p != null -> requires p::void_star<_> \n" ^
+            "                 ensures res::" ^ typ_name ^ "<_> & res=p;\n" ^
+            "  }\n"
         ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -655,6 +661,10 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   (* return *)
   proc_decl
 
+
+let create_void_pointer_casting_proc (typ_name: string) 
+  : Iast.proc_decl =
+  Debug.no_1 "create_void_pointer_casting_proc" pr_id Iprinter.string_of_proc_decl create_void_pointer_casting_proc typ_name
 
 (* check if a type is pointer type *)
 let is_pointer_typ_name (typ_name: string) : bool =
@@ -683,7 +693,7 @@ let create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
             "                 ensures res::" ^ out_typ_name ^ "<_,o> & o>=0;\n" ^
             "  }\n"
           ) in
-          (* overwrites the the above version which contains the extra 0 argument *)
+          (* overwrites the above version which contains the extra 0 argument *)
           (* TODO: we need to check how many paramenters the actual data type has
              and create the specs accordingly. Currently the heap is hardcoded to
              one anonymous parameter. *)
