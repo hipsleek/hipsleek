@@ -621,7 +621,7 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "char"  -> "<_,q>"
           | _ -> (
               try
-                let data_decl = tbl_data_decl # find (Globals.Named base_data) in
+                let data_decl = tbl_data_decl # find ~loc:x_loc (Globals.Named base_data) in
                 match data_decl.Iast.data_fields with
                 | []   -> report_error no_pos "create_void_pointer_casting_proc: Invalid data_decl fields"
                 | [hd] -> "<_>"
@@ -1081,15 +1081,15 @@ and gather_addrof_exp (e: Cil.exp) : unit =
       (* | Cil.TComp _ -> () *)
       | _ -> (
           try
-            let todo_unk = tbl_addrof_info # find lv_str in ()
-
+            let todo_unk = tbl_addrof_info # find ~loc:x_loc lv_str in ()
           with Not_found ->
+          (* let () = y_binfo_pp "XX1\n" in *)
           begin match lv_ty with
             | Cil.TPtr (refined_ty, _) when (is_cil_struct_pointer lv_ty) ->
                 let addr_var_name = str_addr ^ lv_str in
-                begin try
-                  let addr_data_typ = tbl_pointer_typ # find refined_ty in
-                  let addr_data_decl = tbl_data_decl # find addr_data_typ in
+                  begin try
+                  let addr_data_typ = tbl_pointer_typ # find ~loc:x_loc refined_ty in
+                  let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
                   let addr_data_name =
                     begin match addr_data_typ with
                     | Globals.Named s -> s
@@ -1101,9 +1101,9 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
                     in
                   aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
-                  tbl_addrof_info # add lv_str addr_var_name;
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
               with Not_found ->
-                tbl_addrof_info # add lv_str lv_str;
+                tbl_addrof_info # add ~loc:x_loc lv_str lv_str;
                   (* Muoi: Address of a struct is itself *)
               end
             | Cil.TVoid attr
@@ -1119,7 +1119,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                 let addr_var_name = str_addr ^ lv_str in
                 begin try
                   let addr_data_typ = translate_typ (Cil.TPtr (lv_ty, attr)) pos in
-                  let addr_data_decl = tbl_data_decl # find addr_data_typ in
+                  let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
                   let addr_data_name =
                     begin match addr_data_typ with
                     | Globals.Named s -> s
@@ -1131,16 +1131,16 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
                     in
                   aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
-                  tbl_addrof_info # add lv_str addr_var_name;
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
                 with Not_found ->
                   (* report_error pos ("Data declaration for address data structure of \"" ^ string_of_cil_typ lv_ty ^"\" could not be found") *)
-                  tbl_addrof_info # add lv_str addr_var_name;
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
                 end
             (* | _ ->
                 let addr_var_name = str_addr ^ lv_str in
                 begin try
-                    let addr_data_typ = tbl_pointer_typ # find lv_ty in
-                    let addr_data_decl = tbl_data_decl # find addr_data_typ in
+                    let addr_data_typ = tbl_pointer_typ # find ~loc:x_loc lv_ty in
+                    let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
                     let addr_data_name =
                       begin match addr_data_typ with
                       | Globals.Named s -> s
@@ -1152,9 +1152,9 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                       Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
                       in
                     aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
-                    tbl_addrof_info # add lv_str addr_var_name;
+                    tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
                 with Not_found ->
-                  tbl_addrof_info # add lv_str addr_var_name (* lv_str *); (* Muoi: Address of a struct is itself *)
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name (* lv_str *); (* Muoi: Address of a struct is itself *)
                 end *)
           end
           (* with Not_found -> (
@@ -1165,9 +1165,9 @@ and gather_addrof_exp (e: Cil.exp) : unit =
 
              let addr_vname = str_addr ^ lv_str in
               try
-                let addr_dtyp = tbl_pointer_typ # find refined_ty in
-                (* let () = y_binfo_hp (add_str "tbl pointer typ" (pr_hashtbl string_of_cil_typ Globals.string_of_typ)) tbl_pointer_typ in *)
-                let addr_ddecl = tbl_data_decl # find addr_dtyp in
+                let addr_dtyp = tbl_pointer_typ # find ~loc:x_loc refined_ty in
+                let () = y_binfo_hp (add_str "tbl pointer typ" (pr_hashtbl string_of_cil_typ Globals.string_of_typ)) tbl_pointer_typ in
+                let addr_ddecl = tbl_data_decl # find ~loc:x_loc addr_dtyp in
                 let addr_dname = (
                   match addr_dtyp with
                   | Globals.Named s -> s
@@ -1180,8 +1180,8 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
                 ) in
                 aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
-                tbl_addrof_info # add lv_str addr_vname;
-              with Not_found -> tbl_addrof_info # add lv_str addr_var_name (* lv_str *); (*Muoi: Address of a struct is itself*)
+                tbl_addrof_info # add ~loc:x_loc lv_str addr_vname;
+              with Not_found -> tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name (* lv_str *); (*Muoi: Address of a struct is itself*)
  *)
               (* let deref_ty = translate_typ refined_ty pos in *)
               (* let (addr_dtyp, addr_dname, addr_ddecl) = ( *)
@@ -1293,7 +1293,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
         let newt = (
           (* find if this pointer was handled before or not *)
           try
-           tbl_pointer_typ # find core_type
+           tbl_pointer_typ # find ~loc:x_loc core_type
           with Not_found -> (
               (* create new Globals.typ and Iast.data_decl update to hash tables *)
               let value_typ = translate_typ core_type pos in
@@ -1311,11 +1311,11 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
                 | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
                 | _ -> [value_field(*; offset_field*)]
               in
-              tbl_pointer_typ # add core_type dtype;
+              tbl_pointer_typ # add ~loc:x_loc core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
               x_binfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
               x_binfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
-              tbl_data_decl # add dtype ddecl;
+              tbl_data_decl # add ~loc:x_loc dtype ddecl;
               (* return new type*)
               dtype
             )
@@ -1428,7 +1428,7 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
   let _ = Debug.ninfo_hprint (add_str "name" pr_id) name no_pos in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = Iast.mkDataDecl name fields "Object" [] false [] in
-  tbl_data_decl # add (Globals.Named name) datadecl;
+  tbl_data_decl # add ~loc:x_loc (Globals.Named name) datadecl;
 
 
 and translate_unary_operator (op : Cil.unop) pos : Iast.uni_op =
@@ -1469,7 +1469,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
   let pos = translate_location l in
   let lv_str = string_of_cil_lval lv in
   try
-    let addr_vname = tbl_addrof_info # find lv_str in
+    let addr_vname = tbl_addrof_info # find ~loc:x_loc lv_str in
     let addr_var = Iast.mkVar addr_vname pos in
     Iast.mkMember addr_var [str_value] None pos
   with Not_found -> (
@@ -1664,7 +1664,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
       | _ -> (
           let lv_str = string_of_cil_lval lv in
           try
-            let addr_vname = tbl_addrof_info # find lv_str in
+            let addr_vname = tbl_addrof_info # find ~loc:x_loc lv_str in
             Iast.mkVar addr_vname pos
           with Not_found ->
             report_error pos ("translate_exp: addr var of '" ^ lv_str ^ "' is not found.")
@@ -2175,7 +2175,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       begin
         let (id, pr) = hn.IF.h_formula_heap_node in
         try
-          let addr_vname = tbl_addrof_info # find id in
+          let addr_vname = tbl_addrof_info # find ~loc:x_loc id in
           IF.HeapNode { hn with
                         IF.h_formula_heap_node = (addr_vname, pr)
                       }
@@ -2185,7 +2185,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       begin
         let (id, pr) = hn2.IF.h_formula_heap2_node in
         try
-          let addr_vname = tbl_addrof_info # find id in
+          let addr_vname = tbl_addrof_info # find ~loc:x_loc id in
           IF.HeapNode2 { hn2 with
                          IF.h_formula_heap2_node = (addr_vname, pr)
                        }
@@ -2281,7 +2281,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
     | Ipure.Var ((id, pr), pos) ->
       begin
         try
-          let addr_vname = tbl_addrof_info # find id in
+          let addr_vname = tbl_addrof_info # find ~loc:x_loc id in
           Ipure.Var ((addr_vname, pr), pos)
         with _ -> e
       end
@@ -2394,7 +2394,7 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
           ) offset_init_list;
         (* init all fields of *)
         let data_decl = (
-          try tbl_data_decl # find newtyp
+          try tbl_data_decl # find ~loc:x_loc newtyp
           with Not_found -> report_error pos ("translate_init: couldn't find typ - " ^ newtyp_name)
         ) in
         let init_params = List.fold_left (
@@ -2661,7 +2661,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       match gl with
       | Cil.GType (tinfo, _) ->                                   (* collect typedef info *)
         let core_typ = get_core_cil_typ tinfo.Cil.ttype in
-        tbl_typedef # add tinfo.Cil.tname core_typ;
+        tbl_typedef # add ~loc:x_loc tinfo.Cil.tname core_typ;
       | _ -> ();
     ) globals;
   (* translate the rest *)

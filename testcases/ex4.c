@@ -6,12 +6,12 @@ struct node
 };
 
 /*@
-pred ll<n> == self = null & n = 0
-           or self::node<_, q> * q::ll<n-1>
-   inv n >= 0;
+//pred ll<n> == self = null & n = 0
+//           or self::node<_, q> * q::ll<n-1>
+//   inv n >= 0;
 
 pred lseg<n,q> == self = q & n=0
-           or self::node<_, q> * q::lseg<n-1,q>
+           or self::node<_, q1> * q1::lseg<n-1,q>
    inv n >= 0;
 */
 
@@ -68,7 +68,7 @@ void addLast(struct node **head_ref, int d1)
 
 void freeList(struct node *hd)
 /*@
-  infer[@classic] 
+  infer[@leak] 
   requires hd::lseg<n,null>
   ensures emp;
 */
@@ -77,7 +77,7 @@ void freeList(struct node *hd)
   struct node *p2;
   while (p1 != NULL)
   /*@
-    infer[@classic]
+    infer[@leak]
     requires p1::lseg<n,null>
     ensures emp;
   */
@@ -109,14 +109,12 @@ void printList(struct node *ptr)
 // Memory Leak Example
 int main()
 /*@
-  requires true
+  infer[@leak]
+  requires emp
   ensures emp;
 */
 {
   struct node *head = NULL;
-  /*@
-    dprint;
-  */
 
   addLast(&head, 1);
   
@@ -125,10 +123,13 @@ int main()
   // 2. if also comment out the printList() line,
   // which accesses the structure in a loop,
   // error can be found even with --unroll 1 in SMACK
+  /*
+    dprint;
+  */
   printList(head);
   // 1. if only comment out the freeList() line,
   // no error reported by SMACK unless with --unroll 3 or more
-  // freeList(head);
-  // free(&head);
+  freeList(head);
+  free(&head);
   return 0;
 }

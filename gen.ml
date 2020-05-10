@@ -598,17 +598,23 @@ exception Non_existent_key of string
 class ['a, 'b] hash_table name string_of_key string_of_value =
   object (self)
     val tbl : ('a, 'b) Hashtbl.t = Hashtbl.create 1
-    val mutable debug = false
+    val mutable debug =true
 
-    method find k =
-      let () = if debug then print_endline ("Searching for \"" ^ string_of_key k ^ "\" in " ^ name) else () in
-      (* try *)
-        Hashtbl.find tbl k
+    method find ?(loc="") k =
+      (* let () = if debug then print_endline (loc^"Finding \"" ^ string_of_key k ^ "\" in " ^ name) else () in  *)
+        (* try *)
+           try 
+           let r = Hashtbl.find tbl k in
+           let () = if debug then print_endline (loc^"Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
+           r
+           with e ->
+           let () = if debug then print_endline (loc^"Not Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
+           raise e
       (* with Not_found ->
         let err_msg = "Key \"" ^ string_of_key k ^ "\" not found in hash table \"" ^ name ^ "\"" in
         raise (Non_existent_key err_msg) *)
-    method add k v =
-      let () = if debug then print_endline ("Adding \"" ^ string_of_key k ^ "\" -> \"" ^ string_of_value v ^ "\" to " ^ name) else () in
+    method add ?(loc="") k v =
+      let () = if debug then print_endline (loc^"Adding \"" ^ string_of_key k ^ "\" -> \"" ^ string_of_value v ^ "\" to " ^ name) else () in
       Hashtbl.add tbl k v
     method contains k = Hashtbl.mem tbl k
     method clear = Hashtbl.clear tbl

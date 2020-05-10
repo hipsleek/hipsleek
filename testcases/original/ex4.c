@@ -57,6 +57,7 @@ int main() {
    printList(head);
    // 1. if only comment out the freeList() line,
    // no error reported by SMACK unless with --unroll 3 or more
-   // freeList(head);
+   freeList(head);
+   free(&head)
    return 0;
 }
