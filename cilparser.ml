@@ -1097,7 +1097,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     end in
                   let addr_var_decl =
                     let init_params = [(translate_lval lv)] in
-                    let init_data = Iast.mkNew addr_data_name init_params pos in
+                    let init_data = Iast.mkNew addr_data_name [] pos in
                     Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
                     in
                   aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
@@ -1127,7 +1127,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     end in
                   let addr_var_decl =
                     let init_params = [(translate_lval lv)] in
-                    let init_data = Iast.mkNew addr_data_name init_params pos in
+                    let init_data = Iast.mkNew addr_data_name [] pos in
                     Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
                     in
                   aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
@@ -2509,6 +2509,21 @@ and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.p
     | [] -> None
     | _ ->
       let slocals = List.map translate_var_decl fundec.Cil.slocals in
+      let slocals =
+        List.fold_left (fun acc v -> match v with
+          | Iast.VarDecl { exp_var_decl_type; exp_var_decl_decls; exp_var_decl_pos } ->
+              let filtered_vars = List.filter (fun (name, _, _) -> not (tbl_addrof_info # contains name)) exp_var_decl_decls in
+              begin match filtered_vars with
+                | [] -> acc
+                | l ->
+                  let filtered_var_decl = Iast.mkVarDecl exp_var_decl_type l exp_var_decl_pos
+                  in filtered_var_decl :: acc
+              end
+          | e -> e :: acc
+        )
+        []
+        slocals
+      in
       let sbody = translate_block fundec.Cil.sbody in
       let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
       let pos = translate_location fundec.Cil.sbody.Cil.bloc in
