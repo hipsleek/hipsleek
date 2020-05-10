@@ -1173,42 +1173,42 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                 tbl_addrof_info # add lv_str addr_vname;
               with Not_found -> tbl_addrof_info # add lv_str addr_var_name (* lv_str *); (*Muoi: Address of a struct is itself*)
  *)
-              (*let deref_ty = translate_typ refined_ty pos in
-              let (addr_dtyp, addr_dname, addr_ddecl) = (
-                try
-                  let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
-                  let ddecl = Hashtbl.find tbl_data_decl dtyp in
-                  let dname = (
-                    match dtyp with
-                    | Globals.Named s -> s
-                    | _ -> report_error pos "gather_addrof_exp: unexpected type!"
-                  ) in
-                  (dtyp, dname, ddecl)
-                with Not_found -> (
-                    (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
-                    let ftyp = deref_ty in
-                    let fname = str_value in
-                    let val_field = ((ftyp, fname), no_pos, false, (gen_field_ann ftyp) (* Iast.F_NO_ANN *)) in
-                    let offset_field = ((Int, str_offset), no_pos, false, (gen_field_ann Int)) in
-                    let dfields = [val_field; offset_field] in
-                    let dname = (Globals.string_of_typ ftyp) ^ "_star" in
-                    let dtyp = Globals.Named dname in
-                    Hashtbl.add tbl_pointer_typ refined_ty dtyp;
-                    let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-                    Hashtbl.add tbl_data_decl dtyp ddecl;
-                    (dtyp, dname, ddecl)
-                  )
-              ) in
-              (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
-              let addr_vname = str_addr ^ lv_str in
-              let addr_vdecl = (
-                (* create and temporarily initiate a new object *)
-                let init_params = [(translate_lval lv)] in
-                let init_data = Iast.mkNew addr_dname init_params pos in
-                Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
-              ) in
-              aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
-              Hashtbl.add tbl_addrof_info lv_str addr_vname;*)
+              (* let deref_ty = translate_typ refined_ty pos in *)
+              (* let (addr_dtyp, addr_dname, addr_ddecl) = ( *)
+              (*   try *)
+              (*     let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in *)
+              (*     let ddecl = Hashtbl.find tbl_data_decl dtyp in *)
+              (*     let dname = ( *)
+              (*       match dtyp with *)
+              (*       | Globals.Named s -> s *)
+              (*       | _ -> report_error pos "gather_addrof_exp: unexpected type!" *)
+              (*     ) in *)
+              (*     (dtyp, dname, ddecl) *)
+              (*   with Not_found -> ( *)
+              (*       (\* create new Globals.typ and Iast.data_decl, then update to a hash table *\) *)
+              (*       let ftyp = deref_ty in *)
+              (*       let fname = str_value in *)
+              (*       let val_field = ((ftyp, fname), no_pos, false, (gen_field_ann ftyp) (\* Iast.F_NO_ANN *\)) in *)
+              (*       let offset_field = ((Int, str_offset), no_pos, false, (gen_field_ann Int)) in *)
+              (*       let dfields = [val_field; offset_field] in *)
+              (*       let dname = (Globals.string_of_typ ftyp) ^ "_star" in *)
+              (*       let dtyp = Globals.Named dname in *)
+              (*       Hashtbl.add tbl_pointer_typ refined_ty dtyp; *)
+              (*       let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in *)
+              (*       Hashtbl.add tbl_data_decl dtyp ddecl; *)
+              (*       (dtyp, dname, ddecl) *)
+              (*     ) *)
+              (* ) in *)
+              (* (\* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *\) *)
+              (* let addr_vname = str_addr ^ lv_str in *)
+              (* let addr_vdecl = ( *)
+              (*   (\* create and temporarily initiate a new object *\) *)
+              (*   let init_params = [(translate_lval lv)] in *)
+              (*   let init_data = Iast.mkNew addr_dname init_params pos in *)
+              (*   Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos *)
+              (* ) in *)
+              (* aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl]; *)
+              (* Hashtbl.add tbl_addrof_info lv_str addr_vname; *)
             )
         )
   | Cil.StartOf (lv, _) -> ()
