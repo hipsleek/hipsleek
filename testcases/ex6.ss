@@ -14,7 +14,11 @@ int_star foo()
   addr_p.v = 1;
   int_star q = addr_p;
   free_is(addr_p);
-  // stack allocated memory needs to be automatically deallocated
+  /* stack allocated memory needs to be
+    ..automatically deallocated
+    Is there a generic free? What is best way to
+    implement it?
+  */
   return q;
 }
 
