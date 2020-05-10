@@ -638,19 +638,19 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                       "    p != null -> requires p::memLoc<h,s> & h\n" ^
                       "                 ensures res::WFSegN<q,s>; \n" ^
                       "  }\n"
-          (* | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
-           *        "  case { \n" ^
-           *        "    p =  null -> ensures res = null; \n" ^
-           *        "    p != null -> requires p::memLoc<h,s> & h\n" ^
-           *        "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
-           *        (\* "                 ensures res::" ^ data_name ^ param ^ (\* " & o>=0; \n" *\) "; \n" ^ *\)
-           *        "  }\n" *)
           | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
-            "  case { \n" ^
-            "    p =  null -> ensures res = null; \n" ^
-            "    p != null -> requires p::void_star<_> \n" ^
-            "                 ensures res::" ^ typ_name ^ "<_> & res=p;\n" ^
-            "  }\n"
+                 "  case { \n" ^
+                 "    p =  null -> ensures res = null; \n" ^
+                 "    p != null -> requires p::memLoc<h,s> & h\n" ^
+                 "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
+                 (* "                 ensures res::" ^ data_name ^ param ^ (* " & o>=0; \n" *) "; \n" ^ *)
+                 "  }\n"
+          (* | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+           *   "  case { \n" ^
+           *   "    p =  null -> ensures res = null; \n" ^
+           *   "    p != null -> requires p::void_star<_> \n" ^
+           *   "                 ensures res::" ^ typ_name ^ "<_> & res=p;\n" ^
+           *   "  }\n" *)
         ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -697,14 +697,14 @@ let create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
           (* TODO: we need to check how many paramenters the actual data type has
              and create the specs accordingly. Currently the heap is hardcoded to
              one anonymous parameter. *)
-          let cast_proc = (
-            out_typ_name ^ " " ^ proc_name ^ " (" ^ in_typ_name ^ " p)\n" ^
-            "  case { \n" ^
-            "    p =  null -> ensures res = null; \n" ^
-            "    p != null -> requires p::" ^ in_typ_name ^ "<_> \n" ^
-            "                 ensures res::" ^ out_typ_name ^ "<_> & res=p;\n" ^
-            "  }\n"
-          ) in
+          (* let cast_proc = (
+           *   out_typ_name ^ " " ^ proc_name ^ " (" ^ in_typ_name ^ " p)\n" ^
+           *   "  case { \n" ^
+           *   "    p =  null -> ensures res = null; \n" ^
+           *   "    p != null -> requires p::" ^ in_typ_name ^ "<_> \n" ^
+           *   "                 ensures res::" ^ out_typ_name ^ "<_> & res=p;\n" ^
+           *   "  }\n"
+           * ) in *)
           let proc_decl = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
           Hashtbl.add tbl_aux_proc proc_name proc_decl;
           proc_decl

@@ -19,8 +19,8 @@ void *memcpy(int *dest, int *src, int length) __attribute__ ((noreturn))
   ensures  false;
   requires dest::int_star<_>@L & src=null
   ensures  false;
-  requires dest::int_star<_> * src::int_star<_>@L  & length>=0 
-  ensures  dest::int_star<_>; 
+  requires dest::int_star<_> * src::int_star<x>@L  & length>=0 
+  ensures  dest::int_star<x>; 
 
 */;
 
@@ -28,29 +28,26 @@ void *memcpy(int *dest, int *src, int length) __attribute__ ((noreturn))
 int *a;
 
 void foo(void)
-/*@ infer [@leak]
+/*@ //infer [@leak]
   requires a::int_star<_>
   ensures  a'::int_star<_>;
 */
 {
-  int *p ;
-  /*@ dprint;*/
-  p = (int *)malloc(10); // This p will leak
-  /*@ dprint;*/
+  int *p = (int *)malloc(10); // This p will leak
   memcpy(a, &p, sizeof p); // TODO: addr_p is not declared
 }
 
 
-/* int main(void) */
-/* /\*@ */
-/*   requires a::int_star<_> */
-/*   ensures  a'::int_star<_>; */
-/* *\/ */
-/* { */
-/*   foo(); */
-/*   void *p; // this p will free */
-/*   memcpy(&p, a, sizeof p); */
-/*   /\*@ dprint; *\/ */
-/*   free((int *)p); */
-/* } */
+int main(void)
+/*@
+  requires a::int_star<_>
+  ensures  a'::int_star<_>;
+*/
+{
+  foo();
+  void *p; // this p will free
+  memcpy(&p, a, sizeof p);
+  /*@ dprint; */
+  // free(p);
+}
 
