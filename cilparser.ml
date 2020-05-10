@@ -662,7 +662,7 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   proc_decl
 
 
-let create_void_pointer_casting_proc (typ_name: string) 
+let create_void_pointer_casting_proc (typ_name: string)
   : Iast.proc_decl =
   Debug.no_1 "create_void_pointer_casting_proc" pr_id Iprinter.string_of_proc_decl create_void_pointer_casting_proc typ_name
 
@@ -1103,10 +1103,20 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
                   tbl_addrof_info # add lv_str addr_var_name;
               with Not_found ->
-                tbl_addrof_info # add lv_str addr_var_name (*lv_str*);
+                tbl_addrof_info # add lv_str lv_str;
                   (* Muoi: Address of a struct is itself *)
               end
-            | Cil.TInt (_, attr) -> (* Primitive values *)
+            | Cil.TVoid attr
+            | Cil.TFloat (_, attr)
+            | Cil.TPtr (_, attr)
+            | Cil.TArray (_, _,attr)
+            | Cil.TFun (_, _, _, attr)
+            | Cil.TNamed (_, attr)
+            | Cil.TComp (_, attr)
+            | Cil.TEnum (_, attr)
+            | Cil.TBuiltin_va_list attr
+            | Cil.TInt (_, attr) -> (* Not struct pointer *)
+                let addr_var_name = str_addr ^ lv_str in
                 begin try
                   let addr_data_typ = translate_typ (Cil.TPtr (lv_ty, attr)) pos in
                   let addr_data_decl = tbl_data_decl # find addr_data_typ in
@@ -1115,7 +1125,6 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     | Globals.Named s -> s
                     | _ -> report_error pos "gather_addrof_exp: unexpected type!"
                     end in
-                  let addr_var_name = str_addr ^ lv_str in
                   let addr_var_decl =
                     let init_params = [(translate_lval lv)] in
                     let init_data = Iast.mkNew addr_data_name init_params pos in
@@ -1124,9 +1133,10 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
                   tbl_addrof_info # add lv_str addr_var_name;
                 with Not_found ->
-                  report_error pos ("Data declaration for address data structure of \"" ^ string_of_cil_typ lv_ty ^"\" could not be found")
+                  (* report_error pos ("Data declaration for address data structure of \"" ^ string_of_cil_typ lv_ty ^"\" could not be found") *)
+                  tbl_addrof_info # add lv_str addr_var_name;
                 end
-            | _ ->
+            (* | _ ->
                 let addr_var_name = str_addr ^ lv_str in
                 begin try
                     let addr_data_typ = tbl_pointer_typ # find lv_ty in
@@ -1145,7 +1155,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     tbl_addrof_info # add lv_str addr_var_name;
                 with Not_found ->
                   tbl_addrof_info # add lv_str addr_var_name (* lv_str *); (* Muoi: Address of a struct is itself *)
-                end
+                end *)
           end
           (* with Not_found -> (
               let refined_ty = (match lv_ty with
@@ -2436,7 +2446,7 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
 
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   Debug.no_1 "translate_fundec" string_of_cil_fundec Iprinter.string_of_proc_decl
-    (fun x -> translate_fundec_x x lopt) fundec 
+    (fun x -> translate_fundec_x x lopt) fundec
 
 and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   aux_local_vardecls := [];
