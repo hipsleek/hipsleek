@@ -2433,8 +2433,11 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
                  Iast.exp_var_decl_pos = pos} in
   vardecl
 
-
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
+  Debug.no_1 "translate_fundec" string_of_cil_fundec Iprinter.string_of_proc_decl
+    (fun x -> translate_fundec_x x lopt) fundec 
+
+and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   aux_local_vardecls := [];
   nondet_vars := [Globals.nondet_int_proc_name]; (* To handle nondeterministic if conditions *)
   let () = x_add_1 gather_addrof_fundec fundec in

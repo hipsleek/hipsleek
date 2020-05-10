@@ -1,3 +1,7 @@
+struct int_star {
+  int value;
+};
+
 int foo ()
 {
   int *p;
