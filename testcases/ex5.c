@@ -1,40 +1,110 @@
 //Ex.5: tricky memory leak
 
-int *malloc(int size)
+/**********************/
+/*** CAST FUNCTIONS ***/
+/**********************/
+void* __cast_void_star_star_to_void_star__(void** p)
+/*@
+  case{
+  p != null -> requires p::void_star_star<_> 
+               ensures  res::void_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
+
+int* __cast_void_pointer_to_int_star__(void* p)
+/*@
+  case{
+  p != null -> requires p::void_star<_> 
+               ensures  res::int_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
+void* __cast_int_star_to_void_star__(int* p)
+/*@
+  case{
+  p != null -> requires p::int_star<_> 
+               ensures  res::void_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
+int* __cast_void_star_star_to_int_star__(void** p)
+/*@
+  case{
+  p != null -> requires p::void_star_star<_> 
+               ensures  res::int_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
+void* __cast_int_star_star_to_void_star__(int** p)
+/*@
+  case{
+  p != null -> requires p::int_star_star<_> 
+               ensures  res::void_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
+int* __cast_int_star_star_to_int_star__(int** p)
+/*@
+  case{
+  p != null -> requires p::int_star_star<_> 
+               ensures  res::int_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
+int* __cast_char_star_to_int_star__(char p[])
+/*@
+  case{
+  p != null -> requires p::char_star<_,_> 
+               ensures  res::int_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
+
+
+
+void *malloc(int size)
 /*@
   case {
     size <= 0 -> requires true ensures res = null;
     size >  0 ->
       requires true
-      ensures res::int_star<_>;
+      ensures res::void_star<_>;
   }
 */;
 
 /* if any pointer is NULL, the behavior of memcpy is undefined */
-void *memcpy(int *dest, int *src, int length) __attribute__ ((noreturn))
+void *memcpy(void *dest, void *src, int length) __attribute__ ((noreturn))
 /*@
   requires dest=null & src = null
   ensures  false;
-  requires src::int_star<_>@L & dest=null
+  requires src::void_star<_>@L & dest=null
   ensures  false;
-  requires dest::int_star<_>@L & src=null
+  requires dest::void_star<_>@L & src=null
   ensures  false;
-  requires dest::int_star<_> * src::int_star<x>@L  & length>=0 
-  ensures  dest::int_star<x>; 
+  requires dest::void_star<_> * src::void_star<x>@L  & length>=0 
+  ensures  dest::void_star<x>; 
 
 */;
 
-// char a[sizeof(int*)];
+//char a[sizeof(int*)];
 int *a;
 
-void foo(void)
-/*@ //infer [@leak]
+void foo()
+/*@ infer [@leak]
   requires a::int_star<_>
-  ensures  a'::int_star<_>;
+  ensures  a'::int_star<v> ;
 */
 {
   int *p = (int *)malloc(10); // This p will leak
-  memcpy(a, &p, sizeof p); // TODO: addr_p is not declared
+  memcpy(a, &p, sizeof p);
 }
 
 
@@ -47,7 +117,6 @@ int main(void)
   foo();
   void *p; // this p will free
   memcpy(&p, a, sizeof p);
-  /*@ dprint; */
-  // free(p);
+  free(p);
 }
 
