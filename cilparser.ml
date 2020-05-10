@@ -654,7 +654,8 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
-        Hashtbl.add tbl_aux_proc proc_name pd;
+        if Hashtbl.mem tbl_aux_proc proc_name then ()
+        else Hashtbl.add tbl_aux_proc proc_name pd;
         pd
       )
   ) in
@@ -2648,6 +2649,15 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let coercion_decls : Iast.coercion_decl_list list ref = ref [] in
   let aux_progs : Iast.prog_decl list ref = ref [] in
 
+  (* TODO: this is a naive way of checking if this is a cast function.
+           to add a flag in teh specs to distinguish between cast functions and othere functions. *)
+  let is_cast_function proc_name =
+    let str = "__cast" in
+    if (String.length proc_name < String.length str) then false
+    else
+      0 == String.compare (String.sub proc_name 0 (String.length str)) str
+  in
+
   (* reset & init global vars *)
   tbl_pointer_typ # reset;
   tbl_data_decl # reset;
@@ -2687,7 +2697,11 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       | Cil.GFun (fd, l) ->
         let fd = remove_goto fd in
         let proc = translate_fundec fd (Some l) in
-        proc_decls := !proc_decls @ [proc]
+        (* if the user provided a cast method then replace the auto generated one with the user provided one *)
+        if (is_cast_function proc.Iast.proc_name) then
+          Hashtbl.add tbl_aux_proc proc.Iast.proc_name proc
+        else 
+          proc_decls := !proc_decls @ [proc]
       | Cil.GAsm _ ->
         (* let () = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
         ()
