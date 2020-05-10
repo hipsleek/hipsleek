@@ -30,6 +30,11 @@ let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 1
 (* hash table map lval expressions (in string form) to their address holder generated-pointers *)
 let tbl_addrof_info : (string, string) Hashtbl.t = Hashtbl.create 1
 
+let print_tbl_addrof () =
+   (* let  () = Printf.printf "Table of tbl_addrof \n" in *)
+   let s = Hashtbl.fold (fun a b c -> (a^"->"^b^";"^c)) tbl_addrof_info "" in
+   ("["^s^"]")
+
 (* list of nondeterministic variables *)
 let nondet_vars : string list ref = ref []
 
@@ -971,6 +976,9 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
 (************************************************************)
 
 and gather_addrof_fundec (fd: Cil.fundec) : unit =
+  Debug.no_1 "gather_addrof_fundec"  string_of_cil_fundec (fun _ -> print_tbl_addrof () )  gather_addrof_fundec_x fd
+
+and gather_addrof_fundec_x (fd: Cil.fundec) : unit =
   (* reset some local setting *)
   Hashtbl.clear tbl_addrof_info;
   (* start gathering addrof_info in each function *)
@@ -2353,7 +2361,7 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   aux_local_vardecls := [];
   nondet_vars := [Globals.nondet_int_proc_name]; (* To handle nondeterministic if conditions *)
-  let () = gather_addrof_fundec fundec in
+  let () = x_add_1 gather_addrof_fundec fundec in
   (* start translating function *)
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let fheader = fundec.Cil.svar in
