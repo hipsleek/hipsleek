@@ -188,6 +188,15 @@ struct
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 
+  let pr_hashtbl f1 f2 tbl =
+    Hashtbl.fold
+      (fun k v acc ->
+        (f1 k ^ " -> " ^ f2 v) :: acc
+      )
+      tbl
+      []
+    |> String.concat "; "
+
   let map_opt f x = match x with
     | None -> None
     | Some v -> Some (f v)
@@ -584,6 +593,26 @@ module BListEQ =
 
   end;;
 
+class ['a, 'b] hash_table name string_of_key string_of_value =
+  object (self)
+    val tbl : ('a, 'b) Hashtbl.t = Hashtbl.create 1
+    val mutable debug = false
+
+    method find k =
+      let () = if debug then print_endline ("Searching for \"" ^ string_of_key k ^ "\" in " ^ name) else () in
+      Hashtbl.find tbl k
+    method add k v =
+      let () = if debug then print_endline ("Adding \"" ^ string_of_key k ^ "\" -> \"" ^ string_of_value v ^ "\" to " ^ name) else () in
+      Hashtbl.add tbl k v
+    method clear = Hashtbl.clear tbl
+    method reset = Hashtbl.reset tbl
+    method to_string =
+      "{" ^ Basic.pr_hashtbl string_of_key string_of_value tbl ^ "}"
+    method to_list = Hashtbl.fold (fun k v acc -> (k, v) :: acc) tbl []
+    method keys = Hashtbl.fold (fun k v acc -> k :: acc) tbl []
+    method values = Hashtbl.fold (fun k v acc -> v :: acc) tbl []
+    method enable_debug = debug <- true
+  end
 
 exception Stack_Error
 
@@ -2476,4 +2505,3 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
-
