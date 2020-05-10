@@ -1078,7 +1078,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
       let lv_str = string_of_cil_lval lv in
       let lv_ty = typ_of_cil_lval lv in
       match lv_ty with
-      | Cil.TComp _ -> ()
+      (* | Cil.TComp _ -> () *)
       | _ -> (
           try
             let todo_unk = tbl_addrof_info # find lv_str in ()
@@ -1086,6 +1086,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
           with Not_found ->
           begin match lv_ty with
             | Cil.TPtr (refined_ty, _) when (is_cil_struct_pointer lv_ty) ->
+                let addr_var_name = str_addr ^ lv_str in
                 begin try
                   let addr_data_typ = tbl_pointer_typ # find refined_ty in
                   let addr_data_decl = tbl_data_decl # find addr_data_typ in
@@ -1094,7 +1095,6 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     | Globals.Named s -> s
                     | _ -> report_error pos "gather_addrof_exp: unexpected type!"
                     end in
-                  let addr_var_name = str_addr ^ lv_str in
                   let addr_var_decl =
                     let init_params = [(translate_lval lv)] in
                     let init_data = Iast.mkNew addr_data_name init_params pos in
@@ -1103,7 +1103,8 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
                   tbl_addrof_info # add lv_str addr_var_name;
               with Not_found ->
-                tbl_addrof_info # add lv_str lv_str; (* Muoi: Address of a struct is itself *)
+                tbl_addrof_info # add lv_str addr_var_name (*lv_str*);
+                  (* Muoi: Address of a struct is itself *)
               end
             | Cil.TInt (_, attr) -> (* Primitive values *)
                 begin try
@@ -1126,6 +1127,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   report_error pos ("Data declaration for address data structure of \"" ^ string_of_cil_typ lv_ty ^"\" could not be found")
                 end
             | _ ->
+                let addr_var_name = str_addr ^ lv_str in
                 begin try
                     let addr_data_typ = tbl_pointer_typ # find lv_ty in
                     let addr_data_decl = tbl_data_decl # find addr_data_typ in
@@ -1134,7 +1136,6 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                       | Globals.Named s -> s
                       | _ -> report_error pos "gather_addrof_exp: unexpected type!"
                       end in
-                    let addr_var_name = str_addr ^ lv_str in
                     let addr_var_decl =
                       let init_params = [(translate_lval lv)] in
                       let init_data = Iast.mkNew addr_data_name init_params pos in
@@ -1143,7 +1144,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
                     tbl_addrof_info # add lv_str addr_var_name;
                 with Not_found ->
-                  tbl_addrof_info # add lv_str lv_str; (* Muoi: Address of a struct is itself *)
+                  tbl_addrof_info # add lv_str addr_var_name (* lv_str *); (* Muoi: Address of a struct is itself *)
                 end
           end
           (* with Not_found -> (
@@ -1152,6 +1153,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   | _ -> lv_ty
                 ) in
 
+             let addr_vname = str_addr ^ lv_str in
               try
                 let addr_dtyp = tbl_pointer_typ # find refined_ty in
                 (* let () = y_binfo_hp (add_str "tbl pointer typ" (pr_hashtbl string_of_cil_typ Globals.string_of_typ)) tbl_pointer_typ in *)
@@ -1161,7 +1163,6 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   | Globals.Named s -> s
                   | _ -> report_error pos "gather_addrof_exp: unexpected type!"
                 ) in
-                let addr_vname = str_addr ^ lv_str in
                 let addr_vdecl = (
                   (* create and temporarily initiate a new object *)
                   let init_params = [(translate_lval lv)] in
@@ -1170,7 +1171,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                 ) in
                 aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
                 tbl_addrof_info # add lv_str addr_vname;
-              with Not_found -> tbl_addrof_info # add lv_str lv_str; (*Muoi: Address of a struct is itself*)
+              with Not_found -> tbl_addrof_info # add lv_str addr_var_name (* lv_str *); (*Muoi: Address of a struct is itself*)
  *)
               (*let deref_ty = translate_typ refined_ty pos in
               let (addr_dtyp, addr_dname, addr_ddecl) = (

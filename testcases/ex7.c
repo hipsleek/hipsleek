@@ -18,5 +18,6 @@ int main()
 {
    int *c;
    foo(&c);
+   return *c;
    // printf("%d\n",*c);
 }
