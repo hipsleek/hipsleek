@@ -593,6 +593,8 @@ module BListEQ =
 
   end;;
 
+exception Non_existent_key of string
+
 class ['a, 'b] hash_table name string_of_key string_of_value =
   object (self)
     val tbl : ('a, 'b) Hashtbl.t = Hashtbl.create 1
@@ -600,10 +602,15 @@ class ['a, 'b] hash_table name string_of_key string_of_value =
 
     method find k =
       let () = if debug then print_endline ("Searching for \"" ^ string_of_key k ^ "\" in " ^ name) else () in
-      Hashtbl.find tbl k
+      (* try *)
+        Hashtbl.find tbl k
+      (* with Not_found ->
+        let err_msg = "Key \"" ^ string_of_key k ^ "\" not found in hash table \"" ^ name ^ "\"" in
+        raise (Non_existent_key err_msg) *)
     method add k v =
       let () = if debug then print_endline ("Adding \"" ^ string_of_key k ^ "\" -> \"" ^ string_of_value v ^ "\" to " ^ name) else () in
       Hashtbl.add tbl k v
+    method contains k = Hashtbl.mem tbl k
     method clear = Hashtbl.clear tbl
     method reset = Hashtbl.reset tbl
     method to_string =
