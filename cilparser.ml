@@ -2464,7 +2464,6 @@ and generate_free_exprs addr_var_decls =
     )
     addr_var_decls
     |> List.concat
-    |> merge_iast_exp
 
 and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   aux_local_vardecls := [];
@@ -2544,7 +2543,7 @@ and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.p
       in
       let sbody = translate_block fundec.Cil.sbody in
       let free_exprs = generate_free_exprs !aux_local_vardecls in
-      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ [free_exprs]) in *)
+      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ free_exprs) in *)
       let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
       let pos = translate_location fundec.Cil.sbody.Cil.bloc in
       Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
