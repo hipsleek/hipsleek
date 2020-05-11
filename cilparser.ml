@@ -2449,6 +2449,23 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
   Debug.no_1 "translate_fundec" string_of_cil_fundec Iprinter.string_of_proc_decl
     (fun x -> translate_fundec_x x lopt) fundec
 
+and generate_free_exprs addr_var_decls =
+  List.map
+    (function
+      | Iast.VarDecl { exp_var_decl_type; exp_var_decl_decls; exp_var_decl_pos } ->
+          List.map
+            (fun (v, _, pos) ->
+              let fname = "free" in
+              let args = [Iast.mkVar v pos] in
+              Iast.mkCallNRecv fname None args None None pos
+            )
+            exp_var_decl_decls
+      | _ -> report_error no_pos "Not var decl in addr_var_decls"
+    )
+    addr_var_decls
+    |> List.concat
+    |> merge_iast_exp
+
 and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   aux_local_vardecls := [];
   nondet_vars := [Globals.nondet_int_proc_name]; (* To handle nondeterministic if conditions *)
@@ -2526,6 +2543,8 @@ and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.p
         slocals
       in
       let sbody = translate_block fundec.Cil.sbody in
+      let free_exprs = generate_free_exprs !aux_local_vardecls in
+      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ [free_exprs]) in *)
       let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
       let pos = translate_location fundec.Cil.sbody.Cil.bloc in
       Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
@@ -2700,7 +2719,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
         (* if the user provided a cast method then replace the auto generated one with the user provided one *)
         if (is_cast_function proc.Iast.proc_name) then
           Hashtbl.add tbl_aux_proc proc.Iast.proc_name proc
-        else 
+        else
           proc_decls := !proc_decls @ [proc]
       | Cil.GAsm _ ->
         (* let () = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)

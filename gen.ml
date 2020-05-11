@@ -601,18 +601,13 @@ class ['a, 'b] hash_table name string_of_key string_of_value =
     val mutable debug =true
 
     method find ?(loc="") k =
-      (* let () = if debug then print_endline (loc^"Finding \"" ^ string_of_key k ^ "\" in " ^ name) else () in  *)
-        (* try *)
-           try 
-           let r = Hashtbl.find tbl k in
-           let () = if debug then print_endline (loc^"Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
-           r
-           with e ->
-           let () = if debug then print_endline (loc^"Not Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
-           raise e
-      (* with Not_found ->
-        let err_msg = "Key \"" ^ string_of_key k ^ "\" not found in hash table \"" ^ name ^ "\"" in
-        raise (Non_existent_key err_msg) *)
+      try
+        let r = Hashtbl.find tbl k in
+        let () = if debug then print_endline (loc^"Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
+        r
+      with e ->
+        let () = if debug then print_endline (loc^"Not Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
+        raise e
     method add ?(loc="") k v =
       let () = if debug then print_endline (loc^"Adding \"" ^ string_of_key k ^ "\" -> \"" ^ string_of_value v ^ "\" to " ^ name) else () in
       Hashtbl.add tbl k v
