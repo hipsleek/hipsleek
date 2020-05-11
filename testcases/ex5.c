@@ -12,6 +12,15 @@ void* __cast_void_star_star_to_void_star__(void** p)
   }
 */;
 
+void* __cast_void_star_to_void_star_star__(void** p)
+/*@
+  case{
+  p != null -> requires p::void_star<_> 
+               ensures  res::void_star_star<_> & res = p;
+  p = null  -> ensures res = null;
+  }
+*/;
+
 
 int* __cast_void_pointer_to_int_star__(void* p)
 /*@
@@ -67,9 +76,19 @@ int* __cast_char_star_to_int_star__(char p[])
   }
 */;
 
+/**********************/
+/******* LEMMAS *******/
+/**********************/
+/*@ lemma "VOID-INT" self::void_star<x> -> self::int_star<_>. */
 
-/*@ lemma "VOID-INT" self::void_star<x> -> self::int_star<_>.*/
+// TODO allow type cast at formula level too (this would help us
+//      to preserve more information during casting):
+// lemma "VOID-INT" self::void_star<x> -> self::int_star<x:int>.
 
+
+/***************************/
+/*** Annotated C methods ***/
+/***************************/
 void *malloc(int size)
 /*@
   case {
@@ -81,7 +100,7 @@ void *malloc(int size)
 */;
 
 /* if any pointer is NULL, the behavior of memcpy is undefined */
-void *memcpy(void *dest, void *src, int length) __attribute__ ((noreturn))
+void *memcpy(void *dest, void *src, int length)
 /*@
   requires dest=null & src = null
   ensures  false;
@@ -91,21 +110,29 @@ void *memcpy(void *dest, void *src, int length) __attribute__ ((noreturn))
   ensures  false;
   requires dest::void_star<_> * src::void_star<x>@L  & length>=0 
   ensures  dest::void_star<x>; 
-
 */;
+
+
+/*********************/
+/*** ORIGINAL CODE ***/
+/*********************/
 
 //char a[sizeof(int*)];
 int *a;
 
+/* Correctly indetifies the leak in foo:
+   Post condition cannot be derived:
+   (must) cause: residue is forbidden.(1)
+*/
+
 void foo()
 /*@ infer [@leak]
   requires a::int_star<_>
-  ensures  a'::int_star<v> ;
+  ensures  a'::int_star<v>;
 */
 {
   int *p = (int *)malloc(10); // This p will leak
   memcpy(a, &p, sizeof p);
-  /*@ dprint;*/
 }
 
 
@@ -117,10 +144,9 @@ int main(void)
 {
   foo();
   void *p; // this p will free
+  /*@ dprint; */
   memcpy(&p, a, sizeof p);
   /*@ dprint; */
-  void *q = p;
-  /*@ dprint; */
-  free(q);
+  free(p);
 }
 

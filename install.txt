@@ -69,3 +69,14 @@ opam install --root=/usr/.opam batteries
 sudo opam install --root=/usr/.opam camlp4
 sudo opam install --root=/usr/.opam extlib
 sudo opam install --root=/usr/.opam merlin
+
+==================================
+Omega
+
+===================================
+fixcalc
+
+brew install bison
+brew install flex
+brew install cabal-install (for installing happy)
+cabal install happy
