@@ -68,7 +68,7 @@ int* __cast_char_star_to_int_star__(char p[])
 */;
 
 
-
+/*@ lemma "VOID-INT" self::void_star<x> -> self::int_star<_>.*/
 
 void *malloc(int size)
 /*@
@@ -105,6 +105,7 @@ void foo()
 {
   int *p = (int *)malloc(10); // This p will leak
   memcpy(a, &p, sizeof p);
+  /*@ dprint;*/
 }
 
 
@@ -117,6 +118,9 @@ int main(void)
   foo();
   void *p; // this p will free
   memcpy(&p, a, sizeof p);
-  free(p);
+  /*@ dprint; */
+  void *q = p;
+  /*@ dprint; */
+  free(q);
 }
 
