@@ -20,9 +20,9 @@ print residue.
 expect Valid.
 
 
-checkentail x::ch_star<_> * y::ch_star<_> * z::ch_star<_> & y = x+1 & z = y+1 & z = x+2 & z=p
+checkentail x::ch_star<_> * y::ch_star<_> * z::ch_star<_> & y = x+1 & z = y+1 & z=p
            |- x::arr_seg<p,3>.
 print residue.
 expect Valid.
 
-
+       
