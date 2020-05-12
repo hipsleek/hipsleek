@@ -3152,7 +3152,7 @@ let norm_slk_formula form =
  *)
 let norm_slk_cformula form =
   let form = norm_sequence form in
-  let form = norm_emp_sequence form in 
+  let form = norm_emp_sequence form in
   form
 
 let norm_slk_cformula form =

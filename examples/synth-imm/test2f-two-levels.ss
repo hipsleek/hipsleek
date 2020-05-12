@@ -5,16 +5,17 @@ data node{
 }
 
 pred lseg0<p> == self=p or
-                 self::node<_,q,_> * q::lseg0<p> & self!=p. // & self!=q.
+                 self::node<_,q,null> * q::lseg0<p> & self!=p. //& self!=q.
 
 pred lseg1<p,n> == self=p & n=0 or
-                  self::node<_,q,_> * q::lseg1<p,n-1> & self!=p // & self!=q
+                  self::node<_,q,null> * q::lseg1<p,n-1> & self!=p //& self!=q
                   inv n>=0.
 
-pred lseg2<p,n,mn,mx> == self=p & n=0 or
-                  self::node<mn,p,_> & mn=mx & n=1 & self!=p or
-                  self::node<mn,q,_> * q::lseg2<p,n-1,mn1,mx> & self!=p & self!=q & mn<=mn1  & n>1
-                  inv n>=0.
+pred lseg2<p,n,mn,mx> == self=p & n=0 & mx<=mn or
+                  self::node<mn,p,null> & mn=mx & n=1 & self!=p or
+                  self::node<mn,q,null> * q::lseg2<p,n-1,mn1,mx> & self!=p //& self!=q
+                  & mn<=mn1  & n>1 & mn1<=mx
+                  inv n=0 & self=p | n>0 & self!=p.
 
 pred skl0<p> ==
     self = p    or
@@ -30,7 +31,7 @@ pred skl1<p,n> ==
     inv n>=0.
 
 pred skl2<p,n,mn,mx> ==
-    self = p    & n=0
+    self = p    & n=0 & mx<=mn
     or
     /* empty down & fwd */
     self::node<mn,p,p> & self!=p & n = 1 & mn=mx
@@ -58,32 +59,6 @@ pred skl2<p,n,mn,mx> ==
     & mx1<=mn2 & mn<=mn1 & mn1<=mx1 & mn2<=mx
     inv n>=0.
 
-// pred skl3<p,n> ==
-//     self = p    & n=0
-//     or
-//     /* empty down & fwd */
-//     self::node<mn,p,p> & self!=p & n = 1
-//     or
-//     /* empty down */
-//     self::node<mn,fwd,fwd> *
-//     fwd::skl3<p,m2>
-//     & self!=p & fwd!=p
-//     & n = m2 + 1
-//     /* empty fwd */
-//     or
-//     self::node<mn,down,p> *
-//     down::skl3<p,m1>
-//     & self!=p & down!=p
-//     & n = m1 + 1
-//     /* non-empty down & non-empty fwd*/
-//     or
-//     self::node<mn,down,fwd> *
-//     down::skl3<fwd,m1> *
-//     fwd::skl3<p,m2>
-//     & self!=p & fwd!=p & down!=fwd
-//     & n = m1 + m2 + 1
-//     inv n>=0.
-
 int length_ls(node x, node y)
      requires x::lseg0<y>@L
      ensures  true;
@@ -96,24 +71,50 @@ int length_ls(node x, node y)
    else  return 1 + length_ls(x.next,y);
 }
 
-lemma self::skl0<y> -> self::lseg0<y>.
-
 node append_ls(node x, node y, node a)
-     requires x::lseg0<y> & a!=null
+     requires x::lseg0<y> * a::node<_,_,_>@L
      ensures res::lseg0<a>;
-     /*requires x::lseg1<y,n> * a::lseg1<q,m>@L & a!=q
-     ensures  res::lseg1<a,n>;
-     requires x::lseg2<y,n,mn1,mx1> * a::lseg2<q,m,mn2,mx2>@L & a!=q
+     requires x::lseg1<y,n> * a::node<_,_,_>@L
+     ensures res::lseg1<a,n>;
+     requires x::lseg2<y,n,mn1,mx1> * a::node<mn2,_,_>@L
      case{
        n=0  ->  ensures res=a;
-       n!=0 ->  requires mx1<=mn2  ensures res::lseg2<a,n,mn1,mx1>;
-     }*/
+       n!=0 ->  requires mx1<=mn2  ensures res::lseg2<a,n,mn1,mx1> & res!=a;
+     }
 {
  if(x==y) x=a;
  else
    if(x.next == y) x.next = a;
    else x.next = append_ls(x.next,y,a);
  return x;
+}
+
+
+node search_ls(node x, node y, int val)
+     requires x::lseg2<y,n,mn,mx>
+     case{
+       n=0 -> ensures x::lseg2<y,n,mn,mx> & res = null;
+       n=1 -> case{
+           val<=mn -> ensures x::lseg2<y,n,mn,mx> & res = null;// & mn=mx;
+           val>mn  -> ensures x::lseg2<y,n,mn,mx> & res = x   ;// & mn=mx;
+       }
+       n>1 -> case{
+           val<=mn -> ensures x::lseg2<y,n,mn,mx> & res = null ;
+           val>mn  -> ensures x::lseg2<res,n1,mn,mx1> * res::node<mn1,q,_> * q::lseg2<y,n2,mn2,mx> & mx1<=mn1
+           & (n2=0 & mn1=mx & mn2=mn1 | n2>0 & mn1<=mn2) & n=n1+1+n2 & x!=res;
+
+       }
+       n<0 -> ensures false;
+     }
+{
+ if(x == y)  return null;
+ else
+      if(val<=x.key)  return null;
+      else if(x.next == y) return x;
+      else if(x.next.key<val) return search_ls(x.next,y,val);
+      else
+      // x.key<val & val<=x.next.key
+      return x;
 }
 
 int length(node x, node y)
@@ -134,26 +135,20 @@ int length(node x, node y)
    }
 }
 
+
+//SUCCESS (684.250724 second(s))
 node append(node x, node y, node a)
    // y and z may be aliased
-  requires  x::skl0<y> * a::skl0<z>@L & a!=z
-  ensures   res::skl0<a> & res!=a;
-  // case {
-  //    x=y  -> ensures   res=a;
-  //    x!=y -> ensures   res::skl0<a> & res!=a;
-  // }
-  /*
+ /* requires  x::skl0<y> * a::skl0<z>@L & a!=z
+  ensures   res::skl0<a>;
   requires  x::skl1<y,n> * a::skl1<z,_>@L & a!=z
-  case {
-     x=y  -> ensures   res=a;
-     x!=y -> ensures   res::skl1<a,n> & res!=a;
-  }
+  ensures   res::skl1<a,n>;// & res!=a; */
   requires  x::skl2<y,n,mn1,mx1> * a::skl2<z,_,mn2,mx2>@L & a!=z
   case {
      x=y  -> ensures  res=a;
      x!=y -> requires mx1<=mn2
              ensures  res::skl2<a,n,mn1,mx1> & res!=a;
-  }*/
+  }
 {
    node temp;
    if(x == y) x = a ;
@@ -164,34 +159,33 @@ node append(node x, node y, node a)
       else x.sk  = append(x.sk,y,a);
       //update dwn
       if (x.next == temp) x.next = x.sk;
-      else {x.next = append_ls(x.next,temp,x.sk); dprint;}
+      else x.next = append_ls(x.next,temp,x.sk); //dprint;}
    }
    return x;
 }
 
 
 // node search(node x, node y, int val)
-//   requires  x::skl2<y,n,mn,mx>
-//   case {
-//      x=y  -> ensures  x::skl2<y,n,mn1,mx1> & res=null;
-//      x!=y ->
-//           case {
-//             val<mn   ->  ensurs res = null;
-//             val>=mn  ->  ensures
-//             x::skl2<res,n1,mn1,mx1>
-//             * res::node<val0,dn,fw>
-//             * dn::skl2<fw,n2,mn2,mx2>
-//             * fw::skl2<y,n3,mn3,mx>
-//           }
-//   }
-
+//   // requires  x::skl2<y,n,mn,mx>
+//   // case {
+//   //    x=y  -> ensures  x::skl2<y,n,mn1,mx1> & res=null;
+//   //    x!=y ->
+//   //         case {
+//   //           val<mn   ->  ensurs res = null;
+//   //           val>=mn  ->  ensures
+//   //           x::skl2<res,n1,mn1,mx1>
+//   //           * res::node<val0,dn,fw>
+//   //           * dn::skl2<fw,n2,mn2,mx2>
+//   //           * fw::skl2<y,n3,mn3,mx>
+//   //         }
+//   // }
 // {
 //  if(x==y) return null;
 //  else {
 //     if (x.key == val) return x;
 //     else
 //       if (x.fwd == y)
-//          { if (x.down == x.fwd) return x
+//          { if (x.down == x.fwd) return x;
 //            else return search(x.down,y,val);
 //          }
 //      else {
