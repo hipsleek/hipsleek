@@ -731,12 +731,17 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let () = y_tinfo_hp (add_str "r_eqns" (pr_list (pr_pair pr_sv pr_sv))) r_eqns in
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
-    let rhs_pure = MCP.pure_of_mix rhs_p in
+    let rhs_pure_short = MCP.pure_of_mix rhs_p in
+    (* in case this operation is within a fold, use the residual pure rhs info to
+       compute the set of possibe aliases/matches *)
+    let rhs_pure_orig = map_opt_def [] (fun x -> [x]) estate.es_rhs_pure in
+    let rhs_pure = CP.join_conjunctions (rhs_pure_short::rhs_pure_orig) in
     let () = y_tinfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
     let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
     let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns'@r_eqns) in
+    let rhs_pure = rhs_pure_short in
     let () = x_tinfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
     let () = x_tinfo_hp (add_str "same_base_rhs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base_rhs no_pos in
     let () = x_tinfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in

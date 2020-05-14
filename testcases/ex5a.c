@@ -25,7 +25,7 @@ void* __cast_void_star_to_void_star_star__(void** p)
 int* __cast_void_pointer_to_int_star__(void* p)
 /*@
   case{
-  p != null -> requires p::void_star<_> 
+  p != null -> requires p::arr_seg<_> 
                ensures  res::int_star<_> & res = p;
   p = null  -> ensures res = null;
   }
@@ -124,6 +124,12 @@ void *memcpy(void *dest, void *src, int length)
 
   pred arr_seg<p,n> == self::ch_star<_> & self=p & n=1
                     or self::ch_star<_> * q::arr_seg<p,n-1> & q = self + 1 & n > 1
+  inv n>=1.
+
+  pred int_block<p> == arr_seg<p,4>.
+
+  pred arr_seg<p,n> == self::ch_star<_> & self=p & n=1
+  or self::ch_star<_> * q::arr_seg<p,n-1> & q = self + 1 & n > 1
   inv n>=1.
 
 */
