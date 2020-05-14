@@ -2551,7 +2551,7 @@ and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.p
         Iast.mkCatch
           (Some new_name)
           None
-          c_flow
+          raisable_class
           (Some new_flow_var_name)
           (merge_iast_exp (free_exprs @ [raise_expr]))
           pos in
@@ -2563,9 +2563,9 @@ and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.p
           None
           pos
           in
-      let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ free_exprs) in
+      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ free_exprs) in *)
       (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in *)
-      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [try_expr]) in *)
+      let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [try_expr]) in
       let pos = translate_location fundec.Cil.sbody.Cil.bloc in
       Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
   ) in
