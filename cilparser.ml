@@ -2543,8 +2543,29 @@ and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.p
       in
       let sbody = translate_block fundec.Cil.sbody in
       let free_exprs = generate_free_exprs !aux_local_vardecls in
-      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ free_exprs) in *)
-      let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
+      let catch_expr =
+        let new_name = fresh_var_name "fi" pos.start_pos.Lexing.pos_lnum in
+        let new_flow_var_name = fresh_var_name "flv" pos.start_pos.Lexing.pos_lnum in
+        let raise_expr =
+          Iast.mkRaise (Iast.Var_flow new_flow_var_name) false (Some (Iast.mkVar new_name pos)) true None pos in
+        Iast.mkCatch
+          (Some new_name)
+          None
+          c_flow
+          (Some new_flow_var_name)
+          (merge_iast_exp (free_exprs @ [raise_expr]))
+          pos in
+      let try_expr =
+        Iast.mkTry
+          (merge_iast_exp (sbody :: free_exprs))
+          [catch_expr]
+          []
+          None
+          pos
+          in
+      let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ free_exprs) in
+      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in *)
+      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [try_expr]) in *)
       let pos = translate_location fundec.Cil.sbody.Cil.bloc in
       Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
   ) in
