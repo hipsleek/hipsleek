@@ -14,17 +14,25 @@ void foo() {
 
 int test()
   requires true
-  ensures true;
+  ensures emp;
 {
   int_star addr_a;
-  addr_a = new int_star;
+  addr_a = new int_star();
   try {
     foo();
-    free_is(addr_a)
+    free_is(addr_a);
     return 0;
+    dprint;
   }
   catch (__Exc e){
     free_is(addr_a);
     raise e;
-  }
+    dprint;
+  };
 }
+
+/*
+int test() {
+  int a;
+}
+*/
