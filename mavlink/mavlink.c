@@ -22,16 +22,30 @@ typedef struct __mavlink_message {
 } mavlink_message_t;
 
 /*@
-pred_prim strbuf<hd,bsize,sl:int,zeroflag:bool>
-  inv hd != null // hd is non-null root ptr
-   & hd <= self <= hd+bsize
-   & (!zeroflag | (zeroflag & self <= hd+sl & 0 <= sl < bsize)); // string length should exclude 0
-
 pred arr_buf<root,end,max_size,size,v> == self::int_star<v> * q::arr_buf<root,end,max_size,size-1,_> & q=self+1
   or self::int_star<v> & self=end & size = 1
   inv root <= self <= end
   & end - root + 1 = max_size
   &  1 <= size <= max_size;
+
+pred buffer_helper<length,n,ma,n,se,sy,co,ms,f1,s1> ==
+  self::int_star<ma>
+  * buf1::int_star<n>
+  * buf2::int_star<se>
+  * buf3::int_star<sy>
+  * buf4::int_star<co>
+  * buf5::int_star<ms>
+  * buf6::arr_buf<self, end, length, n, _>
+  * end1::int_star<f1>
+  * end::int_star<s1>
+  & end1 = end - 1
+  & buf1 = self + 1
+  & buf2 = self + 2
+  & buf3 = self + 3
+  & buf4 = self + 4
+  & buf5 = self + 5
+  & buf6 = self + 6
+  & length = n + 8;
 */
 
 void *memcpy(int *dest, int *src, int length) __attribute__((noreturn))
@@ -100,48 +114,17 @@ case {
 int parse_mavlink_msg_buggy(int *buf, int length, mavlink_message_t *msg)
 /*@
   requires
-    msg::__mavlink_message<crc,magic,_,seq,sysid,compid,msgid,payl>@M
-    * buf::int_star<ma>
-    * buf1::int_star<n>
-    * buf2::int_star<se>
-    * buf3::int_star<sy>
-    * buf4::int_star<co>
-    * buf5::int_star<ms>
-    * buf6::arr_buf<buf, end, length, n, _>
-    * crc::_checksum<f,s>
-    * end1::int_star<f1>
-    * end::int_star<s1>
-    & end1 = end - 1
-    & length = n + 8
-    & buf1 = buf + 1
-    & buf2 = buf + 2
-    & buf3 = buf + 3
-    & buf4 = buf + 4
-    & buf5 = buf + 5
-    & buf6 = buf + 6
+    msg::__mavlink_message<crc,_,_,_,_,_,_,_>@M
+    * buf::buffer_helper<length,n,ma,n,se,sy,co,ms,f1,s1>
+    * crc::_checksum<_,_>
   ensures
     msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
     * crc::_checksum<f1,s1>
     & res = 1;
   requires
-    msg::__mavlink_message<crc,magic,_,seq,sysid,compid,msgid,payl>@M
-    * buf::int_star<ma>
-    * buf1::int_star<n>
-    * buf2::int_star<se>
-    * buf3::int_star<sy>
-    * buf4::int_star<co>
-    * buf5::int_star<ms>
-    * crc::_checksum<f,s>
-    * end1::int_star<f1>
-    * end::int_star<s1>
-    & end1 = end - 1
-    & length = n + 8
-    & buf1 = buf + 1
-    & buf2 = buf + 2
-    & buf3 = buf + 3
-    & buf4 = buf + 4
-    & buf5 = buf + 5
-    & end1 = buf + 6
+    msg::__mavlink_message<crc,_,_,_,_,_,_,_>@M
+    * buf::buffer_helper<length,n,ma,n,se,sy,co,ms,f1,s1>
+    * crc::_checksum<_,_>
     & n = 0
   ensures
     msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
@@ -181,48 +164,17 @@ int parse_mavlink_msg_buggy(int *buf, int length, mavlink_message_t *msg)
 int parse_mavlink_msg_fixed(int *buf, int length, mavlink_message_t *msg)
 /*@
   requires
-    msg::__mavlink_message<crc,magic,_,seq,sysid,compid,msgid,payl>@M
-    * buf::int_star<ma>
-    * buf1::int_star<n>
-    * buf2::int_star<se>
-    * buf3::int_star<sy>
-    * buf4::int_star<co>
-    * buf5::int_star<ms>
-    * buf6::arr_buf<buf, end, length, n, _>
-    * crc::_checksum<f,s>
-    * end1::int_star<f1>
-    * end::int_star<s1>
-    & end1 = end - 1
-    & length = n + 8
-    & buf1 = buf + 1
-    & buf2 = buf + 2
-    & buf3 = buf + 3
-    & buf4 = buf + 4
-    & buf5 = buf + 5
-    & buf6 = buf + 6
+    msg::__mavlink_message<crc,_,_,_,_,_,_,_>@M
+    * buf::buffer_helper<length,n,ma,n,se,sy,co,ms,f1,s1>
+    * crc::_checksum<_,_>
   ensures
     msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
     * crc::_checksum<f1,s1>
     & res = 1;
   requires
-    msg::__mavlink_message<crc,magic,_,seq,sysid,compid,msgid,payl>@M
-    * buf::int_star<ma>
-    * buf1::int_star<n>
-    * buf2::int_star<se>
-    * buf3::int_star<sy>
-    * buf4::int_star<co>
-    * buf5::int_star<ms>
-    * crc::_checksum<f,s>
-    * end1::int_star<f1>
-    * end::int_star<s1>
-    & end1 = end - 1
-    & length = n + 8
-    & buf1 = buf + 1
-    & buf2 = buf + 2
-    & buf3 = buf + 3
-    & buf4 = buf + 4
-    & buf5 = buf + 5
-    & end1 = buf + 6
+    msg::__mavlink_message<crc,_,_,_,_,_,_,_>@M
+    * buf::buffer_helper<length,n,ma,n,se,sy,co,ms,f1,s1>
+    * crc::_checksum<_,_>
     & n = 0
   ensures
     msg::__mavlink_message<crc,ma,n,se,sy,co,ms,_>
