@@ -73,6 +73,60 @@ int* malloc(int size) __attribute__ ((noreturn))
 //   return k;
 // }
 
+int parse_buggy(int *buf, int length, msg *output)
+/*@
+  requires
+    output::_msg<crc,l,p>@M
+    * buf::int_star<n>
+    * buf1::arr_buf<buf, end, length, n, _>
+    * crc::_checksum<f,s>
+    * end1::int_star<f1>
+    * end::int_star<s1>
+    & end1 = end - 1
+    & length = n + 3
+    & buf1 = buf + 1
+  ensures
+    output::_msg<crc, n, _>
+    * crc::_checksum<f1,s1>
+    & res = 1;
+  requires
+    output::_msg<crc,l,p>@M
+      * buf::int_star<n>
+      * crc::_checksum<f,s>
+      * end1::int_star<f1>
+      * end::int_star<s1>
+      & end1 = end - 1
+      & length = n + 3
+      & end1 = buf + 1
+      & n = 0
+  ensures
+    output::_msg<crc, n, _>
+    * crc::_checksum<f1,s1>
+    & res = 1;
+  requires
+    buf::int_star<n>
+    * buf1::arr_buf<buf, _, _, _, _>
+    & length != n + 3
+    & buf1 = buf + 1
+  ensures res = 0;
+*/
+{
+  if(buf[0] + 3 != length) {
+    return 0;
+  }
+
+  output->l = buf[0];
+
+  output->cs.first = buf[output->l + 2];
+  output->cs.second = buf[output->l + 3];
+
+  int *inp = buf + 1;
+  output->payload = malloc(output->l);
+  memcpy(output->payload, inp, output->l);
+
+  return 1;
+}
+
 int parse(int *buf, int length, msg *output)
 /*@
   requires
