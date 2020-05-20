@@ -136,7 +136,7 @@ end
 namespace :dependencies do
   desc "Install all OPAM dependencies"
   task :install do
-    sh "opam install #{OPAM_PKGS.join ' '} --root /usr/.opam"
+    sh "opam install #{OPAM_PKGS.join ' '}"
   end
 end
 
