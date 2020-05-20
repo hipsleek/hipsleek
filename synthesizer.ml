@@ -394,6 +394,9 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num 
                             then n_proc else x) i_procs in
   ({iprog with IA.prog_proc_decls = n_iprocs}, res)
 
+let synthesize_one_stmt prog orig_proc pre_cond post_cond vars =
+  None
+
 let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
   (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
   let goal = Syn.mk_goal_w_procs prog [orig_proc] pre_cond post_cond vars in

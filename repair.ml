@@ -700,6 +700,134 @@ let create_buggy_prog src (iprog : I.prog_decl)=
     let n_progs = List.map aux_fun buggy_procs in
     n_progs
 
+let repair_by_syn_body (iprog: I.prog_decl) (cprog: C.prog_decl)
+    (r_iproc: I.proc_decl) (r_cproc: C.proc_decl) (i_exp: I.exp)
+    pre_cond post_cond (vars : CP.spec_var list) =
+  let cprog = Astsimp.trans_prog iprog |> fst in
+  let r_cproc = Astsimp.trans_proc iprog r_iproc in
+  let () = x_binfo_hp (add_str "exp" RP.pr_exp) i_exp no_pos in
+  let goal = Syn.mk_goal_w_procs cprog (!C.prog_proc_decls) pre_cond
+      post_cond vars in
+  let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled
+      r_cproc.C.proc_loc in
+  let () = x_binfo_hp (add_str "exp" RP.pr_exp) i_exp no_pos in
+  let pre_ctx = CF.build_context init_ctx pre_cond r_cproc.C.proc_loc in
+  let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
+  let pre_ctx = CF.set_flow_in_context_override
+      { CF.formula_flow_interval = !Exc.GTable.norm_flow_int; CF.formula_flow_link = None } pre_ctx in
+  (* Add initial esc_stack *)
+  let () = x_binfo_hp (add_str "exp" RP.pr_exp) i_exp no_pos in
+  let init_esc = [((0, ""), [])] in
+  let pre_ctx = [CF.mk_failesc_context pre_ctx [] init_esc] in
+  let rec aux (i_exp: I.exp) pre_ctx =
+    let () = x_binfo_hp (add_str "exp" RP.pr_exp) i_exp no_pos in
+    match i_exp with
+    | I.Block bl -> aux bl.I.exp_block_body pre_ctx
+    | I.Label (_, n_e) -> aux n_e pre_ctx
+    | I.Cond cond_e ->
+      let cond_exp = cond_e.I.exp_cond_condition in
+      let c_cond = Astsimp.trans_exp iprog r_iproc cond_exp
+                   |> fst in
+      let n_ctx = Typechecker.check_exp cprog r_cproc pre_ctx
+          c_cond (-1, "random_str") in
+      (* temporarily repair then branch only *)
+      aux cond_e.I.exp_cond_then_arm n_ctx
+    | I.Return _ ->
+      None
+    | _ -> None in
+  aux i_exp pre_ctx
+
+let struc_formula_to_spec_pairs (struc_f: CF.struc_formula) =
+  let rec aux f = match f with
+    | CF.EBase base_f ->
+      begin
+        match base_f.CF.formula_struc_continuation with
+        | None -> None, None
+        | Some con_f ->
+          begin
+            match aux con_f with
+            | (Some post_cond, _) ->
+              let pre = base_f.CF.formula_struc_base in
+              (Some pre, Some post_cond)
+            | _ -> (None, None)
+          end
+      end
+    | CF.EAssume assume_f ->
+      (Some assume_f.CF.formula_assume_simpl, None)
+    | _ -> None, None in
+  match struc_f with
+  | CF.EList elist ->
+    elist |> List.map snd |> List.map aux
+  | _ -> [aux struc_f]
+
+let struc_formula_to_spec_pairs_wrapper struc_f =
+  let pairs = struc_formula_to_spec_pairs struc_f in
+  let aux_pair pair = match pair with
+    | Some pre, Some post -> [(pre, post)]
+    | _ -> [] in
+  let syn_pairs = pairs |> List.map aux_pair |> List.concat in
+  if List.length syn_pairs = 1 then
+    let pre, post = List.hd syn_pairs in
+    let pre = pre |> Syn.rm_emp_formula in
+    let post = post |> Syn.rm_emp_formula in
+    Some (pre, post)
+  else None
+
+let repair_by_synthesis orig_prog (cprog: C.prog_decl)
+    (r_iproc: I.proc_decl) (r_cproc: C.proc_decl) =
+  let specs = r_iproc.I.proc_static_specs in
+  let () = x_binfo_hp (add_str "specs"
+                         Iprinter.string_of_struc_formula) specs no_pos in
+  let c_struc = Astsimp.trans_I2C_struc_formula 1 orig_prog false true [] specs
+      [] false true |> snd in
+  (* let () = x_binfo_hp (add_str "specs"
+   *                        Cprinter.string_of_struc_formula) c_struc no_pos in *)
+  let syn_specs = struc_formula_to_spec_pairs_wrapper c_struc in
+  let aux_param (param : I.param) =
+    let typ = param.I.param_type in
+    let name = param.I.param_name in
+    CP.mk_typed_sv typ name in
+  let vars = r_iproc.I.proc_args |> List.map aux_param in
+  match syn_specs with
+  | Some (pre_cond, post_cond) ->
+    begin
+      let () = x_binfo_hp (add_str "pre" RP.pr_formula)  pre_cond no_pos in
+      let () = x_binfo_hp (add_str "post" RP.pr_formula)  post_cond no_pos in
+      match r_iproc.I.proc_body with
+      | None -> None
+      | Some body ->
+        let () = x_binfo_hp (add_str "body" RP.pr_exp) body no_pos in
+        repair_by_syn_body orig_prog cprog r_iproc r_cproc body pre_cond
+            post_cond vars
+    end
+  | _ -> None
+
+
+let aux_repair_by_syn (iprog: I.prog_decl) (cprog: C.prog_decl) : bool =
+  match !Typechecker.repair_proc with
+  | Some proc_name ->
+    let p_name = Cast.unmingle_name proc_name in
+    let procs = iprog.I.prog_proc_decls in
+    let cprocs = C.list_of_procs cprog in
+    begin
+      try
+        let r_iproc =
+          List.find (fun x -> eq_str x.I.proc_name p_name) procs in
+        let r_cproc =
+          List.find (fun x -> eq_str x.C.proc_name proc_name) cprocs in
+        let () = x_binfo_hp (add_str "repair_proc"
+                               Iprinter.string_of_proc_decl) r_iproc no_pos in
+        let _ = repair_by_synthesis iprog cprog r_iproc r_cproc in
+        false
+      with _ -> false
+    end
+  | None -> false
+
+let repair_by_syn (iprog: I.prog_decl) (cprog: C.prog_decl) : bool =
+  let res = aux_repair_by_syn iprog cprog in
+  let () = x_binfo_hp (add_str "REPAIR RESULT" RP.pr_bool) res no_pos in
+  res
+
 let start_repair_wrapper (iprog: I.prog_decl) level start_time =
   (* let start_time = get_time () in *)
   (* repair using generic programming *)
