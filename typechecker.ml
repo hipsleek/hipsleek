@@ -2869,7 +2869,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let sharp_val = CP.SpecVar (t, v, Primed) in
             let eres_var = CP.mkeRes t in
             let res_var = CP.mkRes t in
-            if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int then
+            if is_subset_flow t1 !loop_ret_flow_int then
               let () = x_tinfo_pp ("inside sharp flow capture") no_pos in
               match t with
               | Named objn ->(
@@ -2879,7 +2879,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let ft = (look_up_typ_first_fld objn) in
                     let res_inside_exc = (CP.mkRes ft) in
                     let dnode =Cfutil.look_up_first_field prog ctx objn in
-                    let v_exc = (List.find (fun sv -> (Cpure.type_of_spec_var sv)== ft) dnode.Cformula.h_formula_data_arguments) in
+                    let v_exc = (List.find (fun sv -> (Cpure.type_of_spec_var sv) = ft) dnode.Cformula.h_formula_data_arguments) in
                     let fr_v_exc = CP.fresh_spec_var v_exc in
                     let p = CP.mkEqVar v_exc res_inside_exc pos in
                     let ctx_w_pure = CF.combine_pure_list_failesc_context (MCP.mix_of_pure p) pos true ctx in
@@ -2899,6 +2899,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               | _ ->
                 (* ctx,(CP.mkeRes t), (CP.SpecVar (t, v, Primed)) *)
                 ctx,eres_var, sharp_val
+            else if is_subset_flow t1 !raisable_flow_int then
+              ctx,eres_var, sharp_val
             else ctx, res_var, sharp_val
           in
           let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
