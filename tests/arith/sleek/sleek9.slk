@@ -20,3 +20,5 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
 
 checkentail x::ll_tail<p, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
 //print residue.
+
+checkentail x::ll_tail<p, n> & n = 11 |- x::lseg<3, r1> * r1::lseg<4, r2> * r2::lseg<3, r3>.

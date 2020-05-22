@@ -26,10 +26,16 @@ print residue.
 //flted_48_99=1).
 
 checkentail c'::LatchIn{ - p'::cell<Anon_11>@M * q'::cell<Anon_12>@M}<>@M *
-// c'::LatchOut{ + p'::cell<Anon_11>@M * q'::cell<Anon_12>@M}<>@M *
 c'::CNT<v_int_44_2195>@M &
- //U@full[p,q]@lend[c]&
 v_int_44_2195=1 & 0<v_int_44_2195
  |-  (exists flted_48_99: c'::LatchIn{ - p'::cell<Anon_13>@M * q'::cell<Anon_14>@M}<>@M *
-                      c'::CNT<flted_48_99>@M). //&
+                      c'::CNT<flted_48_99>@M).
+print residue.
+
+
+checkentail c'::LatchOut{ + p'::cell<Anon_11>@M * q'::cell<Anon_12>@M}<>@M *
+c'::CNT<v_int_44_2195>@M &
+v_int_44_2195=1 & 0<v_int_44_2195
+ |-  (exists flted_48_99: c'::LatchOut{ + p'::cell<Anon_13>@M * q'::cell<Anon_14>@M}<>@M *
+                      c'::CNT<flted_48_99>@M).    
 print residue.
