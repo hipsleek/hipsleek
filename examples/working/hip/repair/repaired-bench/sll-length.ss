@@ -1,10 +1,14 @@
 data node {
-   node next;
+	int val; 
+	node next;	
 }
 
-ll<n> == self = null & n = 0
-      or self::node<q> * q::ll<n-1>
-      inv n >= 0;
+
+/* view for a singly linked list */
+
+ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0;
 
 int length(node x)
   requires x::ll<n>
