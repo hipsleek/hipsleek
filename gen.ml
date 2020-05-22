@@ -2077,7 +2077,7 @@ struct
               end;
               incr n
             done) with Bail -> ());
-      Str.first_chars s' (String.length s - !skip)
+      Str.first_chars (Bytes.to_string s') (String.length s - !skip)
     end
 
   let trim_str input =
@@ -2178,9 +2178,10 @@ struct
     if Sys.file_exists fname then
       let chn = open_in fname in
       let len = in_channel_length chn in
-      let str = String.make len ' ' in
+      let str = Bytes.make len ' ' in
       let () = really_input chn str 0 len in
-      (close_in chn; str)
+      (close_in chn; 
+       Bytes.to_string str)
     else
       (warn ("Could not read file " ^ fname ^ "; assuming empty content.");
        "")

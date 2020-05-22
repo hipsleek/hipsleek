@@ -682,6 +682,10 @@ let gprintf (finish : doc -> 'b)
     skipChars (succ i)
                                         (* the main collection function *)
   and collect (acc: doc) (i: int) = 
+    let string_set str i c =
+      let bytes_str = Bytes.of_string str in
+      let () = Bytes.set bytes_str i c in
+      Bytes.to_string bytes_str in
     if i >= flen then begin
       Obj.magic (dfinish acc) 
     end else begin
@@ -729,7 +733,7 @@ let gprintf (finish : doc -> 'b)
 			   ^ (String.sub format i (j-i+1)));
 	    let j' = succ j in (* eat the d,i,x etc. *)
 	    let format_spec = "% " in
-	    String.set format_spec 1 (fget j'); (* format_spec = "%x", etc. *)
+     let format_spec = string_set format_spec 1 (fget j') in (* format_spec = "%x", etc. *)
             Obj.magic(fun n ->
               collect (dctext1 acc
                          (Int64.format format_spec n))
@@ -739,7 +743,7 @@ let gprintf (finish : doc -> 'b)
 					    ^ (String.sub format i (j-i+1)));
 	    let j' = succ j in (* eat the d,i,x etc. *)
 	    let format_spec = "% " in
-	    String.set format_spec 1 (fget j'); (* format_spec = "%x", etc. *)
+     let format_spec = string_set format_spec 1 (fget j') in (* format_spec = "%x", etc. *)
             Obj.magic(fun n ->
               collect (dctext1 acc
                          (Int32.format format_spec n))
@@ -749,7 +753,7 @@ let gprintf (finish : doc -> 'b)
 					    ^ (String.sub format i (j-i+1)));
 	    let j' = succ j in (* eat the d,i,x etc. *)
 	    let format_spec = "% " in
-	    String.set format_spec 1 (fget j'); (* format_spec = "%x", etc. *)
+     let format_spec = string_set format_spec 1 (fget j') in (* format_spec = "%x", etc. *)
             Obj.magic(fun n ->
               collect (dctext1 acc
                          (Nativeint.format format_spec n))

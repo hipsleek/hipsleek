@@ -42,6 +42,7 @@ void main()
 {
   cell p, q;
   CDL c = create_latch(1) with p'::cell<_> * q'::cell<_>;
+  dprint;
   par {p, q, c@L}
   {
     case {p, q, c@L} c'::LatchIn{- p'::cell<_> * q'::cell<_>}<> * c'::CNT<(1)> ->

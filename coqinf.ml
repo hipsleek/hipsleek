@@ -27,7 +27,8 @@ let implode (l:char list) : string =
   let rec imp i = function
     | [] -> result
     | c :: l -> result.[i] <- c; imp (i + 1) l in
-  imp 0 l;;
+  imp 0 l
+  |> Bytes.to_string;;
 
 module StrSV =
 struct

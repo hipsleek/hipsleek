@@ -40,7 +40,7 @@ module IO = struct
         let data_str = String.create data_len in
         let () = really_input ch data_str 0 data_len in
 
-        from_string data_str
+        from_string (Bytes.to_string data_str)
       end else begin
         failwith "IO.read: Bad input data to Net!"
       end
@@ -70,7 +70,7 @@ module IO = struct
       let data_len = String.length data_str in
       (* trace "write" ("len="^(string_of_int data_len)); *)
       output_binary_int ch data_len;
-      output ch data_str 0 data_len;
+      output ch (Bytes.of_string data_str) 0 data_len;
       flush ch;
     with e -> trace "write" (Printexc.to_string e); raise e
 

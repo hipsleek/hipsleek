@@ -44,9 +44,9 @@ void main()
   //dprint;
   CDL c = create_latch(1) with x'::cell<_>;
   x = new cell(10);
-  dprint;
-  countDown(c);
   //dprint;
+  countDown(c);
+  dprint;
   assert x'::cell<10>; // failed
   await(c);
   //dprint;

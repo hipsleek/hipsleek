@@ -5063,19 +5063,19 @@ let loadBinaryFile (filename : string) : file =
 (* Take the name of a file and make a valid symbol name out of it. There are 
  * a few characters that are not valid in symbols *)
 let makeValidSymbolName (s: string) = 
-  let s = String.copy s in (* So that we can update in place *)
-  let l = String.length s in
+  let bytes_s = Bytes.of_string s in (* So that we can update in place *)
+  let l = Bytes.length bytes_s in
   for i = 0 to l - 1 do
-    let c = String.get s i in
-    let isinvalid = 
+    let c = Bytes.get bytes_s i in
+    let isinvalid =
       match c with
         '-' | '.' -> true
       | _ -> false
     in
-    if isinvalid then 
-      String.set s i '_';
+    if isinvalid then
+      Bytes.set bytes_s i '_';
   done;
-  s
+  Bytes.to_string bytes_s
 
 let rec addOffset (toadd: offset) (off: offset) : offset =
   match off with

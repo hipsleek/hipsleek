@@ -2886,10 +2886,11 @@ let print_proof = ref false
 let strquote s = "\"" ^ s ^ "\""
 
 let norm_file_name str =
-  for i = 0 to (String.length str) - 1 do
-    if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
+  let str_bytes = Bytes.of_string str in
+  for i = 0 to (Bytes.length str_bytes) - 1 do
+    if Bytes.get str_bytes i = '.' || Bytes.get str_bytes i = '/' then str_bytes.[i] <- '_'
   done;
-  str
+  Bytes.to_string str_bytes
 
 (* let wrap_classic et f a = *)
 (*   let flag = !do_classic_frame_rule in *)

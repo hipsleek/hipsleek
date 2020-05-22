@@ -296,7 +296,8 @@ let label_formula f ofl = (match f with
           | P.BForm (b,_) -> P.BForm (b,ofl)
           | P.And _ -> f
           | P.AndList b -> f
-          | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
+          | P.Or  (b1,b2,_,l)
+            -> P.Or(b1,b2,ofl,l)
           | P.Not (b1,_,l)     -> P.Not(b1,ofl,l)
           | P.Forall (q,b1,_,l)-> P.Forall(q,b1,ofl,l)
           | P.Exists (q,b1,_,l)-> P.Exists(q,b1,ofl,l))
