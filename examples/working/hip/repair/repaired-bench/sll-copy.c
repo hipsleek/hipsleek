@@ -5,13 +5,6 @@ struct node {
   int val;
   struct node* next;
 };
-
-/*@
-  ll<n> == self=null & n = 0
-  or self::node<_, r> * r::ll<n2> & n = 1 + n2 & n > 0
-  inv n >= 0;
-*/
-
 struct node* createNode(int data, struct node* x)
 /*@
   requires emp & true
@@ -23,6 +16,14 @@ struct node* createNode(int data, struct node* x)
 	new_node->data = data;
 	return new_node;
 }
+
+
+/*@
+  ll<n> == self=null & n = 0
+  or self::node<_, r> * r::ll<n2> & n = 1 + n2 & n > 0
+  inv n >= 0;
+*/
+
 
 struct node* copy(struct node* x)
 /*@
