@@ -359,6 +359,7 @@ let synthesize_program goal =
   | StValid st_core ->
     let () = x_binfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
     let i_exp = Syn.synthesize_st_core st_core in
+    (* let i_exp = Syn.simply_iast_exp i_exp in *)
     let () = x_binfo_hp (add_str "iast exp" Syn.pr_i_exp_opt) i_exp no_pos in
     i_exp
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
