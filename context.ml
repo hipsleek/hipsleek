@@ -2181,8 +2181,21 @@ and filter_norm_lemmas l =
 and filter_lemmas_by_kind l k =
   List.filter (fun c-> if c.coercion_case == k then true else false) l
 
-
 and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs)
+    (vl_new_orig,vr_new_orig) (vl_name,vr_name) (m_res:match_res) lhs rhs remap =
+  let pr_mr = string_of_match_res in
+  let pr_h = !CF.print_h_formula in
+  let pr_p = !MCP.print_mix_formula in
+  let pr_out = pr_list string_of_action_wt_res in
+  Debug.no_6 "search_lemma_candidates"
+    (add_str "match_res" pr_mr) (add_str "flag_lem" string_of_bool) 
+    (add_str "vl_new_orig" string_of_bool) (add_str "vr_new_orig" string_of_bool)  
+    (add_str "vl_name" pr_id) (add_str "vr_name" pr_id) pr_out
+    (fun _ _ _ _ _ _ -> search_lemma_candidates_x prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs)
+        (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res lhs rhs remap)
+    m_res flag_lem vl_new_orig vr_new_orig vl_name vr_name 
+
+and search_lemma_candidates_x prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs)
     (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res lhs rhs remap=
   let extract_node_info hnode=
     match hnode with
@@ -2190,6 +2203,7 @@ and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,
     | DataNode dn -> (dn.h_formula_data_node, dn.h_formula_data_arguments)
     | _ -> raise Not_found
   in
+  let () = y_binfo_pp ("enter search lemma") in
   if flag_lem then
     let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name vr_name) in
     let left_ls =
@@ -2201,17 +2215,18 @@ and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,
     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) vr_name vl_name) in
     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l ->
         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l,0))
-        else (1,M_lemma (m_res,Some l,0))) left_ls else [] in
+        else (1,M_lemma (m_res,Some l,0))) left_ls else let () = y_binfo_pp ("left_act empty") in [] in
     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
     let right_act =
       List.fold_left (fun acc l ->
           if  (vr_new_orig || (non_loop_candidate l)) then
             let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in
+            let () = y_binfo_pp ("right_act fold then") in
             acc@[(prio,M_lemma (m_res,Some l,0))]
-          else acc) [] right_ls
+          else let () = y_binfo_pp ("right_act fold else") in acc) [] right_ls
     in
     left_act@right_act
-  else  []
+  else  let () = y_binfo_pp "search_lemma_candidates output is empty" in []
 
 and process_one_match_mater_unk_w_view left_preds right_preds lhs_name rhs_name c ms f =
   let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) rhs_name lhs_name) in
@@ -2612,7 +2627,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     let split_act =
                       if (vr_view_split=SPLIT1) || !Globals.ho_always_split then
                         (* SPLIT only, no match *)
-                        let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split
+                        let lem_split = x_add search_lemma_candidates prog flag_lem ann_derv vr_view_split
                             (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name)
                             m_res estate.CF.es_formula rhs reqset
                         in
@@ -2708,7 +2723,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let () = y_tinfo_hp (add_str "a6" (pr_option pr_act)) a6 in
                 let a7 =
                   if (!Globals.smart_lem_search ) then
-                    let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split
+                    let lem_act = x_add search_lemma_candidates prog flag_lem ann_derv vr_view_split
                         (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
                     if lem_act = [] then a6 else
                       match a6 with
@@ -2785,7 +2800,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = y_tinfo_hp (add_str "l2" (pr_list pr_act)) l2 in
             let l3 =
               if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
-                search_lemma_candidates prog flag_lem ann_derv vr_view_split
+                x_add search_lemma_candidates prog flag_lem ann_derv vr_view_split
                   (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset
               else [] in
             let () = y_tinfo_hp (add_str "l3" (pr_list pr_act)) l3 in
@@ -3517,7 +3532,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
           ) in
           let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
           let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-          let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split
+          let lem_act = x_add search_lemma_candidates prog flag_lem ann_derv vr_view_split
               (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
           if lem_act = [] then [] else
             [(1,norm_search_action lem_act)]
