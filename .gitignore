@@ -1,9 +1,9 @@
-/*~$
-/*.o$
-/.*cm[ioxa]$
-/*cmxa$
-/.*.exe$
-/.*\.a$
+/*~
+**.o
+**.cm[ioax]
+**.cmxa
+**.exe
+**.a
 /[123456789]$
 [123456789]$
 _build/*
@@ -13,8 +13,8 @@ indent/
 arith/.*~
 baga/.*/logs/*
 /\.mona_temp*
-/*hip$
-/*sleek$
+/*hip
+/*sleek
 xml/xml_parser.ml
 xml/xml_parser.mli
 xml/xml_lexer.ml
