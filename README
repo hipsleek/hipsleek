@@ -49,3 +49,17 @@ Installation Guide for hip/sleek
    =======================
    ./hip -tp mona examples/working/hip/ll.ss 
 
+
+### Omega for MAC:
+(by Yahui Sonng, 25th May 2020)
+
+1. uncompress this "omega_modified_for_mac.zip" folder and use it to replace your "omega_modified" folder under sleekex/
+2. run this 
+```
+   cd omega_modified
+     make depend
+   cd omega_calc/obj
+   make
+   sudo cp oc /usr/local/bin/
+```
+3. and then you go back and make the sleekex again.
