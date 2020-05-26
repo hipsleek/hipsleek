@@ -1,5 +1,511 @@
 The translation from the input AST to the core AST already handled translating the while loop into a function. This is
-seen in the comparision of the pip output and the pcp output in loop-ret-int.ss and loop-ret-node.ss.
+seen in the comparision of the pip output and the pcp output in loop-ret-int.ss (int main4()) and loop-ret-node.ss
+(node main4()). The try-catch is also only generated when a while loop has a return (int main()). Furthermore, nested
+(nested-while-excep.ss, int main1()) and multiple while loops (multi-while-excep.ss, int main0()) only generate a single
+try-catch in the caller.
+
+int main4() {
+  while(true) {
+    return 1;
+    dprint;
+  }
+  return 2;
+}
+
+/*
+pip:
+int main4()[]
+static EList
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+{
+{ while (true)
+EList
+{
+{(98, ):return 1
+dprint}
+}
+(99, ):return 2}
+}
+
+
+pcp:
+void while_2_2$() rec
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(boolean v_bool_2_1864;
+(v_bool_2_1864 = true;
+if (v_bool_2_1864) [{({((ret_int v_ret_int_3_1863;
+(v_ret_int_3_1863 = {((int v_int_3_1862;
+v_int_3_1862 = 1);
+new ret_int(v_int_3_1862))};
+throw v_ret_int_3_1863:{,(23,24)=ret_int#E}));
+dprint)};
+{while_2_2$() rec})}]
+else []
+))}
+
+{(2,2),(5,3)}
+
+int main4$()
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+try
+{({while_2_2$()};
+(int v_int_6_1865;
+(v_int_6_1865 = 2;
+ret# v_int_6_1865)))}
+ catch (23,24)=ret_int#E ret_int:f_r_1856 )
+        (int v_int_1_1858;
+(v_int_1_1858 = bind f_r_1856 to (val_1_1857) [read] in
+val_1_1857;
+ret# v_int_1_1858))
+
+{(1,0),(0,-1)}
+
+
+
+
+dprint(simpl): loop-ret-int.ss:8: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+ Escaped States:
+ [
+
+  Try-Block:0::
+  [
+   Path: [(,1 )]
+   State:  (exists v_int_7_1897': v_ret_int_7_1898'::ret_int<v_int_7_1897'>@M&
+v_bool_6_1899' & MayLoop[] & v_int_7_1897'=1 & v_int_7_1897'=res &
+eres=v_ret_int_7_1898'&{FLOW,(23,24)=ret_int#E}[])
+          es_gen_impl_vars(E): []
+          es_heap(consumed): emp
+   ]
+  ]
+*/
+
+data node{
+  int val;
+}
+
+node main4() {
+  while(true) {
+    return new node(1);
+    dprint;
+  }
+  return new node(2);
+}
+
+/*
+pip:
+node main4()[]
+static EList
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+{
+{ while (true)
+EList
+{
+{(99, ):return new node(1)
+dprint}
+}
+(100, ):return new node(2)}
+}
+void free(node p)[]
+static EBase: [][](emp ; (emp ; (p::node{}<Anon_11>[HeapNode1]))) * ([] & true)( FLOW __norm) {EAssume: 1,:(emp ; (emp ; emp)) * ([] & true)( FLOW __norm)}
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+
+
+pcp:
+void free$node(  node p)
+static (stk) EBase
+   exists (Impl)[Anon_11]p::node<Anon_11>@M&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&Term[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(1,0),(3,22)}
+
+node main4$()
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+try
+{({while_6_2$()};
+(node v_node_10_1902;
+(v_node_10_1902 = {((int v_int_10_1901;
+v_int_10_1901 = 2);
+new node(v_int_10_1901))};
+ret# v_node_10_1902)))}
+ catch (23,24)=ret_node#E ret_node:f_r_1891 )
+        (node v_node_5_1893;
+(v_node_5_1893 = bind f_r_1891 to (val_5_1892) [read] in
+val_5_1892;
+ret# v_node_5_1893))
+
+{(5,0),(0,-1)}
+
+void while_6_2$() rec
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(boolean v_bool_6_1900;
+(v_bool_6_1900 = true;
+if (v_bool_6_1900) [{({((ret_node v_ret_node_7_1899;
+(v_ret_node_7_1899 = {((node v_node_7_1898;
+v_node_7_1898 = {((int v_int_7_1897;
+v_int_7_1897 = 1);
+new node(v_int_7_1897))});
+new ret_node(v_node_7_1898))};
+throw v_ret_node_7_1899:{,(23,24)=ret_node#E}));
+dprint)};
+{while_6_2$() rec})}]
+else []
+))}
+
+{(6,2),(9,3)}
+
+
+before equality fix:
+dprint(simpl): bugs/bug-while-return.ss:27: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+ Escaped States:
+ [
+
+  Try-Block:0::
+  [
+   Path: [(,1 )]
+   State:  (exists v_int_26_2059',
+v_node_26_2060': v_node_26_2060'::node<v_int_26_2059'>@M *
+                 v_ret_node_26_2061'::ret_node<v_node_26_2060'>@M&
+v_bool_25_2062' & MayLoop[] & v_int_26_2059'=1 & eres=v_ret_node_26_2061'&
+{FLOW,(29,30)=ret_node#E}[])
+          es_gen_impl_vars(E): []
+          es_heap(consumed): emp
+   ]
+  ]
+
+after equality fix:
+dprint(simpl): loop-ret-node.ss:8: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+ Escaped States:
+ [
+
+  Try-Block:0::
+  [
+   Path: [(,1 )]
+   State:  (exists v_int_7_1897',
+v_node_7_1898': v_node_7_1898'::node<v_int_7_1897'>@M *
+                v_ret_node_7_1899'::ret_node<v_node_7_1898'>@M&
+v_bool_6_1900' & MayLoop[] & v_int_7_1897'=1 & v_node_7_1898'=res &
+eres=v_ret_node_7_1899'&{FLOW,(23,24)=ret_node#E}[])
+          es_gen_impl_vars(E): []
+          es_heap(consumed): emp
+   ]
+  ]
+*/
+
+int main() {
+  int a;
+  while (true) {
+    a = 1;
+  }
+  return 0;
+}
+
+/*
+int main()[]
+static EList
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+{
+{local: int a
+int a
+ while (true)
+EList
+{
+{a = 1}
+}
+(100, ):return 0}
+}
+
+void while_3_2$int(  int a)
+@ref a
+ rec
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       ref [a]
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(boolean v_bool_3_1828;
+(v_bool_3_1828 = true;
+if (v_bool_3_1828) [{({a = 1};
+{while_3_2$int(a) rec})}]
+else []
+))}
+
+{(3,2),(5,3)}
+
+int main$()
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{((int a;
+{while_3_2$int(a)});
+(int v_int_6_1829;
+(v_int_6_1829 = 0;
+ret# v_int_6_1829)))}
+
+{(1,0),(0,-1)}
+
+*/
+
+int main0() {
+  while (true) {
+    return 1;
+  }
+  while (true) {
+    return 2;
+  }
+  return 0;
+}
+
+/*
+int main()[]
+static EList
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+{
+{ while (true)
+EList
+{
+{(98, ):return 1}
+}
+ while (true)
+EList
+{
+{(100, ):return 2}
+}
+(101, ):return 0}
+}
+
+
+void while_2_2$() rec
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(boolean v_bool_2_1865;
+(v_bool_2_1865 = true;
+if (v_bool_2_1865) [{({(ret_int v_ret_int_3_1864;
+(v_ret_int_3_1864 = {((int v_int_3_1863;
+v_int_3_1863 = 1);
+new ret_int(v_int_3_1863))};
+throw v_ret_int_3_1864:{,(23,24)=ret_int#E}))};
+{while_2_2$() rec})}]
+else []
+))}
+
+{(2,2),(4,3)}
+
+void while_5_2$() rec
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(boolean v_bool_5_1871;
+(v_bool_5_1871 = true;
+if (v_bool_5_1871) [{({(ret_int v_ret_int_6_1870;
+(v_ret_int_6_1870 = {((int v_int_6_1869;
+v_int_6_1869 = 2);
+new ret_int(v_int_6_1869))};
+throw v_ret_int_6_1870:{,(23,24)=ret_int#E}))};
+{while_5_2$() rec})}]
+else []
+))}
+
+{(5,2),(7,3)}
+
+int main$()
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+try
+{(({while_2_2$()};
+{while_5_2$()});
+(int v_int_8_1872;
+(v_int_8_1872 = 0;
+ret# v_int_8_1872)))}
+ catch (23,24)=ret_int#E ret_int:f_r_1857 )
+        (int v_int_1_1859;
+(v_int_1_1859 = bind f_r_1857 to (val_1_1858) [read] in
+val_1_1858;
+ret# v_int_1_1859))
+
+{(1,0),(0,-1)}
+*/
+
+int main1() {
+  while (true) {
+    return 1;
+    while (true) {
+      return 2;
+    }
+  }
+
+  return 0;
+}
+
+/*
+int main()[]
+static EList
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+{
+{ while (true)
+EList
+{
+{(98, ):return 1
+ while (true)
+EList
+{
+{(100, ):return 2}
+}}
+}
+(101, ):return 0}
+}
+
+
+void while_4_4$() rec
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(boolean v_bool_4_1869;
+(v_bool_4_1869 = true;
+if (v_bool_4_1869) [{({(ret_int v_ret_int_5_1868;
+(v_ret_int_5_1868 = {((int v_int_5_1867;
+v_int_5_1867 = 2);
+new ret_int(v_int_5_1867))};
+throw v_ret_int_5_1868:{,(23,24)=ret_int#E}))};
+{while_4_4$() rec})}]
+else []
+))}
+
+{(4,4),(6,5)}
+
+void while_2_2$() rec
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{(boolean v_bool_2_1870;
+(v_bool_2_1870 = true;
+if (v_bool_2_1870) [{({((ret_int v_ret_int_3_1863;
+(v_ret_int_3_1863 = {((int v_int_3_1862;
+v_int_3_1862 = 1);
+new ret_int(v_int_3_1862))};
+throw v_ret_int_3_1863:{,(23,24)=ret_int#E}));
+{while_4_4$()})};
+{while_2_2$() rec})}]
+else []
+))}
+
+{(2,2),(7,3)}
+
+int main$()
+static (stk) EBase
+   emp&{FLOW,(4,5)=__norm#E}[]
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume
+       emp&{FLOW,(4,5)=__norm#E}[]
+       struct:EBase
+                emp&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+try
+{({while_2_2$()};
+(int v_int_9_1871;
+(v_int_9_1871 = 0;
+ret# v_int_9_1871)))}
+ catch (23,24)=ret_int#E ret_int:f_r_1856 )
+        (int v_int_1_1858;
+(v_int_1_1858 = bind f_r_1856 to (val_1_1857) [read] in
+val_1_1857;
+ret# v_int_1_1858))
+
+{(1,0),(0,-1)}
+*/
 
 The setting of res via the exception result seems sensible when dealing with return in a while loop since that is the
 result of the while loop when we have an early return, and the type of a while loop is void otherwise.
