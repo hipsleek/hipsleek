@@ -1,3 +1,5 @@
+// [FIXED]
+
 data ch_star{
     int val;
 }.
@@ -5,8 +7,6 @@ data ch_star{
 pred arr_seg<p,n>     == self::ch_star<_> & self=p & n=1
                       or self::ch_star<_> * q::arr_seg<p,n-1> & q = self + 1 & n > 1 
   inv n>=1.
-
-
 
 checkentail x::ch_star<_> & x=p
            |- x::arr_seg<p,1>.
