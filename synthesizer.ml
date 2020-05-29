@@ -249,11 +249,12 @@ let process_rule_heap_assign (goal: Syn.goal) (rc: Syn.rule_heap_assign) =
 let rec synthesize_one_goal goal : Syn.synthesis_tree =
   (* let goal = simplify_goal goal in *)
   let trace = goal.Syn.gl_trace in
-  if (Syn.num_of_code_rules trace > 3) ||
+  if (Syn.num_of_code_rules trace > 2) ||
+     (Syn.stop_mk_null trace) ||
      (Syn.length_of_trace trace > 3) ||
      (List.length trace > 8)
   then
-    let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
+    let () = x_tinfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     Syn.mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
     let cur_time = get_time () in
@@ -261,7 +262,7 @@ let rec synthesize_one_goal goal : Syn.synthesis_tree =
     if duration > !synthesis_timeout && not(!enable_i) then
       Syn.mk_synthesis_tree_fail goal [] "TIMEOUT"
     else
-      let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+      let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
       let rules = choose_synthesis_rules goal in
       process_all_rules goal rules
 
@@ -354,16 +355,15 @@ let synthesize_program goal =
   let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = Syn.get_synthesis_tree_status st in
-  let () = x_binfo_hp (add_str "synthesis tree " Syn.pr_st) st no_pos in
+  let () = x_tinfo_hp (add_str "synthesis tree " Syn.pr_st) st no_pos in
   match st_status with
   | StValid st_core ->
     let () = x_binfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
     let i_exp = Syn.synthesize_st_core st_core in
-    (* let i_exp = Syn.simply_iast_exp i_exp in *)
     let () = x_binfo_hp (add_str "iast exp" Syn.pr_i_exp_opt) i_exp no_pos in
     i_exp
   | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
-    let () = x_binfo_hp (add_str "fail branches" Syn.pr_int) (!Syn.fail_branch_num) no_pos in
+    let () = x_tinfo_hp (add_str "fail branches" Syn.pr_int) (!Syn.fail_branch_num) no_pos in
     None
 
 let synthesize_cast_stmts goal =
@@ -372,16 +372,16 @@ let synthesize_cast_stmts goal =
   let st_status = Syn.get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
-    let () = x_binfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
+    let () = x_tinfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
     let c_exp = Syn.st_core2cast st_core in
     let () = x_tinfo_hp (add_str "c_exp" Syn.pr_c_exp_opt) c_exp no_pos in
     c_exp
-  | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
+  | StUnkn _ -> let () = x_tinfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = Syn.mk_goal_w_procs prog called_procs pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let start_time = get_time () in
   let iast_exp = synthesize_program goal in
   let duration = get_time () -. start_time in
@@ -389,8 +389,8 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num 
   let pname, i_procs = proc.CA.proc_name, iprog.IA.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.IA.proc_name) i_procs in
   let n_proc, res = match iast_exp with
-    | None -> (i_proc, false)
-    | Some exp0 -> (Syn.replace_exp_proc exp0 i_proc num, true) in
+    | None -> (i_proc, None)
+    | Some exp0 -> (Syn.replace_exp_proc exp0 i_proc num, iast_exp) in
   let n_iprocs = List.map (fun x -> if contains pname x.IA.proc_name
                             then n_proc else x) i_procs in
   ({iprog with IA.prog_proc_decls = n_iprocs}, res)
@@ -398,7 +398,7 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num 
 let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
   (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
   let goal = Syn.mk_goal_w_procs prog [orig_proc] pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let c_exp = synthesize_cast_stmts goal in
   match c_exp with
   | None -> None
@@ -441,7 +441,7 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
   let entailments = !Synthesis.entailments |> List.rev in
   let hps = SB.solve_entailments_one prog entailments in
   match hps with
-  | None -> ()
+  | None -> None
   | Some hps_list ->
     let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
         iprog.IA.prog_proc_decls in
@@ -451,13 +451,12 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
     let syn_vars = proc.CA.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
-    let stop = ref false in
-    let helper (pre, post) =
-      if !stop then ()
+    let helper pre_res (pre, post) =
+      if pre_res != None then pre_res
       else
         if Syn.isHFalseOrEmp pre post then
-          let () = x_binfo_hp (add_str "post" Syn.pr_f) post no_pos in
-          ()
+          let () = x_tinfo_hp (add_str "post" Syn.pr_f) post no_pos in
+          None
         else
           let all_procs = CA.list_of_procs prog in
           let filter_fun proc =
@@ -466,22 +465,22 @@ let synthesize_entailments_one (iprog:IA.prog_decl) prog proc proc_names =
           let called_procs = List.filter filter_fun all_procs in
           let (n_iprog, res) = synthesize_wrapper iprog prog proc
               pre post syn_vars called_procs 1 in
-          if res then
+          if res != None then
             try
               let cprog, _ = Astsimp.trans_prog n_iprog in
               let () = Typechecker.check_prog_wrapper n_iprog cprog in
-              let () = stop := true in
-              Syn.repair_res := Some n_iprog
-            with _ -> ()
-          else () in
-    if hps_list = [] then ()
+              let () = Syn.repair_res := Some n_iprog in
+              res
+            with _ -> None
+          else None in
+    if hps_list = [] then None
     else
       let spec_list = List.map (get_spec_from_hps prog 1) hps_list in
       let spec_list = ranking_specs spec_list in
       let pr_specs = pr_list (pr_pair Syn.pr_f Syn.pr_f) in
-      let () = x_binfo_hp (add_str "spec" pr_specs) spec_list no_pos in
+      let () = x_tinfo_hp (add_str "spec" pr_specs) spec_list no_pos in
       (* let spec = List.hd spec_list in *)
-      List.iter helper spec_list
+      List.fold_left helper None spec_list
       (* helper spec *)
 
 let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
@@ -506,9 +505,8 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
       let proc_name = proc.CA.proc_name |> CA.unmingle_name in
       List.mem proc_name proc_names in
     let called_procs = List.filter filter_fun all_procs in
-    let (n_iprog, res) = synthesize_wrapper iprog prog proc
-        pre post syn_vars called_procs num in
-    (n_iprog, res) in
+    let goal = Syn.mk_goal_w_procs prog called_procs pre post syn_vars in
+    synthesize_program goal in
   match hps with
   | None -> None
   | Some (hps1, hps2) ->
@@ -516,15 +514,15 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
     let spec_list1 = ranking_specs spec_list1 in
     let spec1 = List.hd spec_list1 in
     let pr_spec = pr_pair Syn.pr_f Syn.pr_f in
-    let () = x_binfo_hp (add_str "spec1" pr_spec) spec1 no_pos in
-    let (n_iprog, res1) = helper spec1 fst_pos in
-    if res1 then
+    let () = x_tinfo_hp (add_str "spec1" pr_spec) spec1 no_pos in
+    let res1 = helper spec1 fst_pos in
+    if res1 != None then
       let spec_list2 = List.map (get_spec_from_hps prog snd_pos) hps2 in
       let spec_list2 = ranking_specs spec_list2 in
       let spec2 = List.hd spec_list2 in
-      let () = x_binfo_hp (add_str "spec2" pr_spec) spec2 no_pos in
-      let (n_iprog, res2) = helper spec2 snd_pos in
-      if res2 then Some n_iprog
+      let () = x_tinfo_hp (add_str "spec2" pr_spec) spec2 no_pos in
+      let res2 = helper spec2 snd_pos in
+      if res2 != None then Some (unsome res1, unsome res2)
       (* To Validate *)
       else None
     else None
@@ -555,7 +553,7 @@ let synthesize_block_statements iprog prog orig_proc proc decl_vars =
         try
           (* need to check later*)
           let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
-          let () = x_binfo_hp (add_str "n_body" Syn.pr_c_exp) n_body no_pos in
+          let () = x_tinfo_hp (add_str "n_body" Syn.pr_c_exp) n_body no_pos in
           Some n_proc
         with _ -> None in
   match hps with

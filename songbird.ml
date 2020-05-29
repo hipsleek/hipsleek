@@ -139,13 +139,15 @@ let translate_type (typ: Globals.typ) : SBG.typ =
            ("translate_type:" ^ (Globals.string_of_typ typ) ^ " is not handled")
 
 let translate_back_type typ = match typ with
-  | SBG.TInt -> Globals.Int
+  | SBG.TInt -> Globals.NUM
   | SBG.TBool -> Globals.Bool
   | SBG.TUnk -> Globals.UNK
   | SBG.TVoid -> Globals.Void
   | SBG.TData str -> Globals.Named str
   | SBG.TNull -> Globals.Named "null"
-  | SBG.TVar num -> Globals.TVar num
+  | SBG.TVar num ->
+    (* Globals.Int *)
+    Globals.TVar num
 
 let translate_var_x (var: CP.spec_var): SBG.var =
   let CP.SpecVar (typ, ident, primed) = var in
@@ -908,7 +910,7 @@ let solve_entailments_one prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
-  let () = x_binfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
+  let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 20)

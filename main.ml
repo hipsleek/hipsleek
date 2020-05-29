@@ -715,7 +715,7 @@ let process_source_full source =
             let () = Z3.stop () in
             if (!Globals.enable_repair) then
               let () = x_binfo_pp "START REPAIR" no_pos in
-              let r_iprog = Repair.start_repair_wrapper intermediate_prog 1 start_time in
+              let r_iprog = Repair.start_repair_wrapper intermediate_prog start_time in
               match r_iprog with
               | false -> raise e
               | true ->
@@ -746,7 +746,7 @@ let process_source_full source =
     reverify_with_hp_rel cprog intermediate_prog
   else ();
 
-  (* Infester *)
+  (* Infestor *)
   let () = if !infestor then
       Repair.infest_and_output source intermediate_prog in
       (* Repair.infest_and_repair source intermediate_prog in *)

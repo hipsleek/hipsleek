@@ -2320,7 +2320,6 @@ let rec mk_exp_list e_list = match e_list with
   | h::tail -> let n_exp = mk_exp_list tail in
     mkSeq h n_exp
 
-
 let rec synthesize_st_core st : Iast.exp option =
   let helper st =
     let sts = List.map synthesize_st_core st.stc_subtrees in
@@ -2484,8 +2483,7 @@ and aux_subtrees st cur_codes =
   | [] -> Some cur_codes
   | [h] ->
     if h = None then Some cur_codes
-    else
-      let st_code = Gen.unsome h in
+    else let st_code = Gen.unsome h in
       let seq = mkSeq cur_codes st_code in Some seq
   | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
 
@@ -2566,7 +2564,7 @@ let replace_exp_proc n_exp proc num =
   let () = x_tinfo_hp (add_str "num" pr_int) num no_pos in
   let n_body = Some (replace_exp_aux n_exp body num) in
   let () = x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos in
-  let () = x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
+  let () = x_tinfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
 
 let replace_exp_cproc n_exp proc =
@@ -3001,16 +2999,16 @@ let compare_rule_frame_data_vs_other r1 r2 =
     else PriLow
   | RlSkip
   | RlAllocate _ -> PriLow
-  | RlMkNull _ -> PriHigh
+  | RlMkNull _ -> PriLow
   | RlReturn _ -> PriLow
   | RlFree _ -> PriLow
   | RlFRead _ -> PriLow
-  | RlUnfoldPre _ -> PriLow
+  (* | RlMkNull _ -> PriLow *)
   | _ -> PriHigh
 
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
-  | RlMkNull _ -> PriHigh
+  | RlMkNull _ -> PriLow
   | RlUnfoldPre _ -> PriHigh
   | _ -> PriHigh
 
@@ -3045,7 +3043,7 @@ let compare_rule_fread_vs_fread r1 r2 =
 
 let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
-  | RlMkNull _ -> PriHigh
+  | RlMkNull _ -> PriLow
   | RlNewNum _ -> PriLow
   | RlFuncCall _ -> PriLow
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
@@ -3078,7 +3076,6 @@ let compare_rule_fread_vs_other r1 r2 = match r2 with
   | RlSkip | RlReturn _ -> PriLow
   | RlFRead r2 -> compare_rule_fread_vs_fread r1 r2
   | RlFramePred r2 -> compare_rule_fread_vs_frame_pred r1 r2
-  | RlMkNull _ -> PriLow
   | _ -> PriHigh
 
 let compare_rule_frame_pred_vs_other goal r1 r2 =
@@ -3091,22 +3088,18 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | RlFree _ -> PriLow
   | RlReturn _ -> PriLow
   | RlNewNum _ -> PriLow
-  | RlUnfoldPre _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   (* | RlUnfoldPost _
    * | RlFuncCall _ -> PriLow *)
   | _ -> PriHigh
 
 
-let compare_rule_mk_null_vs_other r1 r2 =
-  match r2 with
+let compare_rule_mk_null_vs_other r1 r2 = match r2 with
   | RlMkNull r2 ->
-    if CP.is_int_type (CP.get_exp_type r1.rmn_null) then PriLow
-    else if CP.is_int_type (CP.get_exp_type r2.rmn_null) then PriHigh
+    if CP.is_int_type (CP.get_exp_type r1.rmn_null) then PriHigh
+    else if CP.is_int_type (CP.get_exp_type r2.rmn_null) then PriLow
     else PriEqual
-  | RlUnfoldPost _ -> PriHigh
-  | RlFRead _ -> PriHigh
-  | _ -> PriLow
+  | _ -> PriHigh
 
 let compare_rule goal r1 r2 =
   match r1 with
@@ -3163,11 +3156,32 @@ let get_rule_vars rule = match rule with
     let bv = rc.rfw_bound_var in
     let value = rc.rfw_value in
     [bv; value]
+  | RlAllocate rc -> rc.ra_params
   | RlReturn rc ->
     let rhs = CP.afv rc.r_exp in
     rhs
   | RlFuncCall rc -> rc.rfc_params
   | _ -> []
+
+let stop_mk_null trace : bool =
+  let trace = trace |> List.rev in
+  let aux_check null_var list =
+    if List.length list == 2 then
+      let tail_vars = List.map get_rule_vars list
+                      |> List.concat in
+      if List.exists (CP.eq_sv null_var) tail_vars
+      then false
+      else true
+    else false in
+  match trace with
+  | [] -> false
+  | head::tail ->
+    begin
+      match head with
+      | RlMkNull rl ->
+        aux_check rl.rmn_var tail
+      | _ -> false
+    end
 
 let num_of_code_rules trace =
   let trace = List.filter is_generate_code_rule trace in
