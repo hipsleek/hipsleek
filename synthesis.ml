@@ -3533,6 +3533,7 @@ let rm_unk_type_formula prog formula =
     let n_exists = n_exists @ others in
     add_exists_vars n_formula n_exists
 
+
 let rm_unk_type_formula prog formula =
   Debug.no_1 "rm_unk_type_formula" pr_f pr_f
     (fun _ -> rm_unk_type_formula prog formula) formula
