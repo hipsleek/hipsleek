@@ -246,7 +246,7 @@ let omegacalc = if !compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":s
   else ref ("oc":string)
 
 let local_oc = "./oc"
-let global_oc = "/usr/local/bin/oc"
+let global_oc = try FileUtil.which "oc" with Not_found -> ""
 
 let omegacalc = 
   if (Sys.file_exists local_oc) then ref local_oc
