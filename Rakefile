@@ -1,5 +1,6 @@
 OPAM_PKGS = [
   "extlib",
+  "fileutils",
   "batteries",
   "ocamlgraph",
   "camlp4",
@@ -8,6 +9,7 @@ OPAM_PKGS = [
 
 OCAMLFIND_DEPS = [
   "extlib",
+  "fileutils",
   "batteries",
   "ocamlgraph",
   "camlp4",

@@ -36,7 +36,7 @@ let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
 
 (* let mona_prog = if !Globals.web_compile_flag then "/usr/local/bin/mona_inter" else "mona_inter" *)
-let mona_prog =  "/usr/local/bin/mona_inter"
+let mona_prog = try FileUtil.which "mona_inter" with Not_found -> ""
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
