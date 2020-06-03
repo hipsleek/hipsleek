@@ -1,0 +1,41 @@
+data cell{ int v; }.
+
+checkentail_exact x::cell<3> * %P |- %P * %Q.
+print residue.
+
+
+checkentail_exact  %P |- %P .
+print residue.
+
+/*
+# bugs-4
+
+checkentail_exact x::cell<_> * %P |- %P * %Q.
+
+# should succeed with %Q --> x::cell<_>
+
+Residue:
+ <1>x::cell<Anon_12> * (HVar P)&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+checkentail_exact  %P |- %P .
+
+# should succeed with matching here..
+
+Entail 2: Fail.(may) cause:do_unmatched_rhs : HVar P
+
+Residue:
+ <1>HVar P&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+*/
+
+checkentail_exact  %P * %Q |- %Q * %P .
+print residue.
+
+
+checkentail_exact  %P * x::cell<3+2> |- %Q * %P .
+print residue.
+
+checkentail_exact  %P * x::cell<3+2> |- %Q * %P & x!=null.
+print residue.

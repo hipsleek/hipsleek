@@ -1,0 +1,23 @@
+data cell{ int v; }.
+
+checkentail_exact false |- %P.
+print residue.
+
+/*
+ex-5
+
+Guess valid is OK here
+*/
+
+checkentail_exact false |- %P * %Q.
+print residue.
+
+/*
+ex-5
+
+Guess valid is OK here
+*/
+
+
+checkentail_exact x::cell<_> |- %P & 1=2.
+print residue.

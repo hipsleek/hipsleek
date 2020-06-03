@@ -1,0 +1,26 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+// (4) [P --> y::cell<m>]
+checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> * %PPP
+            |- c::LatchOut{+ %PPP}<>.
+print residue.
+
+/*
+bug-6b --esl
+
+why did this not have another entailment logged,
+when the -dd trace captured it?
+
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail c::LatchOut{ + x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[]}<>&
+{FLOW,(4,5)=__norm#E}[]
+ |-  c::LatchOut{ + HVar PPP&{FLOW,(4,5)=__norm#E}[]}<>&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&{FLOW,(4,5)=__norm#E}[]
+   ]
+*/

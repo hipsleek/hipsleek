@@ -1,0 +1,58 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{-%P}<>.
+
+pred_prim LatchOut{+%P}<>.
+
+// (1) 
+checkentail c::LatchIn{- x::cell<n> & n>3}<> 
+    |- c::LatchIn{- x::cell<n> & n>0}<>.
+print residue.
+// should be invalid
+
+// (2) 
+checkentail c::LatchIn{- x::cell<n> & n>3}<> 
+    |- c::LatchIn{- x::cell<n> & n>6}<>.
+print residue.
+// should be valid
+
+// (3) 
+checkentail c::LatchOut{+ x::cell<n> & n>3}<> 
+    |- c::LatchOut{+ x::cell<n> & n>0}<>.
+print residue.
+// valid
+
+// (4) 
+checkentail c::LatchOut{+ x::cell<n> & n>3}<> 
+    |- c::LatchOut{+ x::cell<n> & n>6}<>.
+print residue.
+// invalid
+
+
+/*
+# bug-6a
+
+Contravariant checking is absent. Why?
+
+checkentail c::LatchIn{- x::cell<n> & n>3}<> 
+    |- c::LatchIn{- x::cell<n> & n>0}<>.
+// should be invalid
+
+Entail 1: Valid. 
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+# should fail..
+
+checkentail c::LatchIn{- x::cell<n> & n>3}<> 
+    |- c::LatchIn{- x::cell<n> & n>6}<>.
+// should be valid
+
+Entail 2: Fail.(must) cause:105matching of ho_args failed
+Residue:
+ <1>x::cell<n>&3<n&{FLOW,(4,5)=__norm#E}[]
+
+# why is there a positive residue?
+
+*/

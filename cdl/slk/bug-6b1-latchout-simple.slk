@@ -1,0 +1,33 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+// (4) [P --> y::cell<m>]
+checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> 
+            |- c::LatchOut{+ x::cell<n> * %PPP}<>.
+print residue.
+
+checkentail c::LatchOut{+ %PPP * y::cell<m>}<> 
+            |- c::LatchOut{+ %QQQ * %PPP}<>.
+print residue.
+
+checkentail c::LatchOut{+ x::cell<n>}<> 
+            |- c::LatchOut{+ %QQQ * %PPP}<>.
+print residue.
+
+/*
+bug-6b1 
+
+Why isn't binding in the residue?
+What about name clashes?
+
+!!! old ho_vars_mao:[]
+!!! new ho_var to added:(PPP, x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[])
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+*/

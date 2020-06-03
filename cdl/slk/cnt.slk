@@ -1,0 +1,30 @@
+pred_prim CNT<n:int>
+  inv n>=(-1).
+  
+//lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+//lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+/*
+checkentail c::CNT<1>@S1 |- c::CNT<1>@S1.
+print residue.
+
+checkentail c::CNT<1> |- c::CNT<1>.
+print residue.
+
+checkentail c::CNT<1>@S1 |- c::CNT<1>.
+print residue.
+
+checkentail c::CNT<1> |- c::CNT<1>@S1.
+print residue.
+*/
+
+checkentail c::CNT<2> |- c::CNT<1>.
+print residue.
+
+checkentail c::CNT<1> |- c::CNT<1>.
+print residue.
+
+checkentail c::CNT<(-1)> |- c::CNT<(-1)>.
+print residue.
+

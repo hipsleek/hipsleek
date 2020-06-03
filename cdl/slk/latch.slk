@@ -1,0 +1,54 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P}<>.
+
+pred_prim Latch{%P}<>.
+
+pred_prim CNT<n:int>.
+
+lemma "NORM-1" self::CNT<n> * self::CNT<a> & n<=0 & a < 0 -> self::CNT<a>.
+
+lemma "NORM-2" self::CNT<n1> * self::CNT<n2> & n=n1+n2 & n1>=0 & n2>=0 -> self::CNT<n>.
+
+//lemma "SPLIT-1" self::LatchOut{+ %P * %Q}<> -> self::LatchOut{+%P}<> * self::LatchOut{+%Q}<>.
+
+//lemma "SPLIT-2" self::LatchIn{- %P * %Q}<> -> self::LatchIn{-%P}<> * self::LatchIn{-%Q}<>.
+
+lemma "SPLIT-3" self::CNT<n> & n=n1+n2 & n1>=0 & n2>=0 -> self::CNT<n1> * self::CNT<n2>.
+
+lemma "ERR-1" self::LatchIn{- %P * %Q}<> * self::CNT<a> & a<0 -> emp & flow __Fail.
+
+lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+// (1)
+checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- %P}<>.
+print residue.
+
+// (2) [P --> y::cell<m>]
+checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- x::cell<n> * %P}<>.
+print residue.
+
+// (3)
+checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- x::cell<n>}<>.
+print residue.
+
+// (4) Fail
+checkentail c::LatchIn{- %P}<> |- c::LatchIn{- x::cell<n>}<>.
+print residue.
+
+// (5)
+checkentail x::cell<_> |- %P.
+print residue.
+
+// (6)
+checkentail %P |- x::cell<_>.
+print residue.
+
+// (7) 
+checkentail x::cell<n> * y::cell<m> |- x::cell<n>.
+print residue.
+
+
