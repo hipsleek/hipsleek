@@ -1,4 +1,4 @@
-changeset: f92b3985b0 -- to check some lemma problem 19/8/15 introduce the flag "--old-base-case-unfold",
+changeset: f92b3985b0 -- "to check some lemma problem" 19/8/15 introduces the flag "--old-base-case-unfold",
 need to understand what this is used for.
 
 Why need this flag to make the following entailment valid?

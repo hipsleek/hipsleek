@@ -10258,12 +10258,12 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
     let subs = lst_impl @ lst_ex in
     let pr_subs = pr_list (pr_pair !print_sv !print_sv) in
     let to_ante = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_impl in
-    let () = x_tinfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
-    let () = x_tinfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
+    let () = x_binfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
+    let () = x_binfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
     let msg = (add_str "to_conseq(glob)" pr_subs) lst_glob in
-    let () = x_tinfo_pp msg no_pos in
-    let () = x_tinfo_hp (add_str "impl_inst(subs)" pr_subs) lst_impl no_pos in
-    let () = x_tinfo_hp (add_str "ex_subs" pr_subs) lst_ex no_pos in
+    let () = x_binfo_pp msg no_pos in
+    let () = x_binfo_hp (add_str "impl_inst(subs)" pr_subs) lst_impl no_pos in
+    let () = x_binfo_hp (add_str "ex_subs" pr_subs) lst_ex no_pos in
     let () = if !Globals.assert_no_glob_vars && lst_glob!=[] then
         let () = x_winfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
         let () = x_winfo_hp (add_str "glob_vs" !print_svl) glob_vs no_pos in
@@ -10276,13 +10276,13 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
   begin
     (* to_ante & to_conseq not properly built below *)
     if (Perm.allow_perm ()) then
-      let () = x_winfo_pp "impl_inst and to_conseq not properly built" no_pos in
+      let () = x_binfo_pp "impl_inst and to_conseq not properly built" no_pos in
       (match l_perm, r_perm with
        | Some f1, Some f2 ->
          let ls1 = Perm.get_cperm_var l_perm in
          let ls2 = Perm.get_cperm_var r_perm in
          let rho_0 = List.combine (ls2@r_args) (ls1@l_args) in
-         let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+         let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
          let label_list1 =
            match !Globals.perm with
            | Bperm -> [LO.unlabelled; LO.unlabelled; LO.unlabelled]
@@ -10296,7 +10296,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
           | _ ->
             let f2 = Cpure.get_var f2 in
             let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
-            let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+            let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
             let label_list = (LO.unlabelled::label_list) in
             (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos))
 
@@ -10331,13 +10331,13 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
             (*f1 is either ivar or global
               if it is ivar, REMEMBER to convert it to expl_var*)
             let rho_0 = List.combine r_args l_args in
-            let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+            let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
             let label_list = (label_list) in
             let t_conseq =
               mkFullPerm_pure () f1 in
             (rho_0, label_list,CP.mkTrue no_pos,t_conseq))
        | _ -> let rho_0 = List.combine r_args l_args in
-         let () = x_tinfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
+         let () = x_binfo_hp (add_str "rho_0" pr_subs) rho_0 no_pos in
          (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
       )
     else
