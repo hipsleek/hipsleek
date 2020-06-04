@@ -136,17 +136,17 @@ void foo()
 }
 
 
-int main(void)
-/*@
-  requires a::int_star<_>
-  ensures  a'::int_star<_>;
-*/
-{
-  foo();
-  void *p; // this p will free
-  /*@ dprint; */
-  memcpy(&p, a, sizeof p);
-  /*@ dprint; */
-  free(p);
-}
+/* int main(void) */
+/* /\*@ */
+/*   requires a::int_star<_> */
+/*   ensures  a'::int_star<_>; */
+/* *\/ */
+/* { */
+/*   foo(); */
+/*   void *p; // this p will free */
+/*   /\*@ dprint; *\/ */
+/*   memcpy(&p, a, sizeof p); */
+/*   /\*@ dprint; *\/ */
+/*   free(p); */
+/* } */
 

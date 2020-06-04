@@ -28,7 +28,7 @@ fixcalc.*.inp$
 /*.log$
 /*.mli$
 /bench/
-/*.out$
+**.out
 /old/
 /*.orig$
 /*.output$
@@ -46,4 +46,4 @@ cil/doc/header.html$
 cil/doc/index.html$
 cil/bin/CilConfig.pm$
 /mona.failure
-
+mona-1.4/
