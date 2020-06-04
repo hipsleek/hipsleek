@@ -458,7 +458,7 @@ let building_image flag = begin
       flush root_file;
       close_out root_file;
     end;
-    ignore(Sys.command "isabelle usedir -b HOL " ^ try FileUtil.which "MyImage" with Not_found -> "");
+    ignore(Sys.command ("isabelle usedir -b HOL " ^ try FileUtil.which "MyImage" with Not_found -> ""));
   end
 end
 
