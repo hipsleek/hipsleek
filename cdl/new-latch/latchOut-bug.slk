@@ -1,0 +1,27 @@
+//CountDownLatch
+data CDL{
+}.
+
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+pred_prim CNT<n:int>
+  inv n>=(-1).
+
+//lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+//lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+
+lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+
+//lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+
+//5: VALID
+checkentail c::LatchOut{+z::cell<10>}<> * c::CNT<(-1)> |- z::cell<10>.
+print residue.
