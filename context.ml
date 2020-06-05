@@ -45,7 +45,7 @@ type match_res = {
   match_res_reason : CP.formula option;
   match_res_alias_set : CP.spec_var list;
   match_res_infer : CP.formula option;
-  match_res_root_inst : (CP.spec_var (* * CP.formula *)) option;
+  match_res_root_inst : (CP.spec_var (* * CP.formula *)) option; 
   (* this indicates compatible variables from LHS/RHS that can be used *)
   (* for base-case-fold/unfold and instantiation *)
   match_res_compatible: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
@@ -2602,7 +2602,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 [(0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_fold m_res);(base_case_prio,M_base_case_unfold m_res)])],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
               else
                 let base_case_prio = 3 in
-                let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL))
+                let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))
                   then (-1,M_Nothing_to_do "base_case_unfold not selected")
                   else (base_case_prio,M_base_case_unfold m_res) in
                 let a1 =
@@ -2611,7 +2611,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   let ()= y_binfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
                   (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))   *)
                   let test_b = (vr_kind!=View_HREL && vr_kind!=View_PRIM) in
-                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL))
+                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))
                   then let ()= y_binfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
                   let ()= y_binfo_hp (add_str "test bool View HREL and View PRIM" string_of_bool) test_b in
                   (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
@@ -3712,6 +3712,7 @@ and is_match_lemma_combination action =
   let pr = string_of_action_res in
   Debug.no_1 "is_match_lemma_combination" pr string_of_bool (fun a -> is_match_lemma_combination_x a) action
 
+(* This else branch seems to having problems related to pred_view *)
 and recalibrate_wt (w,a) =
     let pick a b = if a<b then a else b in
     let is_match_lemma = is_match_lemma_combination a in
@@ -3724,8 +3725,11 @@ and recalibrate_wt (w,a) =
       let rw = (fst h) in
       (* WHY did we pick only ONE when rw==0?*)
       (* Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
-      if (rw==0) && (not is_match_lemma) then h
+      (* YF: This should be the place where the bug is for CNT - pred_prim, should not be a single h *)
+      (* lemma should be matched, how come it is lost and enter into this branch? *)
+      if (rw==0) && (not is_match_lemma) then let () = y_tinfo_pp ("recalibrate_wt::Search_action::if_branch") in h
       else
+      let () = y_tinfo_pp ("recalibrate_wt::Search_action::else_branch") in
       if is_match_lemma then (rw, Cond_action l)
       else (rw,mk_search_action sl)
       (* (rw,mk_search_action sl) *)
@@ -3733,8 +3737,10 @@ and recalibrate_wt (w,a) =
       ->
       (*drop ummatched actions if possible*)
       (* let l = drop_unmatched_action l in *)
-      if l==[] then (9,M_Nothing_to_do "Cond_action []")
+      let () = y_tinfo_pp ("recalibrate_wt::Cond_action") in
+      if l==[] then let () = y_tinfo_pp ("recalibrate_wt::Cond_action::if_branch") in (9,M_Nothing_to_do "Cond_action []")
       else
+        let () = y_tinfo_pp ("recalibrate_wt::Cond_action::else_branch") in 
         let l = List.map recalibrate_wt l in
         let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
@@ -3746,7 +3752,7 @@ and recalibrate_wt (w,a) =
         let l = List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Seq_action l)
-    | _ -> if (w == -1) then (0,a) else (w,a)
+    | _ -> let () = y_tinfo_pp ("recalibrate_wt::Else") in if (w == -1) then (0,a) else (w,a)
 
 and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec uncertain (_,a) = match a with
