@@ -1,0 +1,11 @@
+pred int_block<v>    == self::int_star<v>
+                    or self::char_star<_> * x::char_star<_> * y::char_star<_> * z::char_star<_> & x=self+1 & y=x+1 & z=y+1.
+
+/*
+  (1) "type" 116 121 112 101 1954115685
+*/
+checkentail w::char_star<116> * x::char_star<121> * y::char_star<112> * z::char_star<101>
+           & x=w+1 & y=x+1 & z=y+1
+           |- w::int_block<1954115685>.
+print residue.
+expect Valid.
