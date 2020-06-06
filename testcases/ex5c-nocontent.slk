@@ -13,7 +13,7 @@ pred int_arr_seg<n> == self::int_block<> & n=1
   inv n>=1.
 
 lemma "int2char" self::int_arr_seg<n> <-> self::arr_seg<4*n>.
-lemma "splitchar" self::arr_seg<n> & n=a+b & self+a=q <-> self::arr_seg<a> * q::arr_seg<b>.
+lemma "splitchar" self::arr_seg<a+b> & self+a=q <-> self::arr_seg<a> * q::arr_seg<b>.
 
 /**********************************
  * equivalence entailments
@@ -156,23 +156,23 @@ expect Valid.
 /*
  * (16)
  */
-checkentail x::arr_seg<n> & n=4*m+2 & y=x+4*m
-           |- x::int_arr_seg<m> * y::arr_seg<2>.
+checkentail x::arr_seg<4*n+2> & y=x+4*n
+           |- x::int_arr_seg<n> * y::arr_seg<2>.
 print residue.
 expect Valid.
 
 /*
  * (17)
  */
-checkentail x::arr_seg<n> & n=4*m+2 & y=x+2
-           |- x::arr_seg<2> * y::int_arr_seg<m>.
+checkentail x::arr_seg<4*n+2> & y=x+2
+           |- x::arr_seg<2> * y::int_arr_seg<n>.
 print residue.
 expect Valid.
 
 /*
  * (18)
  */
-checkentail x::arr_seg<n> & n=4*m+2 & y=x+1 & z=y+4*m
-           |- x::arr_seg<1> * y::int_arr_seg<m> * z::arr_seg<1>.
+checkentail x::arr_seg<4*n+2> & y=x+1 & z=y+4*n
+           |- x::arr_seg<1> * y::int_arr_seg<n> * z::arr_seg<1>.
 print residue.
 expect Valid.
