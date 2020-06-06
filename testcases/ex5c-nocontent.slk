@@ -8,15 +8,11 @@ pred arr_seg<n>     == self::ch_star<_> & n=1
 
 pred int_block<>    == self::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_> & x=self+1 & y=x+1 & z=y+1.
 
-/*
- * int_arr_seg must have length of multiple of 4.
- * Otherwise, predicate will evaluate to false.
- */
-pred int_arr_seg<n> == self::int_block<> & n=4
-                    or self::int_block<> * q::int_arr_seg<n-4> & q=self+4 & n>4
-  inv n>=4.
+pred int_arr_seg<n> == self::int_block<> & n=1
+                    or self::int_block<> * q::int_arr_seg<n-1> & q=self+4 & n>1
+  inv n>=1.
 
-lemma "int2char" self::int_arr_seg<n> <-> self::arr_seg<n>.
+lemma "int2char" self::int_arr_seg<n> <-> self::arr_seg<4*n>.
 lemma "splitcharRTL" self::arr_seg<n> & n=a+b & self+a=q -> self::arr_seg<a> * q::arr_seg<b>.
 lemma "splitcharLTR" self::arr_seg<n> & n=a+b & self+a=q <- self::arr_seg<a> * q::arr_seg<b>.
 
@@ -31,14 +27,14 @@ lemma "splitcharLTR" self::arr_seg<n> & n=a+b & self+a=q <- self::arr_seg<a> * q
  */
 checkentail w::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_>
            & x=w+1 & y=x+1 & z=y+1
-           |- w::int_arr_seg<4>.
+           |- w::int_arr_seg<1>.
 print residue.
 expect Valid.
 
 /*
  * (2)
  */
-checkentail w::int_arr_seg<4>
+checkentail w::int_arr_seg<1>
            |- w::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_>
            & x=w+1 & y=x+1 & z=y+1.
 print residue.
@@ -65,21 +61,21 @@ expect Valid.
 /*
  * (5)
  */
-checkentail x::int_block<> |- x::int_arr_seg<4>.
+checkentail x::int_block<> |- x::int_arr_seg<1>.
 print residue.
 expect Valid.
 
 /*
  * (6)
  */
-checkentail x::int_block<> * y::int_block<> & y=x+4 |- x::int_arr_seg<8>.
+checkentail x::int_block<> * y::int_block<> & y=x+4 |- x::int_arr_seg<2>.
 print residue.
 expect Valid.
 
 /*
  * (7)
  */
-checkentail x::int_arr_seg<4> |- x::int_block<>.
+checkentail x::int_arr_seg<1> |- x::int_block<>.
 print residue.
 expect Valid.
 
@@ -88,14 +84,14 @@ expect Valid.
 /*
  * (8)
  */
-checkentail x::arr_seg<4> |- x::int_arr_seg<4>.
+checkentail x::arr_seg<4> |- x::int_arr_seg<1>.
 print residue.
 expect Valid.
 
 /*
  * (9)
  */
-checkentail x::int_arr_seg<4> |- x::arr_seg<4>.
+checkentail x::int_arr_seg<1> |- x::arr_seg<4>.
 print residue.
 expect Valid.
 
@@ -107,15 +103,15 @@ expect Valid.
  * (10)
  */
 checkentail x::int_block<> * y::int_arr_seg<n> & y=x+4
-           |- x::int_arr_seg<n+4>.
+           |- x::int_arr_seg<n+1>.
 print residue.
 expect Valid.
 
 /*
  * (11)
  */
-checkentail x::int_block<> * y::int_arr_seg<n> & n=4 & y=x+4
-           |- x::int_arr_seg<n+4>.
+checkentail x::int_block<> * y::int_arr_seg<n> & n=1 & y=x+4
+           |- x::int_arr_seg<n+1>.
 print residue.
 expect Valid.
 
@@ -145,7 +141,7 @@ expect Valid.
  * (14)
  */
 checkentail x::arr_seg<6>
-           |- x::arr_seg<1> * y::int_arr_seg<4> * z::arr_seg<1> & y=x+1 & z=y+4.
+           |- x::arr_seg<1> * y::int_arr_seg<1> * z::arr_seg<1> & y=x+1 & z=y+4.
 print residue.
 expect Valid.
 
@@ -153,7 +149,7 @@ expect Valid.
  * (15)
  */
 checkentail x::arr_seg<6>
-           |- x::arr_seg<2> * y::int_arr_seg<4> & y=x+2.
+           |- x::arr_seg<2> * y::int_arr_seg<1> & y=x+2.
 print residue.
 expect Valid.
 
