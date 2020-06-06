@@ -2098,7 +2098,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
            let simple_act = List.map (fun l -> (1,M_lemma (c,Some l,0))) simple_ls in
            left_act@right_act@simple_act
          in
-         if l=[] then (1,M_Nothing_to_do ("7:"^(string_of_match_res c)))
+         if l=[] then (9,M_Nothing_to_do ("7:"^(string_of_match_res c)))
          else (-1,mk_search_action l)
        | ViewNode vl, ViewNode vr ->
          let vl_name = vl.h_formula_view_name in
@@ -2158,18 +2158,18 @@ and lookup_lemma_action_x prog (c:match_res) :action =
            else  [] in
          (* let () = Debug.info_hprint (add_str "xxxx" pr_id) "1"  no_pos in *)
          if l=[] then
-           (* if not (!Globals.cyc_proof_syn) then *) (1,M_Nothing_to_do ("6:"^(string_of_match_res c)))
+           (* if not (!Globals.cyc_proof_syn) then *) (9,M_Nothing_to_do ("6:"^(string_of_match_res c)))
          (* else (1, M_cyclic (c, -1,-1,-1,None)) *)
          else (-1,mk_search_action l)
-       | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do ("5:"^(string_of_match_res c)))
-       | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do ("4:"^(string_of_match_res c)))
+       | DataNode dl, ViewNode vr -> (9,M_Nothing_to_do ("5:"^(string_of_match_res c)))
+       | ViewNode vl, DataNode dr -> (9,M_Nothing_to_do ("4:"^(string_of_match_res c)))
        | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
     | MaterializedArg (mv,ms) ->
       (*unexpected*)
-      (1,M_Nothing_to_do ("3:"^(string_of_match_res c)))
+      (9,M_Nothing_to_do ("3:"^(string_of_match_res c)))
     | WArg ->
-      (1,M_Nothing_to_do ("2:"^(string_of_match_res c)))
-    | Wand ->  (1,M_Nothing_to_do ("1:"^(string_of_match_res c)))
+      (9,M_Nothing_to_do ("2:"^(string_of_match_res c)))
+    | Wand ->  (9,M_Nothing_to_do ("1:"^(string_of_match_res c)))
   in
   act
 
@@ -2466,7 +2466,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     then
                       (* temp change to 0 to give fold higher priority *)
                       [(wt,M_match m_res)]
-                    else [(wt,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
+                    else [(9,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
                   in
                   let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in
                   (*apply lemmas on data nodes*)
@@ -2603,7 +2603,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               else
                 let base_case_prio = 3 in
                 let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))
-                  then (-1,M_Nothing_to_do "base_case_unfold not selected")
+                  then (9,M_Nothing_to_do "base_case_unfold not selected")
                   else (base_case_prio,M_base_case_unfold m_res) in
                 let a1 =
                   (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
@@ -2635,7 +2635,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                             m_res estate.CF.es_formula rhs reqset
                         in
                         if lem_split = [] then None
-                        else Some (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
+                        else Some (9, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
                       else None
                     in
                     match split_act with
@@ -3082,7 +3082,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             if a!=[] then (2,mk_search_action ~wt:2 a)
             (* if (vl_view_orig || vl_self_pts==[]) then ua *)
             (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
-            else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
+            else (9,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
           | ViewNode vl, HRel (h_name_sv, args, _) -> (* can  it reach this branch? *)
             let () = y_tinfo_pp "VIEW vs HREL" in
             let h_name = Cpure.name_of_spec_var h_name_sv in
@@ -3103,7 +3103,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = y_tinfo_hp (add_str "lst" (pr_list pr_none)) l in
             let res =
               match l with
-              | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
+              | []     -> (9, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
               | l1::[] -> l1
               | _      -> (-1, x_add_1 norm_cond_action l)
             in res
@@ -3139,7 +3139,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 else if CF.is_exists_hp_rel hn2 estate  then
                   (2,M_infer_fold (0,m_res))
                 else
-                  (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
+                  (9,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
             in
             let () = y_tinfo_hp (add_str "orig_act" pr_act) orig_act in
             orig_act
@@ -3229,8 +3229,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       in
       (* let uf_i = 1 in *)
       (match lhs_node,rhs_node with
-       | DataNode dl, _ -> (1,M_Nothing_to_do ("1matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
-       | ThreadNode dt, _ -> (1,M_Nothing_to_do ("2matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
+       | DataNode dl, _ -> (9,M_Nothing_to_do ("1matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
+       | ThreadNode dt, _ -> (9,M_Nothing_to_do ("2matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ViewNode vl, ViewNode vr ->
          let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vl.CF.h_formula_view_name in
          let vl_name = vl.h_formula_view_name in
@@ -3270,7 +3270,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if common==[] then
              let pr = !CF.print_h_formula in
              let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
-             (4,M_Nothing_to_do ("No common parameters : "^msg))
+             (9,M_Nothing_to_do ("No common parameters : "^msg))
            else
              let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
              let ptr = ref None in
@@ -3314,7 +3314,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if common==[] then
              let pr = !CF.print_h_formula in
              let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
-             (4,M_Nothing_to_do ("2 No common parameters : "^msg))
+             (9,M_Nothing_to_do ("2 No common parameters : "^msg))
            else
              let () = y_tinfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
              let () = y_tinfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
@@ -3384,7 +3384,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in a1
        | HRel _, _ ->
          let () = y_tinfo_pp "HREL vs OTHERS" in
-         (1,M_Nothing_to_do ("3matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
+         (9,M_Nothing_to_do ("3matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"
       )
     | WArg -> begin
@@ -3398,11 +3398,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
         (*   | _ -> (1,M_Nothing_to_do (string_of_match_res m_res)) *)
         (***************************************************)
         (***************************************************)
-        (1,M_Nothing_to_do ("a"^(string_of_match_res m_res)))
+        (9,M_Nothing_to_do ("a"^(string_of_match_res m_res)))
       end
     | Wand -> (*let _ = (print_endline"eliminate wand") in *)
       if (Lem_store.all_lemma # any_coercion) then (1,M_ramify_lemma m_res)
-      else (1,M_Nothing_to_do ("b"^(string_of_match_res m_res)))
+      else (9,M_Nothing_to_do ("b"^(string_of_match_res m_res)))
   in
 
   let r1 = match m_res.match_res_type with
@@ -3412,29 +3412,29 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | DataNode dl, DataNode dr ->
          if ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0)
          then (0,M_match m_res)
-         else  (1,M_Nothing_to_do ("c"^(string_of_match_res m_res)))
+         else  (9,M_Nothing_to_do ("c"^(string_of_match_res m_res)))
        | ThreadNode dl, ThreadNode dr ->
          if ((String.compare dl.h_formula_thread_name dr.h_formula_thread_name)==0)
          then (0,M_match m_res)
-         else  (1,M_Nothing_to_do ("d"^(string_of_match_res m_res)))
+         else  (9,M_Nothing_to_do ("d"^(string_of_match_res m_res)))
        | ViewNode vl, ViewNode vr ->
          if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0)
          then (0,M_match m_res)
-         else  (1,M_Nothing_to_do ("e"^(string_of_match_res m_res)))
+         else  (9,M_Nothing_to_do ("e"^(string_of_match_res m_res)))
        | HVar _, HVar _ -> (0, M_match m_res)
-       | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do ("f"^(string_of_match_res m_res)))
-       | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do ("g"^(string_of_match_res m_res)))
-       | _, ViewNode vr -> (1,M_Nothing_to_do ("h"^(string_of_match_res m_res)))
+       | DataNode dl, ViewNode vr -> (9,M_Nothing_to_do ("f"^(string_of_match_res m_res)))
+       | ViewNode vl, DataNode dr -> (9,M_Nothing_to_do ("g"^(string_of_match_res m_res)))
+       | _, ViewNode vr -> (9,M_Nothing_to_do ("h"^(string_of_match_res m_res)))
        | ViewNode _, HRel _
        | DataNode _, HRel _
-       | HRel _, _            ->(1,M_Nothing_to_do ("i"^(string_of_match_res m_res)))
+       | HRel _, _            ->(9,M_Nothing_to_do ("i"^(string_of_match_res m_res)))
        | _ -> report_error no_pos "process_one_match unexpected formulas 3\n"	              )
     | MaterializedArg (mv,ms) ->
       (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
       (* let () = print_string ("\n [context.ml] Warning: process_one_match not support Materialized Arg when normalizing\n") in *)
       (1,M_Nothing_to_do ("j"^(string_of_match_res m_res)))
-    | WArg -> (1,M_Nothing_to_do ("k"^(string_of_match_res m_res)))
-    | Wand -> (1,M_Nothing_to_do ("m"^(string_of_match_res m_res))) in
+    | WArg -> (9,M_Nothing_to_do ("k"^(string_of_match_res m_res)))
+    | Wand -> (9,M_Nothing_to_do ("m"^(string_of_match_res m_res))) in
   (*if in normalizing process => choose r1, otherwise, r*)
   if (is_normalizing) then r1
   else r
@@ -3720,6 +3720,7 @@ and recalibrate_wt (w,a) =
     | Search_action l ->
       let l = List.map recalibrate_wt l in
       let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+      let () = y_tinfo_hp (add_str "recalibrate_wt sl::" (pr_list string_of_action_wt_res_simpl)) sl in
       let h = (List.hd sl) in
 
       let rw = (fst h) in
@@ -3730,12 +3731,12 @@ and recalibrate_wt (w,a) =
       if (rw==0) && (not is_match_lemma) then let () = y_tinfo_pp ("recalibrate_wt::Search_action::if_branch") in h
       else
       let () = y_tinfo_pp ("recalibrate_wt::Search_action::else_branch") in
-      if is_match_lemma then (rw, Cond_action l)
-      else (rw,mk_search_action sl)
+      if is_match_lemma then let () = y_tinfo_pp ("recalibrate_wt::Search_action::else_branch::lemma_match") in (rw, Cond_action l)
+      else let () = y_tinfo_pp ("recalibrate_wt::Search_action::else_branch::lemma_NOT_match") in (rw,mk_search_action sl)
       (* (rw,mk_search_action sl) *)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
       ->
-      (*drop ummatched actions if possible*)
+      (* drop ummatched actions if possible *)
       (* let l = drop_unmatched_action l in *)
       let () = y_tinfo_pp ("recalibrate_wt::Cond_action") in
       if l==[] then let () = y_tinfo_pp ("recalibrate_wt::Cond_action::if_branch") in (9,M_Nothing_to_do "Cond_action []")
@@ -3752,7 +3753,10 @@ and recalibrate_wt (w,a) =
         let l = List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Seq_action l)
-    | _ -> let () = y_tinfo_pp ("recalibrate_wt::Else") in if (w == -1) then (0,a) else (w,a)
+    | _ -> let () = y_tinfo_pp ("recalibrate_wt::Else") in if (w == -1) then 
+            let () = y_binfo_hp (add_str "change the unkown -1 to 10" (string_of_action_wt_res_simpl)) (-1, a) in 
+            (10,a) else (w,a)
+    (* YF: give the unknown lower priority - 10 *)
 
 and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec uncertain (_,a) = match a with
