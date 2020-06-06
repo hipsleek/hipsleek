@@ -117,13 +117,13 @@ expect Valid.
 /*
  * (12)
  */
-checkentail x::int_block<> * y::int_arr_seg<n> & y=x+4
+checkentail x::int_block<> * y::int_arr_seg<n> & x+4=y
            |- x::int_arr_seg<m>.
 print residue.
 expect Valid.
 
 /**********************************
- * alignment entailments
+ * typecasted-alignment entailments
  **********************************/
 
 /* concrete lengths: start, middle, end */
