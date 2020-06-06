@@ -13,8 +13,7 @@ pred int_arr_seg<n> == self::int_block<> & n=1
   inv n>=1.
 
 lemma "int2char" self::int_arr_seg<n> <-> self::arr_seg<4*n>.
-lemma "splitcharRTL" self::arr_seg<n> & n=a+b & self+a=q -> self::arr_seg<a> * q::arr_seg<b>.
-lemma "splitcharLTR" self::arr_seg<n> & n=a+b & self+a=q <- self::arr_seg<a> * q::arr_seg<b>.
+lemma "splitchar" self::arr_seg<n> & n=a+b & self+a=q <-> self::arr_seg<a> * q::arr_seg<b>.
 
 /**********************************
  * equivalence entailments
