@@ -4,10 +4,12 @@ need to understand what this is used for.
 Why need this flag to make the following entailment valid?
 Why the split lemma is not triggered properly without using it?
 maybe could start with search_lemma_candidates
-==========================================================
-//1: VALID
+=========================================================================
+//1: should be VALID	FIXED	related to priority of action
 checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
 print residue.
-==========================================================
-
+========================================================================
+//5: should be VALID	
+checkentail c::LatchOut{+z::cell<10>}<> * c::CNT<(-1)> |- z::cell<10>.
+print residue.
 

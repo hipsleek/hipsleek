@@ -22,6 +22,6 @@ lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
 //lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
 
-//5: VALID
+//should be VALID
 checkentail c::LatchOut{+z::cell<10>}<> * c::CNT<(-1)> |- z::cell<10>.
 print residue.
