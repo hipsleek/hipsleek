@@ -3,7 +3,7 @@ data ch_star{
 }.
 
 pred arr_seg<n>     == self::ch_star<_> & n=1
-                    or (exists q: self::ch_star<_> * q::arr_seg<n-1> & q=self+1 & n>1)
+                    or self::ch_star<_> * q::arr_seg<n-1> & q=self+1 & n>1
   inv n>=1.
 
 pred int_block<>    == self::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_> & x=self+1 & y=x+1 & z=y+1.
