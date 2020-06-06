@@ -157,7 +157,7 @@ expect Valid.
 /*
  * (16)
  */
-checkentail x::arr_seg<n> & n=4*m+1
+checkentail x::arr_seg<n> & n=4*m+2
            |- x::int_arr_seg<m> * y::arr_seg<2> & y=x+4*m.
 print residue.
 expect Valid.
@@ -165,7 +165,7 @@ expect Valid.
 /*
  * (17)
  */
-checkentail x::arr_seg<n> & n=4*m+1
+checkentail x::arr_seg<n> & n=4*m+2
            |- x::arr_seg<2> * y::int_arr_seg<m> & y=x+2.
 print residue.
 expect Valid.
@@ -173,7 +173,7 @@ expect Valid.
 /*
  * (18)
  */
-checkentail x::arr_seg<n> & n=4*m+1
+checkentail x::arr_seg<n> & n=4*m+2
            |- x::arr_seg<1> * y::int_arr_seg<m> * z::arr_seg<1> & y=x+1 & z=y+4*m.
 print residue.
 expect Valid.
