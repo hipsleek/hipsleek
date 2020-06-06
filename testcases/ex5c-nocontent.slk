@@ -132,7 +132,7 @@ expect Valid.
  * (13)
  */
 checkentail x::arr_seg<6> & y=x+4
-           |- x::arr_seg<4> * y::arr_seg<2>.
+           |- x::int_arr_seg<1> * y::arr_seg<2>.
 print residue.
 expect Valid.
 
