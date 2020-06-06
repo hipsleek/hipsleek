@@ -33,9 +33,8 @@ expect Valid.
 /*
  * (2)
  */
-checkentail w::int_arr_seg<1>
-           |- w::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_>
-           & x=w+1 & y=x+1 & z=y+1.
+checkentail w::int_arr_seg<1> & x=w+1 & y=x+1 & z=y+1
+           |- w::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_>.
 print residue.
 expect Valid.
 
@@ -139,16 +138,16 @@ expect Valid.
 /*
  * (14)
  */
-checkentail x::arr_seg<6>
-           |- x::arr_seg<1> * y::int_arr_seg<1> * z::arr_seg<1> & y=x+1 & z=y+4.
+checkentail x::arr_seg<6> & y=x+1 & z=y+4
+           |- x::arr_seg<1> * y::int_arr_seg<1> * z::arr_seg<1>.
 print residue.
 expect Valid.
 
 /*
  * (15)
  */
-checkentail x::arr_seg<6>
-           |- x::arr_seg<2> * y::int_arr_seg<1> & y=x+2.
+checkentail x::arr_seg<6> & y=x+2
+           |- x::arr_seg<2> * y::int_arr_seg<1>.
 print residue.
 expect Valid.
 
@@ -157,23 +156,23 @@ expect Valid.
 /*
  * (16)
  */
-checkentail x::arr_seg<n> & n=4*m+2
-           |- x::int_arr_seg<m> * y::arr_seg<2> & y=x+4*m.
+checkentail x::arr_seg<n> & n=4*m+2 & y=x+4*m
+           |- x::int_arr_seg<m> * y::arr_seg<2>.
 print residue.
 expect Valid.
 
 /*
  * (17)
  */
-checkentail x::arr_seg<n> & n=4*m+2
-           |- x::arr_seg<2> * y::int_arr_seg<m> & y=x+2.
+checkentail x::arr_seg<n> & n=4*m+2 & y=x+2
+           |- x::arr_seg<2> * y::int_arr_seg<m>.
 print residue.
 expect Valid.
 
 /*
  * (18)
  */
-checkentail x::arr_seg<n> & n=4*m+2
-           |- x::arr_seg<1> * y::int_arr_seg<m> * z::arr_seg<1> & y=x+1 & z=y+4*m.
+checkentail x::arr_seg<n> & n=4*m+2 & y=x+1 & z=y+4*m
+           |- x::arr_seg<1> * y::int_arr_seg<m> * z::arr_seg<1>.
 print residue.
 expect Valid.
