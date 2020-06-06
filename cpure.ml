@@ -15318,7 +15318,7 @@ let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (a
   with Invalid_argument s ->
     raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_map") )
 
-let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) =
+let create_view_arg_list_from_pos_map_x (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) =
   try
     (* update the annotations first *)
     let () = x_tinfo_pp ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
@@ -15361,7 +15361,7 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
   let pr1 = pr_list (pr_pair print_view_arg string_of_int) in
   let pr2 = pr_list (pr_pair !print_annot_arg string_of_int) in
   Debug.no_3 "create_view_arg_list_from_pos_map" pr1 !print_svl pr2 (pr_list print_view_arg)
-    create_view_arg_list_from_pos_map map hargs annot
+    create_view_arg_list_from_pos_map_x map hargs annot
 
 (* Ocaml compiler bug here *)
 (* norm/ex25a5.slk *)

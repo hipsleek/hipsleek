@@ -2611,7 +2611,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   let ()= y_binfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
                   (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))   *)
                   let test_b = (vr_kind!=View_HREL && vr_kind!=View_PRIM) in
-                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL))
+                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))
                   then let ()= y_binfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
                   let ()= y_binfo_hp (add_str "test bool View HREL and View PRIM" string_of_bool) test_b in
                   (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
