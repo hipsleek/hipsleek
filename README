@@ -49,6 +49,11 @@ Installation Guide for hip/sleek
    =======================
    ./hip -tp mona examples/working/hip/ll.ss 
 
+### Installation with [hipsleek/dependencies](https://github.com/hipsleek/dependencies)
+This process should work on an Ubuntu-like system.
+1. Clone this repository with `git clone --recursive https://github.com/hipsleek/dependencies`.
+1. Install [hipsleek/dependencies](https://github.com/hipsleek/dependencies).
+1. Install [hipsleek/hipsleek](https://github.com/hipsleek/hipsleek).
 
 ### Omega for MAC:
 (by Yahui Song, 25th May 2020, e0210374@u.nus.edu,
