@@ -49,6 +49,7 @@ EXTRA_TAGS = {
   "not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>)" => "pp(cppo -I ../ -D TRACE)",
   "\"joust\"" => "include",
   "\"ints\"" => "include",
+  "<dependencies/**/*>" => "not_hygienic",
   "<xml/*.*>" => "not_hygienic",
   "<ppx/*.*>" => "not_hygienic",
   "<omega_modified/**/*>" => "not_hygienic",
