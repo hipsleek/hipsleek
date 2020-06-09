@@ -8,4 +8,4 @@ sudo cp -r dependencies/reduce /usr/local/etc
 ln -s /usr/local/new_mona/bin/mona dependencies/mona_inter
 OPAMYES=true rake dependencies:install
 rake
-cpanm File::NCopy Spreadsheet::WriteExcel Spreadsheet::ParseExcel
+sudo cpanm File::NCopy Spreadsheet::WriteExcel Spreadsheet::ParseExcel
