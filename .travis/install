@@ -1,6 +1,7 @@
 #!/bin/bash
 set -ev
 yes "" | opam init --compiler=4.07.0
+eval $(opam env)
 sudo mkdir -p /usr/local/etc
 sudo cp -r dependencies/new_mona /usr/local
 sudo cp -r dependencies/reduce /usr/local/etc
