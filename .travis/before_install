@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ev
+yes "" | sudo add-apt-repository ppa:avsm/ppa
 sudo apt-get update
 sudo apt-get -y install ed opam cpanminus
 ed dependencies/reduce/scripts/run.sh <<'EOF'
