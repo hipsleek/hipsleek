@@ -1,8 +1,12 @@
 os: linux
 dist: trusty
 language: ruby
+cache:
+  directories:
+    - ~/.opam
 env:
   - PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies"
+  - CACHE_NAME=hipsleek
 before_install:
   - ./.travis/before_install
 install:
