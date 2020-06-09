@@ -1,0 +1,12 @@
+#!/bin/bash
+set -ev
+sudo apt-get update
+sudo apt-get -y install ed opam cpanminus
+ed dependencies/reduce/scripts/run.sh <<'EOF'
+10i
+exec $here/../cslbuild/x86_64-unknown-ubuntu12.04/csl/$ap $*
+exit 0
+.
+w
+q
+EOF

@@ -1,0 +1,15 @@
+#!/bin/bash
+# Compare tests output to reference tests output.
+
+# Assume fourth-last to second-last lines are not related to tests,
+# and leaving these lines in causes diff to exit with non-zero code.
+f() {
+  tac "$1" | sed -n -e '2,4d' | tac
+}
+
+set -ev
+cd examples/working
+./run-fast-tests.pl sleek > run-fast-tests.sleek
+diff <(f ../../.travis/run-fast-tests.sleek) <(f run-fast-tests.sleek)
+./run-fast-tests.pl hip > run-fast-tests.hip
+diff <(f ../../.travis/run-fast-tests.hip) <(f run-fast-tests.hip)

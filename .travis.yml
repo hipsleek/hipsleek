@@ -1,0 +1,11 @@
+os: linux
+dist: trusty
+language: ruby
+env:
+  - PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies"
+before_install:
+  - ./.travis/before_install
+install:
+  - ./.travis/install
+script:
+  - ./.travis/script

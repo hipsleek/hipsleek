@@ -1,0 +1,10 @@
+#!/bin/bash
+set -ev
+opam switch create hipsleek 4.07.0
+sudo mkdir -p /usr/local/etc
+sudo cp -r dependencies/new_mona /usr/local
+sudo cp -r dependencies/reduce /usr/local/etc
+ln -s /usr/local/new_mona/bin/mona dependencies/mona_inter
+rake dependencies:install
+rake
+cpanm File::NCopy Spreadsheet::WriteExcel Spreadsheet::ParseExcel

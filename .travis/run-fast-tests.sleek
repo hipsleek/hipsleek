@@ -1,0 +1,126 @@
+Starting sleek tests:
+Checking sleek.slk
+Checking term.slk (runs with extra options: --efa-exc)
+Checking cll-d.slk
+Checking label-basic.slk (runs with extra options: --dis-eps)
+Checking label-dll.slk (runs with extra options: --dis-eps)
+Checking sleek1.slk
+Checking sleek10.slk
+Checking sleek2.slk
+Checking sleek3.slk (runs with extra options: --elp)
+Checking sleek4.slk
+Checking sleek6.slk
+Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
+Checking sleek8.slk (runs with extra options:  --dis-lem-gen )
+Checking sleek8.slk (runs with extra options:  --elp )
+Checking sleek9.slk (runs with extra options:  --elp )
+Checking sleek12-lend.slk
+Checking sleek13-lend.slk
+Checking sleek13-lend.slk
+Checking sleek-err-exc.slk
+Checking sleek-err-exc-bind.slk
+Checking sleek-err-exc-flow.slk (runs with extra options: --efa-exc)
+Checking lst-under2.slk (runs with extra options: --inv-test)
+Checking data-holes.slk
+Checking ll-under1a.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1b.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1c.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1d.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1e.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1f.slk (runs with extra options:  --inv-test --use-baga )
+Checking baga-test-eps.slk (runs with extra options: --eps)
+Checking baga-test.slk (runs with extra options: --use-baga)
+Checking baga-test-2.slk (runs with extra options: --dis-use-baga --dis-eps)
+Checking baga-test-2.slk (runs with extra options: --use-baga)
+Checking symb-diff.slk
+Checking xpure3nodes.slk
+Checking infer/app-inv.slk (runs with extra options: --inv --dis-eps)
+Checking infer/app-inv2.slk (runs with extra options: --inv --dis-eps)
+Checking infer/infer1.slk
+Checking infer/infer2.slk
+Checking infer/infer4.slk
+Checking infer/infer5.slk
+Checking infer/infer5a.slk
+Checking infer/infer6.slk
+Checking infer/infer7.slk
+Checking infer/infer8.slk
+Checking infer/infer9.slk
+Checking infer/infer10.slk
+Checking infer/infer11.slk
+Checking infer/infer12.slk
+Checking infer/infer13.slk (runs with extra options: --sa-en-cont)
+Checking infer/infer14.slk (runs with extra options: --sa-en-pure-field)
+Checking infer/infer15.slk
+Checking infer/infer16.slk
+Checking infer/infer17.slk
+Checking ann2.slk (runs with extra options:  --imm --en-imm-inv --etcsu1 )
+Checking imm/imm1.slk (runs with extra options:  --imm --etcsu1 )
+Checking imm/imm2.slk (runs with extra options:  --imm --etcsu1 )
+Checking imm/imm3.slk (runs with extra options:  --imm --etcsu1 )
+Checking imm/imm4.slk (runs with extra options:  --imm --etcsu1 )
+Checking imm/imm8-instantiation.slk (runs with extra options:  --etcsu1 )
+Checking imm/imm8-instantiation.slk (runs with extra options:  --etcsu1 --field-imm )
+Checking imm/imm9-early-inst.slk (runs with extra options:  --etcsu1 )
+Checking imm/imm9-early-inst.slk (runs with extra options:  --etcsu1 --field-imm )
+Checking imm/imm-hard.slk (runs with extra options:  --imm --eps)
+Checking imm-field/sleek01.slk (runs with extra options:  --field-imm --etcsu1 )
+Checking imm-field/sleek02.slk (runs with extra options:  --field-imm --etcsu1 )
+Checking imm-field/sleek03.slk (runs with extra options:  --field-imm --etcsu1 --imm )
+Checking eps.slk (runs with extra options:  --dis-imm )
+Checking imm-field/sleek05.slk (runs with extra options:  --field-imm --etcsu1 )
+Checking imm/norm/norm1.slk (runs with extra options:  --en-imm-merge )
+Checking imm/norm/norm2.slk (runs with extra options:  --en-imm-merge )
+Checking imm/norm/norm3.slk (runs with extra options:  --en-imm-merge )
+Checking imm/norm/norm4.slk (runs with extra options:  --en-imm-merge )
+Checking imm/norm/norm5.slk (runs with extra options:  --en-imm-merge )
+Checking imm/norm/norm6.slk (runs with extra options:  --en-imm-merge )
+Checking imm/norm/norm7.slk (runs with extra options:  --field-imm --en-imm-merge )
+Checking imm/norm/norm9.slk (runs with extra options:  --field-imm --en-imm-merge )
+Checking imm/norm/norm10.slk (runs with extra options:  --field-imm --en-imm-merge )
+Checking imm/norm/field.slk (runs with extra options:  --en-imm-merge )
+Checking classic/classic1.slk
+Checking classic/classic1.slk (runs with extra options:  --classic)
+Checking classic/classic1a.slk
+Checking classic/classic1b.slk
+Checking classic/classic2.slk
+Checking classic/classic3.slk
+Checking classic/classic4.slk
+Checking ho_vars.slk
+Checking latch.slk
+Checking inf-no-eps.slk (runs with extra options: --dsd --en-inf --dis-eps)
+Checking infinity.slk (runs with extra options: --dsd --en-inf --dis-eps)
+Checking inflem.slk (runs with extra options:  --en-inf --elp --dis-eps --dis-inv-baga)
+Checking lemmas/sort2.slk (runs with extra options:  --elp --dis-lem-gen )
+Checking lemmas/lseg.slk (runs with extra options:  --elp --dis-lem-gen )
+Checking lemmas/lseg1.slk (runs with extra options:  --elp --dis-lem-gen )
+Checking lemmas/rlseg.slk (runs with extra options:  --elp --dis-lem-gen --old-empty-to-conseq)
+Checking lemmas/lemma-fold.slk (runs with extra options:  --elp )
+Checking lemmas/rd-lem-1.slk (runs with extra options:  --elp --dis-lem-gen )
+Checking lemmas/rd-lem-2.slk
+Checking lemmas/app-tail.slk (runs with extra options:  --elp )
+Checking lemmas/lseg_case.slk (runs with extra options:  --elp --dis-lem-gen )
+Checking lemmas/ll.slk (runs with extra options:  --elp )
+Checking lemmas/ll_tail.slk (runs with extra options:  --elp )
+Checking lemmas/nlseg3.slk
+Checking lemmas/nlseg4e.slk (runs with extra options:  --elp )
+Checking lemmas/sll_tailL.slk (runs with extra options:  --elp )
+Checking lemmas/dseg-new.slk (runs with extra options:  --elp --dis-lem-gen --old-empty-to-conseq)
+Unexpected result with : lemmas/dseg-new.slk (failed check(s): {L2#Fail}) 
+Checking lemmas/dseg1.slk (runs with extra options:  --elp --dis-lem-gen )
+Checking lemmas/odd-lseg.slk (runs with extra options:  --elp --dis-lem-gen --dis-eps)
+Checking lemmas/lseg_complex.slk (runs with extra options:  --elp --dis-lem-gen --old-empty-to-conseq)
+Checking vperm/vperm.slk (runs with extra options:  --ann-vp)
+Checking veribsync/bperm-split-combine.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings --dis-ptr-arith)
+Checking veribsync/barrier-static.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith)
+Checking veribsync/barrier-dynamic2.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith)
+Unexpected result with : veribsync/barrier-dynamic2.slk (failed check(s): {E2#Fail}) 
+Checking conchip/threads.slk (runs with extra options:  -tp parahip --old-lemma-settings)
+Checking conchip/latch.slk (runs with extra options:  -tp parahip --old-lemma-settings)
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  lemmas/dseg-new.slk({L2#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 257.84 second
+	Time spent in main process: 131.30 second
+	Time spent in child processes: 126.54 second
+	Number of false contexts: 98
