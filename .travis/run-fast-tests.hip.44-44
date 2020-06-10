@@ -1,0 +1,13 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking parahip/ordered-locking.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj)
+error at: parahip/ordered-locking.ss func
+error at: parahip/ordered-locking.ss main
+Total number of errors: 2 in files:
+ error at: parahip/ordered-locking.ss func
+error at: parahip/ordered-locking.ss main
+.
+Total verification time: 439.78 second
+	Time spent in main process: 0.83 second
+	Time spent in child processes: 438.96 second
+	Number of false contexts: 0

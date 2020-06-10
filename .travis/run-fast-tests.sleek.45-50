@@ -1,0 +1,13 @@
+Starting sleek tests:
+Checking infer/infer9.slk
+Checking infer/infer10.slk
+Checking infer/infer11.slk
+Checking infer/infer12.slk
+Checking infer/infer13.slk (runs with extra options: --sa-en-cont)
+Checking infer/infer14.slk (runs with extra options: --sa-en-pure-field)
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 3.86 second
+	Time spent in main process: 3.09 second
+	Time spent in child processes: 0.77 second
+	Number of false contexts: 19

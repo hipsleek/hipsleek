@@ -1,54 +1,4 @@
 Starting sleek tests:
-Checking sleek.slk
-Checking term.slk (runs with extra options: --efa-exc)
-Checking cll-d.slk
-Checking label-basic.slk (runs with extra options: --dis-eps)
-Checking label-dll.slk (runs with extra options: --dis-eps)
-Checking sleek1.slk
-Checking sleek10.slk
-Checking sleek2.slk
-Checking sleek3.slk (runs with extra options: --elp)
-Checking sleek4.slk
-Checking sleek6.slk
-Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
-Checking sleek8.slk (runs with extra options:  --dis-lem-gen )
-Checking sleek8.slk (runs with extra options:  --elp )
-Checking sleek9.slk (runs with extra options:  --elp )
-Checking sleek12-lend.slk
-Checking sleek13-lend.slk
-Checking sleek13-lend.slk
-Checking sleek-err-exc.slk
-Checking sleek-err-exc-bind.slk
-Checking sleek-err-exc-flow.slk (runs with extra options: --efa-exc)
-Checking lst-under2.slk (runs with extra options: --inv-test)
-Checking data-holes.slk
-Checking ll-under1a.slk (runs with extra options:  --inv-test --use-baga )
-Checking ll-under1b.slk (runs with extra options:  --inv-test --use-baga )
-Checking ll-under1c.slk (runs with extra options:  --inv-test --use-baga )
-Checking ll-under1d.slk (runs with extra options:  --inv-test --use-baga )
-Checking ll-under1e.slk (runs with extra options:  --inv-test --use-baga )
-Checking ll-under1f.slk (runs with extra options:  --inv-test --use-baga )
-Checking baga-test-eps.slk (runs with extra options: --eps)
-Checking baga-test.slk (runs with extra options: --use-baga)
-Checking baga-test-2.slk (runs with extra options: --dis-use-baga --dis-eps)
-Checking baga-test-2.slk (runs with extra options: --use-baga)
-Checking symb-diff.slk
-Checking xpure3nodes.slk
-Checking infer/app-inv.slk (runs with extra options: --inv --dis-eps)
-Checking infer/app-inv2.slk (runs with extra options: --inv --dis-eps)
-Checking infer/infer1.slk
-Checking infer/infer2.slk
-Checking infer/infer4.slk
-Checking infer/infer5.slk
-Checking infer/infer5a.slk
-Checking infer/infer6.slk
-Checking infer/infer7.slk
-Checking infer/infer8.slk
-Checking infer/infer9.slk
-Checking infer/infer10.slk
-Checking infer/infer11.slk
-Checking infer/infer12.slk
-Checking infer/infer13.slk (runs with extra options: --sa-en-cont)
 Checking infer/infer14.slk (runs with extra options: --sa-en-pure-field)
 Checking infer/infer15.slk
 Checking infer/infer16.slk
@@ -120,7 +70,7 @@ Starting hip-sleek tests:
 Total number of errors: 2 in files:
   lemmas/dseg-new.slk({L2#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
-Total verification time: 257.84 second
-	Time spent in main process: 131.30 second
-	Time spent in child processes: 126.54 second
-	Number of false contexts: 98
+Total verification time: 225.94 second
+	Time spent in main process: 95.78 second
+	Time spent in child processes: 130.17 second
+	Number of false contexts: 33
