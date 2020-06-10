@@ -2221,7 +2221,16 @@ sub hip_process_file {
             print "Starting hip-$param tests:\n";
         }}
         $t_list = $hip_files{$param};
-        foreach $test (@{$t_list})
+        unless (defined $ENV{'HIPSLEEK_TESTS_START'}) {
+            $ENV{'HIPSLEEK_TESTS_START'} = 0;
+        }
+        unless (defined $ENV{'HIPSLEEK_TESTS_END'}) {
+            $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+        }
+        if ($ENV{'HIPSLEEK_TESTS_END'} > $#$t_list) { # avoid extra foreach loops
+            $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+        }
+        foreach $test (@{$t_list}[$ENV{'HIPSLEEK_TESTS_START'} .. $ENV{'HIPSLEEK_TESTS_END'}])
         {
             $extra_options = $test->[2];
             if ("$extra_options" eq "") {
@@ -2316,7 +2325,16 @@ sub sleek_process_file  {
       }
       #print "\n!!!exempl_path_full: $exempl_path_full";
       $t_list = $sleek_files{$param};
-      foreach $test (@{$t_list})
+      unless (defined $ENV{'HIPSLEEK_TESTS_START'}) {
+          $ENV{'HIPSLEEK_TESTS_START'} = 0;
+      }
+      unless (defined $ENV{'HIPSLEEK_TESTS_END'}) {
+          $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+      }
+      if ($ENV{'HIPSLEEK_TESTS_END'} > $#$t_list) { # avoid extra foreach loops
+          $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+      }
+      foreach $test (@{$t_list}[$ENV{'HIPSLEEK_TESTS_START'} .. $ENV{'HIPSLEEK_TESTS_END'}])
       {
           my $extra_options = $test->[1];
           if ("$extra_options" eq "") {
