@@ -10251,11 +10251,11 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         let () = x_winfo_pp ((add_str "WARNING: not same length" (pr_pair !print_svl !print_svl)) (left,right)) no_pos in
         []
     in
-    let subs = List.filter (fun (l,r) -> not(CP.eq_spec_var l r)) subs in
+    (* let subs = List.filter (fun (l,r) -> not(CP.eq_spec_var l r)) subs in *)
     let (lst_impl,lst_ex) = List.partition (fun (l,_) -> CP.mem_svl l impl_vars) subs in
     let (lst_glob,lst_ex) = List.partition (fun (l,_) ->
         if !Globals.old_empty_to_conseq then false else CP.mem_svl l glob_vs) lst_ex in
-    let subs = lst_impl @ lst_ex in
+    (* let subs = lst_impl @ lst_ex in *)
     let pr_subs = pr_list (pr_pair !print_sv !print_sv) in
     let to_ante = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_impl in
     let () = x_binfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
@@ -10271,8 +10271,8 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         let () = x_winfo_hp (add_str "ivars" !print_svl) ivars no_pos in
         failwith ("non-empty global vars "^msg)
     in
-    let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_glob in
-    (to_ante, (* CP.mkTrue no_pos *) to_conseq, subs) in
+    let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_ex in
+    (to_ante, CP.mkTrue no_pos (*to_conseq*), subs) in
   begin
     (* to_ante & to_conseq not properly built below *)
     if (Perm.allow_perm ()) then
@@ -10353,7 +10353,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
       (*   (\* (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0) *\) *)
       (*   CP.mkTrue no_pos *)
       (* in *)
-      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),to_conseq (* CP.mkTrue no_pos *))
+      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),(*to_conseq*) CP.mkTrue no_pos)
 
   end
 
@@ -11607,7 +11607,7 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
   let () = x_tinfo_hp (add_str " state.es_gen_expl_vars" !CP.print_svl) estate.es_gen_expl_vars no_pos in
   let lhs_h,lhs_p,_,_,_,_ = CF.extr_formula_base lhs_b in
   let rhs_h,rhs_p,_,_,_,_ = CF.extr_formula_base rhs_b in
-  let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
+  let rhs_lst = x_add split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
   let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p)) rhs_lst in
   let () = x_tinfo_hp (add_str " Aliases" (Cprinter.string_of_list_f Cprinter.string_of_spec_var)) posib_r_alias no_pos in
   let rhs_eqset = (* if !Globals.allow_imm then *)Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) ->
@@ -12340,7 +12340,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let lhs_b = extr_lhs_b estate in
   let lhs_h,lhs_p,_,_,_,_ = extr_formula_base lhs_b in
   let rhs_h,rhs_p,_,_,_,_ = extr_formula_base rhs_b in
-  let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
+  let rhs_lst = x_add split_linear_node_guided (CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
   let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p)) rhs_lst in
   (* let rhs_lst = [] in *)
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
@@ -15870,7 +15870,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         process_one_coerc lst
     in
     (*split into pairs of (single node * the rest)  *)
-    let h_lst = split_linear_node_guided [] h in
+    let h_lst = x_add split_linear_node_guided [] h in
     process_one_h h_lst
   in
   helper estate h p vp fl (*start*)
@@ -15959,14 +15959,27 @@ and normalize_context_perm prog ctx = match ctx with
 
 and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl list) pos: CF.entail_state * formula =
   if not(!Globals.old_norm_w_coerc)
-  then (estate, f)
+  then let () = x_binfo_pp "Branch 1 in normalize_es_formula_w_coers" no_pos in (estate, f)
   else
     (* this part goes into a loop with ex61a.slk *)
-    let () = x_winfo_pp "into normalization_with_coerc? why?" no_pos in
-    if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then (estate, f)
-    else if !Globals.perm = Dperm then (estate, normalize_formula_perm prog f)
-    else if coers==[] then (estate, f)
+    (* let () = x_winfo_pp "into normalization_with_coerc? why?" no_pos in *)
+    if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then 
+      begin 
+        Debug.binfo_pprint "Branch 2 in normalize_es_formula_w_coers" no_pos;
+        (estate, f)
+      end
+    else if !Globals.perm = Dperm then 
+      begin 
+        Debug.binfo_pprint "Branch 3 in normalize_es_formula_w_coers" no_pos;
+        (estate, normalize_formula_perm prog f)
+      end
+    else if coers==[] then 
+      begin 
+        Debug.binfo_pprint "Branch 4 in normalize_es_formula_w_coers" no_pos;
+        (estate, f)
+      end
     else
+      let () = x_binfo_pp "Branch else in normalize_es_formula_w_coers" no_pos in 
       let coers = List.filter (fun c ->
           match c.coercion_case with
           | Cast.Simple -> false
@@ -16039,9 +16052,10 @@ and normalize_estate_w_coers prog estate (coers: coercion_decl list) pos: CF.ent
 
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
   if !Globals.eager_coercions then
+    let () = x_binfo_pp "normalize_formula_w_coers::Glob::true" no_pos in
     snd (normalize_es_formula_w_coers prog estate f coers no_pos)
   else
-    f
+    let () = x_binfo_pp "normalize_formula_w_coers::Glob::false" no_pos in f
 
 and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
   let fn = wrap_proving_kind  PK_Lemma_Norm (normalize_formula_w_coers_x  prog estate f) in
