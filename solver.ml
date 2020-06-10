@@ -15974,6 +15974,7 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl 
         (estate, normalize_formula_perm prog f)
       end
     else if coers==[] then 
+      (* falls in this branch, but for previous version, it is in the else branch's Base case *)
       begin 
         Debug.binfo_pprint "Branch 4 in normalize_es_formula_w_coers" no_pos;
         (estate, f)

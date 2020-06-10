@@ -1012,6 +1012,7 @@ let common_arguments = [
        Globals.old_search_always := true;
      ), "Allow old lemma settings");
   ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");
+  ("--old-norm-wt-coerc", Arg.Clear Globals.old_norm_w_coerc, "Disable old normalize (test)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
   ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");
