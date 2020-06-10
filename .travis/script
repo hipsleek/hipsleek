@@ -11,5 +11,5 @@ set -ev
 cd examples/working
 ./run-fast-tests.pl sleek > run-fast-tests.sleek
 diff <(f ../../.travis/run-fast-tests.sleek) <(f run-fast-tests.sleek)
-./run-fast-tests.pl hip > run-fast-tests.hip
+travis_wait 120 ./run-fast-tests.pl hip > run-fast-tests.hip
 diff <(f ../../.travis/run-fast-tests.hip) <(f run-fast-tests.hip)
