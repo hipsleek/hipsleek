@@ -2221,16 +2221,18 @@ sub hip_process_file {
             print "Starting hip-$param tests:\n";
         }}
         $t_list = $hip_files{$param};
-        unless (defined $ENV{'HIPSLEEK_TESTS_START'}) {
-            $ENV{'HIPSLEEK_TESTS_START'} = 0;
+        my $start = 0;
+        my $end = $#$t_list;
+        if (defined $ENV{'HIPSLEEK_TESTS_START'}) {
+            $start = $ENV{'HIPSLEEK_TESTS_START'};
         }
-        unless (defined $ENV{'HIPSLEEK_TESTS_END'}) {
-            $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+        if (defined $ENV{'HIPSLEEK_TESTS_END'}) {
+            $end = $ENV{'HIPSLEEK_TESTS_END'};
         }
-        if ($ENV{'HIPSLEEK_TESTS_END'} > $#$t_list) { # avoid extra foreach loops
-            $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+        if ($end > $#$t_list) { # avoid extra foreach loops
+            $end = $#$t_list;
         }
-        foreach $test (@{$t_list}[$ENV{'HIPSLEEK_TESTS_START'} .. $ENV{'HIPSLEEK_TESTS_END'}])
+        foreach $test (@{$t_list}[$start .. $end])
         {
             $extra_options = $test->[2];
             if ("$extra_options" eq "") {
@@ -2325,16 +2327,18 @@ sub sleek_process_file  {
       }
       #print "\n!!!exempl_path_full: $exempl_path_full";
       $t_list = $sleek_files{$param};
-      unless (defined $ENV{'HIPSLEEK_TESTS_START'}) {
-          $ENV{'HIPSLEEK_TESTS_START'} = 0;
+      my $start = 0;
+      my $end = $#$t_list;
+      if (defined $ENV{'HIPSLEEK_TESTS_START'}) {
+          $start = $ENV{'HIPSLEEK_TESTS_START'};
       }
-      unless (defined $ENV{'HIPSLEEK_TESTS_END'}) {
-          $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+      if (defined $ENV{'HIPSLEEK_TESTS_END'}) {
+          $end = $ENV{'HIPSLEEK_TESTS_END'};
       }
-      if ($ENV{'HIPSLEEK_TESTS_END'} > $#$t_list) { # avoid extra foreach loops
-          $ENV{'HIPSLEEK_TESTS_END'} = $#$t_list;
+      if ($end > $#$t_list) { # avoid extra foreach loops
+          $end = $#$t_list;
       }
-      foreach $test (@{$t_list}[$ENV{'HIPSLEEK_TESTS_START'} .. $ENV{'HIPSLEEK_TESTS_END'}])
+      foreach $test (@{$t_list}[$start .. $end])
       {
           my $extra_options = $test->[1];
           if ("$extra_options" eq "") {
