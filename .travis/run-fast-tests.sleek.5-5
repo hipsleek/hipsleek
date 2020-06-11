@@ -1,0 +1,8 @@
+Starting sleek tests:
+Checking sleek1.slk
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 0.18 second
+	Time spent in main process: 0.16 second
+	Time spent in child processes: 0.03 second
+	Number of false contexts: 0

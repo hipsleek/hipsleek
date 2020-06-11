@@ -1,0 +1,20 @@
+Starting sleek tests:
+Checking sleek2.slk
+Checking sleek3.slk (runs with extra options: --elp)
+Checking sleek4.slk
+Checking sleek6.slk
+Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
+Checking sleek8.slk (runs with extra options:  --dis-lem-gen )
+Checking sleek8.slk (runs with extra options:  --elp )
+Checking sleek9.slk (runs with extra options:  --elp )
+Checking sleek12-lend.slk
+Checking sleek13-lend.slk
+Checking sleek13-lend.slk
+Checking sleek-err-exc.slk
+Checking sleek-err-exc-bind.slk
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 83.14 second
+	Time spent in main process: 76.96 second
+	Time spent in child processes: 6.17 second
+	Number of false contexts: 0

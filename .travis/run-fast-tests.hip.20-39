@@ -1,0 +1,27 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking trees.ss
+Checking rb.ss
+Checking global1.ss
+Checking global2.ss
+Checking global3.ss
+Checking global4.ss
+Checking global5.ss
+Checking global-ll.ss
+Checking global-mutual-rec.ss
+Checking classic/classic1.ss
+Checking classic/classic1.ss (runs with extra options: --classic)
+Checking classic/classic1a.ss
+Checking classic/classic1a.ss (runs with extra options: --classic)
+Checking classic/classic2.ss
+Checking classic/classic2a.ss
+Checking classic/classic3.ss
+Checking classic/classic3a.ss
+Checking ../../modular_examples/dll-modular.ss (runs with extra options: --overeps)
+Checking ../../modular_examples/selection-modular.ss (runs with extra options: --overeps --lda)
+Checking ../../modular_examples/qsort-modular.ss (runs with extra options: --overeps --lda)
+All test results were as expected.
+Total verification time: 510.01 second
+	Time spent in main process: 407.62 second
+	Time spent in child processes: 102.39 second
+	Number of false contexts: 327
