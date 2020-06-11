@@ -3,8 +3,8 @@
 
 # Assume fourth-last to second-last lines are not related to tests,
 # and leaving these lines in causes diff to exit with non-zero code.
-f() {
-  tac "$1" | sed -n -e '2,4d' | tac
+snip() {
+  tac /dev/stdin | sed -e '2,4d' | tac
 }
 
 travis_wait() {
@@ -43,7 +43,9 @@ set -ev
 cd examples/working
 s=$HIPSLEEK_TESTS_START # assume is integer
 e=$HIPSLEEK_TESTS_END # assume is integer
-./run-fast-tests.pl sleek > run-fast-tests.sleek.$s-$e
-diff <(f ../../.travis/run-fast-tests.sleek.$s-$e) <(f run-fast-tests.sleek.$s-$e)
-travis_wait "./run-fast-tests.pl hip > run-fast-tests.hip.$s-$e"
-diff <(f ../../.travis/run-fast-tests.hip.$s-$e) <(f run-fast-tests.hip.$s-$e)
+./run-fast-tests.pl sleek | snip > run-fast-tests.sleek.$s-$e
+snip < ../../.travis/run-fast-tests.sleek.$s-$e > ../../.travis/run-fast-tests.sleek.$s-$e.snipped
+diff ../../.travis/run-fast-tests.sleek.$s-$e.snipped run-fast-tests.sleek.$s-$e
+travis_wait "./run-fast-tests.pl hip | snip > run-fast-tests.hip.$s-$e"
+snip < ../../.travis/run-fast-tests.hip.$s-$e > ../../.travis/run-fast-tests.hip.$s-$e.snipped
+diff ../../.travis/run-fast-tests.hip.$s-$e.snipped run-fast-tests.hip.$s-$e
