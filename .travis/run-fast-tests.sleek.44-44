@@ -1,0 +1,8 @@
+Starting sleek tests:
+Checking infer/infer8.slk
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 0.86 second
+	Time spent in main process: 0.75 second
+	Time spent in child processes: 0.10 second
+	Number of false contexts: 5

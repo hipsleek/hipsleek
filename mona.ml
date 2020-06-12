@@ -36,8 +36,8 @@ let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
 
-let mona_prog, mona_proc_name =  if inter then "/usr/local/bin/mona_inter", "mona_inter"
-    else "/home/andreeac/tools/mona-1.4/EPREF/bin/mona", "mona"
+(* let mona_prog = if !Globals.web_compile_flag then "/usr/local/bin/mona_inter" else "mona_inter" *)
+let mona_prog = try FileUtil.which "mona_inter" with Not_found -> ""
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 

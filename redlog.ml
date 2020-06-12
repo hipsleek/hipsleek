@@ -130,7 +130,7 @@ let start () =
     in
     rl_current_mode := OFSF;
     let set_process proc = process := proc in
-    let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
+    let rl_bin = if !Globals.web_compile_flag then try FileUtil.which "redcsl" with Not_found -> "" else "redcsl" in
     (* let rl_bin = "redcsl" in *)
     let () = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
     print_endline_quiet "Starting Reduce... ";

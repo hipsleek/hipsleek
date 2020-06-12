@@ -22,6 +22,7 @@ checkentail x::lseg<n,p> & n>=i |- x::lseg<i,q>.
 print residue.
 expect Valid.
 
+
 /*
 # ex4.slk
 

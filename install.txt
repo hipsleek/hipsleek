@@ -49,3 +49,38 @@ http://petio.org/tools/gmp.html
 sudo ap-get install libffi6
 sudo cp /usr/lib/x86_64-linux-gnu/libffi.so.6.0.1 /usr/lib/libffi.so.5
 
+
+**********************
+*** For Mac users: ***
+**********************
+
+1. OPAM + OCaml
+======================
+# install opam + latest Ocaml version
+brew install cmake
+brew install llvm
+brew install gpatch
+brew install opam
+# environment setup
+opam init
+eval `opam env`
+
+2. Install some of the dependencies for OCaml:
+opam install ocamlgraph batteries camlp4 extlib merlin fileutilsread
+
+==================================
+Omega
+1. uncompress this "omega_modified_for_mac.zip" to "omega_modified" 
+2. cd omega_modified
+     make depend
+   cd omega_calc/obj
+   make
+   sudo cp oc /usr/local/bin/
+
+===================================
+fixcalc
+
+brew install bison
+brew install flex
+brew install cabal-install (for installing happy)
+cabal install happy

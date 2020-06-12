@@ -2,11 +2,33 @@
 open VarGen
 open Globals
 open Gen.Basic
-open Iexp 
+open Iexp
 
 module I = Iast
 module IF = Iformula
 module IP = Ipure
+
+let empty_prog : I.prog_decl =
+  { prog_include_decls = [];
+    prog_data_decls = [];
+    prog_global_var_decls = [];
+    prog_logical_var_decls = [];
+    prog_enum_decls = [];
+    prog_view_decls = [];
+    prog_func_decls = [];
+    prog_rel_decls = [];
+    prog_rel_ids = [];
+    prog_templ_decls = [];
+    prog_ut_decls = [];
+    prog_ui_decls = [];
+    prog_hp_decls = [];
+    prog_hp_ids = [];
+    prog_axiom_decls = [];
+    prog_proc_decls = [];
+    prog_coercion_decls = [];
+    prog_hopred_decls = [];
+    prog_barrier_decls = [];
+    prog_test_comps = []; }
 
 let init_conditions_of_block (b : ints_block) : ints_exp_assume list =
   let vars_of_exp e =
@@ -92,27 +114,27 @@ let pure_formula_of_condition (cond : ints_exp_assume list) : IP.formula =
 let is_equivalent_condition c1 c2 =
   let pf1 = pure_formula_of_condition c1 in
   let pf2 = pure_formula_of_condition c2 in
-  let cf1 = Astsimp.trans_pure_formula pf1 [] in
-  let cf2 = Astsimp.trans_pure_formula pf2 [] in
+  let cf1 = Astsimp.trans_pure_formula pf1 [] empty_prog in
+  let cf2 = Astsimp.trans_pure_formula pf2 [] empty_prog in
   Tpdispatcher.simpl_imply_raw cf1 cf2 &&
   Tpdispatcher.simpl_imply_raw cf2 cf1
 
-let rec partition_by_key key_of key_eq ls = 
+let rec partition_by_key key_of key_eq ls =
   match ls with
   | [] -> []
   | e::es ->
-    let ke = key_of e in 
+    let ke = key_of e in
     let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
     (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
 
 let ints_loc_prefix = "ints_method_"
 
-let name_of_ints_loc lbl = 
+let name_of_ints_loc lbl =
   match lbl with
   | NumLoc (i, _) -> ints_loc_prefix ^ (string_of_int i)
   | NameLoc (s, _) -> s
 
-let pos_of_ints_loc lbl = 
+let pos_of_ints_loc lbl =
   match lbl with
   | NumLoc (_, p)
   | NameLoc (_, p) -> p
@@ -120,7 +142,7 @@ let pos_of_ints_loc lbl =
 let eq_ints_loc lbl1 lbl2 =
   (String.compare (name_of_ints_loc lbl1) (name_of_ints_loc lbl2)) == 0
 
-let rec trans_ints_exp_lst (exps: ints_exp list) (last_exp: I.exp): I.exp = 
+let rec trans_ints_exp_lst (exps: ints_exp list) (last_exp: I.exp): I.exp =
   match exps with
   | [] -> last_exp
   | e::es ->
@@ -128,7 +150,7 @@ let rec trans_ints_exp_lst (exps: ints_exp list) (last_exp: I.exp): I.exp =
     match e with
     | Assign asg ->
       let asg_pos = asg.ints_exp_assign_pos in
-      let asg_exp = I.mkAssign I.OpAssign asg.ints_exp_assign_lhs asg.ints_exp_assign_rhs 
+      let asg_exp = I.mkAssign I.OpAssign asg.ints_exp_assign_lhs asg.ints_exp_assign_rhs
                       (fresh_branch_point_id "") asg_pos in
       I.mkSeq asg_exp cont_exp asg_pos
     | Assume asm ->
@@ -191,10 +213,10 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
       let ret_exp = I.mkReturn None None pos in
       I.mkProc fn (name_of_ints_loc lbl) [] "" None false [] [] I.void_type  (IF.EList []) (IF.mkEFalseF ()) pos (Some ret_exp)
     ) abandoned_to_lbls in
-  
+
   let proc_blks = partition_by_key (fun blk -> blk.ints_block_from) eq_ints_loc iprog.ints_prog_blocks in
-  let proc_decls = 
-    [main_proc] @ 
+  let proc_decls =
+    [main_proc] @
     (List.map (fun (fr, blks) -> trans_ints_block_lst fn fr blks) proc_blks) @
     abandoned_procs @
     (* ensure `nondet()` proc is in program *)
@@ -215,7 +237,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
     Gen.BList.remove_dups_eq (fun (s1, _) (s2, _) -> String.compare s1 s2 == 0) all_vars
   in
   let () = x_binfo_hp (add_str "global_vars" (pr_list fst)) global_vars no_pos in
-  let global_var_decls = List.map (fun (d, p) -> I.mkGlobalVarDecl Int [(d, None, p)] p) global_vars in 
+  let global_var_decls = List.map (fun (d, p) -> I.mkGlobalVarDecl Int [(d, None, p)] p) global_vars in
   (* Inline Iast procedure if body is only a call to another procedure *)
   let proc_decls =
       let rec inline_body pd proc_names =
@@ -276,7 +298,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
 let parse_ints (file_name: string): I.prog_decl =
   let in_chnl = open_in file_name in
   let lexbuf = Lexing.from_channel in_chnl in
-  let iprog = 
+  let iprog =
     try
       let p = Iparser.program Ilexer.tokenizer lexbuf in
       let () = close_in in_chnl in
@@ -292,5 +314,5 @@ let parse_ints (file_name: string): I.prog_decl =
         let token = Lexing.lexeme lexbuf in
         Gen.report_error err_pos ("Intsparser: Unexpected token " ^ token)
       | _ -> raise e
-  in 
+  in
   trans_ints_prog file_name iprog

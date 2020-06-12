@@ -1,26 +1,8 @@
 # DO NOT DELETE
 
-../src/uniform_misc.o: /usr/include/stdio.h /usr/include/features.h
-../src/uniform_misc.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/uniform_misc.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/uniform_misc.o: /usr/include/bits/types.h
-../src/uniform_misc.o: /usr/include/bits/typesizes.h /usr/include/libio.h
-../src/uniform_misc.o: /usr/include/_G_config.h /usr/include/wchar.h
-../src/uniform_misc.o: /usr/include/bits/stdio_lim.h
-../src/uniform_misc.o: /usr/include/bits/sys_errlist.h
 ../src/uniform_misc.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/uniform_misc.o: ../../basic/include/basic/Dynamic_Array.c
 ../src/uniform_misc.o: ../../basic/include/basic/assert.h
-../src/uniform_misc.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/uniform_misc.o: /usr/include/time.h /usr/include/endian.h
-../src/uniform_misc.o: /usr/include/bits/endian.h
-../src/uniform_misc.o: /usr/include/bits/byteswap.h
-../src/uniform_misc.o: /usr/include/bits/byteswap-16.h
-../src/uniform_misc.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/uniform_misc.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/uniform_misc.o: /usr/include/sys/sysmacros.h
-../src/uniform_misc.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/uniform_misc.o: /usr/include/bits/stdlib-float.h
 ../src/uniform_misc.o: ../../omega_lib/include/omega/Relations.h
 ../src/uniform_misc.o: ../../basic/include/basic/bool.h
 ../src/uniform_misc.o: ../../omega_lib/include/omega/Relation.h
@@ -29,13 +11,8 @@
 ../src/uniform_misc.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/uniform_misc.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/uniform_misc.o: ../../basic/include/basic/String.h
-../src/uniform_misc.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/uniform_misc.o: /usr/include/bits/posix1_lim.h
-../src/uniform_misc.o: /usr/include/bits/local_lim.h
-../src/uniform_misc.o: /usr/include/linux/limits.h
-../src/uniform_misc.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
+../src/uniform_misc.o: ../../basic/include/basic/util.h
 ../src/uniform_misc.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/uniform_misc.o: /usr/include/ctype.h
 ../src/uniform_misc.o: ../../basic/include/basic/ConstString.h
 ../src/uniform_misc.o: ../../basic/include/basic/Iterator.h
 ../src/uniform_misc.o: ../../basic/include/basic/Collection.h
@@ -90,25 +67,7 @@
 ../src/uniform_misc.o: ../include/uniform/time_mappings.h
 ../src/uniform_misc.o: ../include/uniform/simple_codegen.h
 ../src/uniform_misc.o: ../../petit/include/petit/Exit.h
-../src/uniform_misc.o: ../../basic/include/basic/Exit.h /usr/include/signal.h
-../src/uniform_misc.o: /usr/include/bits/signum.h /usr/include/bits/siginfo.h
-../src/uniform_misc.o: /usr/include/bits/sigaction.h
-../src/uniform_misc.o: /usr/include/bits/sigcontext.h
-../src/uniform_misc.o: /usr/include/bits/sigstack.h
-../src/uniform_misc.o: /usr/include/bits/sigthread.h
-../src/communication.o: /usr/include/stdio.h /usr/include/features.h
-../src/communication.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/communication.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/communication.o: /usr/include/bits/types.h
-../src/communication.o: /usr/include/bits/typesizes.h /usr/include/libio.h
-../src/communication.o: /usr/include/_G_config.h /usr/include/wchar.h
-../src/communication.o: /usr/include/bits/stdio_lim.h
-../src/communication.o: /usr/include/bits/sys_errlist.h /usr/include/math.h
-../src/communication.o: /usr/include/bits/huge_val.h
-../src/communication.o: /usr/include/bits/huge_valf.h
-../src/communication.o: /usr/include/bits/huge_vall.h /usr/include/bits/inf.h
-../src/communication.o: /usr/include/bits/nan.h /usr/include/bits/mathdef.h
-../src/communication.o: /usr/include/bits/mathcalls.h
+../src/uniform_misc.o: ../../basic/include/basic/Exit.h
 ../src/communication.o: ../include/uniform/communication.h
 ../src/communication.o: ../include/uniform/search.h
 ../src/communication.o: ../../omega_lib/include/omega/Relations.h
@@ -118,26 +77,10 @@
 ../src/communication.o: ../../omega_lib/include/omega/pres_form.h
 ../src/communication.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/communication.o: ../../basic/include/basic/assert.h
-../src/communication.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/communication.o: /usr/include/time.h /usr/include/endian.h
-../src/communication.o: /usr/include/bits/endian.h
-../src/communication.o: /usr/include/bits/byteswap.h
-../src/communication.o: /usr/include/bits/byteswap-16.h
-../src/communication.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/communication.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/communication.o: /usr/include/sys/sysmacros.h
-../src/communication.o: /usr/include/bits/pthreadtypes.h
-../src/communication.o: /usr/include/alloca.h
-../src/communication.o: /usr/include/bits/stdlib-float.h
 ../src/communication.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/communication.o: ../../basic/include/basic/String.h
 ../src/communication.o: ../../basic/include/basic/util.h
-../src/communication.o: /usr/include/limits.h /usr/include/bits/posix1_lim.h
-../src/communication.o: /usr/include/bits/local_lim.h
-../src/communication.o: /usr/include/linux/limits.h
-../src/communication.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
 ../src/communication.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/communication.o: /usr/include/ctype.h
 ../src/communication.o: ../../basic/include/basic/ConstString.h
 ../src/communication.o: ../../basic/include/basic/Iterator.h
 ../src/communication.o: ../../basic/include/basic/Collection.h
@@ -189,35 +132,10 @@
 ../src/communication.o: ../include/uniform/uniform_args.h
 ../src/communication.o: ../include/uniform/parallelism.h
 ../src/communication.o: ../include/uniform/space_mappings.h
-../src/space_mappings.o: /usr/include/stdio.h /usr/include/features.h
-../src/space_mappings.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/space_mappings.o: /usr/include/bits/wordsize.h
-../src/space_mappings.o: /usr/include/gnu/stubs.h /usr/include/bits/types.h
-../src/space_mappings.o: /usr/include/bits/typesizes.h /usr/include/libio.h
-../src/space_mappings.o: /usr/include/_G_config.h /usr/include/wchar.h
-../src/space_mappings.o: /usr/include/bits/stdio_lim.h
-../src/space_mappings.o: /usr/include/bits/sys_errlist.h /usr/include/math.h
-../src/space_mappings.o: /usr/include/bits/huge_val.h
-../src/space_mappings.o: /usr/include/bits/huge_valf.h
-../src/space_mappings.o: /usr/include/bits/huge_vall.h
-../src/space_mappings.o: /usr/include/bits/inf.h /usr/include/bits/nan.h
-../src/space_mappings.o: /usr/include/bits/mathdef.h
-../src/space_mappings.o: /usr/include/bits/mathcalls.h
 ../src/space_mappings.o: ../include/uniform/space_mappings.h
 ../src/space_mappings.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/space_mappings.o: ../../basic/include/basic/Dynamic_Array.c
 ../src/space_mappings.o: ../../basic/include/basic/assert.h
-../src/space_mappings.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/space_mappings.o: /usr/include/time.h /usr/include/endian.h
-../src/space_mappings.o: /usr/include/bits/endian.h
-../src/space_mappings.o: /usr/include/bits/byteswap.h
-../src/space_mappings.o: /usr/include/bits/byteswap-16.h
-../src/space_mappings.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/space_mappings.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/space_mappings.o: /usr/include/sys/sysmacros.h
-../src/space_mappings.o: /usr/include/bits/pthreadtypes.h
-../src/space_mappings.o: /usr/include/alloca.h
-../src/space_mappings.o: /usr/include/bits/stdlib-float.h
 ../src/space_mappings.o: ../include/uniform/uniform_misc.h
 ../src/space_mappings.o: ../../omega_lib/include/omega/Relations.h
 ../src/space_mappings.o: ../../basic/include/basic/bool.h
@@ -228,12 +146,7 @@
 ../src/space_mappings.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/space_mappings.o: ../../basic/include/basic/String.h
 ../src/space_mappings.o: ../../basic/include/basic/util.h
-../src/space_mappings.o: /usr/include/limits.h /usr/include/bits/posix1_lim.h
-../src/space_mappings.o: /usr/include/bits/local_lim.h
-../src/space_mappings.o: /usr/include/linux/limits.h
-../src/space_mappings.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
 ../src/space_mappings.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/space_mappings.o: /usr/include/ctype.h
 ../src/space_mappings.o: ../../basic/include/basic/ConstString.h
 ../src/space_mappings.o: ../../basic/include/basic/Iterator.h
 ../src/space_mappings.o: ../../basic/include/basic/Collection.h
@@ -285,29 +198,9 @@
 ../src/space_mappings.o: ../include/uniform/uniform_args.h
 ../src/space_mappings.o: ../include/uniform/parallelism.h
 ../src/space_mappings.o: ../include/uniform/time_mappings.h
-../src/space_constants.o: /usr/include/stdio.h /usr/include/features.h
-../src/space_constants.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/space_constants.o: /usr/include/bits/wordsize.h
-../src/space_constants.o: /usr/include/gnu/stubs.h /usr/include/bits/types.h
-../src/space_constants.o: /usr/include/bits/typesizes.h /usr/include/libio.h
-../src/space_constants.o: /usr/include/_G_config.h /usr/include/wchar.h
-../src/space_constants.o: /usr/include/bits/stdio_lim.h
-../src/space_constants.o: /usr/include/bits/sys_errlist.h
 ../src/space_constants.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/space_constants.o: ../../basic/include/basic/Dynamic_Array.c
 ../src/space_constants.o: ../../basic/include/basic/assert.h
-../src/space_constants.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/space_constants.o: /usr/include/time.h /usr/include/endian.h
-../src/space_constants.o: /usr/include/bits/endian.h
-../src/space_constants.o: /usr/include/bits/byteswap.h
-../src/space_constants.o: /usr/include/bits/byteswap-16.h
-../src/space_constants.o: /usr/include/sys/select.h
-../src/space_constants.o: /usr/include/bits/select.h
-../src/space_constants.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/space_constants.o: /usr/include/sys/sysmacros.h
-../src/space_constants.o: /usr/include/bits/pthreadtypes.h
-../src/space_constants.o: /usr/include/alloca.h
-../src/space_constants.o: /usr/include/bits/stdlib-float.h
 ../src/space_constants.o: ../include/uniform/space_constants.h
 ../src/space_constants.o: ../include/uniform/space_mappings.h
 ../src/space_constants.o: ../include/uniform/uniform_misc.h
@@ -320,14 +213,7 @@
 ../src/space_constants.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/space_constants.o: ../../basic/include/basic/String.h
 ../src/space_constants.o: ../../basic/include/basic/util.h
-../src/space_constants.o: /usr/include/limits.h
-../src/space_constants.o: /usr/include/bits/posix1_lim.h
-../src/space_constants.o: /usr/include/bits/local_lim.h
-../src/space_constants.o: /usr/include/linux/limits.h
-../src/space_constants.o: /usr/include/bits/posix2_lim.h
-../src/space_constants.o: /usr/include/string.h
 ../src/space_constants.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/space_constants.o: /usr/include/ctype.h
 ../src/space_constants.o: ../../basic/include/basic/ConstString.h
 ../src/space_constants.o: ../../basic/include/basic/Iterator.h
 ../src/space_constants.o: ../../basic/include/basic/Collection.h
@@ -383,31 +269,10 @@
 ../src/uniform_args.o: ../../omega_lib/include/omega/pres_form.h
 ../src/uniform_args.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/uniform_args.o: ../../basic/include/basic/assert.h
-../src/uniform_args.o: /usr/include/stdlib.h /usr/include/features.h
-../src/uniform_args.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/uniform_args.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/uniform_args.o: /usr/include/sys/types.h /usr/include/bits/types.h
-../src/uniform_args.o: /usr/include/bits/typesizes.h /usr/include/time.h
-../src/uniform_args.o: /usr/include/endian.h /usr/include/bits/endian.h
-../src/uniform_args.o: /usr/include/bits/byteswap.h
-../src/uniform_args.o: /usr/include/bits/byteswap-16.h
-../src/uniform_args.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/uniform_args.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/uniform_args.o: /usr/include/sys/sysmacros.h
-../src/uniform_args.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/uniform_args.o: /usr/include/bits/stdlib-float.h /usr/include/stdio.h
-../src/uniform_args.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/uniform_args.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/uniform_args.o: /usr/include/bits/sys_errlist.h
 ../src/uniform_args.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/uniform_args.o: ../../basic/include/basic/String.h
-../src/uniform_args.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/uniform_args.o: /usr/include/bits/posix1_lim.h
-../src/uniform_args.o: /usr/include/bits/local_lim.h
-../src/uniform_args.o: /usr/include/linux/limits.h
-../src/uniform_args.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
+../src/uniform_args.o: ../../basic/include/basic/util.h
 ../src/uniform_args.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/uniform_args.o: /usr/include/ctype.h
 ../src/uniform_args.o: ../../basic/include/basic/ConstString.h
 ../src/uniform_args.o: ../../basic/include/basic/Iterator.h
 ../src/uniform_args.o: ../../basic/include/basic/Collection.h
@@ -455,13 +320,6 @@
 ../src/uniform_args.o: ../../omega_lib/include/omega/closure.h
 ../src/uniform_args.o: ../../omega_lib/include/omega/lib_hack.h
 ../src/uniform_args.o: ../include/uniform/uniform_args.h
-../src/depend_rel2.o: /usr/include/stdio.h /usr/include/features.h
-../src/depend_rel2.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/depend_rel2.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/depend_rel2.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/depend_rel2.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/depend_rel2.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/depend_rel2.o: /usr/include/bits/sys_errlist.h
 ../src/depend_rel2.o: ../../omega_lib/include/omega/Relations.h
 ../src/depend_rel2.o: ../../basic/include/basic/bool.h
 ../src/depend_rel2.o: ../../omega_lib/include/omega/Relation.h
@@ -469,24 +327,10 @@
 ../src/depend_rel2.o: ../../omega_lib/include/omega/pres_form.h
 ../src/depend_rel2.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/depend_rel2.o: ../../basic/include/basic/assert.h
-../src/depend_rel2.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/depend_rel2.o: /usr/include/time.h /usr/include/endian.h
-../src/depend_rel2.o: /usr/include/bits/endian.h /usr/include/bits/byteswap.h
-../src/depend_rel2.o: /usr/include/bits/byteswap-16.h
-../src/depend_rel2.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/depend_rel2.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/depend_rel2.o: /usr/include/sys/sysmacros.h
-../src/depend_rel2.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/depend_rel2.o: /usr/include/bits/stdlib-float.h
 ../src/depend_rel2.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/depend_rel2.o: ../../basic/include/basic/String.h
-../src/depend_rel2.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/depend_rel2.o: /usr/include/bits/posix1_lim.h
-../src/depend_rel2.o: /usr/include/bits/local_lim.h
-../src/depend_rel2.o: /usr/include/linux/limits.h
-../src/depend_rel2.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
+../src/depend_rel2.o: ../../basic/include/basic/util.h
 ../src/depend_rel2.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/depend_rel2.o: /usr/include/ctype.h
 ../src/depend_rel2.o: ../../basic/include/basic/ConstString.h
 ../src/depend_rel2.o: ../../basic/include/basic/Iterator.h
 ../src/depend_rel2.o: ../../basic/include/basic/Collection.h
@@ -536,28 +380,11 @@
 ../src/depend_rel2.o: ../../omega_lib/include/omega/closure.h
 ../src/depend_rel2.o: ../../omega_lib/include/omega/lib_hack.h
 ../src/depend_rel2.o: ../include/uniform/select.h
-../src/depend_dir.o: /usr/include/stdio.h /usr/include/features.h
-../src/depend_dir.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/depend_dir.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/depend_dir.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/depend_dir.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/depend_dir.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/depend_dir.o: /usr/include/bits/sys_errlist.h
 ../src/depend_dir.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/depend_dir.o: ../../basic/include/basic/Dynamic_Array.c
-../src/depend_dir.o: ../../basic/include/basic/assert.h /usr/include/stdlib.h
-../src/depend_dir.o: /usr/include/sys/types.h /usr/include/time.h
-../src/depend_dir.o: /usr/include/endian.h /usr/include/bits/endian.h
-../src/depend_dir.o: /usr/include/bits/byteswap.h
-../src/depend_dir.o: /usr/include/bits/byteswap-16.h
-../src/depend_dir.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/depend_dir.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/depend_dir.o: /usr/include/sys/sysmacros.h
-../src/depend_dir.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/depend_dir.o: /usr/include/bits/stdlib-float.h
+../src/depend_dir.o: ../../basic/include/basic/assert.h
 ../src/depend_dir.o: ../../omega_lib/include/omega.h
 ../src/depend_dir.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/depend_dir.o: /usr/include/ctype.h
 ../src/depend_dir.o: ../../omega_lib/include/omega/pres_var.h
 ../src/depend_dir.o: ../../basic/include/basic/bool.h
 ../src/depend_dir.o: ../../omega_lib/include/omega/pres_cnstr.h
@@ -565,11 +392,7 @@
 ../src/depend_dir.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/depend_dir.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/depend_dir.o: ../../basic/include/basic/String.h
-../src/depend_dir.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/depend_dir.o: /usr/include/bits/posix1_lim.h
-../src/depend_dir.o: /usr/include/bits/local_lim.h
-../src/depend_dir.o: /usr/include/linux/limits.h
-../src/depend_dir.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
+../src/depend_dir.o: ../../basic/include/basic/util.h
 ../src/depend_dir.o: ../../basic/include/basic/ConstString.h
 ../src/depend_dir.o: ../../basic/include/basic/Iterator.h
 ../src/depend_dir.o: ../../basic/include/basic/Collection.h
@@ -617,30 +440,9 @@
 ../src/depend_dir.o: ../../petit/include/petit/evaluate.h
 ../src/depend_dir.o: ../../petit/include/petit/ddodriver.h
 ../src/depend_dir.o: ../include/uniform/select.h
-../src/parallelism.o: /usr/include/stdio.h /usr/include/features.h
-../src/parallelism.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/parallelism.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/parallelism.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/parallelism.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/parallelism.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/parallelism.o: /usr/include/bits/sys_errlist.h /usr/include/math.h
-../src/parallelism.o: /usr/include/bits/huge_val.h
-../src/parallelism.o: /usr/include/bits/huge_valf.h
-../src/parallelism.o: /usr/include/bits/huge_vall.h /usr/include/bits/inf.h
-../src/parallelism.o: /usr/include/bits/nan.h /usr/include/bits/mathdef.h
-../src/parallelism.o: /usr/include/bits/mathcalls.h
 ../src/parallelism.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/parallelism.o: ../../basic/include/basic/Dynamic_Array.c
 ../src/parallelism.o: ../../basic/include/basic/assert.h
-../src/parallelism.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/parallelism.o: /usr/include/time.h /usr/include/endian.h
-../src/parallelism.o: /usr/include/bits/endian.h /usr/include/bits/byteswap.h
-../src/parallelism.o: /usr/include/bits/byteswap-16.h
-../src/parallelism.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/parallelism.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/parallelism.o: /usr/include/sys/sysmacros.h
-../src/parallelism.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/parallelism.o: /usr/include/bits/stdlib-float.h
 ../src/parallelism.o: ../../omega_lib/include/omega/Relations.h
 ../src/parallelism.o: ../../basic/include/basic/bool.h
 ../src/parallelism.o: ../../omega_lib/include/omega/Relation.h
@@ -649,13 +451,8 @@
 ../src/parallelism.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/parallelism.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/parallelism.o: ../../basic/include/basic/String.h
-../src/parallelism.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/parallelism.o: /usr/include/bits/posix1_lim.h
-../src/parallelism.o: /usr/include/bits/local_lim.h
-../src/parallelism.o: /usr/include/linux/limits.h
-../src/parallelism.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
+../src/parallelism.o: ../../basic/include/basic/util.h
 ../src/parallelism.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/parallelism.o: /usr/include/ctype.h
 ../src/parallelism.o: ../../basic/include/basic/ConstString.h
 ../src/parallelism.o: ../../basic/include/basic/Iterator.h
 ../src/parallelism.o: ../../basic/include/basic/Collection.h
@@ -706,33 +503,9 @@
 ../src/parallelism.o: ../../petit/include/petit/ddodriver.h
 ../src/parallelism.o: ../include/uniform/depend_rel.h
 ../src/parallelism.o: ../include/uniform/space_mappings.h
-../src/time_mappings.o: /usr/include/stdio.h /usr/include/features.h
-../src/time_mappings.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/time_mappings.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/time_mappings.o: /usr/include/bits/types.h
-../src/time_mappings.o: /usr/include/bits/typesizes.h /usr/include/libio.h
-../src/time_mappings.o: /usr/include/_G_config.h /usr/include/wchar.h
-../src/time_mappings.o: /usr/include/bits/stdio_lim.h
-../src/time_mappings.o: /usr/include/bits/sys_errlist.h /usr/include/math.h
-../src/time_mappings.o: /usr/include/bits/huge_val.h
-../src/time_mappings.o: /usr/include/bits/huge_valf.h
-../src/time_mappings.o: /usr/include/bits/huge_vall.h /usr/include/bits/inf.h
-../src/time_mappings.o: /usr/include/bits/nan.h /usr/include/bits/mathdef.h
-../src/time_mappings.o: /usr/include/bits/mathcalls.h
 ../src/time_mappings.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/time_mappings.o: ../../basic/include/basic/Dynamic_Array.c
 ../src/time_mappings.o: ../../basic/include/basic/assert.h
-../src/time_mappings.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/time_mappings.o: /usr/include/time.h /usr/include/endian.h
-../src/time_mappings.o: /usr/include/bits/endian.h
-../src/time_mappings.o: /usr/include/bits/byteswap.h
-../src/time_mappings.o: /usr/include/bits/byteswap-16.h
-../src/time_mappings.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/time_mappings.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/time_mappings.o: /usr/include/sys/sysmacros.h
-../src/time_mappings.o: /usr/include/bits/pthreadtypes.h
-../src/time_mappings.o: /usr/include/alloca.h
-../src/time_mappings.o: /usr/include/bits/stdlib-float.h
 ../src/time_mappings.o: ../../omega_lib/include/omega/Relations.h
 ../src/time_mappings.o: ../../basic/include/basic/bool.h
 ../src/time_mappings.o: ../../omega_lib/include/omega/Relation.h
@@ -742,12 +515,7 @@
 ../src/time_mappings.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/time_mappings.o: ../../basic/include/basic/String.h
 ../src/time_mappings.o: ../../basic/include/basic/util.h
-../src/time_mappings.o: /usr/include/limits.h /usr/include/bits/posix1_lim.h
-../src/time_mappings.o: /usr/include/bits/local_lim.h
-../src/time_mappings.o: /usr/include/linux/limits.h
-../src/time_mappings.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
 ../src/time_mappings.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/time_mappings.o: /usr/include/ctype.h
 ../src/time_mappings.o: ../../basic/include/basic/ConstString.h
 ../src/time_mappings.o: ../../basic/include/basic/Iterator.h
 ../src/time_mappings.o: ../../basic/include/basic/Collection.h
@@ -802,47 +570,17 @@
 ../src/time_mappings.o: ../include/uniform/space_constants.h
 ../src/time_mappings.o: ../include/uniform/wak_codegen.h
 ../src/time_mappings.o: ../include/uniform/uniform_args.h
-../src/simple_codegen.o: /usr/include/stdio.h /usr/include/features.h
-../src/simple_codegen.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/simple_codegen.o: /usr/include/bits/wordsize.h
-../src/simple_codegen.o: /usr/include/gnu/stubs.h /usr/include/bits/types.h
-../src/simple_codegen.o: /usr/include/bits/typesizes.h /usr/include/libio.h
-../src/simple_codegen.o: /usr/include/_G_config.h /usr/include/wchar.h
-../src/simple_codegen.o: /usr/include/bits/stdio_lim.h
-../src/simple_codegen.o: /usr/include/bits/sys_errlist.h /usr/include/math.h
-../src/simple_codegen.o: /usr/include/bits/huge_val.h
-../src/simple_codegen.o: /usr/include/bits/huge_valf.h
-../src/simple_codegen.o: /usr/include/bits/huge_vall.h
-../src/simple_codegen.o: /usr/include/bits/inf.h /usr/include/bits/nan.h
-../src/simple_codegen.o: /usr/include/bits/mathdef.h
-../src/simple_codegen.o: /usr/include/bits/mathcalls.h
 ../src/simple_codegen.o: ../../omega_lib/include/omega.h
 ../src/simple_codegen.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/simple_codegen.o: /usr/include/ctype.h /usr/include/endian.h
-../src/simple_codegen.o: /usr/include/bits/endian.h
-../src/simple_codegen.o: /usr/include/bits/byteswap.h
-../src/simple_codegen.o: /usr/include/bits/byteswap-16.h
 ../src/simple_codegen.o: ../../omega_lib/include/omega/pres_var.h
 ../src/simple_codegen.o: ../../basic/include/basic/bool.h
 ../src/simple_codegen.o: ../../omega_lib/include/omega/pres_cnstr.h
 ../src/simple_codegen.o: ../../omega_lib/include/omega/pres_subs.h
 ../src/simple_codegen.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/simple_codegen.o: ../../basic/include/basic/assert.h
-../src/simple_codegen.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/simple_codegen.o: /usr/include/time.h /usr/include/sys/select.h
-../src/simple_codegen.o: /usr/include/bits/select.h
-../src/simple_codegen.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/simple_codegen.o: /usr/include/sys/sysmacros.h
-../src/simple_codegen.o: /usr/include/bits/pthreadtypes.h
-../src/simple_codegen.o: /usr/include/alloca.h
-../src/simple_codegen.o: /usr/include/bits/stdlib-float.h
 ../src/simple_codegen.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/simple_codegen.o: ../../basic/include/basic/String.h
 ../src/simple_codegen.o: ../../basic/include/basic/util.h
-../src/simple_codegen.o: /usr/include/limits.h /usr/include/bits/posix1_lim.h
-../src/simple_codegen.o: /usr/include/bits/local_lim.h
-../src/simple_codegen.o: /usr/include/linux/limits.h
-../src/simple_codegen.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
 ../src/simple_codegen.o: ../../basic/include/basic/ConstString.h
 ../src/simple_codegen.o: ../../basic/include/basic/Iterator.h
 ../src/simple_codegen.o: ../../basic/include/basic/Collection.h
@@ -897,16 +635,6 @@
 ../src/simple_codegen.o: ../include/uniform/search.h
 ../src/simple_codegen.o: ../include/uniform/simple_codegen.h
 ../src/simple_codegen.o: ../include/uniform/wak_codegen.h
-../src/wak_codegen.o: /usr/include/stdio.h /usr/include/features.h
-../src/wak_codegen.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/wak_codegen.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/wak_codegen.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/wak_codegen.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/wak_codegen.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/wak_codegen.o: /usr/include/bits/sys_errlist.h /usr/include/ctype.h
-../src/wak_codegen.o: /usr/include/endian.h /usr/include/bits/endian.h
-../src/wak_codegen.o: /usr/include/bits/byteswap.h
-../src/wak_codegen.o: /usr/include/bits/byteswap-16.h
 ../src/wak_codegen.o: ../../omega_lib/include/omega.h
 ../src/wak_codegen.o: ../../omega_lib/include/omega/omega_core/debugging.h
 ../src/wak_codegen.o: ../../omega_lib/include/omega/pres_var.h
@@ -915,19 +643,9 @@
 ../src/wak_codegen.o: ../../omega_lib/include/omega/pres_subs.h
 ../src/wak_codegen.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/wak_codegen.o: ../../basic/include/basic/assert.h
-../src/wak_codegen.o: /usr/include/stdlib.h /usr/include/sys/types.h
-../src/wak_codegen.o: /usr/include/time.h /usr/include/sys/select.h
-../src/wak_codegen.o: /usr/include/bits/select.h /usr/include/bits/sigset.h
-../src/wak_codegen.o: /usr/include/bits/time.h /usr/include/sys/sysmacros.h
-../src/wak_codegen.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/wak_codegen.o: /usr/include/bits/stdlib-float.h
 ../src/wak_codegen.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/wak_codegen.o: ../../basic/include/basic/String.h
-../src/wak_codegen.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/wak_codegen.o: /usr/include/bits/posix1_lim.h
-../src/wak_codegen.o: /usr/include/bits/local_lim.h
-../src/wak_codegen.o: /usr/include/linux/limits.h
-../src/wak_codegen.o: /usr/include/bits/posix2_lim.h /usr/include/string.h
+../src/wak_codegen.o: ../../basic/include/basic/util.h
 ../src/wak_codegen.o: ../../basic/include/basic/ConstString.h
 ../src/wak_codegen.o: ../../basic/include/basic/Iterator.h
 ../src/wak_codegen.o: ../../basic/include/basic/Collection.h
@@ -982,30 +700,13 @@
 ../src/wak_codegen.o: ../include/uniform/search.h
 ../src/wak_codegen.o: ../include/uniform/wak_codegen.h
 ../src/wak_codegen.o: ../include/uniform/simple_codegen.h
-../src/search.o: /usr/include/stdio.h /usr/include/features.h
-../src/search.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/search.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/search.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/search.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/search.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/search.o: /usr/include/bits/sys_errlist.h
-../src/search.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/search.o: /usr/include/bits/posix1_lim.h /usr/include/bits/local_lim.h
-../src/search.o: /usr/include/linux/limits.h /usr/include/bits/posix2_lim.h
-../src/search.o: ../../basic/include/basic/assert.h /usr/include/stdlib.h
-../src/search.o: /usr/include/sys/types.h /usr/include/time.h
-../src/search.o: /usr/include/endian.h /usr/include/bits/endian.h
-../src/search.o: /usr/include/bits/byteswap.h /usr/include/bits/byteswap-16.h
-../src/search.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/search.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/search.o: /usr/include/sys/sysmacros.h
-../src/search.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/search.o: /usr/include/bits/stdlib-float.h
+../src/search.o: ../../basic/include/basic/util.h
+../src/search.o: ../../basic/include/basic/assert.h
 ../src/search.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/search.o: ../../basic/include/basic/Dynamic_Array.c
 ../src/search.o: ../include/uniform/uniform_args.h
 ../src/search.o: ../../basic/include/basic/String.h
-../src/search.o: ../../basic/include/basic/bool.h /usr/include/string.h
+../src/search.o: ../../basic/include/basic/bool.h
 ../src/search.o: ../include/uniform/uniform_misc.h
 ../src/search.o: ../../omega_lib/include/omega/Relations.h
 ../src/search.o: ../../omega_lib/include/omega/Relation.h
@@ -1014,7 +715,7 @@
 ../src/search.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/search.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/search.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/search.o: /usr/include/ctype.h ../../basic/include/basic/ConstString.h
+../src/search.o: ../../basic/include/basic/ConstString.h
 ../src/search.o: ../../basic/include/basic/Iterator.h
 ../src/search.o: ../../basic/include/basic/Collection.h
 ../src/search.o: ../../basic/include/basic/List.h
@@ -1066,29 +767,12 @@
 ../src/select.o: ../../omega_lib/include/omega/RelBody.h
 ../src/select.o: ../../omega_lib/include/omega/pres_form.h
 ../src/select.o: ../../omega_lib/include/omega/pres_gen.h
-../src/select.o: ../../basic/include/basic/assert.h /usr/include/stdlib.h
-../src/select.o: /usr/include/features.h /usr/include/stdc-predef.h
-../src/select.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
-../src/select.o: /usr/include/gnu/stubs.h /usr/include/sys/types.h
-../src/select.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/select.o: /usr/include/time.h /usr/include/endian.h
-../src/select.o: /usr/include/bits/endian.h /usr/include/bits/byteswap.h
-../src/select.o: /usr/include/bits/byteswap-16.h /usr/include/sys/select.h
-../src/select.o: /usr/include/bits/select.h /usr/include/bits/sigset.h
-../src/select.o: /usr/include/bits/time.h /usr/include/sys/sysmacros.h
-../src/select.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/select.o: /usr/include/bits/stdlib-float.h /usr/include/stdio.h
-../src/select.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/select.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/select.o: /usr/include/bits/sys_errlist.h
+../src/select.o: ../../basic/include/basic/assert.h
 ../src/select.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/select.o: ../../basic/include/basic/String.h
-../src/select.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/select.o: /usr/include/bits/posix1_lim.h /usr/include/bits/local_lim.h
-../src/select.o: /usr/include/linux/limits.h /usr/include/bits/posix2_lim.h
-../src/select.o: /usr/include/string.h
+../src/select.o: ../../basic/include/basic/util.h
 ../src/select.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/select.o: /usr/include/ctype.h ../../basic/include/basic/ConstString.h
+../src/select.o: ../../basic/include/basic/ConstString.h
 ../src/select.o: ../../basic/include/basic/Iterator.h
 ../src/select.o: ../../basic/include/basic/Collection.h
 ../src/select.o: ../../basic/include/basic/List.h
@@ -1135,29 +819,11 @@
 ../src/select.o: ../../omega_lib/include/omega/closure.h
 ../src/select.o: ../../omega_lib/include/omega/lib_hack.h
 ../src/select.o: ../include/uniform/select.h
-../src/uniform.o: /usr/include/stdio.h /usr/include/features.h
-../src/uniform.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/uniform.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/uniform.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/uniform.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/uniform.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/uniform.o: /usr/include/bits/sys_errlist.h
 ../src/uniform.o: ../include/uniform/uniform_args.h
 ../src/uniform.o: ../../basic/include/basic/String.h
 ../src/uniform.o: ../../basic/include/basic/bool.h
-../src/uniform.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/uniform.o: /usr/include/bits/posix1_lim.h
-../src/uniform.o: /usr/include/bits/local_lim.h /usr/include/linux/limits.h
-../src/uniform.o: /usr/include/bits/posix2_lim.h
-../src/uniform.o: ../../basic/include/basic/assert.h /usr/include/stdlib.h
-../src/uniform.o: /usr/include/sys/types.h /usr/include/time.h
-../src/uniform.o: /usr/include/endian.h /usr/include/bits/endian.h
-../src/uniform.o: /usr/include/bits/byteswap.h
-../src/uniform.o: /usr/include/bits/byteswap-16.h /usr/include/sys/select.h
-../src/uniform.o: /usr/include/bits/select.h /usr/include/bits/sigset.h
-../src/uniform.o: /usr/include/bits/time.h /usr/include/sys/sysmacros.h
-../src/uniform.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/uniform.o: /usr/include/bits/stdlib-float.h /usr/include/string.h
+../src/uniform.o: ../../basic/include/basic/util.h
+../src/uniform.o: ../../basic/include/basic/assert.h
 ../src/uniform.o: ../include/uniform/uniform.h
 ../src/uniform.o: ../include/uniform/uniform_misc.h
 ../src/uniform.o: ../../omega_lib/include/omega/Relations.h
@@ -1167,7 +833,6 @@
 ../src/uniform.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/uniform.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/uniform.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/uniform.o: /usr/include/ctype.h
 ../src/uniform.o: ../../basic/include/basic/ConstString.h
 ../src/uniform.o: ../../basic/include/basic/Iterator.h
 ../src/uniform.o: ../../basic/include/basic/Collection.h

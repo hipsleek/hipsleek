@@ -10,6 +10,14 @@ OLIBS = $(OPREP)/$(GRLIB),
 #CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
 CPPO_FLAGS =
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+ CPFLAGS = -u
+endif
+ifeq ($(UNAME_S),Darwin)
+ CPFLAGS = 
+endif
+
 #CFLAGS1='-Wl,--rpath=/usr/lib-2.12'
 #CFLAGS2='-Wl,--dynamic-linker=/usr/lib-2.12/ld-linux.so.2'
 
@@ -18,6 +26,7 @@ ifdef OCAML_TOPLEVEL_PATH
  LIBBATLIB = $(OPREP)/$(BATLIB)
  LIBELIB = $(OPREP)/$(ELIB)
  LIBGLIB = $(OPREP)/$(GRLIB)
+ LIBFILEUTILS = $(OPREP)/fileutils/fileutils
  LIBIGRAPH = $(OPREP)/ocamlgraph
 else
  INCLPRE = +site-lib
@@ -25,19 +34,20 @@ else
  LIBELIB = site-lib/$(ELIB)
  LIBGLIB = graph
  LIBIGRAPH = +ocamlgraph
+ LIBFILEUTILS = fileutils
 endif
 
 #  number of parallel jobs, 0 means unlimited.
 JOBS = 16
 
 # dynlink should precede camlp4lib
-LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
-LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
+LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(LIBFILEUTILS)
+LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(LIBFILEUTILS)
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
-INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH),-I,$(INCLPRE)/fileutils
+INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH),-I,$(INCLPRE)/fileutils
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
@@ -100,74 +110,74 @@ parser.cmo:
 
 dtest.byte: xdebug.cppo
 	@ocamlbuild $(OBB_GFLAGS) dtest.byte
-	cp -u _build/dtest.byte dtest
+	cp $(CPFLAGS) _build/dtest.byte dtest
 
 hip.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) main.byte
-	cp -u _build/main.byte hip
-	cp -u _build/main.byte g-hip
+	cp $(CPFLAGS) _build/main.byte hip
+	cp $(CPFLAGS) _build/main.byte g-hip
 
 sleek.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) sleek.byte
-	cp -u _build/sleek.byte sleek
-	cp -u _build/sleek.byte g-sleek
+	cp $(CPFLAGS) _build/sleek.byte sleek
+	cp $(CPFLAGS) _build/sleek.byte g-sleek
 
 sh_proc.byte:
 	@ocamlbuild -cflags -annot $(OBB_GFLAGS) sh_proc.byte
-	cp -u _build/sh_proc.byte sh_proc
+	cp $(CPFLAGS) _build/sh_proc.byte sh_proc
 
 hip.byte: xml
 	@ocamlbuild $(OBB_FLAGS) main.byte
-	cp -u _build/main.byte hip
-	cp -u _build/main.byte b-hip
+	cp $(CPFLAGS) _build/main.byte hip
+	cp $(CPFLAGS) _build/main.byte b-hip
 
 sleek.byte: xml
 	@ocamlbuild $(OBB_FLAGS) sleek.byte
-	cp -u _build/sleek.byte sleek
-	cp -u _build/sleek.byte b-sleek
+	cp $(CPFLAGS) _build/sleek.byte sleek
+	cp $(CPFLAGS) _build/sleek.byte b-sleek
 
 hip.native: xml
 	@ocamlbuild $(OBN_FLAGS) main.native
-	cp -u _build/main.native hip
-	cp -u _build/main.native n-hip
+	cp $(CPFLAGS) _build/main.native hip
+	cp $(CPFLAGS) _build/main.native n-hip
 
 ship.native: xml
 	@ocamlbuild $(OBNS_FLAGS) main.native
-	cp -u _build/main.native hip
-	cp -u _build/main.native s-hip
+	cp $(CPFLAGS) _build/main.native hip
+	cp $(CPFLAGS) _build/main.native s-hip
 
 hsprinter.byte: xml
 	@ocamlbuild $(OB_FLAGS) hsprinter.byte
 
 sleek.native: xml
 	@ocamlbuild $(OBN_FLAGS) sleek.native
-	cp -u _build/sleek.native sleek
-	cp -u _build/sleek.native n-sleek
+	cp $(CPFLAGS) _build/sleek.native sleek
+	cp $(CPFLAGS) _build/sleek.native n-sleek
 
 ssleek.native: xml
 	@ocamlbuild $(OBNS_FLAGS) sleek.native
-	cp -u _build/sleek.native sleek
-	cp -u _build/sleek.native s-sleek
+	cp $(CPFLAGS) _build/sleek.native sleek
+	cp $(CPFLAGS) _build/sleek.native s-sleek
 
 gsleek.byte:
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
-	cp -u _build/gsleek.byte p-gsleek
+	cp $(CPFLAGS) _build/gsleek.byte p-gsleek
 
 gsleek.native:
 	@ocamlbuild $(OBG_FLAGS) gsleek.native
-	cp -u _build/gsleek.native gsleek
+	cp $(CPFLAGS) _build/gsleek.native gsleek
 
 fact.byte:
 	@ocamlbuild $(OBB_FLAGS) fact.byte
-	cp -u _build/fact.byte fact
+	cp $(CPFLAGS) _build/fact.byte fact
 
 ghip.byte:
 	@ocamlbuild $(OBG_FLAGS) ghip.byte
-	cp -u _build/ghip.byte p-ghip
+	cp $(CPFLAGS) _build/ghip.byte p-ghip
 
 ghip.native:
 	@ocamlbuild $(OBG_FLAGS) ghip.native
-	cp -u _build/ghip.native ghip
+	cp $(CPFLAGS) _build/ghip.native ghip
 
 # Clean up
 clean:
@@ -187,8 +197,8 @@ install:
 	cp MyImage /usr/local/lib/MyImage
 
 install-native: hip.native sleek.native
-	cp -u _build/main.native /usr/local/bin/hip
-	cp -u _build/sleek.native /usr/local/bin/sleek
+	cp $(CPFLAGS) _build/main.native /usr/local/bin/hip
+	cp $(CPFLAGS) _build/sleek.native /usr/local/bin/sleek
 
 FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer imminferi chr
 

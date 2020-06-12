@@ -2606,10 +2606,14 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         let new_ctx =
           CF.set_context (fun es ->
               let rhs_p = MCP.pure_of_mix rhs_p in
-              {es with es_rhs_pure = Gen.map_opt_def
-                           (if(CP.is_True rhs_p || CP.is_False rhs_p ) then None else Some rhs_p)
-                           (fun x -> Some (CP.join_conjunctions [rhs_p;x]))
-                           es.es_rhs_pure   }
+              {es with es_rhs_pure =
+                         let new_rhs_pure = Gen.map_opt_def
+                             (if(CP.is_True rhs_p || CP.is_False rhs_p ) then None else Some rhs_p)
+                             (fun x -> Some (CP.join_conjunctions [rhs_p;x]))
+                             es.es_rhs_pure  in
+                         let () = x_tinfo_hp (add_str "es_rhs_pure" (pr_opt Cprinter.string_of_pure_formula)) new_rhs_pure no_pos in
+                         new_rhs_pure
+              }
             ) new_ctx in
         let () = x_tinfo_hp (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos in
         let () = x_tinfo_hp (add_str "new_ctx" Cprinter.string_of_context) new_ctx no_pos in
@@ -12017,6 +12021,7 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
   let () = x_tinfo_hp (add_str " xxxxxxxxxxxxxx1" pr_id) "START"  no_pos in
   (* let () = print_string("\n estate.es_aux_conseq: "^(Cprinter.string_of_pure_formula estate.es_aux_conseq)^"\n") in *)
   let () = x_tinfo_hp (add_str "estate.es_pure" Cprinter.string_of_mix_formula) estate.es_pure  no_pos in
+  let () = x_tinfo_hp (add_str "estate.es_rhs_pure" (pr_opt Cprinter.string_of_pure_formula)) estate.es_rhs_pure  no_pos in
   let () = x_tinfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq  no_pos in
   let () = x_tinfo_hp (add_str "ctx0" Cprinter.string_of_context_short) ctx0  no_pos in
   let () = x_tinfo_hp (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in

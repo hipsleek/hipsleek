@@ -1,0 +1,38 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking parahip/unordered-locking.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj)
+error at: parahip/unordered-locking.ss main
+Checking veribsync/hip-bperm1.ss (runs with extra options: --en-para -perm bperm -tp redlog)
+error at: veribsync/hip-bperm1.ss readCell
+error at: veribsync/hip-bperm1.ss updateCell
+Checking veribsync/barrier-static-consistency.ss (runs with extra options: --en-para -perm bperm -tp redlog)
+error at: veribsync/barrier-static-consistency.ss main_fail
+Checking veribsync/barrier-dynamic-exp3.ss (runs with extra options: --en-para -perm bperm -tp redlog)
+Checking veribsync/barrier-dynamic-exp4.ss (runs with extra options: --en-para -perm bperm -tp redlog)
+Checking conchip/mapreduce.ss (runs with extra options: -tp parahip --classic)
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+Total number of errors: 12 in files:
+ error at: parahip/unordered-locking.ss main
+error at: veribsync/hip-bperm1.ss readCell
+error at: veribsync/hip-bperm1.ss updateCell
+error at: veribsync/barrier-static-consistency.ss main_fail
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+.
+Total verification time: 457.06 second
+	Time spent in main process: 13.51 second
+	Time spent in child processes: 443.55 second
+	Number of false contexts: 1

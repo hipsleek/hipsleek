@@ -189,6 +189,15 @@ struct
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 
+  let pr_hashtbl f1 f2 tbl =
+    Hashtbl.fold
+      (fun k v acc ->
+        (f1 k ^ " -> " ^ f2 v) :: acc
+      )
+      tbl
+      []
+    |> String.concat "; "
+
   let map_opt f x = match x with
     | None -> None
     | Some v -> Some (f v)
@@ -585,6 +594,34 @@ module BListEQ =
 
   end;;
 
+exception Non_existent_key of string
+
+class ['a, 'b] hash_table name string_of_key string_of_value =
+  object (self)
+    val tbl : ('a, 'b) Hashtbl.t = Hashtbl.create 1
+    val mutable debug =true
+
+    method find ?(loc="") k =
+      try
+        let r = Hashtbl.find tbl k in
+        let () = if debug then print_endline (loc^"Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
+        r
+      with e ->
+        let () = if debug then print_endline (loc^"Not Found \"" ^ string_of_key k ^ "\" in " ^ name) else () in
+        raise e
+    method add ?(loc="") k v =
+      let () = if debug then print_endline (loc^"Adding \"" ^ string_of_key k ^ "\" -> \"" ^ string_of_value v ^ "\" to " ^ name) else () in
+      Hashtbl.add tbl k v
+    method contains k = Hashtbl.mem tbl k
+    method clear = Hashtbl.clear tbl
+    method reset = Hashtbl.reset tbl
+    method to_string =
+      "{" ^ Basic.pr_hashtbl string_of_key string_of_value tbl ^ "}"
+    method to_list = Hashtbl.fold (fun k v acc -> (k, v) :: acc) tbl []
+    method keys = Hashtbl.fold (fun k v acc -> k :: acc) tbl []
+    method values = Hashtbl.fold (fun k v acc -> v :: acc) tbl []
+    method enable_debug = debug <- true
+  end
 
 exception Stack_Error
 

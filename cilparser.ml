@@ -7,43 +7,6 @@ open Gen.Basic
 
 module IF = Iformula
 
-
-(* --------------------- *)
-(* Global variables      *)
-(* --------------------- *)
-
-let str_addr = "addr_"
-let str_value = "value"
-let str_char = "val" (*the value field of char* a.k.a string*)
-let str_offset = "offset"
-
-let eq_str s1 s2 = String.compare s1 s2 == 0
-
-let tbl_typedef : (string, Cil.typ) Hashtbl.t = Hashtbl.create 1
-
-(* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
-let tbl_pointer_typ : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 1
-
-(* hash table contains Iast.data_decl structures that are used to represent pointer types *)
-let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 1
-
-(* hash table map lval expressions (in string form) to their address holder generated-pointers *)
-let tbl_addrof_info : (string, string) Hashtbl.t = Hashtbl.create 1
-
-(* list of nondeterministic variables *)
-let nondet_vars : string list ref = ref []
-
-(* list of address-represented pointer declaration *)
-let aux_local_vardecls : Iast.exp list ref = ref []
-
-(* hashtbl contains all auxiliary procedures, proc_name -> proc_decl *)
-let tbl_aux_proc: (string, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
-
-(* reset all global vars for the next use *)
-let reset_global_vars () =
-  Hashtbl.clear tbl_pointer_typ;
-  Hashtbl.clear tbl_data_decl
-
 (*******************************************************)
 (*         string conversion functions for CIL         *)
 (*******************************************************)
@@ -118,6 +81,50 @@ let string_of_cil_file (f: Cil.file) : string =
 
 (* ---   end of string conversion   --- *)
 
+(* --------------------- *)
+(* Global variables      *)
+(* --------------------- *)
+
+let str_addr = "addr_"
+let str_value = "value"
+let str_char = "val" (*the value field of char* a.k.a string*)
+let str_offset = "offset"
+
+let eq_str s1 s2 = String.compare s1 s2 == 0
+
+(* let tbl_typedef : (string, Cil.typ) Hashtbl.t = Hashtbl.create 1 *)
+let tbl_typedef = new Gen.hash_table "tbl_typedef" pr_id string_of_cil_typ
+
+(* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
+(* let tbl_pointer_typ : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 1 *)
+let tbl_pointer_typ = new Gen.hash_table "tbl_pointer_typ" string_of_cil_typ Globals.string_of_typ
+
+(* hash table contains Iast.data_decl structures that are used to represent pointer types *)
+(* let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 1 *)
+let tbl_data_decl = new Gen.hash_table "tbl_data_decl" Globals.string_of_typ !Iast.print_data_decl
+
+(* hash table map lval expressions (in string form) to their address holder generated-pointers *)
+(* let tbl_addrof_info : (string, string) Hashtbl.t = Hashtbl.create 1 *)
+let tbl_addrof_info = new Gen.hash_table "tbl_addr_info" pr_id pr_id
+
+(* let print_tbl_addrof () =
+   (* let  () = Printf.printf "Table of tbl_addrof \n" in *)
+   let s = Hashtbl.fold (fun a b c -> (a^"->"^b^";"^c)) tbl_addrof_info "" in
+   ("["^s^"]") *)
+
+(* list of nondeterministic variables *)
+let nondet_vars : string list ref = ref []
+
+(* list of address-represented pointer declaration *)
+let aux_local_vardecls : Iast.exp list ref = ref []
+
+(* hashtbl contains all auxiliary procedures, proc_name -> proc_decl *)
+let tbl_aux_proc: (string, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
+
+(* reset all global vars for the next use *)
+let reset_global_vars () =
+  tbl_pointer_typ # clear;
+  tbl_data_decl # clear
 
 (* ---------------------------------------- *)
 (* supporting function                      *)
@@ -231,7 +238,7 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
     | Cil.TNamed (tinfo, _) -> get_core_cil_typ tinfo.Cil.ttype
     | Cil.TComp (cinfo, _) -> (
         try
-          let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
+          let ty = tbl_typedef # find cinfo.Cil.cname in
           get_core_cil_typ ty
         with _ -> t
       )
@@ -590,7 +597,7 @@ let remove_goto (fd: Cil.fundec) : Cil.fundec =
 (****** create intermediate procedures  *******)
 (**********************************************)
 
-let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
+let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   let proc_name = "__cast_void_pointer_to_" ^ typ_name ^ "__" in
   let proc_decl = (
     try
@@ -614,7 +621,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "char"  -> "<_,q>"
           | _ -> (
               try
-                let data_decl = Hashtbl.find tbl_data_decl (Globals.mkNamedTyp base_data) in
+                let data_decl = tbl_data_decl # find ~loc:x_loc (Globals..mkNamedTyp base_data) in
                 match data_decl.Iast.data_fields with
                 | []   -> report_error no_pos "create_void_pointer_casting_proc: Invalid data_decl fields"
                 | [hd] -> "<_>"
@@ -635,19 +642,30 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                  "  case { \n" ^
                  "    p =  null -> ensures res = null; \n" ^
                  "    p != null -> requires p::memLoc<h,s> & h\n" ^
-                 (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-                 "                 ensures res::" ^ data_name ^ param ^ (* " & o>=0; \n" *) "; \n" ^
+                 "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
+                 (* "                 ensures res::" ^ data_name ^ param ^ (* " & o>=0; \n" *) "; \n" ^ *)
                  "  }\n"
+          (* | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+           *   "  case { \n" ^
+           *   "    p =  null -> ensures res = null; \n" ^
+           *   "    p != null -> requires p::void_star<_> \n" ^
+           *   "                 ensures res::" ^ typ_name ^ "<_> & res=p;\n" ^
+           *   "  }\n" *)
         ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
-        Hashtbl.add tbl_aux_proc proc_name pd;
+        if Hashtbl.mem tbl_aux_proc proc_name then ()
+        else Hashtbl.add tbl_aux_proc proc_name pd;
         pd
       )
   ) in
   (* return *)
   proc_decl
 
+
+let create_void_pointer_casting_proc (typ_name: string)
+  : Iast.proc_decl =
+  Debug.no_1 "create_void_pointer_casting_proc" pr_id Iprinter.string_of_proc_decl create_void_pointer_casting_proc typ_name
 
 (* check if a type is pointer type *)
 let is_pointer_typ_name (typ_name: string) : bool =
@@ -659,7 +677,7 @@ let is_pointer_typ_name (typ_name: string) : bool =
     eq_str suffix "_star"
 
 
-let rec create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
+let create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
   : Iast.proc_decl =
   let proc_name = "__cast_" ^ in_typ_name ^ "_to_" ^ out_typ_name ^ "__" in
   let proc_decl = (
@@ -676,6 +694,18 @@ let rec create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
             "                 ensures res::" ^ out_typ_name ^ "<_,o> & o>=0;\n" ^
             "  }\n"
           ) in
+          (* overwrites the above version which contains the extra 0 argument *)
+          (* TODO: we need to check how many paramenters the actual data type has
+             and create the specs accordingly. Currently the heap is hardcoded to
+             one anonymous parameter. *)
+          (* let cast_proc = (
+           *   out_typ_name ^ " " ^ proc_name ^ " (" ^ in_typ_name ^ " p)\n" ^
+           *   "  case { \n" ^
+           *   "    p =  null -> ensures res = null; \n" ^
+           *   "    p != null -> requires p::" ^ in_typ_name ^ "<_> \n" ^
+           *   "                 ensures res::" ^ out_typ_name ^ "<_> & res=p;\n" ^
+           *   "  }\n"
+           * ) in *)
           let proc_decl = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
           Hashtbl.add tbl_aux_proc proc_name proc_decl;
           proc_decl
@@ -689,7 +719,11 @@ let rec create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
   (* return *)
   proc_decl
 
-and create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_decl =
+let create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
+  : Iast.proc_decl =
+  Debug.no_2 "create_pointer_casting_proc" pr_id pr_id Iprinter.string_of_proc_decl create_pointer_casting_proc in_typ_name out_typ_name
+
+let rec create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_decl =
   let proc_name = "__cast_" ^ pointer_typ_name ^ "_to_int__" in
   let proc_decl = (
     try
@@ -895,11 +929,11 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   try
     Hashtbl.find tbl_aux_proc proc_name
   with Not_found -> (
-      Debug.ninfo_hprint (add_str "proc_name" pr_id) proc_name no_pos;
-      Debug.ninfo_hprint (add_str "op_name" pr_id) op_name no_pos;
-      Debug.ninfo_hprint (add_str "op_str" pr_id) op_str no_pos;
-      Debug.ninfo_hprint (add_str "t1" Cil.string_of_typ) t1 no_pos;
-      Debug.ninfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
+      x_ninfo_hp (add_str "proc_name" pr_id) proc_name no_pos;
+      x_ninfo_hp (add_str "op_name" pr_id) op_name no_pos;
+      x_ninfo_hp (add_str "op_str" pr_id) op_str no_pos;
+      x_ninfo_hp (add_str "t1" Cil.string_of_typ) t1 no_pos;
+      x_ninfo_hp (add_str "t2" Cil.string_of_typ) t2 no_pos;
       let proc_str = (
         match t1, t2 with
 (*        | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> *)
@@ -914,7 +948,8 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"
             ^ "  requires p::" ^ typ2_name ^ "<val>\n"
             ^ "  ensures p::" ^ typ2_name ^ "<val>"
-            ^ " * res::" ^ typ2_name ^ "<val " ^ op_str ^ " i>;\n"
+            (* ^ " * res::" ^ typ2_name ^ "<val " ^ op_str ^ " i>;\n" *)
+            ^ " & res = p " ^ op_str ^ " i;\n"
 (*        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_) -> *)
 (*             typ1_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"*)
 (*           ^ "requires x::char_star<_,_>@L & Term[] \n"*)
@@ -927,7 +962,8 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
             ^ "  requires p::" ^ typ1_name^ "<val>\n"
             ^ "  ensures p::" ^ typ1_name^ "<val>"
-               ^ " * res::" ^ typ1_name^ "<val " ^ op_str ^ " i>;\n"
+            (* ^ " * res::" ^ typ1_name^ "<val " ^ op_str ^ " i>;\n" *)
+            ^ " & res = p " ^ op_str ^ " i;\n"
         | Cil.TPtr _, Cil.TPtr _ when (cmp_typ typ1 typ2) ->
           let tn = typ1_name in
           tn ^ " " ^ proc_name ^ "(" ^ tn ^ " p, " ^ tn ^ " q)\n"
@@ -953,8 +989,11 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
 (************************************************************)
 
 and gather_addrof_fundec (fd: Cil.fundec) : unit =
+  Debug.no_1 "gather_addrof_fundec"  string_of_cil_fundec (fun _ -> tbl_addrof_info # to_string )  gather_addrof_fundec_x fd
+
+and gather_addrof_fundec_x (fd: Cil.fundec) : unit =
   (* reset some local setting *)
-  Hashtbl.clear tbl_addrof_info;
+  tbl_addrof_info # clear;
   (* start gathering addrof_info in each function *)
   let blk = fd.Cil.sbody in
   gather_addrof_block blk
@@ -1040,25 +1079,101 @@ and gather_addrof_exp (e: Cil.exp) : unit =
       let lv_str = string_of_cil_lval lv in
       let lv_ty = typ_of_cil_lval lv in
       match lv_ty with
-      | Cil.TComp _ -> ()
+      (* | Cil.TComp _ -> () *)
       | _ -> (
           try
-            let todo_unk = Hashtbl.find tbl_addrof_info lv_str in ()
-          with Not_found -> (
+            let todo_unk = tbl_addrof_info # find ~loc:x_loc lv_str in ()
+          with Not_found ->
+          (* let () = y_binfo_pp "XX1\n" in *)
+          begin match lv_ty with
+            | Cil.TPtr (refined_ty, _) when (is_cil_struct_pointer lv_ty) ->
+                let addr_var_name = str_addr ^ lv_str in
+                  begin try
+                  let addr_data_typ = tbl_pointer_typ # find ~loc:x_loc refined_ty in
+                  let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
+                  let addr_data_name =
+                    begin match addr_data_typ with
+                    | Globals.Named s -> s
+                    | _ -> report_error pos "gather_addrof_exp: unexpected type!"
+                    end in
+                  let addr_var_decl =
+                    let init_params = [(translate_lval lv)] in
+                    let init_data = Iast.mkNew addr_data_name [] pos in
+                    Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
+                    in
+                  aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
+              with Not_found ->
+                tbl_addrof_info # add ~loc:x_loc lv_str lv_str;
+                  (* Muoi: Address of a struct is itself *)
+              end
+            | Cil.TVoid attr
+            | Cil.TFloat (_, attr)
+            | Cil.TPtr (_, attr)
+            | Cil.TArray (_, _,attr)
+            | Cil.TFun (_, _, _, attr)
+            | Cil.TNamed (_, attr)
+            | Cil.TComp (_, attr)
+            | Cil.TEnum (_, attr)
+            | Cil.TBuiltin_va_list attr
+            | Cil.TInt (_, attr) -> (* Not struct pointer *)
+                let addr_var_name = str_addr ^ lv_str in
+                begin try
+                  let addr_data_typ = translate_typ (Cil.TPtr (lv_ty, attr)) pos in
+                  let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
+                  let addr_data_name =
+                    begin match addr_data_typ with
+                    | Globals.Named s -> s
+                    | _ -> report_error pos "gather_addrof_exp: unexpected type!"
+                    end in
+                  let addr_var_decl =
+                    let init_params = [(translate_lval lv)] in
+                    let init_data = Iast.mkNew addr_data_name [] pos in
+                    Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
+                    in
+                  aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
+                with Not_found ->
+                  (* report_error pos ("Data declaration for address data structure of \"" ^ string_of_cil_typ lv_ty ^"\" could not be found") *)
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
+                end
+            (* | _ ->
+                let addr_var_name = str_addr ^ lv_str in
+                begin try
+                    let addr_data_typ = tbl_pointer_typ # find ~loc:x_loc lv_ty in
+                    let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
+                    let addr_data_name =
+                      begin match addr_data_typ with
+                      | Globals.Named s -> s
+                      | _ -> report_error pos "gather_addrof_exp: unexpected type!"
+                      end in
+                    let addr_var_decl =
+                      let init_params = [(translate_lval lv)] in
+                      let init_data = Iast.mkNew addr_data_name init_params pos in
+                      Iast.mkVarDecl addr_data_typ [(addr_var_name, Some init_data, pos)] pos
+                      in
+                    aux_local_vardecls := !aux_local_vardecls @ [addr_var_decl];
+                    tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name;
+                with Not_found ->
+                  tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name (* lv_str *); (* Muoi: Address of a struct is itself *)
+                end *)
+          end
+          (* with Not_found -> (
               let refined_ty = (match lv_ty with
                   | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
                   | _ -> lv_ty
                 ) in
 
+             let addr_vname = str_addr ^ lv_str in
               try
-                let addr_dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
-                let addr_ddecl = Hashtbl.find tbl_data_decl addr_dtyp in
+                let addr_dtyp = tbl_pointer_typ # find ~loc:x_loc refined_ty in
+                let () = y_binfo_hp (add_str "tbl pointer typ" (pr_hashtbl string_of_cil_typ Globals.string_of_typ)) tbl_pointer_typ in
+                let addr_ddecl = tbl_data_decl # find ~loc:x_loc addr_dtyp in
                 let addr_dname = (
                   match addr_dtyp with
                   | Globals.Named (s, _) -> s
                   | _ -> report_error pos "gather_addrof_exp: unexpected type!"
                 ) in
-                let addr_vname = str_addr ^ lv_str in
                 let addr_vdecl = (
                   (* create and temporarily initiate a new object *)
                   let init_params = [(translate_lval lv)] in
@@ -1066,48 +1181,47 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
                 ) in
                 aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
-                Hashtbl.add tbl_addrof_info lv_str addr_vname;
-              with Not_found -> Hashtbl.add tbl_addrof_info lv_str lv_str; (*Muoi: Address of a struct is itself*)
-
-              (*let deref_ty = translate_typ refined_ty pos in
-              let (addr_dtyp, addr_dname, addr_ddecl) = (
-                try
-                  let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
-                  let ddecl = Hashtbl.find tbl_data_decl dtyp in
-                  let dname = (
-                    match dtyp with
-                    | Globals.Named s -> s
-                    | _ -> report_error pos "gather_addrof_exp: unexpected type!"
-                  ) in
-                  (dtyp, dname, ddecl)
-                with Not_found -> (
-                    (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
-                    let ftyp = deref_ty in
-                    let fname = str_value in
-                    let val_field = ((ftyp, fname), no_pos, false, (gen_field_ann ftyp) (* Iast.F_NO_ANN *)) in
-                    let offset_field = ((Int, str_offset), no_pos, false, (gen_field_ann Int)) in
-                    let dfields = [val_field; offset_field] in
-                    let dname = (Globals.string_of_typ ftyp) ^ "_star" in
-                    let dtyp = Globals.Named dname in
-                    Hashtbl.add tbl_pointer_typ refined_ty dtyp;
-                    let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-                    Hashtbl.add tbl_data_decl dtyp ddecl;
-                    (dtyp, dname, ddecl)
-                  )
-              ) in
-              (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
-              let addr_vname = str_addr ^ lv_str in
-              let addr_vdecl = (
-                (* create and temporarily initiate a new object *)
-                let init_params = [(translate_lval lv)] in
-                let init_data = Iast.mkNew addr_dname init_params pos in
-                Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
-              ) in
-              aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
-              Hashtbl.add tbl_addrof_info lv_str addr_vname;*)
+                tbl_addrof_info # add ~loc:x_loc lv_str addr_vname;
+              with Not_found -> tbl_addrof_info # add ~loc:x_loc lv_str addr_var_name (* lv_str *); (*Muoi: Address of a struct is itself*)
+ *)
+              (* let deref_ty = translate_typ refined_ty pos in *)
+              (* let (addr_dtyp, addr_dname, addr_ddecl) = ( *)
+              (*   try *)
+              (*     let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in *)
+              (*     let ddecl = Hashtbl.find tbl_data_decl dtyp in *)
+              (*     let dname = ( *)
+              (*       match dtyp with *)
+              (*       | Globals.Named s -> s *)
+              (*       | _ -> report_error pos "gather_addrof_exp: unexpected type!" *)
+              (*     ) in *)
+              (*     (dtyp, dname, ddecl) *)
+              (*   with Not_found -> ( *)
+              (*       (\* create new Globals.typ and Iast.data_decl, then update to a hash table *\) *)
+              (*       let ftyp = deref_ty in *)
+              (*       let fname = str_value in *)
+              (*       let val_field = ((ftyp, fname), no_pos, false, (gen_field_ann ftyp) (\* Iast.F_NO_ANN *\)) in *)
+              (*       let offset_field = ((Int, str_offset), no_pos, false, (gen_field_ann Int)) in *)
+              (*       let dfields = [val_field; offset_field] in *)
+              (*       let dname = (Globals.string_of_typ ftyp) ^ "_star" in *)
+              (*       let dtyp = Globals.Named dname in *)
+              (*       Hashtbl.add tbl_pointer_typ refined_ty dtyp; *)
+              (*       let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in *)
+              (*       Hashtbl.add tbl_data_decl dtyp ddecl; *)
+              (*       (dtyp, dname, ddecl) *)
+              (*     ) *)
+              (* ) in *)
+              (* (\* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *\) *)
+              (* let addr_vname = str_addr ^ lv_str in *)
+              (* let addr_vdecl = ( *)
+              (*   (\* create and temporarily initiate a new object *\) *)
+              (*   let init_params = [(translate_lval lv)] in *)
+              (*   let init_data = Iast.mkNew addr_dname init_params pos in *)
+              (*   Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos *)
+              (* ) in *)
+              (* aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl]; *)
+              (* Hashtbl.add tbl_addrof_info lv_str addr_vname; *)
             )
         )
-    )
   | Cil.StartOf (lv, _) -> ()
 
 (************************************************************)
@@ -1180,13 +1294,13 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
         let newt = (
           (* find if this pointer was handled before or not *)
           try
-            Hashtbl.find tbl_pointer_typ core_type
+           tbl_pointer_typ # find ~loc:x_loc core_type
           with Not_found -> (
               (* create new Globals.typ and Iast.data_decl update to hash tables *)
               let value_typ = translate_typ core_type pos in
               let value_field = ((value_typ, str_value), no_pos, false, (gen_field_ann value_typ) (* Iast.F_NO_ANN *)) in
               let dname = match ty with
-		| Cil.TInt(Cil.IChar, _) -> "char_star"
+		            | Cil.TInt(Cil.IChar, _) -> "char_star"
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star"
               in
               let dtype = Globals.mkNamedTyp dname in
@@ -1198,11 +1312,11 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
                 | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
                 | _ -> [value_field(*; offset_field*)]
               in
-              Hashtbl.add tbl_pointer_typ core_type dtype;
+              tbl_pointer_typ # add ~loc:x_loc core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-              x_ninfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
-              x_ninfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
-              Hashtbl.add tbl_data_decl dtype ddecl;
+              x_binfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
+              x_binfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
+              tbl_data_decl # add ~loc:x_loc dtype ddecl;
               (* return new type*)
               dtype
             )
@@ -1315,7 +1429,7 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
   let _ = Debug.ninfo_hprint (add_str "name" pr_id) name no_pos in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = Iast.mkDataDecl name fields "Object" [] false [] in
-  Hashtbl.add tbl_data_decl (Globals.mkNamedTyp name) datadecl;
+  tbl_data_decl # add ~loc:x_loc (Globals..mkNamedTyp name) datadecl;
 
 
 and translate_unary_operator (op : Cil.unop) pos : Iast.uni_op =
@@ -1356,7 +1470,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
   let pos = translate_location l in
   let lv_str = string_of_cil_lval lv in
   try
-    let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
+    let addr_vname = tbl_addrof_info # find ~loc:x_loc lv_str in
     let addr_var = Iast.mkVar addr_vname pos in
     Iast.mkMember addr_var [str_value] None pos
   with Not_found -> (
@@ -1551,7 +1665,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
       | _ -> (
           let lv_str = string_of_cil_lval lv in
           try
-            let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
+            let addr_vname = tbl_addrof_info # find ~loc:x_loc lv_str in
             Iast.mkVar addr_vname pos
           with Not_found ->
             report_error pos ("translate_exp: addr var of '" ^ lv_str ^ "' is not found.")
@@ -2062,7 +2176,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       begin
         let (id, pr) = hn.IF.h_formula_heap_node in
         try
-          let addr_vname = Hashtbl.find tbl_addrof_info id in
+          let addr_vname = tbl_addrof_info # find ~loc:x_loc id in
           IF.HeapNode { hn with
                         IF.h_formula_heap_node = (addr_vname, pr)
                       }
@@ -2072,7 +2186,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       begin
         let (id, pr) = hn2.IF.h_formula_heap2_node in
         try
-          let addr_vname = Hashtbl.find tbl_addrof_info id in
+          let addr_vname = tbl_addrof_info # find ~loc:x_loc id in
           IF.HeapNode2 { hn2 with
                          IF.h_formula_heap2_node = (addr_vname, pr)
                        }
@@ -2170,7 +2284,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
     | Ipure.Var ((id, pr), pos) ->
       begin
         try
-          let addr_vname = Hashtbl.find tbl_addrof_info id in
+          let addr_vname = tbl_addrof_info # find ~loc:x_loc id in
           Ipure.Var ((addr_vname, pr), pos)
         with _ -> e
       end
@@ -2283,7 +2397,7 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
           ) offset_init_list;
         (* init all fields of *)
         let data_decl = (
-          try Hashtbl.find tbl_data_decl newtyp
+          try tbl_data_decl # find ~loc:x_loc newtyp
           with Not_found -> report_error pos ("translate_init: couldn't find typ - " ^ newtyp_name)
         ) in
         let init_params = List.fold_left (
@@ -2333,11 +2447,30 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
                  Iast.exp_var_decl_pos = pos} in
   vardecl
 
-
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
+  Debug.no_1 "translate_fundec" string_of_cil_fundec Iprinter.string_of_proc_decl
+    (fun x -> translate_fundec_x x lopt) fundec
+
+and generate_free_exprs addr_var_decls =
+  List.map
+    (function
+      | Iast.VarDecl { exp_var_decl_type; exp_var_decl_decls; exp_var_decl_pos } ->
+          List.map
+            (fun (v, _, pos) ->
+              let fname = "free" in
+              let args = [Iast.mkVar v pos] in
+              Iast.mkCallNRecv fname None args None None pos
+            )
+            exp_var_decl_decls
+      | _ -> report_error no_pos "Not var decl in addr_var_decls"
+    )
+    addr_var_decls
+    |> List.concat
+
+and translate_fundec_x (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   aux_local_vardecls := [];
   nondet_vars := [Globals.nondet_int_proc_name]; (* To handle nondeterministic if conditions *)
-  let () = gather_addrof_fundec fundec in
+  let () = x_add_1 gather_addrof_fundec fundec in
   (* start translating function *)
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let fheader = fundec.Cil.svar in
@@ -2395,8 +2528,46 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     | [] -> None
     | _ ->
       let slocals = List.map translate_var_decl fundec.Cil.slocals in
+      let slocals =
+        List.fold_left (fun acc v -> match v with
+          | Iast.VarDecl { exp_var_decl_type; exp_var_decl_decls; exp_var_decl_pos } ->
+              let filtered_vars = List.filter (fun (name, _, _) -> not (tbl_addrof_info # contains name)) exp_var_decl_decls in
+              begin match filtered_vars with
+                | [] -> acc
+                | l ->
+                  let filtered_var_decl = Iast.mkVarDecl exp_var_decl_type l exp_var_decl_pos
+                  in filtered_var_decl :: acc
+              end
+          | e -> e :: acc
+        )
+        []
+        slocals
+      in
       let sbody = translate_block fundec.Cil.sbody in
-      let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
+      let free_exprs = generate_free_exprs !aux_local_vardecls in
+      let catch_expr =
+        let new_name = fresh_var_name "fi" pos.start_pos.Lexing.pos_lnum in
+        let new_flow_var_name = fresh_var_name "flv" pos.start_pos.Lexing.pos_lnum in
+        let raise_expr =
+          Iast.mkRaise (Iast.Var_flow new_flow_var_name) false (Some (Iast.mkVar new_name pos)) true None pos in
+        Iast.mkCatch
+          (Some new_name)
+          None
+          raisable_class
+          (Some new_flow_var_name)
+          (merge_iast_exp (free_exprs @ [raise_expr]))
+          pos in
+      let try_expr =
+        Iast.mkTry
+          (merge_iast_exp (sbody :: free_exprs))
+          [catch_expr]
+          []
+          None
+          pos
+          in
+      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody] @ free_exprs) in *)
+      (* let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in *)
+      let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [try_expr]) in
       let pos = translate_location fundec.Cil.sbody.Cil.bloc in
       Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
   ) in
@@ -2521,9 +2692,18 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let coercion_decls : Iast.coercion_decl_list list ref = ref [] in
   let aux_progs : Iast.prog_decl list ref = ref [] in
 
+  (* TODO: this is a naive way of checking if this is a cast function.
+           to add a flag in teh specs to distinguish between cast functions and othere functions. *)
+  let is_cast_function proc_name =
+    let str = "__cast" in
+    if (String.length proc_name < String.length str) then false
+    else
+      0 == String.compare (String.sub proc_name 0 (String.length str)) str
+  in
+
   (* reset & init global vars *)
-  Hashtbl.reset tbl_pointer_typ;
-  Hashtbl.reset tbl_data_decl;
+  tbl_pointer_typ # reset;
+  tbl_data_decl # reset;
   Hashtbl.reset tbl_aux_proc;
   aux_local_vardecls := [];
 
@@ -2534,7 +2714,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       match gl with
       | Cil.GType (tinfo, _) ->                                   (* collect typedef info *)
         let core_typ = get_core_cil_typ tinfo.Cil.ttype in
-        Hashtbl.add tbl_typedef tinfo.Cil.tname core_typ;
+        tbl_typedef # add ~loc:x_loc tinfo.Cil.tname core_typ;
       | _ -> ();
     ) globals;
   (* translate the rest *)
@@ -2560,7 +2740,11 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       | Cil.GFun (fd, l) ->
         let fd = remove_goto fd in
         let proc = translate_fundec fd (Some l) in
-        proc_decls := !proc_decls @ [proc]
+        (* if the user provided a cast method then replace the auto generated one with the user provided one *)
+        if (is_cast_function proc.Iast.proc_name) then
+          Hashtbl.add tbl_aux_proc proc.Iast.proc_name proc
+        else
+          proc_decls := !proc_decls @ [proc]
       | Cil.GAsm _ ->
         (* let () = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
         ()
@@ -2590,9 +2774,12 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
 (*                    Iast.data_pure_inv = None;*)
   (*                   Iast.data_methods = []} in *)
   (* update some global settings *)
-  Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) (*&& ((String.compare  data.Iast.data_name "int_star")!=0)*)  then data_decls := data::!data_decls) tbl_data_decl;
+  (* Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) (*&& ((String.compare  data.Iast.data_name "int_star")!=0)*)  then data_decls := data::!data_decls) tbl_data_decl; *)
+  let data = tbl_data_decl # values |> List.filter (fun d -> d.Iast.data_name <> "char_star") in
+  data_decls := data @ !data_decls;
   (* aux procs *)
-  Hashtbl.iter (fun _ p -> if ((String.compare p.Iast.proc_name "__plus_plus_char")!=0) && ((String.compare p.Iast.proc_name "__get_char")!=0) && ((String.compare p.Iast.proc_name "__write_char")!=0) && ((String.compare p.Iast.proc_name "__pointer_add__int_star__int__")!=0) then  proc_decls := p::!proc_decls) tbl_aux_proc;
+  Hashtbl.iter (fun _ p -> proc_decls := p :: !proc_decls) tbl_aux_proc;
+  (* Hashtbl.iter (fun _ p -> if ((String.compare p.Iast.proc_name "__plus_plus_char")!=0) && ((String.compare p.Iast.proc_name "__get_char")!=0) && ((String.compare p.Iast.proc_name "__write_char")!=0) && ((String.compare p.Iast.proc_name "__pointer_add__int_star__int__")!=0) then  proc_decls := p::!proc_decls) tbl_aux_proc; *)
   (* return *)
   let newprog : Iast.prog_decl = {
     Iast.prog_data_decls = (* obj_def :: string_def ::  *)!data_decls;

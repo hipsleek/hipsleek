@@ -1,27 +1,18 @@
+true: warn_error(+4+8+9+11+12+25+28), warn(-26), bin_annot, package(extlib), package(fileutils), package(batteries), package(ocamlgraph), package(camlp4), package(camlp4.lib), package(xml-light)
 <{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>: pp(camlp4of)
 not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>): pp(cppo -I ../ -D TRACE)
 "joust": include
 "ints": include
+<dependencies/**/*>: not_hygienic
 <xml/*.*>: not_hygienic
 <ppx/*.*>: not_hygienic
-<omega_modified/omega_lib/obj/*.*>: not_hygienic
-<omega_modified/code_gen/obj/*.*>: not_hygienic
-<omega_modified/omega_calc/obj/*.*>: not_hygienic
-<omega_modified/petit/obj/*.*>: not_hygienic
+<omega_modified/**/*>: not_hygienic
 <z3iw/z3/lib/*.*>: not_hygienic
-<omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
 <smt2slk_src/*.*>: not_hygienic
-<mona-1.4/comp/lib/*.*>: not_hygienic
-<mona-1.4/comp/Lib/*.*>: not_hygienic
-<mona-1.4/comp/BDD/*.*>: not_hygienic
-<mona-1.4/GTA/.libs/*.*>: not_hygienic
-<mona-1.4/Mem/.libs/*.*>: not_hygienic
-<mona-1.4/BDD/.libs/*.*>: not_hygienic
-<mona-1.4/DFA/.libs/*.*>: not_hygienic
+<mona-1.4/**/*>: not_hygienic
 <sw/*>: not_hygienic
 <smt2slk_src/*>: not_hygienic
 <lp-ex/*>: not_hygienic
 <cil/obj/x86_LINUX/*.*>: not_hygienic
 <{3234,benchmark,bin,bugs,_build,core,cparser,demo,docs,errors,examples,exists,field,guard,hoaegs,_hoaegs,hoaegs-new,html_resources,imm,infer,infinity,inline,label,LDK,lemma,list,misc,mlold,mona-1.4,omega_modified,omega_original,printing,problems,sa,sh_solver,slice,term,synlem,term,test,testing,test_proof,test_proof_backup,tests,tp-mona,tp-redlog,validate,vscomp2010,vsttecomp2012,xml,z3}/*.*>: -traverse
-
