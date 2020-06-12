@@ -1411,7 +1411,7 @@ and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_sta
   else Ctx {es with es_formula = r1;}
 
 and list_context_and_unsat_now prog (ctx : list_context) : list_context =
-  let r = transform_list_context ((elim_unsat_es 7 prog (ref 1)),(fun c->c)) ctx in
+  let r = transform_list_context ((x_add elim_unsat_es 7 prog (ref 1)),(fun c->c)) ctx in
   TP.incr_sat_no () ; r
 
 (*and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context =
@@ -3017,7 +3017,7 @@ and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
 
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
-  else elim_unsat_es_now 4 prog sat_subno es
+  else x_add elim_unsat_es_now 4 prog sat_subno es
 
 
 and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
@@ -15973,12 +15973,12 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl 
         Debug.binfo_pprint "Branch 3 in normalize_es_formula_w_coers" no_pos;
         (estate, normalize_formula_perm prog f)
       end
-    else if coers==[] then 
+    (* else if coers==[] then 
       (* falls in this branch, but for previous version, it is in the else branch's Base case *)
       begin 
         Debug.binfo_pprint "Branch 4 in normalize_es_formula_w_coers" no_pos;
         (estate, f)
-      end
+      end *)
     else
       let () = x_binfo_pp "Branch else in normalize_es_formula_w_coers" no_pos in 
       let coers = List.filter (fun c ->
@@ -15992,6 +15992,7 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl 
       let rec helper f =
         match f with
         | Base b ->
+          let () = x_binfo_pp "Base case in else of normalize_es_formula_w_coers" no_pos in
           let h = b.formula_base_heap in
           let p = b.formula_base_pure in
           let vp = b.formula_base_vperm in
@@ -16007,6 +16008,7 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl 
                   formula_base_vperm=nvp;
                   formula_base_flow=nfl })
         | Exists e ->
+          let () = x_binfo_pp "Exists case in else of normalize_es_formula_w_coers" no_pos in
           let h = e.formula_exists_heap in
           let p = e.formula_exists_pure in
           let vp = e.formula_exists_vperm in
@@ -16022,15 +16024,16 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl 
                   formula_exists_vperm=nvp;
                   formula_exists_flow=nfl }
         | Or o ->
+          let () = x_binfo_pp "Or case in else of normalize_es_formula_w_coers" no_pos in
           let es1, f1 = helper o.formula_or_f1 in
           let es2, f2 = helper o.formula_or_f2 in
           let es = estate in
           es, Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
-      in
+      in 
       if coers ==[] then
         begin
           (* let () = print_endline ("No combine lemma in left coercion?") in *)
-          Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
+          Debug.binfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
           (estate, f)
         end
       else
@@ -16038,7 +16041,7 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl 
           (* let () = print_endline ("normalize_formula_w_coers: "   *)
           (* ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers)  *)
           (* ^ "\n\n") in *)
-          Debug.ninfo_zprint (lazy ("normalize_formula_w_coers: "
+          Debug.binfo_zprint (lazy ("normalize_formula_w_coers: "
                                     ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers)
                                     ^ "\n\n")) no_pos;
           helper f
