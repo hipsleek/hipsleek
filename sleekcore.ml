@@ -129,6 +129,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let es = {es with CF.es_proof_traces = proof_traces} in
   let lem = Lem_store.all_lemma # get_left_coercion in
+  let () = x_binfo_hp (add_str "string_of_coerc_decl_list::" (pr_list Cprinter.string_of_coerc_short)) lem no_pos in
   let ante = x_add Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
   let fvs = CF.struc_fv conseq in
