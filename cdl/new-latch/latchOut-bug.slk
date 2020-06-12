@@ -33,3 +33,7 @@ print residue.
 //VALID
 //checkentail c::LatchOut{+z::cell<n> & n=6}<>  |- c::LatchOut{+z::cell<n> & n>5}<>.
 //print residue.
+
+//INVALID
+//checkentail c::LatchOut{+z::cell<n> & n>5}<>  |- c::LatchOut{+z::cell<n> & n=6}<>.
+//print residue.

@@ -10251,11 +10251,11 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         let () = x_winfo_pp ((add_str "WARNING: not same length" (pr_pair !print_svl !print_svl)) (left,right)) no_pos in
         []
     in
-    (* let subs = List.filter (fun (l,r) -> not(CP.eq_spec_var l r)) subs in *)
+    let subs = List.filter (fun (l,r) -> not(CP.eq_spec_var l r)) subs in
     let (lst_impl,lst_ex) = List.partition (fun (l,_) -> CP.mem_svl l impl_vars) subs in
     let (lst_glob,lst_ex) = List.partition (fun (l,_) ->
         if !Globals.old_empty_to_conseq then false else CP.mem_svl l glob_vs) lst_ex in
-    (* let subs = lst_impl @ lst_ex in *)
+    let subs = lst_impl @ lst_ex in
     let pr_subs = pr_list (pr_pair !print_sv !print_sv) in
     let to_ante = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_impl in
     let () = x_binfo_hp (add_str "impl_vars" !print_svl) impl_vars no_pos in
@@ -10271,8 +10271,8 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         let () = x_winfo_hp (add_str "ivars" !print_svl) ivars no_pos in
         failwith ("non-empty global vars "^msg)
     in
-    let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_ex in
-    (to_ante, CP.mkTrue no_pos (*to_conseq*), subs) in
+    let to_conseq = List.fold_left  (fun e (l,r) -> CP.mkAnd e (CP.mkEqVar l r no_pos) no_pos) (CP.mkTrue no_pos) lst_glob in
+    (to_ante, (*CP.mkTrue no_pos*) to_conseq, subs) in
   begin
     (* to_ante & to_conseq not properly built below *)
     if (Perm.allow_perm ()) then
@@ -10353,7 +10353,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
       (*   (\* (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0) *\) *)
       (*   CP.mkTrue no_pos *)
       (* in *)
-      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),(*to_conseq*) CP.mkTrue no_pos)
+      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),to_conseq (* CP.mkTrue no_pos *))
 
   end
 

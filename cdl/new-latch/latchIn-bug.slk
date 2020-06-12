@@ -27,5 +27,5 @@ checkentail c::LatchIn{-z::cell<n> & n=6}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
 print residue.
 
 //should be VALID
-checkentail c::LatchIn{-z::cell<n> & n>5}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
-print residue.
+//checkentail c::LatchIn{-z::cell<n> & n>5}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
+//print residue.
