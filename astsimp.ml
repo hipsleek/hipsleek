@@ -2458,13 +2458,13 @@ and trans_I2C_session_formulae_x prog free_vars tlist (form : I.session_formulae
   let i2c_proj = List.fold_left (fun acc (k, v) ->
     let (_, c_struc) = x_add_1 (trans_I2C_struc_formula 8 prog false true free_vars v tlist false) true in
     let pos = CF.pos_of_struc_formula c_struc in
-    let key = trans_var k tlist pos in
+    let key = trans_var k tlist prog pos in
     SP.CPrjMap.add_elem_dupl acc key c_struc) (SP.CPrjMap.mkEmpty()) (sess_form.proj_per_party) in
   let i2c_tproj = List.fold_left (fun acc ((kc, kr), v) ->
     let (_, c_struc) = x_add_1 (trans_I2C_struc_formula 8 prog false true free_vars v tlist false) true in
     let pos = CF.pos_of_struc_formula c_struc in
-    let key_chan = trans_var kc tlist pos in
-    let key_role = trans_var kr tlist pos in
+    let key_chan = trans_var kc tlist prog pos in
+    let key_role = trans_var kr tlist prog pos in
     let key = (key_chan, key_role) in
     SP.CTPrjMap.add_elem_dupl acc key c_struc) (SP.CTPrjMap.mkEmpty()) (sess_form.proj_per_chan) in
   let shared_orders = sess_form.shared_orders in
@@ -2943,7 +2943,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         else []
       in
       let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
-      let inst_vars = List.map (fun (ip,v) -> (ip, trans_var (v,Unprimed) n_tl pos)) vdef.I.view_inst_vars in
+      let inst_vars = List.map (fun (ip,v) -> (ip, trans_var (v,Unprimed) n_tl prog pos)) vdef.I.view_inst_vars in
       (* removing non-ptr arithmetic *)
       let lst_heap_ptrs = List.filter (fun (sv,f) -> not(CP.isConstTrue f)) lst_heap_ptrs in
       (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
@@ -8704,7 +8704,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       | IF.HEmp -> (CF.HEmp, CF.TypeTrue, CP.mkTrue no_pos, [], tl)
       (* URGENT:TODOWN:HVar *)
       | IF.HVar (v,hvar_vs) ->
-        let vs = List.map (fun (v,p) -> trans_var (v,p) tl pos
+        let vs = List.map (fun (v,p) -> trans_var (v,p) tl prog pos
             (* (CP.SpecVar (FORM, v, p)) *)) hvar_vs in
         (CF.HVar (CP.SpecVar (FORM, v, Unprimed),vs), CF.TypeTrue, CP.mkTrue no_pos, [], tl)
       | IF.HSubs hf -> failwith x_tbi
@@ -9008,7 +9008,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) prog :
                           }
                | IP.TVar (var,typ,pos) ->
                  let () = y_ninfo_pp ("TVar"^ (!Ipure.print_exp var)) in
-                 CP.TVar( (trans_pure_exp var tlist), typ, pos)
+                 CP.TVar( (trans_pure_exp var tlist prog), typ, pos)
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with

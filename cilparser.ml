@@ -621,7 +621,7 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "char"  -> "<_,q>"
           | _ -> (
               try
-                let data_decl = tbl_data_decl # find ~loc:x_loc (Globals..mkNamedTyp base_data) in
+                let data_decl = tbl_data_decl # find ~loc:x_loc (Globals.mkNamedTyp base_data) in
                 match data_decl.Iast.data_fields with
                 | []   -> report_error no_pos "create_void_pointer_casting_proc: Invalid data_decl fields"
                 | [hd] -> "<_>"
@@ -1093,7 +1093,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
                   let addr_data_name =
                     begin match addr_data_typ with
-                    | Globals.Named s -> s
+                    | Globals.Named (s,_) -> s
                     | _ -> report_error pos "gather_addrof_exp: unexpected type!"
                     end in
                   let addr_var_decl =
@@ -1123,7 +1123,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   let addr_data_decl = tbl_data_decl # find ~loc:x_loc addr_data_typ in
                   let addr_data_name =
                     begin match addr_data_typ with
-                    | Globals.Named s -> s
+                    | Globals.Named (s,_) -> s
                     | _ -> report_error pos "gather_addrof_exp: unexpected type!"
                     end in
                   let addr_var_decl =
@@ -1429,7 +1429,7 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
   let _ = Debug.ninfo_hprint (add_str "name" pr_id) name no_pos in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = Iast.mkDataDecl name fields "Object" [] false [] in
-  tbl_data_decl # add ~loc:x_loc (Globals..mkNamedTyp name) datadecl;
+  tbl_data_decl # add ~loc:x_loc (Globals.mkNamedTyp name) datadecl;
 
 
 and translate_unary_operator (op : Cil.unop) pos : Iast.uni_op =
@@ -2459,7 +2459,7 @@ and generate_free_exprs addr_var_decls =
             (fun (v, _, pos) ->
               let fname = "free" in
               let args = [Iast.mkVar v pos] in
-              Iast.mkCallNRecv fname None args None None pos
+              Iast.mkCallNRecv fname None args None pos
             )
             exp_var_decl_decls
       | _ -> report_error no_pos "Not var decl in addr_var_decls"
