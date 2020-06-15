@@ -3,6 +3,7 @@ OPAM_PKGS = [
   "fileutils",
   "batteries",
   "ocamlgraph",
+  "ocamlformat",
   "camlp4",
   "xml-light"
 ]
@@ -12,6 +13,7 @@ OCAMLFIND_DEPS = [
   "fileutils",
   "batteries",
   "ocamlgraph",
+  "ocamlformat",
   "camlp4",
   "camlp4.lib",
   "xml-light"

@@ -41,6 +41,7 @@ travis_jigger() {
 }
 
 set -ev
+find . -name _build -not -prune -or -name '*.ml' -and -not -name '*.pp.ml' -or -name '*.mli' -and -not -name '*.pp.mli' | xargs ocamlformat -i
 cd examples/working
 s=$HIPSLEEK_TESTS_START # assume is integer
 e=$HIPSLEEK_TESTS_END # assume is integer
