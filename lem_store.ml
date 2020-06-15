@@ -82,15 +82,24 @@ class lemma_store =
       self # set_left_coercion left;
       self # set_right_coercion right
 
-    method get_complex_coercion =
+    method get_left_complex_coercion =
       List.filter (fun c -> c.coercion_case==Complex) left_lem # get_stk
 
     method get_left_coercion =
       List.filter (fun c -> not(c.coercion_case==Complex)) left_lem # get_stk
       (* Change this to its previous version: left_lem # get_stk will fix the cdl/new-latch/latchOut-bug.slk *)
 
+    method get_left_all_coercion =
+     left_lem # get_stk
+
     method get_right_coercion =
       right_lem # get_stk
+
+    method get_right_simp_coercion =
+      List.filter (fun c -> not(c.coercion_case==Complex)) right_lem # get_stk
+
+    method get_right_complex_coercion =
+      List.filter (fun c -> (c.coercion_case==Complex)) right_lem # get_stk
 
     method any_coercion =
       num_left_lem>0 || num_right_lem>0

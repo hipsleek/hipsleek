@@ -37,3 +37,6 @@ print residue.
 //INVALID
 //checkentail c::LatchOut{+z::cell<n> & n>5}<>  |- c::LatchOut{+z::cell<n> & n=6}<>.
 //print residue.
+
+checkentail c::LatchOut{+z::cell<n> * w::cell<m>}<>  |- c::LatchOut{+z::cell<n>}<>.
+print residue.

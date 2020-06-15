@@ -17,7 +17,7 @@ pred_prim CNT<n:int>
 
 //lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
 
-lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+//lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
 
 //lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 

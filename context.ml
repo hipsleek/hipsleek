@@ -2391,7 +2391,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
     | Root ->
       let view_decls = prog.prog_view_decls in
       let tup = (lhs_node, rhs_node) in
-      let comp_lems = Lem_store.all_lemma # get_complex_coercion in
+      let comp_lems = Lem_store.all_lemma # get_left_complex_coercion in
       let pr_hf = !CF.print_h_formula in
       let () = y_tinfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
       (* let () = y_tinfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in *)

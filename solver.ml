@@ -12873,8 +12873,8 @@ and process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched
       | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
     (* let new_p = Context.adhoc_stk # get_stk in *)
     let () = x_tinfo_zp (lazy ("before_do_match rhs_p" ^ (Cprinter.string_of_mix_formula rhs_p))) pos in
-    let rhs_p = if new_p==[] then rhs_p
-      else MCP.memoise_add_pure rhs_p (CP.join_conjunctions new_p) in
+    (* let rhs_p = if new_p==[] then rhs_p
+      else MCP.memoise_add_pure rhs_p (CP.join_conjunctions new_p) in *)
     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
     let () = x_tinfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos in
     let () = y_tinfo_hp (add_str "n_rhs_b" !CF.print_formula) n_rhs_b in
@@ -15958,9 +15958,10 @@ and normalize_context_perm prog ctx = match ctx with
   | Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog es.es_formula;}
 
 and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl list) pos: CF.entail_state * formula =
-  if not(!Globals.old_norm_w_coerc)
+  (* Remove the first cond branch directly *)
+  (* if not(!Globals.old_norm_w_coerc)
   then let () = x_binfo_pp "Branch 1 in normalize_es_formula_w_coers" no_pos in (estate, f)
-  else
+  else *)
     (* this part goes into a loop with ex61a.slk *)
     (* let () = x_winfo_pp "into normalization_with_coerc? why?" no_pos in *)
     if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then 
