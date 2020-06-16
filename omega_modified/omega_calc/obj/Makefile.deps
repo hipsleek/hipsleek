@@ -1,23 +1,7 @@
 # DO NOT DELETE
 
-../src/parser.o: /usr/include/stdio.h /usr/include/features.h
-../src/parser.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../src/parser.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../src/parser.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/parser.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/parser.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/parser.o: /usr/include/bits/sys_errlist.h /usr/include/string.h
-../src/parser.o: /usr/include/xlocale.h ../../omega_lib/include/omega/AST.h
-../src/parser.o: ../../basic/include/basic/assert.h /usr/include/stdlib.h
-../src/parser.o: /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h
-../src/parser.o: /usr/include/endian.h /usr/include/bits/endian.h
-../src/parser.o: /usr/include/bits/byteswap.h /usr/include/bits/byteswap-16.h
-../src/parser.o: /usr/include/sys/types.h /usr/include/time.h
-../src/parser.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../src/parser.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../src/parser.o: /usr/include/sys/sysmacros.h
-../src/parser.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/parser.o: /usr/include/bits/stdlib-float.h
+../src/parser.o: ../../omega_lib/include/omega/AST.h
+../src/parser.o: ../../basic/include/basic/assert.h
 ../src/parser.o: ../../basic/include/basic/Collections.h
 ../src/parser.o: ../../basic/include/basic/Collection.h
 ../src/parser.o: ../../basic/include/basic/Iterator.h
@@ -32,14 +16,11 @@
 ../src/parser.o: ../../basic/include/basic/Map.c
 ../src/parser.o: ../../omega_lib/include/omega.h
 ../src/parser.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/parser.o: /usr/include/ctype.h
 ../src/parser.o: ../../omega_lib/include/omega/pres_var.h
 ../src/parser.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/parser.o: ../../omega_lib/include/omega/omega_core/oc.h
 ../src/parser.o: ../../basic/include/basic/String.h
-../src/parser.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/parser.o: /usr/include/bits/posix1_lim.h /usr/include/bits/local_lim.h
-../src/parser.o: /usr/include/linux/limits.h /usr/include/bits/posix2_lim.h
+../src/parser.o: ../../basic/include/basic/util.h
 ../src/parser.o: ../../basic/include/basic/ConstString.h
 ../src/parser.o: ../../basic/include/basic/Tuple.h
 ../src/parser.o: ../../basic/include/basic/Tuple.c
@@ -76,33 +57,16 @@
 ../src/parser.o: ../../code_gen/include/code_gen/CG_outputBuilder.h
 ../src/parser.o: ../../code_gen/include/code_gen/CG_stringBuilder.h
 ../src/parser.o: ../../code_gen/include/code_gen/CG_stringRepr.h
-../src/parser.o: ../../omega_lib/include/omega/calc_debug.h
+../src/parser.o: ../../omega_lib/include/omega/calc_debug.h y.tab.h
 ../src/parser.o: ../../basic/include/basic/Dynamic_Array.h
 ../src/parser.o: ../../basic/include/basic/Dynamic_Array.c
-../src/parser.o: ../../basic/include/basic/assert.h /usr/include/stdlib.h
-../src/parser.o: /usr/include/features.h /usr/include/stdc-predef.h
-../src/parser.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
-../src/parser.o: /usr/include/gnu/stubs.h /usr/include/bits/waitflags.h
-../src/parser.o: /usr/include/bits/waitstatus.h /usr/include/endian.h
-../src/parser.o: /usr/include/bits/endian.h /usr/include/bits/byteswap.h
-../src/parser.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
-../src/parser.o: /usr/include/bits/byteswap-16.h /usr/include/sys/types.h
-../src/parser.o: /usr/include/time.h /usr/include/sys/select.h
-../src/parser.o: /usr/include/bits/select.h /usr/include/bits/sigset.h
-../src/parser.o: /usr/include/bits/time.h /usr/include/sys/sysmacros.h
-../src/parser.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
-../src/parser.o: /usr/include/bits/stdlib-float.h /usr/include/stdio.h
-../src/parser.o: /usr/include/libio.h /usr/include/_G_config.h
-../src/parser.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../src/parser.o: /usr/include/bits/sys_errlist.h
+../src/parser.o: ../../basic/include/basic/assert.h
 ../src/parser.o: ../../code_gen/include/code_gen/code_gen.h
 ../src/parser.o: ../../basic/include/basic/bool.h
 ../src/parser.o: ../../basic/include/basic/Tuple.h
 ../src/parser.o: ../../basic/include/basic/Collection.h
 ../src/parser.o: ../../basic/include/basic/Iterator.h
-../src/parser.o: ../../basic/include/basic/util.h /usr/include/limits.h
-../src/parser.o: /usr/include/bits/posix1_lim.h /usr/include/bits/local_lim.h
-../src/parser.o: /usr/include/linux/limits.h /usr/include/bits/posix2_lim.h
+../src/parser.o: ../../basic/include/basic/util.h
 ../src/parser.o: ../../basic/include/basic/Tuple.c
 ../src/parser.o: ../../omega_lib/include/omega/Relation.h
 ../src/parser.o: ../../omega_lib/include/omega/RelBody.h
@@ -112,8 +76,7 @@
 ../src/parser.o: ../../omega_lib/include/omega/Relations.h
 ../src/parser.o: ../../code_gen/include/code_gen/CG.h
 ../src/parser.o: ../../code_gen/include/code_gen/elim.h
-../src/parser.o: ../../basic/include/basic/String.h /usr/include/string.h
-../src/parser.o: /usr/include/xlocale.h
+../src/parser.o: ../../basic/include/basic/String.h
 ../src/parser.o: ../../code_gen/include/code_gen/CG_outputRepr.h
 ../src/parser.o: ../../code_gen/include/code_gen/CG_outputBuilder.h
 ../src/parser.o: ../../code_gen/include/code_gen/spmd.h
@@ -130,7 +93,6 @@
 ../src/parser.o: ../../basic/include/basic/Map.c
 ../src/parser.o: ../../omega_lib/include/omega.h
 ../src/parser.o: ../../omega_lib/include/omega/omega_core/debugging.h
-../src/parser.o: /usr/include/ctype.h
 ../src/parser.o: ../../omega_lib/include/omega/pres_var.h
 ../src/parser.o: ../../omega_lib/include/omega/pres_gen.h
 ../src/parser.o: ../../omega_lib/include/omega/omega_core/oc.h
@@ -159,30 +121,8 @@
 ../src/parser.o: ../../code_gen/include/code_gen/CG_stringBuilder.h
 ../src/parser.o: ../../code_gen/include/code_gen/CG_stringRepr.h
 ../src/parser.o: ../../code_gen/include/code_gen/mmap-util.h
-../src/parser.o: /usr/include/sys/time.h /usr/include/sys/resource.h
-../src/parser.o: /usr/include/bits/resource.h
-../../basic/src/Exit.o: /usr/include/stdlib.h /usr/include/features.h
-../../basic/src/Exit.o: /usr/include/stdc-predef.h /usr/include/sys/cdefs.h
-../../basic/src/Exit.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
-../../basic/src/Exit.o: /usr/include/bits/waitflags.h
-../../basic/src/Exit.o: /usr/include/bits/waitstatus.h /usr/include/endian.h
-../../basic/src/Exit.o: /usr/include/bits/endian.h
-../../basic/src/Exit.o: /usr/include/bits/byteswap.h
-../../basic/src/Exit.o: /usr/include/bits/types.h
-../../basic/src/Exit.o: /usr/include/bits/typesizes.h
-../../basic/src/Exit.o: /usr/include/bits/byteswap-16.h
-../../basic/src/Exit.o: /usr/include/sys/types.h /usr/include/time.h
-../../basic/src/Exit.o: /usr/include/sys/select.h /usr/include/bits/select.h
-../../basic/src/Exit.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
-../../basic/src/Exit.o: /usr/include/sys/sysmacros.h
-../../basic/src/Exit.o: /usr/include/bits/pthreadtypes.h
-../../basic/src/Exit.o: /usr/include/alloca.h
-../../basic/src/Exit.o: /usr/include/bits/stdlib-float.h
 ../../basic/src/Exit.o: ../../basic/include/basic/Exit.h
-../../basic/src/Exit.o: ../../basic/include/basic/List.h /usr/include/stdio.h
-../../basic/src/Exit.o: /usr/include/libio.h /usr/include/_G_config.h
-../../basic/src/Exit.o: /usr/include/wchar.h /usr/include/bits/stdio_lim.h
-../../basic/src/Exit.o: /usr/include/bits/sys_errlist.h
+../../basic/src/Exit.o: ../../basic/include/basic/List.h
 ../../basic/src/Exit.o: ../../basic/include/basic/Iterator.h
 ../../basic/src/Exit.o: ../../basic/include/basic/bool.h
 ../../basic/src/Exit.o: ../../basic/include/basic/Collection.h

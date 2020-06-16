@@ -610,6 +610,7 @@ let peek_try =
           | [BOOL,_;OSQUARE,_] -> ()
           (* For pointer*)
           | [INT,_;STAR,_] -> ()
+          | [VOID,_;STAR,_] -> ()
           | [FLOAT,_;STAR,_] -> ()
           | [BOOL,_;STAR,_] -> ()
           | [IDENTIFIER n,_;STAR,_] -> ()

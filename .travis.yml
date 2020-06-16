@@ -1,0 +1,25 @@
+os: linux
+dist: trusty
+language: ruby
+cache:
+  directories:
+    - ~/.opam
+env:
+  - HIPSLEEK_TESTS_START=0 HIPSLEEK_TESTS_END=4 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=5 HIPSLEEK_TESTS_END=5 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=6 HIPSLEEK_TESTS_END=6 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=7 HIPSLEEK_TESTS_END=19 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=20 HIPSLEEK_TESTS_END=39 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=40 HIPSLEEK_TESTS_END=40 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=41 HIPSLEEK_TESTS_END=41 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=42 HIPSLEEK_TESTS_END=42 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=43 HIPSLEEK_TESTS_END=43 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=44 HIPSLEEK_TESTS_END=44 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=45 HIPSLEEK_TESTS_END=50 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=50 HIPSLEEK_TESTS_END=119 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+before_install:
+  - ./.travis/before_install
+install:
+  - ./.travis/install
+script:
+  - ./.travis/script

@@ -1,0 +1,49 @@
+data ch_star{
+    int val;
+}.
+
+pred arr_seg<n>     == self::ch_star<_> & n=1
+                      or (exists q: self::ch_star<_> * q::arr_seg<n-1> & q = self + 1 & n > 1) 
+  inv n>=1.
+
+checkentail x::ch_star<_> * y::ch_star<_> & y = x+1 
+           |- x::arr_seg<2>.
+print residue.
+expect Valid.
+
+
+checkentail x::ch_star<_> * y::ch_star<_> & y = x+1 
+           |- (exists q: x::ch_star<_> * q::arr_seg<1> & q=x+1).
+print residue.
+expect Valid.
+
+
+checkentail  y::ch_star<_> & y = x+1 
+           |- (exists q:  q::arr_seg<1> & q=x+1 ).
+print residue.
+expect Valid.
+
+checkentail  y::ch_star<_> & y = x+1 
+           |- (exists q:  q::ch_star<_> & q=x+1 ).
+print residue.
+expect Valid.
+
+/*
+[FIXED] Below MUST failure is unsoud
+
+
+Entail 1: Fail.(must) cause: true |-  1=2. LOCS:[0;11] (RHS: contradiction)
+
+Residue:
+
+ MustErr Context: 
+   fe_kind: MUST
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  1=2. LOCS:[0;11] (RHS: contradiction)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  Fold ==>  SEARCH ==>  Match(x,x)]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_Must
+*/

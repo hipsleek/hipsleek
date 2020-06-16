@@ -13,7 +13,16 @@ print residue.
 checkentail x=null |- x::ll<n>.
 print residue.
 
-checkentail x::node<_,null> |- x::ll<n>.
+//implicit existential
+checkentail x::node<_,null> |- x::ll<n> & n>0.
+print residue.
+
+//explicit existential
+checkentail x::node<_,null> |- [n] x::ll<n> & n>0 .
+print residue.
+
+//existential
+checkentail x::node<_,null> |- (exists n: x::ll<n> & n>0).
 print residue.
 
 checkentail x::ll<n> |- x::node<_,p> .

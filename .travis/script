@@ -1,0 +1,50 @@
+#!/bin/bash
+# Compare tests output to reference tests output.
+
+# Assume fourth-last to second-last lines are not related to tests,
+# and leaving these lines in causes diff to exit with non-zero code.
+snip() {
+  tac /dev/stdin | sed -e '2,4d' | tac
+}
+
+travis_wait() {
+  local log_file="$1"
+  shift
+  local cmd="$@"
+
+  $cmd 2>&1 >$log_file &
+  local cmd_pid=$!
+
+  travis_jigger $! $cmd &
+  local jigger_pid=$!
+  local result
+
+  { wait $cmd_pid 2>/dev/null; result=$?; ps -p$jigger_pid 2>&1>/dev/null && kill $jigger_pid; } || return 1
+  return $result
+}
+
+travis_jigger() {
+  local timeout=50 # in minutes
+  local count=0
+
+  local cmd_pid=$1
+  shift
+
+  while [ $count -lt $timeout ]; do
+    count=$(($count + 1))
+    echo -e "\033[0mStill running ($count of $timeout): $@"
+    sleep 60
+  done
+
+  echo -e "\n\033[31;1mTimeout reached. Terminating $@\033[0m\n"
+  kill -9 $cmd_pid
+}
+
+set -ev
+cd examples/working
+s=$HIPSLEEK_TESTS_START # assume is integer
+e=$HIPSLEEK_TESTS_END # assume is integer
+./run-fast-tests.pl sleek > run-fast-tests.sleek.$s-$e
+diff <(snip < ../../.travis/run-fast-tests.sleek.$s-$e) <(snip < run-fast-tests.sleek.$s-$e)
+travis_wait run-fast-tests.hip.$s-$e "./run-fast-tests.pl hip"
+diff <(snip < ../../.travis/run-fast-tests.hip.$s-$e) <(snip < run-fast-tests.hip.$s-$e)

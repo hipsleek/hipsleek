@@ -1,0 +1,20 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking bll.ss
+Checking bubble.ss
+Checking cll.ss
+Checking complete.ss
+Checking dll.ss
+Checking heaps.ss
+Checking insertion.ss
+Checking ll.ss
+Checking merge.ss
+Checking perfect.ss
+Checking qsort.ss
+Checking selection.ss
+Checking sll.ss
+All test results were as expected.
+Total verification time: 327.35 second
+	Time spent in main process: 145.93 second
+	Time spent in child processes: 181.42 second
+	Number of false contexts: 64

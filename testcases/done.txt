@@ -1,0 +1,280 @@
+===============================================================
+ex1
+  HIP manages to detect the error with a modification to update___1d in the prelude, that enforces array access to within its bounds. Without it, the error is undetected.
+  Updated function spec:
+
+  int[] update___1d(int v, ref int[] a, int i)
+    requires dom(a, l, h) & l <= i <= h
+    ensures update_array_1d(a,res,v,i);
+
+
+  Proving precondition in method update___1d$int~int[]~int Failed.
+  (may) cause: AndR[ dom(v_int_arr_25_1897',0,8) |-  dom(v_int_arr_25_1897',l_1953,h_1954). LOCS:[7;24;25];  dom(v_int_arr_25_1897',0,8) & i'=10 |-  l_1953<=i'. LOCS:[7;24;25];  dom(v_int_arr_25_1897',0,8) & i'=10 |-  i'<=h_1954. LOCS:[7;24;25] (may-bug).]
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: array-inside-struct.c_27:12_27:13
+
+  Procedure main$ FAIL.(2)
+
+
+  Exception Failure("Proving precond failed") Occurred!
+
+===============================================================
+WN : dom make use of SMT monolothic array logic
+     it isn't as flexible as those based on array segments
+     in separation logic form
+to
+ex1b : changing Line 26 to i=8 still reports
+    a spurious error (when it should not). need to see what info
+     is lost
+
+Proving precondition in method update___1d$int~int[]~int Failed.
+  (may) cause: AndR[ dom(v_int_arr_27_1897',0,8) |-  dom(v_int_arr_27_1897',l_1953,h_1954). LOCS:[9;26;27];  dom(v_int_arr_27_1897',0,8) & i'=8 |-  l_1953<=i'. LOCS:[9;26;27];  dom(v_int_arr_27_1897',0,8) & i'=8 |-  i'<=h_1954. LOCS:[9;26;27] (may-bug).]
+
+A problem is that l_1953,h_1954 are existential variables that need to be
+instantiated to 0,8 but that is not being done. Hence, we cannot
+prove it even if it was within bound.
+===============================================================
+ex2a
+  HIP manages to detect the error if malloc's spec returns an int_star. If malloc's spec returns an arr_seg, the first free will result in a false heap and pure, and the verification will
+  mistakenly succeed.
+
+  Proving precondition in method free$int_star Failed.
+    (must) cause: do_unmatched_rhs : array'::int_star<Anon_1934>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: double-free.c_28:2_28:13
+
+  Procedure main$ FAIL.(2)
+
+
+  Exception Failure("Proving precond failed") Occurred!
+
+===============================================================
+ex2b
+  Same caveats as ex2a
+
+  Proving precondition in method __pointer_add__int_star__int__$int_star~int Failed.
+    (must) cause: do_unmatched_rhs : array'::int_star<val>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex2b.c_29:11_29:19
+
+===============================================================
+ex3
+  Proving precondition in method free$T Failed.
+    (must) cause: do_unmatched_rhs : x'::T<Anon_2031>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/invalid-ptr-ref.c_37:3_37:10
+
+===============================================================
+ex8
+  Proving binding in method main$ for spec  EAssume
+    emp&{FLOW,(4,5)=__norm#E}[]
+    struct:EBase
+              emp&{FLOW,(4,5)=__norm#E}[], Line 0
+
+  ( []) bind: node  tmp'::P<a_17_2020',b_17_2021'>@L&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+  1 File "testcases/ex8.c",Line:18,Col:11
+
+  (Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+  Failed States:
+  [
+    Label: []
+    State:
+      fe_kind: MAY
+      fe_name: separation entailment
+      fe_locs: {
+          fc_message: do_unmatched_rhs : tmp'::P<a_17_2020',b_17_2021'>@L(may)
+          fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+        }
+      [[ SEARCH ==>  UnmatchedRHSData]]
+    ]1 File "testcases/ex8.c",Line:18,Col:11
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex8.c_18:11_-1:-1
+
+===============================================================
+ex12
+  Proving precondition in method free$int_star Failed.
+    (must) cause: do_unmatched_rhs : p'::int_star<Anon_12>@M(must)
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex12.c_19:11_19:18
+
+  Procedure while_15_3$int~int_star~int_star FAIL.(2)
+
+
+  Exception Failure("Proving precond failed") Occurred!
+
+
+  Error(s) detected when checking procedure while_15_3$int~int_star~int_star
+
+WN: For this example, we need to write pre/post for the loop
+  spec added to allow code to verify without false double free
+
+=========================================================================
+ex6 - Benedict
+
+  WN : Please see ex6.ss and ex7.ss for improved translation
+  
+  The translation of the address-of operator on primitive values seems wrong. The address variable is not created, and
+  the translation attempts to dereference a primitive:
+
+  class int_star extends Object {
+    int value@
+  }
+
+  int_star foo()[]
+  static EList
+  dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+  {
+    {local: int p,int_star q
+      int p
+      int_star q
+      {member access p~~>value = 1
+        q = p
+        (101, ):return q}}
+  }
+
+  int main()[]
+  static EList
+  dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+  {
+    {local: int_star a,int_star tmp
+      int_star a
+      int_star tmp
+      {tmp = (103, ):foo()
+        a = tmp
+        (105, ):return 0}}
+  }
+  void free(int_star p)[]
+  static EBase: [][](emp ; (emp ; (p::int_star{}<Anon_11>[HeapNode1]))) * ([] & true)( FLOW __norm) {EAssume: 1,:(emp ; (emp ; emp)) * ([] & true)( FLOW __norm)}
+  dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false)
+
+  I've manually translated the code to what I expect it to be in ss in ex6.ss. With my translation, it fails as expected with:
+
+  Checking procedure main$...
+  Proving binding in method main$ for spec  EAssume
+    emp&{FLOW,(4,5)=__norm#E}[]
+    struct:EBase
+              emp&{FLOW,(4,5)=__norm#E}[], Line 0
+
+  ( []) bind: node  a'::int_star<v_17_1857'>@L&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+  1 File "testcases/ex6.ss",Line:17,Col:8
+
+  (Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+  Failed States:
+  [
+    Label: []
+    State:
+      fe_kind: MAY
+      fe_name: separation entailment
+      fe_locs: {
+          fc_message: do_unmatched_rhs : a'::int_star<v_17_1857'>@L(may)
+          fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+        }
+      [[ SEARCH ==>  UnmatchedRHSData]]
+    ]1 File "testcases/ex6.ss",Line:17,Col:8
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex6.ss_17:8_17:11
+
+  Procedure main$ FAIL.(2)
+
+=========================================================================
+ex7 - Benedict
+  The same issue for ex6 appears in ex7. My expected translation is in ex7.ss. I'm less certain of this translation, and
+  I'm not that sure the spec for foo() is correct either. That said, we do get a failure:
+
+  Checking procedure main$...
+
+  Proving binding in method main$ for spec  EAssume
+    emp&{FLOW,(4,5)=__norm#E}[]
+    struct:EBase
+              emp&{FLOW,(4,5)=__norm#E}[], Line 0
+
+  ( []) bind: node  v_int_star_23_1894'::int_star<v_23_1895'>@L&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+  1 File "testcases/ex7.ss",Line:23,Col:15
+
+  (Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+  Failed States:
+  [
+    Label: []
+    State:
+      fe_kind: MAY
+      fe_name: separation entailment
+      fe_locs: {
+          fc_message: do_unmatched_rhs : v_int_star_23_1894'::int_star<v_23_1895'>@L(may)
+          fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+        }
+      [[ SEARCH ==>  UnmatchedRHSData]]
+    ]1 File "testcases/ex7.ss",Line:23,Col:15
+
+  Context of Verification Failure: _0:0_0:0
+
+  Last Proving Location: testcases/ex7.ss_23:15_23:25
+
+  Procedure main$ FAIL.(2)
+
+=========================================================================
+Working on:
+ex4 - Benedict
+  I can't figure out a spec for the loop in addLast, so I've treated the function as primitive for the sake of
+  verification
+
+  While --classic in theory allows us to detect the leak, the problem is the use of the address-of
+  operator ends up creating a variable addr_head, initialised to a node_star, which is never freed. freeList would
+  remove the list addr_head points to from the heap, but addr_head still remains, and that violates the no residue
+  condition for --classic. Will need more work to insert the free calls.
+
+  State with freeList called:
+  dprint(simpl): testcases/ex4.c:125: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+    Successful States:
+    [
+      Label: []
+      State:
+        (htrue) * addr_head'::node_star<v1_2336>@M&addr_head'!=null&
+    {FLOW,(4,5)=__norm#E}[]
+        es_gen_impl_vars(E): []
+        es_heap(consumed): emp
+        es_subst (from,to): []:[]
+        es_cond_path: [0]
+        es_var_measures 1: Some(MayLoop[]{})
+
+      Exc:None
+      ]
+
+  State without freeList called:
+  dprint(simpl): testcases/ex4.c:125: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+    Successful States:
+    [
+      Label: []
+      State:
+        (htrue) * addr_head'::node_star<v1_2332>@M * v1_2332::ll<n_2336>@M&
+    n_2336=2 & addr_head'!=null&{FLOW,(4,5)=__norm#E}[]
+        es_gen_impl_vars(E): []
+        es_heap(consumed): emp
+        es_subst (from,to): []:[]
+        es_cond_path: [0]
+        es_var_measures 1: Some(MayLoop[]{})
+
+      Exc:None
+      ]
+
+  While I can't find where in cilparser to add this free() call at the end, adding free(&head) at the end before the
+  return can free the generated addr_head. However, addr_head != null is still in the residue, and so --classic still
+  fails. And I can't figure out how to remove addr_head != null even if I can add in the free(addr_head), because free()
+  doesn't touch the pure.
+
+=========================================================================
+ex5
+  in progress (Andreea)

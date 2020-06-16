@@ -1,0 +1,27 @@
+Starting sleek tests:
+Checking sleek-err-exc-flow.slk (runs with extra options: --efa-exc)
+Checking lst-under2.slk (runs with extra options: --inv-test)
+Checking data-holes.slk
+Checking ll-under1a.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1b.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1c.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1d.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1e.slk (runs with extra options:  --inv-test --use-baga )
+Checking ll-under1f.slk (runs with extra options:  --inv-test --use-baga )
+Checking baga-test-eps.slk (runs with extra options: --eps)
+Checking baga-test.slk (runs with extra options: --use-baga)
+Checking baga-test-2.slk (runs with extra options: --dis-use-baga --dis-eps)
+Checking baga-test-2.slk (runs with extra options: --use-baga)
+Checking symb-diff.slk
+Checking xpure3nodes.slk
+Checking infer/app-inv.slk (runs with extra options: --inv --dis-eps)
+Checking infer/app-inv2.slk (runs with extra options: --inv --dis-eps)
+Checking infer/infer1.slk
+Checking infer/infer2.slk
+Checking infer/infer4.slk
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 5.80 second
+	Time spent in main process: 4.99 second
+	Time spent in child processes: 0.82 second
+	Number of false contexts: 42

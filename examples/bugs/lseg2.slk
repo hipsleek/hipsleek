@@ -1,0 +1,98 @@
+data node { int val ; node next }.
+
+pred lseg<n,q> ==
+ case{
+  n=0  -> [] emp & self = q & n = 0;
+	n!=0 -> [] self::node<_,r> * r::lseg<n - 1,q> & self!=q;
+ } inv n >= 0.
+
+checkentail x::lseg<n,q> |- x::lseg<m,q>.
+expect Valid.
+print residue.
+
+checkentail x::lseg<n,q> & m>0 |- x::lseg<m,q>.
+expect Fail.
+print residue.
+
+checkentail x::lseg<n,q> & m=0 |- x::lseg<m,q>.
+expect Fail.
+print residue.
+
+checkentail x::lseg<n,q> & m>0 |- x::lseg<m,p>.
+expect Fail.
+print residue.
+
+checkentail x::lseg<n,q> & m=0 |- x::lseg<m,p>.
+expect Valid.
+print residue.
+
+checkentail x::lseg<n,q> |- x::lseg<m,p> & m>0.
+expect Fail.
+print residue.
+
+checkentail x::lseg<n,q> |- x::lseg<m,p> & m=0.
+expect Valid.
+print residue.
+
+checkentail x::lseg<n,q> |- x::lseg<m,q> & m>0.
+expect Fail.
+print residue.
+
+checkentail x::lseg<n,q> |- x::lseg<m,q> & m=0.
+expect Fail.
+print residue.
+
+
+//===
+
+
+
+//10
+checkentail x::node<_,q> & m>0 |- x::lseg<m,q>.
+expect Fail.
+print residue.
+
+//11
+checkentail x::node<_,q> & m=0 |- x::lseg<m,q>.
+expect Fail.
+print residue.
+
+//12
+checkentail x::node<_,q> & m>0 |- x::lseg<m,p>.
+expect Fail.
+print residue.
+
+//13
+checkentail x::node<_,q> & m=0 |- x::lseg<m,p>.
+expect Valid.
+print residue.
+
+//14
+checkentail x::node<_,q> |- x::lseg<m,p> & m>0.
+expect Valid.
+print residue.
+
+//15
+checkentail x::node<_,q> |- x::lseg<m,p> & m=0.
+expect Valid.
+print residue.
+
+//16
+checkentail x::node<_,q> |- x::lseg<m,q> & m>0.
+expect Valid.
+print residue.
+
+//17
+checkentail x::node<_,q> |- x::lseg<m,q> & m=0.
+expect Fail.
+print residue.
+
+//18
+checkentail x=null |- x::lseg<m,q> & m>0.
+expect Fail.
+print residue.
+
+//19
+checkentail x=null |- x::lseg<m,q> & m=0.
+expect Valid.
+print residue.

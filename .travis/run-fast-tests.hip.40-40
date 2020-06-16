@@ -1,0 +1,8 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking vperm/ho_vperm_check.ss (runs with extra options: --ann-vp)
+All test results were as expected.
+Total verification time: 1.08 second
+	Time spent in main process: 1.00 second
+	Time spent in child processes: 0.07 second
+	Number of false contexts: 0

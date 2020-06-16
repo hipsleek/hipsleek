@@ -1,0 +1,8 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking parahip/cell-extreme-cases.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj)
+All test results were as expected.
+Total verification time: 468.70 second
+	Time spent in main process: 1.02 second
+	Time spent in child processes: 467.68 second
+	Number of false contexts: 0

@@ -346,7 +346,7 @@ let subst_inv_lower_view view_invs f=
 (* let fixcalc_exe = "fixcalc " *)
 
 let local_oc = "./fixcalc"
-let global_oc = "/usr/local/bin/fixcalc"
+let global_oc = try FileUtil.which "fixcalc" with Not_found -> ""
 
 let fixcalc_exe = if !Globals.is_solver_local then (ref "./fixcalc ") else (ref "fixcalc ")
 

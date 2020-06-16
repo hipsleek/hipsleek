@@ -1,0 +1,8 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking avl-orig3.ss
+All test results were as expected.
+Total verification time: 1184.09 second
+	Time spent in main process: 410.61 second
+	Time spent in child processes: 773.48 second
+	Number of false contexts: 0

@@ -1,0 +1,12 @@
+Starting sleek-hip tests:
+Starting hip tests:
+Checking eps.ss
+Checking append.ss
+Checking append-tail.ss
+Checking avl-bind.ss
+Checking avl.ss
+All test results were as expected.
+Total verification time: 620.17 second
+	Time spent in main process: 345.71 second
+	Time spent in child processes: 274.46 second
+	Number of false contexts: 23

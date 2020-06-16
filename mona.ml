@@ -36,8 +36,8 @@ let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
 
-let mona_prog, mona_proc_name =  if inter then "/usr/local/bin/mona_inter", "mona_inter"
-    else "/home/andreeac/tools/mona-1.4/EPREF/bin/mona", "mona"
+(* let mona_prog = if !Globals.web_compile_flag then "/usr/local/bin/mona_inter" else "mona_inter" *)
+let mona_prog = try FileUtil.which "mona_inter" with Not_found -> ""
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
@@ -1296,7 +1296,7 @@ let start () =
       if(check_prover_existence mona_prog) then begin
         try
           print_endline_quiet  ("\nStarting MONA..."^mona_prog); flush stdout;
-          let () = Procutils.PrvComms.start !log_all_flag log_all (mona_proc_name, mona_prog, [|mona_prog; "-a";|]) set_process prelude in
+          let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-a";|]) set_process prelude in
           (* let () = print_endline (mona_prog ^ "end") in *)
           is_mona_running := true
         with e ->
@@ -1514,7 +1514,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
       output_string log_all file_content;
       flush log_all;
     end;
-  let () = Procutils.PrvComms.start !log_all_flag log_all (mona_proc_name, mona_prog, [|mona_prog; "-a";  mona_filename|]) set_process (fun () -> ()) in
+  let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-a";  mona_filename|]) set_process (fun () -> ()) in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
     let () = x_binfo_hp (add_str "mona_answ" pr_id) mona_answ no_pos  in

@@ -1,0 +1,178 @@
+data ch_star{
+    int val;
+}.
+
+pred arr_seg<n>     == self::ch_star<_> & n=1
+                    or self::ch_star<_> * q::arr_seg<n-1> & q=self+1 & n>1
+  inv n>=1.
+
+pred int_block<>    == self::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_> & x=self+1 & y=x+1 & z=y+1.
+
+pred int_arr_seg<n> == self::int_block<> & n=1
+                    or self::int_block<> * q::int_arr_seg<n-1> & q=self+4 & n>1
+  inv n>=1.
+
+lemma "int2char" self::int_arr_seg<n> <-> self::arr_seg<4*n>.
+lemma "splitchar" self::arr_seg<a+b> & self+a=q <-> self::arr_seg<a> * q::arr_seg<b>.
+
+/**********************************
+ * equivalence entailments
+ **********************************/
+
+/* ch_star vs int_arr_seg */
+
+/*
+ * (1)
+ */
+checkentail w::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_>
+           & x=w+1 & y=x+1 & z=y+1
+           |- w::int_arr_seg<1>.
+print residue.
+expect Valid.
+
+/*
+ * (2)
+ */
+checkentail w::int_arr_seg<1> & x=w+1 & y=x+1 & z=y+1
+           |- w::ch_star<_> * x::ch_star<_> * y::ch_star<_> * z::ch_star<_>.
+print residue.
+expect Valid.
+
+/* arr_seg vs int_block */
+
+/*
+ * (3)
+ */
+checkentail x::arr_seg<4> |- x::int_block<>.
+print residue.
+expect Valid.
+
+/*
+ * (4)
+ */
+checkentail x::int_block<> |- x::arr_seg<4>.
+print residue.
+expect Valid.
+
+/* int_block vs int_arr_seg */
+
+/*
+ * (5)
+ */
+checkentail x::int_block<> |- x::int_arr_seg<1>.
+print residue.
+expect Valid.
+
+/*
+ * (6)
+ */
+checkentail x::int_block<> * y::int_block<> & y=x+4 |- x::int_arr_seg<2>.
+print residue.
+expect Valid.
+
+/*
+ * (7)
+ */
+checkentail x::int_arr_seg<1> |- x::int_block<>.
+print residue.
+expect Valid.
+
+/* arr_seg vs int_arr_seg */
+
+/*
+ * (8)
+ */
+checkentail x::arr_seg<4> |- x::int_arr_seg<1>.
+print residue.
+expect Valid.
+
+/*
+ * (9)
+ */
+checkentail x::int_arr_seg<1> |- x::arr_seg<4>.
+print residue.
+expect Valid.
+
+/**********************************
+ * int_arr_seg entailments
+ **********************************/
+
+/*
+ * (10)
+ */
+checkentail x::int_block<> * y::int_arr_seg<n> & y=x+4
+           |- x::int_arr_seg<n+1>.
+print residue.
+expect Valid.
+
+/*
+ * (11)
+ */
+checkentail x::int_block<> * y::int_arr_seg<n> & n=1 & y=x+4
+           |- x::int_arr_seg<n+1>.
+print residue.
+expect Valid.
+
+/*
+ * (12)
+ */
+checkentail x::int_block<> * y::int_arr_seg<n> & x+4=y
+           |- x::int_arr_seg<m>.
+print residue.
+expect Valid.
+
+/**********************************
+ * typecasted-alignment entailments
+ **********************************/
+
+/* concrete lengths: start, middle, end */
+
+/*
+ * (13)
+ */
+checkentail x::arr_seg<6> & y=x+4
+           |- x::int_arr_seg<1> * y::arr_seg<2>.
+print residue.
+expect Valid.
+
+/*
+ * (14)
+ */
+checkentail x::arr_seg<6> & y=x+1 & z=y+4
+           |- x::arr_seg<1> * y::int_arr_seg<1> * z::arr_seg<1>.
+print residue.
+expect Valid.
+
+/*
+ * (15)
+ */
+checkentail x::arr_seg<6> & y=x+2
+           |- x::arr_seg<2> * y::int_arr_seg<1>.
+print residue.
+expect Valid.
+
+/* existential lengths: start, middle, end */
+
+/*
+ * (16)
+ */
+checkentail x::arr_seg<4*n+2> & y=x+4*n
+           |- x::int_arr_seg<n> * y::arr_seg<2>.
+print residue.
+expect Valid.
+
+/*
+ * (17)
+ */
+checkentail x::arr_seg<4*n+2> & y=x+2
+           |- x::arr_seg<2> * y::int_arr_seg<n>.
+print residue.
+expect Valid.
+
+/*
+ * (18)
+ */
+checkentail x::arr_seg<4*n+2> & y=x+1 & z=y+4*n
+           |- x::arr_seg<1> * y::int_arr_seg<n> * z::arr_seg<1>.
+print residue.
+expect Valid.

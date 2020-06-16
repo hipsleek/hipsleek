@@ -431,7 +431,7 @@ int_star __pointer_add__int_star__int__(int_star p, int i)
 /* ************************/
 
 int[] update___1d(int v, ref int[] a, int i)
-  requires true
+  requires dom(a, l, h) & l <= i <= h
 //ensures a'[i]=v;
 ensures update_array_1d(a,res,v,i);
 //void update___(ref int[] a, int i, int v)

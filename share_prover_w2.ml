@@ -165,7 +165,7 @@ struct
   let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *)
 
   (*minisat*)
-  let minisat_path = "/usr/local/bin/minisat"
+  let minisat_path = try FileUtil.which "minisat" with Not_found -> ""
   let minisat_name = "minisat"
   let minisat_arg = "-pre"
   let minisat_input_format = "cnf"   (* valid value is: cnf *)
