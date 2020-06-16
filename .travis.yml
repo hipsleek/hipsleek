@@ -16,7 +16,7 @@ env:
   - HIPSLEEK_TESTS_START=43 HIPSLEEK_TESTS_END=43 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
   - HIPSLEEK_TESTS_START=44 HIPSLEEK_TESTS_END=44 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
   - HIPSLEEK_TESTS_START=45 HIPSLEEK_TESTS_END=50 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
-  - HIPSLEEK_TESTS_START=50 HIPSLEEK_TESTS_END=119 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
+  - HIPSLEEK_TESTS_START=50 HIPSLEEK_TESTS_END=150 PATH="$PATH:$TRAVIS_BUILD_DIR/dependencies:/usr/local/etc/reduce/bin" CACHE_NAME=hipsleek
 before_install:
   - ./.travis/before_install
 install:

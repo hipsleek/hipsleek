@@ -72,9 +72,14 @@ Checking lemmas/odd-lseg.slk (runs with extra options:  --elp --dis-lem-gen --di
 Checking lemmas/lseg_complex.slk (runs with extra options:  --elp --dis-lem-gen --old-empty-to-conseq)
 Checking vperm/vperm.slk (runs with extra options:  --ann-vp)
 Checking veribsync/bperm-split-combine.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings --dis-ptr-arith)
+Checking veribsync/barrier-static.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith)
+Checking veribsync/barrier-dynamic2.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith)
+Unexpected result with : veribsync/barrier-dynamic2.slk (failed check(s): {E13#Valid},{E2#Fail}) 
+Checking conchip/threads.slk (runs with extra options:  -tp parahip --old-lemma-settings)
+Checking conchip/latch.slk (runs with extra options:  -tp parahip --old-lemma-settings)
 Starting hip-sleek tests:
-Total number of errors: 3 in files:
-  infer/infer13.slk({E3#Valid},{E5#Valid}) imm-field/sleek02.slk({E13#Fail},{E7#Fail}) lemmas/dseg-new.slk({L2#Fail}).
+Total number of errors: 4 in files:
+  infer/infer13.slk({E3#Valid},{E5#Valid}) imm-field/sleek02.slk({E13#Fail},{E7#Fail}) lemmas/dseg-new.slk({L2#Fail}) veribsync/barrier-dynamic2.slk({E13#Valid},{E2#Fail}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 Total verification time: 225.94 second
 	Time spent in main process: 95.78 second
