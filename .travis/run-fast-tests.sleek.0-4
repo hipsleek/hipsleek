@@ -1,12 +1,12 @@
 Starting sleek tests:
 Checking sleek.slk
 Checking term.slk (runs with extra options: --efa-exc)
-Checking cll-d.slk
-Checking label-basic.slk (runs with extra options: --dis-eps)
-Checking label-dll.slk (runs with extra options: --dis-eps)
+Checking session/ent-1.slk
+Checking session/ex4-1B1S1S-a1.slk
+Checking session/ex4-1B1S1S.slk
 Starting hip-sleek tests:
 All test results were as expected.
 Total verification time: 0.99 second
 	Time spent in main process: 0.85 second
 	Time spent in child processes: 0.14 second
-	Number of false contexts: 1
+	Number of false contexts: 0

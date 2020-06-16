@@ -1,8 +1,8 @@
 Starting sleek tests:
-Checking infer/infer5a.slk
+Checking baga-test-2.slk (runs with extra options: --use-baga)
 Starting hip-sleek tests:
 All test results were as expected.
 Total verification time: 1.06 second
 	Time spent in main process: 0.45 second
 	Time spent in child processes: 0.61 second
-	Number of false contexts: 0
+	Number of false contexts: 8

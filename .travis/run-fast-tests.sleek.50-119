@@ -1,4 +1,14 @@
 Starting sleek tests:
+Checking infer/infer5a.slk
+Checking infer/infer6.slk
+Checking infer/infer7.slk
+Checking infer/infer8.slk
+Checking infer/infer9.slk
+Checking infer/infer10.slk
+Checking infer/infer11.slk
+Checking infer/infer12.slk
+Checking infer/infer13.slk (runs with extra options: --sa-en-cont)
+Unexpected result with : infer/infer13.slk (failed check(s): {E3#Valid},{E5#Valid}) 
 Checking infer/infer14.slk (runs with extra options: --sa-en-pure-field)
 Checking infer/infer15.slk
 Checking infer/infer16.slk
@@ -15,6 +25,7 @@ Checking imm/imm9-early-inst.slk (runs with extra options:  --etcsu1 --field-imm
 Checking imm/imm-hard.slk (runs with extra options:  --imm --eps)
 Checking imm-field/sleek01.slk (runs with extra options:  --field-imm --etcsu1 )
 Checking imm-field/sleek02.slk (runs with extra options:  --field-imm --etcsu1 )
+Unexpected result with : imm-field/sleek02.slk (failed check(s): {E13#Fail},{E7#Fail}) 
 Checking imm-field/sleek03.slk (runs with extra options:  --field-imm --etcsu1 --imm )
 Checking eps.slk (runs with extra options:  --dis-imm )
 Checking imm-field/sleek05.slk (runs with extra options:  --field-imm --etcsu1 )
@@ -61,16 +72,11 @@ Checking lemmas/odd-lseg.slk (runs with extra options:  --elp --dis-lem-gen --di
 Checking lemmas/lseg_complex.slk (runs with extra options:  --elp --dis-lem-gen --old-empty-to-conseq)
 Checking vperm/vperm.slk (runs with extra options:  --ann-vp)
 Checking veribsync/bperm-split-combine.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings --dis-ptr-arith)
-Checking veribsync/barrier-static.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith)
-Checking veribsync/barrier-dynamic2.slk (runs with extra options: --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith)
-Unexpected result with : veribsync/barrier-dynamic2.slk (failed check(s): {E2#Fail}) 
-Checking conchip/threads.slk (runs with extra options:  -tp parahip --old-lemma-settings)
-Checking conchip/latch.slk (runs with extra options:  -tp parahip --old-lemma-settings)
 Starting hip-sleek tests:
-Total number of errors: 2 in files:
-  lemmas/dseg-new.slk({L2#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+Total number of errors: 3 in files:
+  infer/infer13.slk({E3#Valid},{E5#Valid}) imm-field/sleek02.slk({E13#Fail},{E7#Fail}) lemmas/dseg-new.slk({L2#Fail}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 Total verification time: 225.94 second
 	Time spent in main process: 95.78 second
 	Time spent in child processes: 130.17 second
-	Number of false contexts: 33
+	Number of false contexts: 53

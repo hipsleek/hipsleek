@@ -1,20 +1,25 @@
 Starting sleek tests:
+Checking session/ex10a2-choice.slk
+Unexpected result with : session/ex10a2-choice.slk (failed check(s): {E12#Valid}) 
+Checking session/ex3e-lbl-rel.slk (runs with extra options: --sess)
+Unexpected result with : session/ex3e-lbl-rel.slk (failed check(s): no result  for {E}) 
+Checking session/ex5d-ent.slk (runs with extra options: --sess)
+Unexpected result with : session/ex5d-ent.slk (failed check(s): no result  for {E}) 
+Checking typecheck-poly.slk
+Checking cll-d.slk
+Checking label-basic.slk (runs with extra options: --dis-eps)
+Checking label-dll.slk (runs with extra options: --dis-eps)
+Checking sleek1.slk
+Checking sleek10.slk
 Checking sleek2.slk
 Checking sleek3.slk (runs with extra options: --elp)
 Checking sleek4.slk
 Checking sleek6.slk
-Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
-Checking sleek8.slk (runs with extra options:  --dis-lem-gen )
-Checking sleek8.slk (runs with extra options:  --elp )
-Checking sleek9.slk (runs with extra options:  --elp )
-Checking sleek12-lend.slk
-Checking sleek13-lend.slk
-Checking sleek13-lend.slk
-Checking sleek-err-exc.slk
-Checking sleek-err-exc-bind.slk
 Starting hip-sleek tests:
-All test results were as expected.
+Total number of errors: 3 in files:
+  session/ex10a2-choice.slk({E12#Valid}) session/ex3e-lbl-rel.slk(no result  for {E}) session/ex5d-ent.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 Total verification time: 83.14 second
 	Time spent in main process: 76.96 second
 	Time spent in child processes: 6.17 second
-	Number of false contexts: 0
+	Number of false contexts: 1

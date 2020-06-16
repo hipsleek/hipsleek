@@ -1,8 +1,8 @@
 Starting sleek tests:
-Checking infer/infer7.slk
+Checking xpure3nodes.slk
 Starting hip-sleek tests:
 All test results were as expected.
 Total verification time: 0.35 second
 	Time spent in main process: 0.31 second
 	Time spent in child processes: 0.04 second
-	Number of false contexts: 4
+	Number of false contexts: 0
