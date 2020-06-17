@@ -75,6 +75,8 @@ let default_value (t :typ) pos : exp =
   match t with
   | Int -> 
     IntLit { exp_int_lit_val = 0; exp_int_lit_pos = pos; }
+  | String -> 
+    StringLit { exp_string_lit_val = ""; exp_string_lit_pos = pos; }
   | Bool ->
     BoolLit {exp_bool_lit_val = true;  exp_bool_lit_pos = pos;}
   | Float ->
@@ -329,6 +331,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -528,6 +531,7 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -785,6 +789,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -1607,6 +1612,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -1744,6 +1750,7 @@ and find_addr (e:exp) : ident list =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -2343,6 +2350,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _

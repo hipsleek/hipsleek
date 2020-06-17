@@ -288,6 +288,7 @@ let rec math_of_exp e0 : string=
   | CP.Bptriple _ -> failwith ("mathematica.math_of_exp: Bptriple can't appear here")
   | CP.Tup2 _ -> failwith ("mathematica.math_of_exp: Tup2 can't appear here")
   | CP.IConst (i, _) -> string_of_int i
+  | CP.SConst (s, _) -> failwith ("mathematica.math_of_exp: String cannot be handled")
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> math_of_float f
   | CP.Tsconst _ -> failwith ("mathematica.math_of_exp: Tsconst can't appear here")

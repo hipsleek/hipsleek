@@ -77,6 +77,7 @@ let rec smt_of_typ t =
   | Float -> "Int" (* Currently, do not support real arithmetic! *)
   | Tree_sh -> "Int"
   | Int -> "Int"
+  | String -> "String"
   | AnnT -> "Int"
   | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)
@@ -115,6 +116,7 @@ let rec smt_of_exp a =
   | CP.Var (sv, _) -> smt_of_spec_var sv
   | CP.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
+  | CP.SConst (s, _) -> "\"" ^ s ^ "\""
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
   | CP.FConst (f, _) -> string_of_float f 
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"

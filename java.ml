@@ -338,6 +338,7 @@ and java_of_exp = function
   | BoolLit ({exp_bool_lit_val = b})
     -> string_of_bool b 
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
+  | StringLit b -> "translator is in need of reviews"
   | FloatLit ({exp_float_lit_val = f})
     -> string_of_float f
   | Null l                         -> "null"

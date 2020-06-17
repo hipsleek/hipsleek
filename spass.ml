@@ -44,6 +44,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.Var (sv, _) -> let func = spass_dfg_of_spec_var sv in (func, [func], [])
   (* illegal_format "SPASS don't support Var expresion" *)
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
+  | Cpure.SConst _    -> illegal_format "SPASS don't support IConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
@@ -193,6 +194,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.Null _      -> "ssNULL"
   | Cpure.Var (sv, _) -> spass_tptp_of_spec_var sv
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
+  | Cpure.SConst _    -> illegal_format "SPASS don't support SConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
@@ -282,6 +284,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Null _         -> true
   | Cpure.Var _          -> true
   | Cpure.IConst _       -> false
+  | Cpure.SConst _       -> false
   | Cpure.FConst _       -> false
   | Cpure.AConst _       -> false
   | Cpure.Tsconst _      -> false

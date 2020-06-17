@@ -874,6 +874,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
   match exp with
   | CP.Null _
   | CP.IConst _
+  | CP.SConst _
   | CP.AConst _ 
   | CP.InfConst _
   | CP.NegInfConst _

@@ -200,6 +200,7 @@ let rec string_of_formula_exp = function
   | P.Var (x, l)        -> string_of_id x
   | P.Level (x, l)        -> ("level(" ^ (string_of_id x) ^ ")")
   | P.IConst (i, l)           -> string_of_int i
+  | P.SConst (s, l)           -> s
   | P.InfConst(s,l) -> s
   | P.NegInfConst(s,l) -> "~"^s
   | P.AConst (i, l)           -> string_of_heap_ann i
@@ -828,6 +829,7 @@ let rec string_of_exp = function
   | BoolLit ({exp_bool_lit_val = b})
       -> string_of_bool b 
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
+  | StringLit ({exp_string_lit_val = s}) -> s
   | FloatLit ({exp_float_lit_val = f})
       -> string_of_float f
   | Null l                         -> "null"

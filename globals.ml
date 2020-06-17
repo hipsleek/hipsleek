@@ -192,6 +192,7 @@ type typ =
   | TVar of int
   | AnnT
   | Bool
+  | String
   | Float
   | Int
   | INFInt
@@ -298,6 +299,7 @@ let rec cmp_typ t1 t2=
   | UNK, UNK
   | AnnT, AnnT
   | Bool, Bool
+  | String, String
   | Float, Float
   | Int, Int
   | INFInt, INFInt
@@ -609,6 +611,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
+  | String          -> "string"
   | Float         -> "float"
   | Int           -> "int"
   | INFInt        -> "INFint"
@@ -663,6 +666,7 @@ let rec string_of_typ_alpha = function
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
+  | String          -> "string"
   | Float         -> "float"
   | Int           -> "int"
   | INFInt        -> "INFint"

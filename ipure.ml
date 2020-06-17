@@ -245,6 +245,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Null _ 
   | AConst _ 
   | IConst _ 
+  | SConst _ 
   | Tsconst _ 
   | InfConst _
   | NegInfConst _
@@ -308,6 +309,11 @@ and is_integer e =
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
     is_integer e1 && is_integer e2
+  | _ -> false
+
+and is_string e =
+  match e with
+  | SConst _ -> true
   | _ -> false
 
 and is_list (e : exp) : bool = match e with
@@ -606,6 +612,7 @@ and pos_of_exp (e : exp) = match e with
   | Var (_, p) 
   | Level (_, p) 
   | IConst (_, p) 
+  | SConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
   | Bptriple (_, p)
@@ -838,6 +845,7 @@ and subst_exp sst (e: exp) : exp =
 and e_apply_one ((fr, t) as p) e = match e with
   | Null _ 
   | IConst _ 
+  | SConst _ 
   | FConst _ 
   | Tsconst _
   | InfConst _
@@ -1053,6 +1061,7 @@ and find_lexp_exp (e: exp) ls =
     | Var _
     | Level _
     | IConst _
+    | SConst _
     | AConst _
     | Tsconst _
     | InfConst _
@@ -1124,6 +1133,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Var _ 
   | Level _ 
   | IConst _ 
+  | SConst _ 
   | AConst _ 
   | Tsconst _
   | Bptriple _ (* TOCHECK *)
@@ -1200,6 +1210,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Var _ 
   | Level _ 
   | IConst _ 
+  | SConst _ 
   | AConst _ 
   | Tsconst _
   | InfConst _ 
@@ -1602,6 +1613,7 @@ and float_out_pure_min_max (p : formula) : formula =
         | Min(v1, v2, v3) -> let r2 = match e2 with
           | Null _
           | IConst _
+          | SConst _
           | FConst _
           | AConst _
           | Tsconst _
@@ -1618,6 +1630,7 @@ and float_out_pure_min_max (p : formula) : formula =
         | Max(v1, v2, v3) -> let r2 = match e2 with
           | Null _
           | IConst _
+          | SConst _
           | AConst _
           | Tsconst _
           | Var _ ->
@@ -1633,6 +1646,7 @@ and float_out_pure_min_max (p : formula) : formula =
           in r2
         | Null _
         | IConst _
+        | SConst _
         | FConst _
         | AConst _
         | Tsconst _
@@ -1840,6 +1854,7 @@ let rec typ_of_exp (e: exp) : typ =
   (* Const *)
   | Level _                   -> Globals.level_data_typ
   | IConst _                  -> Globals.Int
+  | SConst _                  -> Globals.String
   | FConst _                  -> Globals.Float
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
   | NegInfConst _               -> Globals.INFInt (* Type of Infinity should be Num keep Int for now *)
@@ -2069,7 +2084,7 @@ let rec transform_exp_x f (e : exp) : exp =
   match r with
   | Some ne -> ne
   | None -> (match e with
-      | Null _  | Var _ | Level _ | IConst _ | AConst _ 
+      | Null _  | Var _ | Level _ | IConst _ | SConst _ | AConst _ 
       | Tsconst _ | Bptriple _ | FConst _ | Tup2 _ -> e
       | Ann_Exp (e,t,l) ->
         let ne = transform_exp f e in

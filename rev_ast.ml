@@ -40,6 +40,7 @@ let rec rev_trans_exp e = match e with
     IP.Bptriple ((nc,nt,na),p)
   | CP.Tup2 ((e1,e2),p)      -> IP.Tup2 ((rev_trans_exp e1, rev_trans_exp e2), p)
   | CP.IConst b -> IP.IConst b
+  | CP.SConst b -> IP.SConst b
   | CP.FConst b -> IP.FConst b
   | CP.AConst b -> IP.AConst b
   | CP.Tsconst b -> IP.Tsconst b

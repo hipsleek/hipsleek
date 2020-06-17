@@ -97,6 +97,7 @@ and cvcl_of_exp a = match a with
   | CP.Null _ -> "0"
   | CP.Var (sv, _) -> cvcl_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
+  | CP.SConst (s, _) -> failwith ("cvclite.cvcl_of_exp: String cannot be handled")
   | CP.FConst _ -> failwith ("[cvclite.ml]: ERROR in constraints (float should not appear here)")
   | CP.Add (a1, a2, _) ->  (cvcl_of_exp a1) ^ " + " ^ (cvcl_of_exp a2)
   | CP.Subtract (a1, a2, _) ->  (cvcl_of_exp a1) ^ " - " ^ (cvcl_of_exp a2)

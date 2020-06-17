@@ -114,7 +114,7 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
     | CheckRef _ | BConst _
     | Debug _    | Dprint _
     | FConst _   | ICall _
-    | IConst _   | New _
+    | IConst _   | SConst _ | New _
     | Null _  | EmptyArray _ (* An Hoa *)
     | Print _ | Barrier _
     | This _   | Time _
@@ -296,7 +296,7 @@ let find_rel_args_groups_x prog proc e0=
     | CheckRef _ | BConst _
     | Debug _    | Dprint _
     | FConst _   | ICall _
-    | IConst _   | New _
+    | IConst _   | SConst _ | New _
     | Null _  | EmptyArray _ (* An Hoa *)
     | Print _ | Barrier _
     | This _   | Time _

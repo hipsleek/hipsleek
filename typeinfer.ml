@@ -546,6 +546,10 @@ and gather_type_info_exp_x prog a0 tlist et =
     let t = I.int_type in
     let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
     (n_tl,n_typ)
+  | IP.SConst (_,pos) ->
+    let t = I.string_type in
+    let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
+    (n_tl,n_typ)
   | IP.FConst (_,pos) ->
     let t = I.float_type in
     let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in

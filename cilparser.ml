@@ -155,6 +155,7 @@ let rec loc_of_iast_exp (e: Iast.exp) : VarGen.loc =
   | Iast.FloatLit e -> e.Iast.exp_float_lit_pos
   | Iast.Finally e -> e.Iast.exp_finally_pos
   | Iast.IntLit e -> e.Iast.exp_int_lit_pos
+  | Iast.StringLit e -> e.Iast.exp_string_lit_pos
   | Iast.Java e -> e.Iast.exp_java_pos
   | Iast.Label (_, e1) -> loc_of_iast_exp e1
   | Iast.Member e -> e.Iast.exp_member_pos
@@ -1389,7 +1390,7 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
   | Cil.CInt64 (i, _, _) -> Iast.mkIntLit (Int64.to_int i) pos
-  | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
+  | Cil.CStr s -> Iast.mkStringLit s pos
   | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
   (*| Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"*)
   | Cil.CChr c -> Iast.mkIntLit (Char.code c) pos
@@ -2290,6 +2291,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Iast.mkMember addr_var ["deref"] None pos*)
     | Ipure.IConst (i, pos) ->
       Ipure.IConst (i, pos)
+    | Ipure.SConst (s, pos) ->
+      Ipure.SConst (s, pos)
     | Ipure.FConst (f, pos) ->
       Ipure.FConst (f, pos)
     | Ipure.AConst (ha, pos) ->

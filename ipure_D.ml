@@ -123,6 +123,7 @@ and exp =
   | Var of ((ident * primed) * loc)
   (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
+  | SConst of (string * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc) (* Constant for Infinity  *)

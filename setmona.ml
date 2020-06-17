@@ -244,7 +244,7 @@ and to_fo (svs : spec_var list) var_map : bool =
 *)
 and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Null _ 
-  | IConst _ | AConst _ -> false
+  | IConst _ | SConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Bptriple _ -> failwith ("[setmona.ml]: ERROR in constraints (Bptriple should not appear here)")

@@ -34,6 +34,9 @@ let rec isabelle_of_typ = function
   | Tree_sh 	  -> "int"
   | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
+  | String        ->
+    Error.report_error {Error.error_loc = no_pos; 
+                        Error.error_text = "String not supported for Isabelle"}
   | Void          -> "void" 	(* same as for float *)
   | BagT	t	  ->
     if !bag_flag then "("^(isabelle_of_typ t) ^") multiset"
@@ -117,6 +120,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Null _ -> "(0::int)"
   | CP.Var (sv, _) -> isabelle_of_spec_var sv
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
+  | CP.SConst (s, _) -> failwith ("[isabelle.ml]: ERROR in constraints (String should not appear here)")
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")

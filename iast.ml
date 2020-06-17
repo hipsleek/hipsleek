@@ -409,6 +409,9 @@ and exp_block = { exp_block_body : exp;
 and exp_bool_lit = { exp_bool_lit_val : bool;
                      exp_bool_lit_pos : loc }
 
+and exp_string_lit = { exp_string_lit_val : string;
+                       exp_string_lit_pos : loc }
+
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
 (* WN : why do we have two kinds of calls? should unify *)
@@ -576,6 +579,7 @@ and exp =
   | FloatLit of exp_float_lit
   | Finally of exp_finally
   | IntLit of exp_int_lit
+  | StringLit of exp_string_lit
   | Java of exp_java
   | Label of ((control_path_id * path_label) * exp)
   | Member of exp_member
@@ -599,6 +603,8 @@ and exp =
 let void_type = Void
 
 let int_type = Int
+
+let string_type = Globals.String
 
 let infint_type = INFInt
 
@@ -847,6 +853,7 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
       | Empty _
       | FloatLit _
       | IntLit _
+      | StringLit _
       | Java _
       | Null _
       | This _
@@ -1001,6 +1008,7 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
       | Empty _
       | FloatLit _
       | IntLit _
+      | StringLit _
       | Java _
       | Null _
       | This _
@@ -1175,6 +1183,10 @@ let is_num (e : exp) : bool = match e with
   | FloatLit _ | IntLit _ -> true
   | _ -> false
 
+let is_string (e : exp) : bool = match e with
+  | StringLit _ -> true
+  | _ -> false
+
 let is_mult_op b =
   match b with | OpMult -> true | _ -> false
 
@@ -1213,6 +1225,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | FloatLit e -> e.exp_float_lit_pos
   | Finally e -> e.exp_finally_pos
   | IntLit e -> e.exp_int_lit_pos
+  | StringLit e -> e.exp_string_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
   | ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
@@ -2616,6 +2629,10 @@ and mkIntLit i pos =
   IntLit { exp_int_lit_val = i;
            exp_int_lit_pos = pos }
 
+and mkStringLit s pos =
+  StringLit { exp_string_lit_val = s;
+              exp_string_lit_pos = pos; }
+
 and mkFloatLit f pos =
   FloatLit { exp_float_lit_val = f;
              exp_float_lit_pos = pos}
@@ -2804,6 +2821,7 @@ let rec label_e e =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Unfold _
     | Var _
@@ -3825,6 +3843,7 @@ let find_all_num_trailer_exp e =
     | CallRecv b -> Some ac
     | CallNRecv b -> Some ac
     | IntLit _ -> Some ac
+    | StringLit _ -> Some ac
     | New b -> Some ac
     | Null _ -> Some ac
     | Empty _ -> Some ac

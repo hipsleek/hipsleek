@@ -114,6 +114,9 @@ and aug_class_name (t : typ) = match t with
   | Pointer _ -> "Pointer"
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
+  | String -> 	
+    Error.report_error {Error.error_loc = no_pos; 
+                        Error.error_text = "unexpected String type"}
   | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
   | RelT _ -> "RelAug"
