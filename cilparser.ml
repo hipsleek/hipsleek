@@ -1286,7 +1286,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
     match t with
     | Cil.TVoid _ -> Globals.Void
     | Cil.TInt (Cil.IBool, _) -> Globals.Bool
-    (*| Cil.TInt (Cil.IChar, _) -> Globals.Named "char"*)
+    | Cil.TInt (Cil.IChar, _) -> Globals.Named "char"
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) -> (
