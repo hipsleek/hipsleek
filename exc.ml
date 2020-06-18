@@ -832,6 +832,7 @@ struct
     | BagT et1, BagT et2 -> sub_type et1 et2
     | List et1, List et2 -> sub_type et1 et2
     | Int, NUM        -> true
+    | String, Named "char_star" -> true
     | Float, NUM        -> true
     | p1, p2 -> p1=p2
   ;;
