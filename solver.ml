@@ -7894,7 +7894,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                          in the ante will be passed throught the entailment*)
                       match h2 with
                       | HFalse | HEmp | HTrue (* | HRel _ *) -> (
-                          x_dinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
+                          x_binfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                                             ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                                             ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
                           (*simplify htrue in LHS*)
@@ -7966,7 +7966,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                           (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
                           then (
                             (* WN : shouldn't we fail if no_infer_hp_rel *)
-                            if  (* not *) (no_infer_hp_rel estate) then
+                            if not (no_infer_hp_rel estate) then
                               let () = x_tinfo_pp "no_infer_hp_rel? " no_pos in
                               let err_msg =  "residue is forbidden.(1)" in
                               let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
@@ -7976,6 +7976,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                               (ls_ctx, proof)
                             else
                             if !Globals.old_infer_hprel_classic then
+                              (* This part allows to handle the HVar mapping during ho arg matching *)
                               let () = x_tinfo_hp (add_str "h1 " !CF.print_h_formula) h1 no_pos in
                               let () = x_winfo_pp "WN : Why a diffrent way to infer_collect_hp_rel_classsic" no_pos in
                               let r, new_es = x_add InferHP.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
@@ -11367,6 +11368,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   let f_es, f_rhs =
                     match flow_ann with
                     | INFLOW ->
+                      let () = x_binfo_pp "flow_ann INFLOW" no_pos in
                       (match k with
                        | HO_SPLIT ->
                          let vpl = CF.get_vperm_set ho_lhs in
@@ -11376,10 +11378,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                          { new_es with es_formula = contra_lhs; }, contra_rhs
                        | _ -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
                       )
-                    | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs
+                    | _ -> let () = x_binfo_pp "flow_ann _" no_pos in { new_es with es_formula = ho_lhs; }, new_ho_rhs
                   in
                   let pr = Cprinter.string_of_formula in
-                  let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
+                  let () = x_tinfo_hp (add_str "new_ho_lhs f_es:" Cprinter.string_of_entail_state_short) f_es no_pos in
                   let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
                   let f_ctx = x_add elim_unsat_es_now 13 prog (ref 1) f_es in
                   let res_ctx, res_prf =
@@ -11487,7 +11489,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs, rhs), k)
               in
 
-              let res = List.map match_one_ho_arg args in
+              let res = x_add List.map match_one_ho_arg args in
               let failures = List.filter (fun (r, _, _, _) -> r != None) res in
               if (failures != []) then
                 (* Failure case *)

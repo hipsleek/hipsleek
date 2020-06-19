@@ -410,7 +410,7 @@ let common_arguments = [
   ("--new-keep-all-matchres", Arg.Clear Globals.old_keep_all_matchres,"Filter out matchres that are empty first");
   ("--old-do-match-infer-heap", Arg.Set Globals.old_do_match_infer_heap,"Enable do match during infer_heap (seems wrong)");
   ("--new-do-match-infer-heap", Arg.Clear Globals.old_do_match_infer_heap,"Disable do match during infer_heap (cleaner)");
-  ("--old-infer-hprel-classic", Arg.Set Globals.old_infer_hprel_classic,"Enable infer hp_rel handling of classic (seems redundant)");
+  ("--old-infer-hprel-classic", Arg.Clear Globals.old_infer_hprel_classic,"Enable infer hp_rel handling of classic (seems redundant)");
   ("--old-collect-hprel", Arg.Set Globals.old_collect_hprel,"Enable Old False which invokes infer_hp_rel without classic");
   ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
   ("--old-base-case-unfold", Arg.Set Globals.old_base_case_unfold,"Enable Old BaseCaseUnfold Method");

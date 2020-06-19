@@ -27,5 +27,28 @@ checkentail c::LatchIn{-z::cell<n> & n=6}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
 print residue.
 
 //should be VALID
-//checkentail c::LatchIn{-z::cell<n> & n>5}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
-//print residue.
+checkentail c::LatchIn{-z::cell<n> & n>5}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
+print residue.
+
+
+//should FAIL
+checkentail c::LatchIn{-z::cell<m> & m=6}<>  |- 
+		c::LatchIn{-z::cell<n> * x::cell<1> & n=6}<>.
+print residue.
+
+//should be VALID
+checkentail c::LatchOut{+z::cell<m> * x::cell<1> & m=6}<>  |-
+                c::LatchOut{+z::cell<n> & n=6}<>.
+print residue.
+
+
+//should be VALID
+checkentail c::LatchIn{-z::cell<m> * x::cell<1> & m=6}<>  |-
+                c::LatchIn{-z::cell<n> & n=6}<>.
+print residue.
+
+
+//should be VALID
+checkentail c::LatchIn{-z::cell<m> * x::cell<1> & m=6}<>  |-
+                c::LatchIn{-z::cell<n> & n=6}<> * c::LatchIn{-x::cell<1>}<>.
+print residue.
