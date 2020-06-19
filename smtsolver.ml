@@ -90,6 +90,7 @@ let rec smt_of_typ t =
   | TVar _ -> "Int"
   | Void -> "Int"
   | List _ -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+  | Named "char" -> "String" (* char pointers are strings *)
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
@@ -121,8 +122,10 @@ let rec smt_of_exp a =
   | CP.Null _ -> "0"
   | CP.Var (sv, _) -> smt_of_spec_var sv
   | CP.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
-  | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
-  | CP.SConst (s, _) -> "\"" ^ s ^ "\""
+  (* | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")" *)
+  | CP.IConst (i, _) -> let () = print_string ("z3.smt_of_exp debug: " ^ str) in if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
+  (* | CP.SConst (s, _) -> "\"" ^ s ^ "\"" *)
+  | CP.SConst (s, _) -> let () = print_string ("z3.smt_of_exp debug: " ^ str) in "\"" ^ s ^ "\""
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
   | CP.FConst (f, _) -> string_of_float f 
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int* __cast_char_star_to_int_star__(char p[])
+int* __cast_char_star_to_int_star__(char *p)
 /*@
   case{
   p != null -> requires p::char_star<_,_>
@@ -21,7 +21,7 @@ int main(void)
   /*
    * big-endian integer interpretation of "type" 116 121 112 101, is 1954115685
    */
-  char s[] = {'e','p','y','t'}; // integer is little-endian
+  char *s = "eypt"; // integer is little-endian
   a = (int *)s;
   //printf("%d\n", *a);
 }
