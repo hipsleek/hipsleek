@@ -1,7 +1,16 @@
 Starting sleek-hip tests:
 Starting hip tests:
 Checking parahip/cell-extreme-cases.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj)
-All test results were as expected.
+error at: parahip/cell-extreme-cases.ss test
+error at: parahip/cell-extreme-cases.ss test2
+error at: parahip/cell-extreme-cases.ss test3
+error at: parahip/cell-extreme-cases.ss test4
+Total number of errors: 4 in files:
+ error at: parahip/cell-extreme-cases.ss test
+error at: parahip/cell-extreme-cases.ss test2
+error at: parahip/cell-extreme-cases.ss test3
+error at: parahip/cell-extreme-cases.ss test4
+.
 Total verification time: 468.70 second
 	Time spent in main process: 1.02 second
 	Time spent in child processes: 467.68 second

@@ -2,8 +2,10 @@ Starting sleek-hip tests:
 Starting hip tests:
 Checking parahip/cell.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj)
 error at: parahip/cell.ss test
-Total number of errors: 1 in files:
+error at: parahip/cell.ss test1
+Total number of errors: 2 in files:
  error at: parahip/cell.ss test
+error at: parahip/cell.ss test1
 .
 Total verification time: 1196.81 second
 	Time spent in main process: 1.76 second
