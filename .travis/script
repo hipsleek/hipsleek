@@ -3,8 +3,8 @@
 
 # Assume fourth-last to second-last lines are not related to tests,
 # and leaving these lines in causes diff to exit with non-zero code.
-snip() {
-  tac /dev/stdin | sed -e '2,4d' | tac
+get_timings() {
+  tail -n 4 "$1" | head -n 3
 }
 
 travis_wait() {
@@ -46,7 +46,35 @@ find . -name _build -not -prune -or -name '*.ml' -and -not -name '*.pp.ml' -or -
 cd examples/working
 s=$HIPSLEEK_TESTS_START # assume is integer
 e=$HIPSLEEK_TESTS_END # assume is integer
-./run-fast-tests.pl sleek > run-fast-tests.sleek.$s-$e
-diff <(snip < ../../.travis/run-fast-tests.sleek.$s-$e) <(snip < run-fast-tests.sleek.$s-$e)
+
+timings="$(get_timings ../../.travis/run-fast-tests.sleek.$s-$e)"
+./run-fast-tests.pl sleek > ../../.travis/run-fast-tests.sleek.$s-$e
+ed ../../.travis/run-fast-tests.sleek.$s-$e <<EOF
+$
+---
+d
+d
+d
+i
+$timings
+.
+w
+q
+EOF
+git diff --exit-code --ignore-submodules=dirty
+
+timings="$(get_timings ../../.travis/run-fast-tests.hip.$s-$e)"
 travis_wait run-fast-tests.hip.$s-$e "./run-fast-tests.pl hip"
-diff <(snip < ../../.travis/run-fast-tests.hip.$s-$e) <(snip < run-fast-tests.hip.$s-$e)
+ed ../../.travis/run-fast-tests.hip.$s-$e <<EOF
+$
+---
+d
+d
+d
+i
+$timings
+.
+w
+q
+EOF
+git diff --exit-code --ignore-submodules=dirty
