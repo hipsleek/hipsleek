@@ -1884,8 +1884,8 @@ my $dis = '--dis-inv-baga';
                       ["baga-test-2.slk", "--use-baga", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               ["symb-diff.slk", "", (), "Valid.Valid.Valid."],
 		      ["xpure3nodes.slk","",(),"Valid.Valid."],
-                      ["infer/app-inv.slk", "--inv --dis-eps", (), "Valid.Valid.Fail.Valid.Valid.Valid."],
-                      ["infer/app-inv2.slk", "--inv --dis-eps", (), "Valid.Valid.Valid.Fail."],
+                      ["infer/app-inv.slk", "--inv --dis-eps --old-infer-hprel-classic", (), "Valid.Valid.Fail.Valid.Valid.Valid."],
+                      ["infer/app-inv2.slk", "--inv --dis-eps --old-infer-hprel-classic", (), "Valid.Valid.Valid.Fail."],
                       ["infer/infer1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
                       ["infer/infer2.slk", "", (), "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
                       ["infer/infer4.slk", "", (), "Fail.Fail.Valid"],
@@ -1949,7 +1949,7 @@ my $dis = '--dis-inv-baga';
 #        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
         # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
         ["lemmas/sort2.slk", " --elp --dis-lem-gen ", ([$lem,"Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid."]), ""],
-         ["lemmas/lseg.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid.Valid."]), ""],
+         ["lemmas/lseg.slk", " --elp --dis-lem-gen --lem-get-simp", ([$lem,"Valid.Valid.Valid.Valid."]), ""],
         # ["lemmas/lseg.slk", " --elp ", "", ""],
         ["lemmas/lseg1.slk", " --elp --dis-lem-gen ", ([$lem,"Valid."]), ""],
         ["lemmas/rlseg.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Valid.Valid."]), ""],
@@ -1974,12 +1974,12 @@ my $dis = '--dis-inv-baga';
         ["lemmas/sll_tailL.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
         # ["lemmas/dseg-new.slk", " --elp --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
   # --old-empty-to-conseq is an unsound feature used by complex lemmas
-        ["lemmas/dseg-new.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Fail.Valid."]), ""],
+        ["lemmas/dseg-new.slk", " --elp --dis-lem-gen --old-empty-to-conseq --lem-get-simp --old-infer-hprel-classic", ([$lem,"Valid.Fail.Valid."]), ""],
         # 2nd lemma requires another rlseg<..> <--> lseg to prove..
         ["lemmas/dseg1.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Fail."]), ""],
         # loop with --eps. Why?
         ["lemmas/odd-lseg.slk", " --elp --dis-lem-gen --dis-eps", ([$lem,"Valid.Valid."]), "Fail.Valid.Valid.Fail.Valid.Fail.Valid"],
-        ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
+        ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen --old-empty-to-conseq --lem-get-simp", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
   # --old-norm-w-coerc causes infinite loop for some examples
               # loop without old-search-always
               #["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
@@ -1987,9 +1987,9 @@ my $dis = '--dis-inv-baga';
               # loop
               # ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
               ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
-              ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings --dis-ptr-arith", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
-              ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith", (), "Valid.Valid.Valid.Valid.Valid."],
-              ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+              ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings --dis-ptr-arith --lem-get-simp --old-infer-hprel-classic", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
+              ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith --lem-get-simp --old-infer-hprel-classic", (), "Valid.Valid.Valid.Valid.Valid."],
+              ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith --lem-get-simp --old-infer-hprel-classic", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
               # looping..
               #["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog  --old-lemma-settings", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"],
               ["conchip/threads.slk"," -tp parahip --old-lemma-settings", "", "Valid.Valid.Valid"],

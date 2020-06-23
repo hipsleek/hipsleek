@@ -929,6 +929,8 @@ let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
 
+let get_simp_lemma = ref true
+
 let allow_rd_lemma = ref false
 (* unsound *)
 
