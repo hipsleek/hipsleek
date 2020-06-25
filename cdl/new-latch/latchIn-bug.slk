@@ -22,33 +22,32 @@ pred_prim CNT<n:int>
 //lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
 
-//should be VALID
+//1: should be VALID
 checkentail c::LatchIn{-z::cell<n> & n=6}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
 print residue.
 
-//should be VALID
+//2: should be VALID
 checkentail c::LatchIn{-z::cell<n> & n>5}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
 print residue.
 
 
-//should FAIL
+//3: should FAIL
 checkentail c::LatchIn{-z::cell<m> & m=6}<>  |- 
 		c::LatchIn{-z::cell<n> * x::cell<1> & n=6}<>.
 print residue.
 
-//should be VALID
+//4: should be VALID
 checkentail c::LatchOut{+z::cell<m> * x::cell<1> & m=6}<>  |-
                 c::LatchOut{+z::cell<n> & n=6}<>.
 print residue.
 
-
-//should be VALID
+//5: should be VALID
 checkentail c::LatchIn{-z::cell<m> * x::cell<1> & m=6}<>  |-
                 c::LatchIn{-z::cell<n> & n=6}<>.
 print residue.
 
 
-//should be VALID
+//6: should be VALID
 checkentail c::LatchIn{-z::cell<m> * x::cell<1> & m=6}<>  |-
                 c::LatchIn{-z::cell<n> & n=6}<> * c::LatchIn{-x::cell<1>}<>.
 print residue.

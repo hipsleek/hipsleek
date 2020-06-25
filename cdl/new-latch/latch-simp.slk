@@ -15,12 +15,13 @@ pred_prim CNT<n:int>
 
 lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
 
-lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+lemma "combine-first" self::CNT<a> * self::CNT<b> & a<0 & b<0 -> self::CNT<a+b>.
 
 lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
 
-lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
-//1: VALID
-checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
+
+//2: VALID -- ???
+checkentail c::CNT<a> * c::CNT<b> & a=-2 & b=-2 |- c::CNT<n> & n=-4.
 print residue.
