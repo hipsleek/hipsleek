@@ -29,7 +29,7 @@ print residue.
 checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
 print residue.
 
-//3: VALID
+//3: VALID -- ???
 checkentail c::CNT<a> * c::CNT<b> & a=-1 & b=-2 |- c::CNT<n> & n=-3.
 print residue.
 
@@ -48,10 +48,10 @@ print residue.
 checkentail c::LatchOut{+z::cell<10>}<> * c::CNT<0> |- z::cell<10>.
 print residue.
 
-//7: FAIL -- should be VALID
+//7: FAIL -- should be VALID -- VALID
 checkentail c::CNT<1> * c::CNT<(-1)> |- emp & flow __Fail.
 print residue.
 
-//8: VALID -- should FAIL
+//8: VALID -- should FAIL -- FAIL
 checkentail c::CNT<1> * c::CNT<(-1)> |- true.
 print residue.

@@ -15,12 +15,26 @@ pred_prim CNT<n:int>
 
 lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
 
-lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+lemma "combine-first" self::CNT<a> * self::CNT<b> & a<0 & b<0 -> self::CNT<a+b>.
 
 lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
 
-lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
 
 //1: VALID
-checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
+//checkentail c::CNT<d> & d=4 |- c::CNT<n> * c::CNT<l> & n=2 & l=2.
+//print residue.
+
+//2: FAIL
+//checkentail c::CNT<d> * c::CNT<e> & d=2 & e=2 |- c::CNT<n> & n=4.
+//print residue.
+
+//3: should be VALID -- ??? after deleting the error lemma, it becomes VALID
+checkentail c::CNT<d> * c::CNT<e> & d=-2 & e=-3 |- c::CNT<n> & n=-5.
 print residue.
+
+
+
+
+

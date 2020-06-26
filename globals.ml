@@ -929,6 +929,8 @@ let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
 
+let get_simp_lemma = ref true
+
 let allow_rd_lemma = ref false
 (* unsound *)
 
@@ -1340,7 +1342,8 @@ let rev_priority = ref false
 
 let old_collect_false = ref false
 let old_collect_hprel = ref false
-let old_infer_hprel_classic = ref false
+let old_infer_hprel_classic = ref true 
+  (* this is allowed the HVar to be handled during ho arg matching *)
 let old_classic_rhs_emp = ref false
 let old_post_conv_impl = ref true (* affected by incr/ex14d.ss *)
 let old_post_impl_to_ex = ref true

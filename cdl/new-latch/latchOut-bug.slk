@@ -13,30 +13,31 @@ pred_prim LatchOut{+%P@Split}<>.
 pred_prim CNT<n:int>
   inv n>=(-1).
 
-//lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
 
-//lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
 
 lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
 
-//lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
 
-//VALID
-//checkentail c::LatchOut{+z::cell<n> & n=6}<>  |- c::LatchOut{+z::cell<n> & n=6}<>.
-//print residue.
+//1: VALID
+checkentail c::LatchOut{+z::cell<n> & n=6}<>  |- c::LatchOut{+z::cell<n> & n=6}<>.
+print residue.
 
-//should be VALID
+//2: should be VALID -- VALID
 checkentail c::LatchOut{+z::cell<10>}<> * c::CNT<(-1)> |- z::cell<10>.
 print residue.
 
-//VALID
-//checkentail c::LatchOut{+z::cell<n> & n=6}<>  |- c::LatchOut{+z::cell<n> & n>5}<>.
-//print residue.
+//3: VALID
+checkentail c::LatchOut{+z::cell<n> & n=6}<>  |- c::LatchOut{+z::cell<n> & n>5}<>.
+print residue.
 
-//INVALID
-//checkentail c::LatchOut{+z::cell<n> & n>5}<>  |- c::LatchOut{+z::cell<n> & n=6}<>.
-//print residue.
+//4: FAIL
+checkentail c::LatchOut{+z::cell<n> & n>5}<>  |- c::LatchOut{+z::cell<n> & n=6}<>.
+print residue.
 
+//5: VALID
 checkentail c::LatchOut{+z::cell<n> * w::cell<m>}<>  |- c::LatchOut{+z::cell<n>}<>.
 print residue.
