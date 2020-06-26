@@ -1,0 +1,35 @@
+//CountDownLatch
+data CDL{
+}.
+
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+pred_prim CNT<n:int>
+  inv n>=(-1).
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+//lemma "combine-first" self::CNT<a> * self::CNT<b> & a<0 & b<0 -> self::CNT<a+b>.
+
+lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+
+lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+lemma "combine-first" self::CNT<a> * self::CNT<b> & a<0 & b<0 -> self::CNT<a+b>.
+
+
+//3: should be VALID -- ??? after deleting the error lemma, it becomes VALID
+checkentail c::CNT<d> * c::CNT<e> & d=-2 & e=-3 |- c::CNT<n> & n=-5.
+print residue.
+
+
+
+
+
+
