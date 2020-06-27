@@ -10,18 +10,22 @@ pred_prim LatchOut{+%P@Split}<>.
 //checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- x::cell<n> * %P}<>.
 //print residue.
 
+//1:
 // (4) [P --> y::cell<m>]
 checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> |- c::LatchOut{+ x::cell<n> * %P}<>.
 print residue.
 
+//2:
 // Should Fail
 checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> * x::cell<m> |- c::LatchOut{+ x::cell<n> * %P}<> * %P.
 print residue.
 
+//3:
 // P -> c::LatchOut{+ y::cell<m>} * x::cell<n>
 checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> * x::cell<n> |- c::LatchOut{+ x::cell<n>}<> * %P.
 print residue.
 
+//4:
 checkentail_exact c::LatchOut{+ x::cell<n>}<> * x::cell<m> |- c::LatchOut{+ %P}<> * %P.
 print residue.
 

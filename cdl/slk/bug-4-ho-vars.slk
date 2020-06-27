@@ -1,9 +1,10 @@
 data cell{ int v; }.
 
+//1:
 checkentail_exact x::cell<3> * %P |- %P * %Q.
 print residue.
 
-
+//2:
 checkentail_exact  %P |- %P .
 print residue.
 
@@ -30,12 +31,14 @@ Residue:
 
 */
 
+//3:
 checkentail_exact  %P * %Q |- %Q * %P .
 print residue.
 
-
+//4:
 checkentail_exact  %P * x::cell<3+2> |- %Q * %P .
 print residue.
 
+//5:
 checkentail_exact  %P * x::cell<3+2> |- %Q * %P & x!=null.
 print residue.

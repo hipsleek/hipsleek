@@ -17,7 +17,7 @@ Residue:
 For instantiation, I think we should pick mainly heap + related pure?
 Otherwise, I think we may pick up too much info?
 =================================================================
-# bug-3b
+# bug-3b (DONE)
 
 checkentail_exact x::cell<1>*y::cell<2> |- z::cell<3>*%P.
 
@@ -71,7 +71,7 @@ Residue:
 [[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
 
 =================================================================
-# bug-6
+# bug-6 (DONE)
 
 checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> 
     |- c::LatchOut{+ x::cell<n> * %P}<>.
@@ -83,7 +83,7 @@ Residue:
  ho_vars: [P --> x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[]]
 [[ COND ==>  Match(c,c) ==> ]]
 =================================================================
-# bug-6a
+# bug-6a (DONE)
 
 Contravariant checking is absent. Why?
 
@@ -154,7 +154,7 @@ Residue:
  <1>HVar PPP&{FLOW,(4,5)=__norm#E}[]
 [[ COND ==>  Match(c,c) ==> ]]
 =================================================================
-# bug-6e3 --esl (LatchIN)
+# bug-6e3 --esl (LatchIN) (DONE)
 
 - should be contravariant but is presently co-variant
 
@@ -195,7 +195,7 @@ check_normalize c1::CNT<1> * c2::CNT<(-1)> .
 CheckNorm (2) :  c1::CNT{}<flted_7_72>&flted_11_59=a_67 & c2=c1 & flted_11_58=flted_6_15 & 
 flted_11_59=1 & flted_11_58+1=0 & flted_7_72+1=0&{FLOW,(4,5)=__norm#E}[]
 =================================================================
-# bug-6e4 --esl (LatchIN)
+# bug-6e4 --esl (LatchIN) (DONE)
 
 - why did this example fail?
 - We should allow %PPP = emp as solution.

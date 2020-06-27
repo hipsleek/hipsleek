@@ -24,7 +24,7 @@ lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fa
 lemma "combine-first" self::CNT<a> * self::CNT<b> & a<0 & b<0 -> self::CNT<a+b>.
 
 
-//3: should be VALID -- ??? after deleting the error lemma, it becomes VALID
+//3: should be VALID -- ??? after changing the sequences of the lemmas, it becomes VALID
 checkentail c::CNT<d> * c::CNT<e> & d=-2 & e=-3 |- c::CNT<n> & n=-5.
 print residue.
 

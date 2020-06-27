@@ -5,32 +5,38 @@ pred_prim LatchIn{-%P@Split}<>.
 
 pred_prim LatchOut{+%P@Split}<>.
 
+//1:
 // (4) [P --> y::cell<m>]
 checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
             |- c::LatchIn{- x::cell<n> & n>0}<>.
 print residue.
 
+//2:
 checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
             |- c::LatchIn{- x::cell<n> & n>5}<>.
 print residue.
 
+//3:
 checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m > 3 & n > 0}<>
          |- c::LatchIn{- x::cell<n> * %PPP & n > 1}<>.
 print residue.
 
+//4:
 checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m > 3 & n > 0}<>
          |- c::LatchIn{- x::cell<n> & n > 1}<>.
 print residue.
 
+//5:
 checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n > 0}<>
          |- c::LatchIn{- x::cell<n> * y::cell<5>  & n > 1}<>.
 print residue.
 
+//6:
 checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m>0 & n > 0}<>
          |- c::LatchIn{- x::cell<n> * y::cell<m>  & m>1& n > 1}<>.
 print residue.
 
-// 7 -- this should fail or not?
+// 7 -- this should fail or not? -- YF: should succeed
 checkentail c::LatchIn{- x::cell<n> * y::cell<m> }<>
          |- c::LatchIn{- x::cell<n> * y::cell<m> }<>.
 print residue.

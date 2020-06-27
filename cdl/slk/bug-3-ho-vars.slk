@@ -17,6 +17,7 @@ print residue.
 checkentail x::cell<1> * y::cell<2> |- x::cell<3> * %P.
 print residue.
 
+// Why is this VALID
 checkentail x::cell<1> * y::cell<2> |- x::cell<1> * %P.
 print residue.
 

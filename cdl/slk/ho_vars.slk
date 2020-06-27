@@ -9,9 +9,11 @@ print residue.
 checkentail x::cell<_> * y::cell<_> |- %P.
 print residue.
 
+//???
 checkentail x::cell<_> |- %P * %Q.
 print residue.
 
+//???
 checkentail x::cell<_> * y::cell<_> |- %P * %Q.
 print residue.
 

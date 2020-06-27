@@ -32,7 +32,7 @@ print residue.
 checkentail c::LatchIn{- x::cell<n> & n>3}<>
             |- c::LatchIn{- x::cell<n> * y::cell<3> & n>5}<>.
 print residue.
-// valid
+// valid   YF???
 
 
 checkentail c::LatchIn{- x::cell<n> * y::cell<3> & n>3}<>

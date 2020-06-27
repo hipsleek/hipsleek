@@ -1,9 +1,10 @@
 data cell{ int v; }.
 
-
+//1:
 checkentail_exact  y::cell<_> * x::cell<3+2> |- %Q * x::cell<_> & y!=null.
 print residue.
 
+//2:
 checkentail_exact  y::cell<_> |- y::cell<_> & y!=null.
 print residue.
 

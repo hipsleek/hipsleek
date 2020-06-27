@@ -9,13 +9,13 @@ pred_prim LatchOut{+%P}<>.
 checkentail c::LatchIn{- x::cell<n> & n>3}<> 
     |- c::LatchIn{- x::cell<n> & n>0}<>.
 print residue.
-// should be invalid
+// should be invalid -- INVALID
 
 // (2) 
 checkentail c::LatchIn{- x::cell<n> & n>3}<> 
     |- c::LatchIn{- x::cell<n> & n>6}<>.
 print residue.
-// should be valid
+// should be valid -- VALID
 
 // (3) 
 checkentail c::LatchOut{+ x::cell<n> & n>3}<> 

@@ -21,7 +21,7 @@ checkentail c::LatchOut{+ x::cell<n>}<>
 print residue.
 expect Fail.
 
-//(4)
+//(4) What we expect???
 checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> * %PPP
             |- c::LatchOut{+ %PPP}<>.
 print residue.
@@ -35,3 +35,4 @@ print residue.
 checkentail c::LatchOut{+ x::cell<n> * y::cell<m> & n>3}<>
             |- c::LatchOut{+ x::cell<n> & n>5}<>.
 print residue.
+expect Fail.

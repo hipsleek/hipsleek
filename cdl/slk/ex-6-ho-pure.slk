@@ -8,7 +8,7 @@ checkentail x::cell<_> * y::cell<m> & m > 3 |- x::cell<_> * %PPP & m > 0.
 print residue.
 
 
-// Should be invalid because %PPP is not an impl_var
+// Should be invalid because %PPP is not an impl_var  ???
 
 checkentail x::cell<n> * %PPP & n > 1 |- x::cell<n> * y::cell<m> & m > 3 & n > 0.
 print residue.
