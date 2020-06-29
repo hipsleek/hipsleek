@@ -8,8 +8,10 @@ lemma_prop "idemp-CNT" self::CNT<a> * self::CNT<(-1)> -> self::CNT<(-1)>.
 lemma_prop "aum-CNT" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>.
 
 //1
-checkentail c1::CNT<1> * c1::CNT<(-1)> |- emp.
+checkentail c1::CNT<1> * c1::CNT<(-1)> |- c1::CNT<(-1)>.
 print residue.
+
+/*
 
 //2
 check_normalize c1::CNT<_> * c2::CNT<(-1)> .
@@ -38,3 +40,4 @@ check_normalize c2::CNT<(-1)> * c2::CNT<_>.
 //10
 check_normalize c1::CNT<(-1)> * c1::CNT<_>.
 
+*/
