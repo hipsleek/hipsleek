@@ -1,6 +1,6 @@
 /*
   Example with simple CountDownLatch
- */
+*/
 
 //CountDownLatch
 data CDL {}
