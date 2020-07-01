@@ -51,6 +51,10 @@ type match_res = {
   match_res_compatible: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
 }
 
+(* and match_res_level =
+ *   | One of match_res list
+ *   | Many of match_res_level list *)
+
 (*
 type context = (h_formula (* frame with a hole *)
 		* h_formula (* formula from the hole *)
@@ -4089,6 +4093,40 @@ and compute_actions_pretty prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
   let pr1 xs = String.concat " *" (List.map (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) xs) in
   let pr2 = string_of_action_res in
   let action = compute_actions_y prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos in
+  (* let rec get_match_res_level_of_action (a: action): match_res_level =
+   *   match a with
+   *   | M_match e -> One [e]
+   *   | M_split_match e -> One [e]
+   *   | M_fold e -> One [e]
+   *   | M_acc_fold (e,_) -> One [e]
+   *   | M_unfold (e,_) -> One [e]
+   *   | M_base_case_unfold e -> One [e]
+   *   | M_base_case_fold e -> One [e]
+   *   | M_seg_fold (e,_) -> One [e]
+   *   | M_rd_lemma e -> One [e]
+   *   | M_lemma (e,_,_) -> One [e]
+   *   | Undefined_action e -> One [e]
+   *   | M_Nothing_to_do _ -> One []
+   *   | M_infer_unfold (e,_,_) -> One [e]
+   *   | M_infer_fold (_,e) -> One [e]
+   *   | M_infer_heap (_,h1,h2,h3) -> One []
+   *   | M_unmatched_rhs_data_node (h1,h2,_) ->  One []
+   *   | Cond_action l -> Many (List.map (fun (w,a) -> get_match_res_level_of_action a) l)
+   *   | Seq_action l -> Many (List.map (fun (w,a) -> get_match_res_level_of_action a) l)
+   *   | Search_action l -> Many (List.map (fun (w,a) -> get_match_res_level_of_action a) l)
+   *   | M_lhs_case e -> One [e]
+   *   | M_ramify_lemma e -> One [e]
+   *   | M_cyclic (e,_,_,_,_) -> One [e]
+   * in
+   * let rec show_match_res (c: match_res): unit =
+   *   pr_hwrap "" pr_h_formula c.match_res_lhs_node; fmt_cut ();
+   *   pr_hwrap "" pr_h_formula c.match_res_rhs_node; fmt_cut ();
+   *   fmt_close ()
+   * and show_match_res_level (c: match_res_level): unit =
+   *   match c with
+   *   | One l -> List.iter show_match_res l
+   *   | Many l -> List.iter show_match_res_level l
+   * in *)
   compute_actions_pretty_no_4 "compute_actions_pretty" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> action) lhs_h lhs_p rhs_lst rhs_p
 
 and compute_actions_pretty_no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
