@@ -22,7 +22,7 @@ grammar = Grammar(
     alias = exp"="exp
     boolPred = exp"("exp")"
     heapPred = (space? "emp" space?) / (exp"::"exp"<"exp">@M")
-    exp = (var times var) / (var plus var) / var
+    exp = (var times exp) / (var plus exp) / var
     var = ~r"[a-zA-Z0-9_]+"
     proves = space? "|-" space?
     star = space? "*" space?
