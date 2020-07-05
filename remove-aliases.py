@@ -8,53 +8,73 @@
 # 2. Go to step 3 if line is not an entailment. Else, replace in `line` all occurences of `alias` with `value`, and remove from `line` all aliases.
 # 3. Print line (possibly with aliases removed) to output.
 
-import sys
+from sys import stdin
 
-entailSymbol=' |- '
-aliasSymbol='='
-operatorSymbols=['*', '&']
+openSymbol='[e|'
+closeSymbol='|e]'
+
+def get_indexes(line, symbol):
+    indexes = []
+    index = line.find(symbol)
+    if index != -1:
+        while index != -1:
+            indexes.append(index)
+            index = line.find(symbol, index+1)
+    return indexes
 
 if __name__ == '__main__':
 
     # Step 1.
-    for line in sys.stdin:
+    for line in stdin:
 
-        # Step 2.
-        if entailSymbol in line:
+        # Although get multiple index of `openSymbol` and `closeSymbol` with intention to iterate through all combinations,
+        # assume for now that `openSymbol` and `closeSymbol` are unique to entailments, and not used anywhere else.
+        # That is, between an `openSymbol` and a `closeSymbol` must lie an entailment (and nothing else).
+        # This assumption is useful for parsing entailments that span many lines.
+        indexesOpen = get_indexes(line, openSymbol)
+        indexesClose = get_indexes(line, closeSymbol)
 
-            # Replace all occurences of `alias` with `value`.
-            tokens = line.split(' ')
-            for i in range(len(tokens)):
-                token = tokens[i]
-                if aliasSymbol in token:
-                    (alias, value) = token.split(aliasSymbol)
+        isNotEntailment = len(indexesOpen) == 0 and len(indexesClose) == 0
+        isSpanOne = len(indexesOpen) == 1 and len(indexesClose) == 1
+        isSpanMany = len(indexesOpen) == 1 and len(indexesClose) == 0
+        if isNotEntailment:
 
-                    # Although all variables have unique names, the following is not correct,
-                    # since variables `b` and `b_107` have unique names, but with an alias `b=a`,
-                    # then string replacement will convert the variable `b_107` into `a_107`.
-                    # But to avoid parsing, this is the best solution.
-                    line = line.replace(alias, value)
+            # Step 3.
+            print(line, end='')
 
-            # Remove all aliases.
-            # Remove an alias, and also remove the operator before (if available).
-            tokens = line.split(' ')
-            tokensNoAliases = []
-            for i in range(len(tokens)):
-                token = tokens[i]
-                if aliasSymbol in token:
-                    (alias, value) = token.split(aliasSymbol)
-                    if alias == value:
-                        # Do not add to tokensNoAliases.
-                        # Try to remove operator before.
-                        if i-1 >= 0 and tokens[i-1] in operatorSymbols:
-                            tokensNoAliases.pop()
+        else:
+
+            # Extract entailments that possibly span multiple lines.
+            entailmentChunks = []
+
+            if isSpanOne:
+                entailmentChunks.append(line[indexesOpen[0]+len(openSymbol):indexesClose[0]])
+
+            elif isSpanMany:
+
+                # Assume line ends with '\n'. Remove trailing '\n'.
+                line = line[:-1]
+                entailmentChunks.append(line[indexesOpen[0]+len(openSymbol):])
+                for line in stdin:
+                    indexesOpen = get_indexes(line, openSymbol)
+                    indexesClose = get_indexes(line, closeSymbol)
+                    isIllegal = len(indexesOpen) == 1
+                    isSpanEnd = len(indexesOpen) == 0 and len(indexesClose) == 1
+                    if isIllegal:
+                        raise Exception('Nested openSymbols are illegal')
+                    elif isSpanEnd:
+                        entailmentChunks.append(line[:indexesClose[0]])
+                        break
                     else:
-                        tokensNoAliases.append(token)
-                else:
-                    tokensNoAliases.append(token)
+                        # Assume line ends with '\n'. Remove trailing '\n'.
+                        line = line[:-1]
+                        entailmentChunks.append(line)
 
-            # Collect tokensNoAliases.
-            line = ' '.join(tokensNoAliases)
+            else:
+                raise Exception('Unhandled case')
 
-        # Step 3.
-        print(line, end='')
+            entailment = ''.join(entailmentChunks)
+            print('entailment:', entailment)
+
+            # Step 2.
+            # TODO
