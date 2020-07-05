@@ -10,6 +10,7 @@
 
 from sys import stdin
 from parsimonious.grammar import Grammar
+from parsimonious.nodes import NodeVisitor
 from parsimonious.exceptions import ParseError
 
 # `handside` stands for both "left hand side" and "right hand side".
@@ -43,6 +44,33 @@ def get_indexes(line, symbol):
             indexes.append(index)
             index = line.find(symbol, index+1)
     return indexes
+
+class AliasCollector(NodeVisitor):
+    """Collect all occurences of `alias` with `value`.
+    """
+
+    def visit_alias(self, node, visited_children):
+        alias, _, value = node.children
+        return [(alias, value)]
+
+    def generic_visit(self, node, visited_children):
+        return [alias for child in visited_children for alias in child]
+
+class VarReplacer(NodeVisitor):
+    """Replace all occurences of `alias` with `value`.
+    """
+
+    def __init__(self, aliases):
+        self.aliases = aliases
+
+    def visit_var(self, node, visited_children):
+        for (alias, value) in self.aliases:
+            if alias.text == node.text:
+                return value.text
+        return node.text
+
+    def generic_visit(self, node, visited_children):
+        return ''.join(visited_children) if visited_children else node.text
 
 if __name__ == '__main__':
 
@@ -94,6 +122,18 @@ if __name__ == '__main__':
             entailment = ''.join(map(lambda x: x.strip(), entailmentChunks))
 
             # Step 2.
-            # TODO
             print(entailment)
-            print(grammar.parse(entailment))
+            # Repeat until fixpoint.
+            entailmentOld = entailment
+            while True:
+                tree = grammar.parse(entailment)
+                ac = AliasCollector()
+                aliases = ac.visit(tree)
+                vr = VarReplacer(aliases)
+                entailment = vr.visit(tree)
+                if entailmentOld == entailment:
+                    break
+                entailmentOld = entailment
+
+            # Step 3.
+            print(entailment)
