@@ -4,9 +4,9 @@
 # It is assumed that all variables in the entailment have unique names.
 # Aliases are boolean expressions of the form `alias=value`.
 # This script has three steps:
-# 1. Read line from input.
+# 1. Read line from input, and print same line to output.
 # 2. Go to step 3 if line is not an entailment. Else, replace in `line` all occurences of `alias` with `value`, and remove from `line` all aliases.
-# 3. Print line (possibly with aliases removed) to output.
+# 3. Maybe print line (possibly with aliases removed) to output.
 
 from sys import stdin
 from parsimonious.grammar import Grammar
@@ -76,6 +76,7 @@ if __name__ == '__main__':
 
     # Step 1.
     for line in stdin:
+        print(line, end='')
 
         # Although get multiple index of `openSymbol` and `closeSymbol` with intention to iterate through all combinations,
         # assume for now that `openSymbol` and `closeSymbol` are unique to entailments, and not used anywhere else.
@@ -87,12 +88,7 @@ if __name__ == '__main__':
         isNotEntailment = len(indexesOpen) == 0 and len(indexesClose) == 0
         isSpanOne = len(indexesOpen) == 1 and len(indexesClose) == 1
         isSpanMany = len(indexesOpen) == 1 and len(indexesClose) == 0
-        if isNotEntailment:
-
-            # Step 3.
-            print(line, end='')
-
-        else:
+        if not isNotEntailment:
 
             # Extract entailments that possibly span multiple lines.
             entailmentChunks = []
@@ -122,7 +118,6 @@ if __name__ == '__main__':
             entailment = ''.join(map(lambda x: x.strip(), entailmentChunks))
 
             # Step 2.
-            print(entailment)
             # Repeat until fixpoint.
             entailmentOld = entailment
             while True:
