@@ -72,6 +72,28 @@ class VarReplacer(NodeVisitor):
     def generic_visit(self, node, visited_children):
         return ''.join(visited_children) if visited_children else node.text
 
+class AliasRemover(NodeVisitor):
+    """Remove a trivial alias, and also remove the operator before (if available).
+    """
+
+    """TODO remove trivial alias at the start of `handside`.
+    def visit_handside(self, node, visited_children):
+        ...
+    """
+
+    def visit_handsideRest(self, node, visited_children):
+        operator, operand, _ = node.children[0]
+        if operand.expr_name == 'boolExp':
+            child = operand.children[0]
+            if child.expr_name == 'alias':
+                alias, _, value = child
+                if alias.text == value.text:
+                    return ''
+        return ''.join(visited_children)
+
+    def generic_visit(self, node, visited_children):
+        return ''.join(visited_children) if visited_children else node.text
+
 if __name__ == '__main__':
 
     # Step 1.
@@ -129,6 +151,10 @@ if __name__ == '__main__':
                 if entailmentOld == entailment:
                     break
                 entailmentOld = entailment
+
+            tree = grammar.parse(entailment)
+            ar = AliasRemover()
+            entailment = ar.visit(tree)
 
             # Step 3.
             print(entailment)
