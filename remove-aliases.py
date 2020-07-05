@@ -9,6 +9,28 @@
 # 3. Print line (possibly with aliases removed) to output.
 
 from sys import stdin
+from parsimonious.grammar import Grammar
+from parsimonious.exceptions import ParseError
+
+# `handside` stands for both "left hand side" and "right hand side".
+grammar = Grammar(
+    r"""
+    entailment = space? handside proves handside space?
+    handside = (boolExp handsideRest?) / (heapPred handsideRest?)
+    handsideRest = (and boolExp handsideRest*) / (star heapPred handsideRest*)
+    boolExp = alias / boolPred / (exp"<"exp) / (exp">"exp) / (exp"<="exp) / (exp">="exp)
+    alias = exp"="exp
+    boolPred = exp"("exp")"
+    heapPred = (space? "emp" space?) / (exp"::"exp"<"exp">@M")
+    exp = (var times var) / (var plus var) / var
+    var = ~r"[a-zA-Z0-9_]+"
+    proves = space? "|-" space?
+    star = space? "*" space?
+    and = space? "&" space?
+    times = space? "*" space?
+    plus = space? "+" space?
+    space = ~r"\s+"
+    """)
 
 openSymbol='[e|'
 closeSymbol='|e]'
@@ -70,7 +92,8 @@ if __name__ == '__main__':
                 raise Exception('Unhandled case')
 
             entailment = ''.join(map(lambda x: x.strip(), entailmentChunks))
-            print('entailment:', entailment)
 
             # Step 2.
             # TODO
+            print(entailment)
+            print(grammar.parse(entailment))
