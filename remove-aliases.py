@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Entailments are of the form `A * B & C |- D * E & F`, where `A,B,C,D,E,F` are predicates, `*,&` are operators, and `|-` is the entailment symbol.
+# Entailments are of the form `[e|A * B & C |- D * E & F|e]`, where `A,B,C,D,E,F` are predicates, `*,&` are operators, and `|-` is the entailment symbol.
 # It is assumed that all variables in the entailment have unique names.
 # Aliases are predicates of the form `alias=value`.
 # This script has three steps:
