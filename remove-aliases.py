@@ -52,8 +52,6 @@ if __name__ == '__main__':
 
             elif isSpanMany:
 
-                # Assume line ends with '\n'. Remove trailing '\n'.
-                line = line[:-1]
                 entailmentChunks.append(line[indexesOpen[0]+len(openSymbol):])
                 for line in stdin:
                     indexesOpen = get_indexes(line, openSymbol)
@@ -66,14 +64,12 @@ if __name__ == '__main__':
                         entailmentChunks.append(line[:indexesClose[0]])
                         break
                     else:
-                        # Assume line ends with '\n'. Remove trailing '\n'.
-                        line = line[:-1]
                         entailmentChunks.append(line)
 
             else:
                 raise Exception('Unhandled case')
 
-            entailment = ''.join(entailmentChunks)
+            entailment = ''.join(map(lambda x: x.strip(), entailmentChunks))
             print('entailment:', entailment)
 
             # Step 2.
