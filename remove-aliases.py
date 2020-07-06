@@ -83,13 +83,15 @@ class AliasRemover(NodeVisitor):
     """
 
     def visit_handsideRest(self, node, visited_children):
-        operator, operand, _ = node.children[0]
+        operator, operand, rest = node.children[0]
         if operand.expr_name == 'boolExp':
             child = operand.children[0]
             if child.expr_name == 'alias':
                 alias, _, value = child
                 if alias.text == value.text:
-                    return ''
+                    return '' # TODO do something with `rest`
+                else:
+                    return ''.join(visited_children)
         return ''.join(visited_children)
 
     def generic_visit(self, node, visited_children):
