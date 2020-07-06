@@ -17,8 +17,10 @@ from parsimonious.exceptions import ParseError
 grammar = Grammar(
     r"""
     entailment = space? handside proves handside space?
-    handside = (boolExp handsideRest?) / (heapPred handsideRest?)
-    handsideRest = (and boolExp handsideRest*) / (star heapPred handsideRest*)
+    handside = handsideHead handsideRest?
+    handsideHead = boolExp / heapPred
+    handsideRest = handsideRestHead handsideRest*
+    handsideRestHead = (and boolExp) / (star heapPred)
     boolExp = "true" / "false" / alias / notAlias / boolPred / (exp"<"exp) / (exp">"exp) / (exp"<="exp) / (exp">="exp)
     alias = exp"="exp
     notAlias = "!("exp"="exp")"
@@ -77,19 +79,26 @@ class AliasRemover(NodeVisitor):
     """Remove a trivial alias, and also remove the operator before (if available).
     """
 
-    """TODO remove trivial alias at the start of `handside`.
-    def visit_handside(self, node, visited_children):
-        ...
-    """
-
-    def visit_handsideRest(self, node, visited_children):
-        operator, operand, rest = node.children[0]
+    def visit_handsideHead(self, node, visited_children):
+        operand = node.children[0]
         if operand.expr_name == 'boolExp':
             child = operand.children[0]
             if child.expr_name == 'alias':
                 alias, _, value = child
                 if alias.text == value.text:
-                    return '' # TODO do something with `rest`
+                    return ''
+                else:
+                    return ''.join(visited_children)
+        return ''.join(visited_children)
+
+    def visit_handsideRestHead(self, node, visited_children):
+        _, operand = node.children[0]
+        if operand.expr_name == 'boolExp':
+            child = operand.children[0]
+            if child.expr_name == 'alias':
+                alias, _, value = child
+                if alias.text == value.text:
+                    return ''
                 else:
                     return ''.join(visited_children)
         return ''.join(visited_children)
