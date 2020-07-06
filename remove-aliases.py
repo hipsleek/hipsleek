@@ -121,7 +121,10 @@ if __name__ == '__main__':
             elif isSpanMany:
 
                 entailmentChunks.append(line[indexesOpen[0]+len(openSymbol):])
+
+                # Step 1.
                 for line in stdin:
+                    print(line, end='')
                     indexesOpen = get_indexes(line, openSymbol)
                     indexesClose = get_indexes(line, closeSymbol)
                     isIllegal = len(indexesOpen) == 1
