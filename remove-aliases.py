@@ -19,8 +19,9 @@ grammar = Grammar(
     entailment = space? handside proves handside space?
     handside = (boolExp handsideRest?) / (heapPred handsideRest?)
     handsideRest = (and boolExp handsideRest*) / (star heapPred handsideRest*)
-    boolExp = "true" / "false" / alias / boolPred / (exp"<"exp) / (exp">"exp) / (exp"<="exp) / (exp">="exp)
+    boolExp = "true" / "false" / alias / notAlias / boolPred / (exp"<"exp) / (exp">"exp) / (exp"<="exp) / (exp">="exp)
     alias = exp"="exp
+    notAlias = "!("exp"="exp")"
     boolPred = exp"("exp")"
     heapPred = (space? "emp" space?) / (exp"::"exp"<"exp">@M")
     exp = (var times exp) / (var plus exp) / ("(" var times exp ")") / ("(" var plus exp ")") / var
