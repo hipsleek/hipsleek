@@ -21,12 +21,12 @@ grammar = Grammar(
     handsideHead = boolExp / heapPred
     handsideRest = handsideRestHead handsideRest*
     handsideRestHead = (and boolExp) / (star heapPred)
-    boolExp = "true" / "false" / alias / notAlias / boolPred / (exp"<"exp) / (exp">"exp) / (exp"<="exp) / (exp">="exp)
+    boolExp = "true" / "false" / alias / notAlias / boolPred / (exp ("<"/">"/"<="/">=") exp)
     alias = exp"="exp
     notAlias = "!("exp"="exp")"
     boolPred = exp"("exp")"
     heapPred = (space? "emp" space?) / (exp"::"exp"<"exp">@M")
-    exp = (var times exp) / (var plus exp) / ("(" var times exp ")") / ("(" var plus exp ")") / var
+    exp = (var (times/plus) exp) / ("(" var (times/plus) exp ")") / var
     var = ~r"[a-zA-Z0-9_]+"
     proves = space? "|-" space?
     star = space? "*" space?
