@@ -4086,7 +4086,7 @@ and compute_actions prog estate es (* list of right aliases *)
     es lhs_h lhs_p rhs_lst rhs_p posib_r_alias
 
 
-and compute_actions_pretty prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_lst : (CF.h_formula * CF.h_formula * MCP.mix_formula) list) is_normalizing (conseq:CF.formula) pos
+and compute_pretty_actions prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_lst : (CF.h_formula * CF.h_formula * MCP.mix_formula) list) is_normalizing (conseq:CF.formula) pos
   : action =
   let pr = Cprinter.string_of_h_formula   in
   let pr3 = Cprinter.string_of_mix_formula in
@@ -4127,14 +4127,14 @@ and compute_actions_pretty prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
    *   | One l -> List.iter show_match_res l
    *   | Many l -> List.iter show_match_res_level l
    * in *)
-  compute_actions_pretty_no_4 "compute_actions_pretty" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> action) lhs_h lhs_p rhs_lst rhs_p
+  compute_pretty_actions_no_4 "compute_pretty_actions" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> action) lhs_h lhs_p rhs_lst rhs_p
 
-and compute_actions_pretty_no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
+and compute_pretty_actions_no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = Debug.ho_aux_no s (f e1 e2 e3) in
-  compute_actions_pretty_splitter s code_none code_gen compute_actions_pretty_go_4
+  compute_pretty_actions_splitter s code_none code_gen compute_pretty_actions_go_4
 
-and compute_actions_pretty_splitter s f_none f_gen f_norm =
+and compute_pretty_actions_splitter s f_none f_gen f_norm =
   let () = VarGen.last_posn # set_name s in
   let at_call_site =
     let x_call_site = VarGen.last_posn # get s in
@@ -4154,9 +4154,9 @@ and compute_actions_pretty_splitter s f_none f_gen f_norm =
       f_none in 
   if !Debug.dump_calls then Debug.wrap_pop_call fn else fn
 
-and compute_actions_pretty_go_4 t_flag l_flag s = compute_actions_pretty_ho_4_opt_aux t_flag [] l_flag (fun _ -> true) None s
+and compute_pretty_actions_go_4 t_flag l_flag s = compute_pretty_actions_ho_4_opt_aux t_flag [] l_flag (fun _ -> true) None s
 
-and compute_actions_pretty_ho_4_opt_aux df (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
+and compute_pretty_actions_ho_4_opt_aux df (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
     (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
   let call_site = VarGen.last_posn # get_rm s in
   let a1 = pr1 e1 in
