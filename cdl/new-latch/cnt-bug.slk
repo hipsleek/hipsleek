@@ -19,19 +19,20 @@ pred_prim CNT<n:int>
 
 //lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
 
-lemma "combine-first" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>.
-
 lemma "norm-1" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
 
 lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
+lemma "combine-first" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>.
+
 //3: should be VALID -- ??? after changing the sequences of the lemmas, it becomes VALID
-checkentail c::CNT<d> * c::CNT<e> & d=2 & e=-3 |- c::CNT<n> & n=-1.
+//related to the inv
+checkentail c::CNT<d> * c::CNT<e> & d=2 & e=-1 |- c::CNT<n> & n=-1.
 print residue.
 
 //should trigger norm-1
-checkentail c::CNT<d> * c::CNT<e> & d=-3 & e=-1 |- c::CNT<n> & n=-1.
-print residue.
+//checkentail c::CNT<d> * c::CNT<e> & d=-1 & e=-1 |- c::CNT<n> & n=-1.
+//print residue.
 
 //checkentail c::CNT<d> * c::CNT<e> & d=2 & e=-3 |- emp & flow __Fail.
 //print residue.

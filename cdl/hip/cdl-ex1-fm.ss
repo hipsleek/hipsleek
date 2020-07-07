@@ -61,6 +61,7 @@ void main()
       await(c);
       v = h.val + r.val;
   }
+  //v = h.val + r.val;
   //dprint;
   assert h'::cell<1> * r'::cell<2> & v' = 3;
 }
