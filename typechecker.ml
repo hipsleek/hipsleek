@@ -1859,7 +1859,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* yes below is safe *)
           (* x_tinfo_pp ("Check for @L read permission on bind node "^v) pos; *)
           (* x_winfo_pp "Safe to use @L for Bind? Use frac?" pos; *)
-          check_var_read_perm ~msg:"(inside bind)" prog ctx pos v v_t;
+          (* check_var_read_perm ~msg:"(inside bind)" prog ctx pos v v_t; *)
           (* let b,res = (if !Globals.ann_vp then                          *)
           (*   (*check for access permissions*)                            *)
           (*   let var = (CP.SpecVar (v_t, v, Primed)) in                  *)
@@ -2796,6 +2796,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (*********************************************)
         let b =
           (* let sv = (CP.SpecVar (t, v, Unprimed)) in *)
+          let () = x_binfo_pp ("check variable read permission is triggered!") no_pos in
           let () = check_var_read_perm ~msg:"(var access)" prog ctx pos v t in
           true
           (* if !ann_vp then *)
