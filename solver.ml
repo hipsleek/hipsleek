@@ -3808,8 +3808,41 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 (*   let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in *)
 (*   (CF.convert_must_failure_to_value ans ante_flow conseq post_check, prf) *)
 
+
+and find_common_free_variable (cl : list_context) (conseq : struc_formula) = 
+  let rec helper ctx = match ctx with
+    | Ctx es ->
+      let f = es.es_formula in
+      CF.all_vars f
+    | OCtx (c1, c2) ->
+      let fvl1 = helper c1 in
+      let fvl2 = helper c2 in
+      fvl1@fvl2
+  in
+  (* let fvs_cl = find_fv_in_context cl in *)
+  let fvs_cl_list = match cl with 
+    | SuccCtx sc -> List.map helper sc      
+    | FailCtx (_,_,_) -> []
+  in
+  (* let fvs_conseq = find_fv_in_formula conseq in *)
+  let fvs_conseq = match conseq with
+    | EBase eb -> CF.all_vars eb.formula_struc_base
+    | _ -> []
+  in
+  (* Is this map correct? *)
+  let intersect_list = List.map (CP.intersect_svl fvs_conseq) fvs_cl_list in
+  intersect_list
+
+(* and add_value_permission_on_rhs cv_ls conseq : struct_formula =  
+  (* how to add?? *)
+  conseq  *)
+
+
 and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  let (ans,prf) = x_add heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
+  let cv_list = find_common_free_variable cl conseq in
+  let () = x_binfo_hp (add_str "common variables list" Cprinter.string_of_ms) cv_list no_pos in
+  (* let conseq = add_value_permission_on_rhs cv_list conseq *)
+  let (ans, prf) = x_add heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
   (CF.convert_maymust_failure_to_value_orig ~mark:false ans, prf)
 
 and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =

@@ -4,10 +4,11 @@
 
 //(1)
 checkentail @zero[v1,v2] & x>0 |- x>=0.
+print residue.
 //valid   --> @zero[v1,v2,x1].
 
 //(2)
-checkentail @full[x1] * @zero[v1,v2] |- @full[x1].
+checkentail @full[x1, x2] * @zero[v1,v2] |- @full[x1].
 print residue.
 //valid   --> @zero[v1,v2,x1].
 
@@ -44,7 +45,7 @@ checkentail @zero[v1,v2] or @zero[v2] |- @value[v1].
 // OK to fail
 
 //(9)
-checkentail @full[x1]*@zero[v1,v2] |- @value[x2] or @value[x1].
+checkentail @full[x1]*@value[v1,v2] |- @value[v2] or @value[x1].
 print residue.
 // succeed with 2 answers
 
@@ -74,4 +75,20 @@ checkentail @full[x3] |- @full[x3]*@full[x3].
 
 //(15)
 checkentail @full[x3]*@full[x3] |- false.
+
+data cell{
+  int v;
+}.
+
+//(16)
+checkentail h::cell<1> * @zero[h] |- h::cell<m>.
+print residue.
+
+//(17)
+checkentail @zero[n] & n = 3 |- @value[n] & n > 1.
+print residue.
+
+//(18)
+checkentail @zero[n] & n = 3 |- n > 1.
+print residue.
 

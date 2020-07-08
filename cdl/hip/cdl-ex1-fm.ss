@@ -41,23 +41,26 @@ void main()
   requires emp ensures emp;
 {
   cell h, r;
+  dprint;
   int v;
   CDL c = create_latch(2) with h'::cell<1> * r'::cell<2>;
   par {h, r, v, c@L}
   {
     case {h, c@L} c'::LatchIn{- h'::cell<1>}<> * c'::CNT<(1)> ->
+      dprint;
       h = new cell(1);
       countDown(c);
       dprint;
     ||
     case {r, c@L} c'::LatchIn{- r'::cell<2>}<> * c'::CNT<(1)> ->
+      dprint;
       r = new cell(2);
       countDown(c);
       dprint;
     ||
     //else ->
     case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2>}<> * c'::CNT<0> ->
-      //dprint;
+      dprint;
       await(c);
       v = h.val + r.val;
   }

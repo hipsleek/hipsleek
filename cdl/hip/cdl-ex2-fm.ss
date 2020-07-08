@@ -41,6 +41,7 @@ void main()
   requires emp ensures emp;
 {
   cell p, q;
+  dprint;
   CDL c = create_latch(1) with p'::cell<_> * q'::cell<_>;
   par {p, q, c@L}
   {
