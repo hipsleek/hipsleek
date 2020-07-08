@@ -11630,6 +11630,7 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
                posib_r_alias rhs_lst estate.es_is_normalizing conseq pos,[])
     | (_,a)::lst -> (a,lst)
   in
+  let _ = x_add Context.compute_pretty_actions prog estate rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
   let () = x_tinfo_hp (add_str "actions" Context.string_of_action_res) actions  no_pos in
   (* let () = x_tinfo_hp (add_str " xxxxxxxxxxxxxx1" pr_id) "END"  no_pos in *)
   (* !!!!!!!!
