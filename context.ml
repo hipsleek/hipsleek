@@ -2616,7 +2616,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   let ()= y_binfo_hp (add_str "test bool View HREL and View PRIM" string_of_bool) test_b in
                   (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                   else let ()= y_binfo_hp (add_str "test bool View HREL and View PRIM" string_of_bool) test_b in a1 in
-                let () = y_binfo_hp (add_str "a1" pr_act) a1 in
+                let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
                 (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
                 (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
                 let a2 = (
@@ -2659,7 +2659,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                         m_act
                 ) in
                 let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
-                let () = y_binfo_hp (add_str "a2" pr_act) a2 in
+                let () = y_tinfo_hp (add_str "a2" pr_act) a2 in
                 let a3 = (
                   (*Do not fold/unfold LOCKs, only match*)
                   if (is_l_lock || is_r_lock) then Some a2 else

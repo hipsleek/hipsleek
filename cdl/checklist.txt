@@ -1,6 +1,7 @@
 Check some test cases:
 
-
-
-
+cdl/hip/cdl-ex4-race.ss		skip???
+rho/vp/vperm.slk   		ok
+demo/vperm/vperm.slk		???
+ 
 

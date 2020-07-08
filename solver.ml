@@ -7894,7 +7894,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                          in the ante will be passed throught the entailment*)
                       match h2 with
                       | HFalse | HEmp | HTrue (* | HRel _ *) -> (
-                          x_binfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
+                          x_tinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                                             ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                                             ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
                           (*simplify htrue in LHS*)
