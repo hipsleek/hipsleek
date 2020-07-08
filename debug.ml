@@ -2,6 +2,7 @@
 open Gen.Basic
 open VarGen
 
+let webprint = ref true
 let debug_on = ref false
 let devel_debug_on = ref false
 let devel_debug_steps = ref false
@@ -51,7 +52,7 @@ let ho_print flag (pr:'a->string) (m:'a) : unit =
   (* let () = print_endline ("\ndd_get:"^((pr_option string_of_int) d)) in *)
   (* WN : should we use && or || *)
   if !compete_mode then ()
-  else if (flag (* !devel_debug_on *)  ||  not(d==None)) then 
+  else if ((flag (* !devel_debug_on *)  ||  not(d==None)) && !webprint) then 
     let s = (pr m) in
     let msg = match d with 
       | None -> ("\n!!!" ^ s)
