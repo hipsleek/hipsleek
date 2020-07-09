@@ -3808,7 +3808,6 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 (*   let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in *)
 (*   (CF.convert_must_failure_to_value ans ante_flow conseq post_check, prf) *)
 
-
 and find_common_free_variable (cl : list_context) (conseq : struc_formula) = 
   let rec helper ctx = match ctx with
     | Ctx es ->
@@ -3829,20 +3828,38 @@ and find_common_free_variable (cl : list_context) (conseq : struc_formula) =
     | EBase eb -> CF.all_vars eb.formula_struc_base
     | _ -> []
   in
-  (* Is this map correct? *)
   let intersect_list = List.map (CP.intersect_svl fvs_conseq) fvs_cl_list in
-  intersect_list
+  let intersect_list_flat = List.flatten intersect_list in
+  intersect_list_flat
 
-(* and add_value_permission_on_rhs cv_ls conseq : struct_formula =  
-  (* how to add?? *)
-  conseq  *)
-
+and add_default_val_perm (vps : CVP.vperm_sets) (spcvl : CP.spec_var list) : (CVP.vperm_sets) =
+  let vps_new = { vps with vperm_lend_vars = vps.vperm_lend_vars @ spcvl } in
+  vps_new
+  
+(* how to access to the vperm_sets and then modify it? *)
+and add_value_permission_on_rhs cv_ls conseq : struc_formula =  
+  if cv_ls = [] then conseq
+  else let m_conseq = 
+    match conseq with
+    | EBase eb ->  
+      (* f is the formula *)
+      let f = eb.formula_struc_base in 
+      let vps = VP.vperm_sets_of_formula f in (* f.formula_base_vperm  vps inside the formula *)
+      let vps = add_default_val_perm vps cv_ls in
+      (* let new_f = { f with formula_base_vperm = (VP.set_vperm_sets_formula vps f) } in *)
+      let new_f = VP.set_vperm_sets_formula vps f in
+      let new_eb = {eb with formula_struc_base = new_f} in
+      EBase {eb with formula_struc_base = new_f}
+      (* new_eb *)
+    | _ -> conseq
+  in m_conseq
 
 and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  let cv_list = find_common_free_variable cl conseq in
-  let () = x_binfo_hp (add_str "common variables list" Cprinter.string_of_ms) cv_list no_pos in
-  (* let conseq = add_value_permission_on_rhs cv_list conseq *)
-  let (ans, prf) = x_add heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
+  let cv_list = find_common_free_variable cl conseq in 
+  let () = x_binfo_hp (add_str "common variables list" Cprinter.string_of_spec_var_list) cv_list no_pos in
+  (* let () = x_binfo_hp (add_str "common variables list" Cprinter.string_of_ms) cv_list no_pos in *)
+  let new_conseq = add_value_permission_on_rhs cv_list conseq in
+  let (ans, prf) = x_add heap_entail_struc_init prog is_folding has_post cl new_conseq pos pid in
   (CF.convert_maymust_failure_to_value_orig ~mark:false ans, prf)
 
 and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
@@ -16770,9 +16787,7 @@ and normalize_list_partial_context_w_lemma prog lctx =
     let res = CF.transform_list_partial_context (fct, idf) lctx in
     res
 
-let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool)
-    (b1:bool)  (ctx : context)
-    (conseq : formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (b2:control_path_id): (list_context * proof) =
+let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool) (b1:bool)  (ctx : context) (conseq : formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (b2:control_path_id): (list_context * proof) =
   x_add heap_entail_one_context 11 prog is_folding  ctx conseq tid delayed_f join_id pos
 
 let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
