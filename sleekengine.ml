@@ -1,5 +1,6 @@
 #include "xdebug.cppo"
 open VarGen
+open Printf
 (*
   The frontend engine of SLEEK.
 *)
@@ -2884,14 +2885,15 @@ let process_nondet_check (v: ident) (mf: meta_formula) =
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) (etype : entail_type) =
-  if (not !Debug.webprint) then print_string "=======================================================================================================================";
   let nn = (sleek_proof_counter#inc_and_get) in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
+  if (!Debug.webprint && not (pnum>0 & pnum!=nn)) then print_string "=======================================================================================================================\n";
+
   if pnum>0 & pnum!=nn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
-    let num_id = "\nEntail "^(string_of_int nn) in
+    let num_id = "Entail "^(string_of_int nn) in
     try
       let valid, rs, _(*sel_hps*) =
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in

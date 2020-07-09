@@ -3653,8 +3653,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           if pr_flag then
             begin
               let separator = if (!Debug.webprint) 
-                then ""
-              else "=======================================================================================================================" in
+                then "======================================================================================================================="
+              else "" in
               print_string_web_mode ((separator^"\nChecking procedure ") ^ proc.proc_name ^ "...\n"); flush stdout;
               (* x_binfo_hp (add_str "Static spec (proc)" Cprinter.string_of_struc_formula) proc.proc_static_specs; flush stdout;           *)
               (* x_binfo_hp (add_str "Static spec (stk of proc)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top);   *)
@@ -4275,9 +4275,9 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
         (* dummy_exception(); *)
         let () = Infer.rel_ass_stk # reset in
         print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
-        if (!Debug.webprint) then print_web_mode ("\nException "^(Printexc.to_string e)^" Occurred!\n");
+        if (not !Debug.webprint) then print_web_mode ("\nException "^(Printexc.to_string e)^" Occurred!\n");
         print_backtrace_quiet ();
-        if (!Debug.webprint) then print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+        if (not !Debug.webprint) then print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
         Log.last_cmd # dumping (proc.proc_name^" FAIL2");
         (* print_endline "Last PURE PROOF FAILURE:"; *)
         (* Log.last_proof_command # dump; *)

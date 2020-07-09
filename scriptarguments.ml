@@ -1175,8 +1175,8 @@ let common_arguments = [
   ("--dis-warning", Arg.Clear VarGen.en_warning_msg, "disable warning (switch to report error)");
   ("--webprint", Arg.Unit
     (fun _ ->
-      Debug.webprint := false;
-      VarGen.web_location := false;
+      Debug.webprint := true;
+      VarGen.web_location := true;
       Globals.enable_count_stats:= false;
       Globals.enable_time_stats:= false;
       Globals.tnt_web_mode:=true),
