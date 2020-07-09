@@ -1292,7 +1292,7 @@ let start () =
       end
   end
   else 
-    (print_endline  ("\nCannot find MONA code..."); flush stdout;)
+    (print_endline  ("\nCannot find mona_inter code..."); flush stdout;)
 
 
 let start () =
