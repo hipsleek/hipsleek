@@ -25,7 +25,7 @@ grammar = Grammar(
     alias = exp"="exp
     notAlias = "!("exp"="exp")"
     boolPred = exp"("exp")"
-    heapPred = (space? "emp" space?) / (exp"::"exp"<"exp">@M")
+    heapPred = (space? "emp" space?) / (exp"::"exp"<"exp?">@M")
     exp = (var ((times/plus) exp)*) / (expEnclosed ((times/plus) exp)*)
     expEnclosed = "(" exp ((times/plus) exp)* ")"
     var = ~r"[a-zA-Z0-9_]+"
