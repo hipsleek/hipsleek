@@ -21,7 +21,7 @@ grammar = Grammar(
     handsideHead = boolExp / heapPred
     handsideRest = handsideRestHead handsideRest*
     handsideRestHead = (and boolExp) / (star heapPred)
-    boolExp = "true" / "false" / alias / notAlias / boolPred / ((exp/expEnclosed) ("<"/">"/"<="/">=") (exp/expEnclosed))
+    boolExp = "true" / "false" / alias / notAlias / boolPred / ((exp/expEnclosed) ("<="/">="/"<"/">") (exp/expEnclosed))
     alias = exp"="exp
     notAlias = "!("exp"="exp")"
     boolPred = exp"("exp")"
