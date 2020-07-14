@@ -16,11 +16,11 @@ from parsimonious.exceptions import ParseError
 grammar = Grammar(
     r"""
     formula = space? head rest? space?
-    head = (heapPred / boolExp) / ("(" space? (heapPred / boolExp) space? ")")
+    head = (heapPred / alias / boolExp) / ("(" space? (heapPred / alias / boolExp) space? ")")
     rest = space? restHead space? rest*
     restHead = operatorsTop head
     heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
-    boolExp = (("true" / "false" / alias / notAlias / boolPred / quantifierPred / boolCompare) (operatorsBool boolExp)*) / ("(" boolExp ")" (operatorsBool boolExp)*)
+    boolExp = (("true" / "false" / (exp "=" exp) / notAlias / boolPred / quantifierPred / boolCompare) (operatorsBool boolExp)*) / ("(" boolExp ")" (operatorsBool boolExp)*)
     alias = exp "=" exp
     notAlias = ("!(" exp "=" exp ")") / (exp "!=" exp)
     boolPred = exp "(" exp ")"
