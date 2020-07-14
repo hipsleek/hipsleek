@@ -11626,11 +11626,12 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
   let () = x_tinfo_hp (add_str "ctx0" Cprinter.string_of_context_short) ctx0  no_pos in
   let () = x_tinfo_hp (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
   let actions,cont_act = match cont_act with
-      [] -> (x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
-               posib_r_alias rhs_lst estate.es_is_normalizing conseq pos,[])
+      [] -> if !Globals.pretty_print then
+        (x_add Context.compute_pretty_actions prog estate rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing conseq pos,[])
+      else
+        (x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing conseq pos,[])
     | (_,a)::lst -> (a,lst)
   in
-  let _ = x_add Context.compute_pretty_actions prog estate rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
   let () = x_tinfo_hp (add_str "actions" Context.string_of_action_res) actions  no_pos in
   (* let () = x_tinfo_hp (add_str " xxxxxxxxxxxxxx1" pr_id) "END"  no_pos in *)
   (* !!!!!!!!
