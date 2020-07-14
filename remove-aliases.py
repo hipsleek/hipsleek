@@ -18,15 +18,18 @@ grammar = Grammar(
     entailment = head rest?
     head = space? (heapPred / boolExp) space?
     rest = restHead rest*
-    restHead = space? ("|-" / "*" / "&") space? (heapPred / boolExp) space?
+    restHead = space? operatorsTop space? (heapPred / boolExp) space?
     heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
     boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare
     alias = exp "=" exp
     notAlias = "!(" exp "=" exp ")"
     boolPred = exp "(" exp ")"
-    boolCompare = (exp ("<=" / ">=" / "<" / ">") exp)
-    exp = (var (("*" / "+") exp)*) / (expEnclosed (("*" / "+") exp)*)
+    boolCompare = exp operatorsCompare exp
+    exp = (var (operatorsExp exp)*) / (expEnclosed (operatorsExp exp)*)
     expEnclosed = "(" exp ")"
+    operatorsTop = "|-" / "*" / "&"
+    operatorsCompare = "<=" / ">=" / "<" / ">"
+    operatorsExp = "*" / "+"
     var = ~r"[a-zA-Z0-9_]+"
     space = ~r"\s+"
     """)
