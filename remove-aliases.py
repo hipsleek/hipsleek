@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 # Aliased statements are of the form `[f| A * B & C |f]`, where `A,B,C` are operands, and `*,&` are operators.
-# It is assumed that all variables in the entailment have unique names.
+# It is assumed that all variables in the formula have unique names.
 # Aliases are boolean expressions of the form `alias=value`.
 # This script has three steps:
 # 1. Read line from input, and print same line to output.
-# 2. Go to step 3 if line is not an entailment. Else, replace in `line` all occurences of `alias` with `value`, and remove from `line` all aliases.
+# 2. Go to step 3 if line is not an formula. Else, replace in `line` all occurences of `alias` with `value`, and remove from `line` all aliases.
 # 3. Maybe print line (possibly with aliases removed) to output.
 
 from sys import stdin
@@ -15,7 +15,7 @@ from parsimonious.exceptions import ParseError
 
 grammar = Grammar(
     r"""
-    entailment = space? head rest? space?
+    formula = space? head rest? space?
     head = heapPred / boolExp
     rest = space? restHead space? rest*
     restHead = operatorsTop (heapPred / boolExp)
@@ -25,7 +25,7 @@ grammar = Grammar(
     notAlias = "!(" exp "=" exp ")"
     boolPred = exp "(" exp ")"
     boolCompare = exp operatorsCompare exp
-    quantifierPred = exp "(" exp ":" entailment ")"
+    quantifierPred = exp "(" exp ":" formula ")"
     exp = (var (operatorsExp exp)*) / (expEnclosed (operatorsExp exp)*)
     expEnclosed = "(" exp ")"
     operatorsTop = space? ("|-" / "*" / "&") space?
@@ -112,26 +112,26 @@ if __name__ == '__main__':
         print(line, end='')
 
         # Although get multiple index of `openSymbol` and `closeSymbol` with intention to iterate through all combinations,
-        # assume for now that `openSymbol` and `closeSymbol` are unique to entailments, and not used anywhere else.
-        # That is, between an `openSymbol` and a `closeSymbol` must lie an entailment (and nothing else).
-        # This assumption is useful for parsing entailments that span many lines.
+        # assume for now that `openSymbol` and `closeSymbol` are unique to formulas, and not used anywhere else.
+        # That is, between an `openSymbol` and a `closeSymbol` must lie an formula (and nothing else).
+        # This assumption is useful for parsing formulas that span many lines.
         indexesOpen = get_indexes(line, openSymbol)
         indexesClose = get_indexes(line, closeSymbol)
 
-        isNotEntailment = len(indexesOpen) == 0 and len(indexesClose) == 0
+        isNotFormula = len(indexesOpen) == 0 and len(indexesClose) == 0
         isSpanOne = len(indexesOpen) == 1 and len(indexesClose) == 1
         isSpanMany = len(indexesOpen) == 1 and len(indexesClose) == 0
-        if not isNotEntailment:
+        if not isNotFormula:
 
-            # Extract entailments that possibly span multiple lines.
-            entailmentChunks = []
+            # Extract formulas that possibly span multiple lines.
+            formulaChunks = []
 
             if isSpanOne:
-                entailmentChunks.append(line[indexesOpen[0]+len(openSymbol):indexesClose[0]])
+                formulaChunks.append(line[indexesOpen[0]+len(openSymbol):indexesClose[0]])
 
             elif isSpanMany:
 
-                entailmentChunks.append(line[indexesOpen[0]+len(openSymbol):])
+                formulaChunks.append(line[indexesOpen[0]+len(openSymbol):])
 
                 # Step 1.
                 for line in stdin:
@@ -143,33 +143,33 @@ if __name__ == '__main__':
                     if isIllegal:
                         raise Exception('Nested openSymbols are illegal')
                     elif isSpanEnd:
-                        entailmentChunks.append(line[:indexesClose[0]])
+                        formulaChunks.append(line[:indexesClose[0]])
                         break
                     else:
-                        entailmentChunks.append(line)
+                        formulaChunks.append(line)
 
             else:
                 raise Exception('Unhandled case')
 
-            entailment = ''.join(map(lambda x: x.strip(), entailmentChunks))
-            entailment = entailment.split('&{FLOW,(20,21)=__norm#E}[]', 1)[0]
+            formula = ''.join(map(lambda x: x.strip(), formulaChunks))
+            formula = formula.split('&{FLOW,(20,21)=__norm#E}[]', 1)[0]
 
             # Step 2.
             # Repeat until fixpoint.
-            entailmentOld = entailment
+            formulaOld = formula
             while True:
-                tree = grammar.parse(entailment)
+                tree = grammar.parse(formula)
                 ac = AliasCollector()
                 aliases = ac.visit(tree)
                 vr = VarReplacer(aliases)
-                entailment = vr.visit(tree)
-                if entailmentOld == entailment:
+                formula = vr.visit(tree)
+                if formulaOld == formula:
                     break
-                entailmentOld = entailment
+                formulaOld = formula
 
-            tree = grammar.parse(entailment)
+            tree = grammar.parse(formula)
             ar = AliasRemover()
-            entailment = ar.visit(tree)
+            formula = ar.visit(tree)
 
             # Step 3.
-            print(entailment)
+            print(formula)
