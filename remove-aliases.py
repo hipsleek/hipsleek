@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Entailments are of the form `[e|A * B & C |- D * E & F|e]`, where `A,B,C,D,E,F` are either boolean expressions or predicates, `*,&` are operators, and `|-` is the entailment symbol.
+# Aliased statements are of the form `[e| A * B & C |e]`, where `A,B,C` are operands, and `*,&` are operators.
 # It is assumed that all variables in the entailment have unique names.
 # Aliases are boolean expressions of the form `alias=value`.
 # This script has three steps:
@@ -13,27 +13,21 @@ from parsimonious.grammar import Grammar
 from parsimonious.nodes import NodeVisitor
 from parsimonious.exceptions import ParseError
 
-# `handside` stands for both "left hand side" and "right hand side".
 grammar = Grammar(
     r"""
-    entailment = space? handside proves handside space?
-    handside = handsideHead handsideRest?
-    handsideHead = boolExp / heapPred
-    handsideRest = handsideRestHead handsideRest*
-    handsideRestHead = (and boolExp) / (star heapPred)
-    boolExp = "true" / "false" / alias / notAlias / boolPred / ((exp/expEnclosed) ("<="/">="/"<"/">") (exp/expEnclosed))
-    alias = exp"="exp
-    notAlias = "!("exp"="exp")"
-    boolPred = exp"("exp")"
-    heapPred = (space? "emp" space?) / (exp"::"exp"<"exp?">@M")
-    exp = (var ((times/plus) exp)*) / (expEnclosed ((times/plus) exp)*)
-    expEnclosed = "(" exp ((times/plus) exp)* ")"
+    entailment = head rest?
+    head = space? (heapPred / boolExp) space?
+    rest = restHead rest*
+    restHead = space? ("|-" / "*" / "&") space? (heapPred / boolExp) space?
+    heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
+    boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare
+    alias = exp "=" exp
+    notAlias = "!(" exp "=" exp ")"
+    boolPred = exp "(" exp ")"
+    boolCompare = (exp ("<=" / ">=" / "<" / ">") exp)
+    exp = (var (("*" / "+") exp)*) / (expEnclosed (("*" / "+") exp)*)
+    expEnclosed = "(" exp ")"
     var = ~r"[a-zA-Z0-9_]+"
-    proves = space? "|-" space?
-    star = space? "*" space?
-    and = space? "&" space?
-    times = space? "*" space?
-    plus = space? "+" space?
     space = ~r"\s+"
     """)
 
@@ -80,7 +74,7 @@ class AliasRemover(NodeVisitor):
     """Remove a trivial alias, and also remove the operator before (if available).
     """
 
-    def visit_handsideHead(self, node, visited_children):
+    def visit_head(self, node, visited_children):
         operand = node.children[0]
         if operand.expr_name == 'boolExp':
             child = operand.children[0]
@@ -92,7 +86,7 @@ class AliasRemover(NodeVisitor):
                     return ''.join(visited_children)
         return ''.join(visited_children)
 
-    def visit_handsideRestHead(self, node, visited_children):
+    def visit_restHead(self, node, visited_children):
         _, operand = node.children[0]
         if operand.expr_name == 'boolExp':
             child = operand.children[0]
