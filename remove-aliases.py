@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Aliased statements are of the form `[e| A * B & C |e]`, where `A,B,C` are operands, and `*,&` are operators.
+# Aliased statements are of the form `[f| A * B & C |f]`, where `A,B,C` are operands, and `*,&` are operators.
 # It is assumed that all variables in the entailment have unique names.
 # Aliases are boolean expressions of the form `alias=value`.
 # This script has three steps:
@@ -31,8 +31,8 @@ grammar = Grammar(
     space = ~r"\s+"
     """)
 
-openSymbol='[e|'
-closeSymbol='|e]'
+openSymbol='[f|'
+closeSymbol='|f]'
 
 def get_indexes(line, symbol):
     indexes = []
