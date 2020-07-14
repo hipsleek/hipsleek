@@ -20,7 +20,7 @@ grammar = Grammar(
     rest = space? restHead space? rest*
     restHead = operatorsTop head
     heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
-    boolExp = ("true" / "false" / alias / notAlias / boolPred / quantifierPred / boolCompare) (operatorsBool boolExp)*
+    boolExp = (("true" / "false" / alias / notAlias / boolPred / quantifierPred / boolCompare) (operatorsBool boolExp)*) / ("(" boolExp ")" (operatorsBool boolExp)*)
     alias = exp "=" exp
     notAlias = ("!(" exp "=" exp ")") / (exp "!=" exp)
     boolPred = exp "(" exp ")"
