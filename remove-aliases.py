@@ -16,9 +16,9 @@ from parsimonious.exceptions import ParseError
 grammar = Grammar(
     r"""
     formula = space? head rest? space?
-    head = heapPred / boolExp
+    head = (heapPred / boolExp) / ("(" space? (heapPred / boolExp) space? ")")
     rest = space? restHead space? rest*
-    restHead = operatorsTop (heapPred / boolExp)
+    restHead = operatorsTop head
     heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
     boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare / quantifierPred
     alias = exp "=" exp
