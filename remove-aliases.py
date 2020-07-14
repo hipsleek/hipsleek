@@ -92,8 +92,8 @@ class AliasRemover(NodeVisitor):
 
     def visit_restHead(self, node, visited_children):
         _, operand = node.children
-        if operand.expr_name == 'boolExp':
-            child = operand.children[0]
+        if operand.expr_name == 'head':
+            child = operand.children[0].children[0]
             if child.expr_name == 'alias':
                 alias, _, value = child
                 if alias.text == value.text:
