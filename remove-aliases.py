@@ -26,8 +26,7 @@ grammar = Grammar(
     boolPred = exp "(" exp ")"
     boolCompare = exp operatorsCompare exp
     quantifierPred = exp "(" exp ":" formula ")"
-    exp = (var (operatorsExp exp)*) / (expEnclosed (operatorsExp exp)*)
-    expEnclosed = "(" exp ")"
+    exp = (var (operatorsExp exp)*) / ("(" exp ")" (operatorsExp exp)*)
     operatorsTop = space? ("|-" / "*" / "&") space?
     operatorsBool = space? ("|" / "&") space?
     operatorsCompare = space? ("<=" / ">=" / "<" / ">") space?
