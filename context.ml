@@ -4166,7 +4166,7 @@ and compute_pretty_actions_ho_4_opt_aux df (flags:bool list) (loop_d:bool) (test
   let lz = Debug.choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3)); (4,lazy (pr4 e4))] in
   let f  = f e1 e2 e3 in
   let g  = match g with None -> None | Some g -> Some (g e1 e2 e3) in
-  Debug.ho_aux ~call_site:call_site df lz loop_d test g s ["[e|"^a1^" &"^a2^" |-"^a3^" &"^a4^"|e]"] pr_o f e4
+  Debug.ho_aux ~call_site:call_site df lz loop_d test g s ["[f|"^a1^" &"^a2^" |-"^a3^" &"^a4^"|f]"] pr_o f e4
 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
