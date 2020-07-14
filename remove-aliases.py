@@ -22,7 +22,7 @@ grammar = Grammar(
     heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
     boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare / quantifierPred
     alias = exp "=" exp
-    notAlias = "!(" exp "=" exp ")"
+    notAlias = ("!(" exp "=" exp ")") / (exp "!=" exp)
     boolPred = exp "(" exp ")"
     boolCompare = exp operatorsCompare exp
     quantifierPred = exp "(" exp ":" formula ")"
