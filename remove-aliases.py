@@ -152,6 +152,7 @@ if __name__ == '__main__':
                 raise Exception('Unhandled case')
 
             entailment = ''.join(map(lambda x: x.strip(), entailmentChunks))
+            entailment = entailment.split('&{FLOW,(20,21)=__norm#E}[]', 1)[0]
 
             # Step 2.
             # Repeat until fixpoint.
