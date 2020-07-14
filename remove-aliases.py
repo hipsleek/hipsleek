@@ -20,11 +20,12 @@ grammar = Grammar(
     rest = restHead rest*
     restHead = space? operatorsTop space? (heapPred / boolExp) space?
     heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
-    boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare
+    boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare / quantifierPred
     alias = exp "=" exp
     notAlias = "!(" exp "=" exp ")"
     boolPred = exp "(" exp ")"
     boolCompare = exp operatorsCompare exp
+    quantifierPred = exp "(" exp ":" entailment ")"
     exp = (var (operatorsExp exp)*) / (expEnclosed (operatorsExp exp)*)
     expEnclosed = "(" exp ")"
     operatorsTop = "|-" / "*" / "&"
