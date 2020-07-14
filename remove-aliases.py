@@ -152,7 +152,7 @@ if __name__ == '__main__':
                 raise Exception('Unhandled case')
 
             formula = ''.join(map(lambda x: x.strip(), formulaChunks))
-            formula = formula.split('&{FLOW,(20,21)=__norm#E}[]', 1)[0]
+            formula = formula.split('&{FLOW,(', 1)[0]
 
             # Step 2.
             # Repeat until fixpoint.
