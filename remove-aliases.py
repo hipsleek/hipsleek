@@ -29,7 +29,7 @@ grammar = Grammar(
     expEnclosed = "(" exp ")"
     operatorsTop = "|-" / "*" / "&"
     operatorsCompare = "<=" / ">=" / "<" / ">"
-    operatorsExp = "*" / "+"
+    operatorsExp = "*" / "+" / "-"
     var = ~r"[a-zA-Z0-9_]+"
     space = ~r"\s+"
     """)
