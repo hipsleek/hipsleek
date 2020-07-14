@@ -12,10 +12,9 @@
 
 2. Compile Mona as follows:
    ```
-   tar -xvf mona-1.4-18.tar.gz
+   tar -xvf mona-1.4-modif.tar.gz
    cd mona-1.4
-   ./configure
-   make install-strip (may require root permissions)
+   ./install.sh
    ```
    The mona executable is now placed in
    `/usr/local/bin`.
