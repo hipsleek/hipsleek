@@ -15,10 +15,10 @@ from parsimonious.exceptions import ParseError
 
 grammar = Grammar(
     r"""
-    entailment = head rest?
-    head = space? (heapPred / boolExp) space?
-    rest = restHead rest*
-    restHead = space? operatorsTop space? (heapPred / boolExp) space?
+    entailment = space? head rest? space?
+    head = heapPred / boolExp
+    rest = space? restHead space? rest*
+    restHead = operatorsTop (heapPred / boolExp)
     heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
     boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare / quantifierPred
     alias = exp "=" exp
@@ -28,9 +28,9 @@ grammar = Grammar(
     quantifierPred = exp "(" exp ":" entailment ")"
     exp = (var (operatorsExp exp)*) / (expEnclosed (operatorsExp exp)*)
     expEnclosed = "(" exp ")"
-    operatorsTop = "|-" / "*" / "&"
-    operatorsCompare = "<=" / ">=" / "<" / ">"
-    operatorsExp = "*" / "+" / "-"
+    operatorsTop = space? ("|-" / "*" / "&") space?
+    operatorsCompare = space? ("<=" / ">=" / "<" / ">") space?
+    operatorsExp = space? ("*" / "+" / "-") space?
     var = ~r"[a-zA-Z0-9_]+"
     space = ~r"\s+"
     """)
