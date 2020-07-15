@@ -156,11 +156,12 @@ if __name__ == '__main__':
 
             # Step 2.
             # Repeat until fixpoint.
+            aliases = []
             formulaOld = formula
             while True:
                 tree = grammar.parse(formula)
                 ac = AliasCollector()
-                aliases = ac.visit(tree)
+                aliases = aliases + ac.visit(tree)
                 vr = VarReplacer(aliases)
                 formula = vr.visit(tree)
                 if formulaOld == formula:
