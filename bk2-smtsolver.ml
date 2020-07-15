@@ -184,7 +184,7 @@ let logic_for_formulas f1 f2 =
 *)
 type smtprover =
   | Z3
-  | Cvc3
+  | Cvc4
   | Yices
 
 (**
@@ -194,7 +194,7 @@ let command_for prover =
   let helper s = s ^ infile ^ (* " | tail -n 1 > " *) " > " ^ outfile in
   match prover with
   | Z3 -> helper "z3 -smt2 "
-  | Cvc3 -> helper "cvc3 -lang smt "
+  | Cvc4 -> helper "cvc4 --lang=smt "
   | Yices -> helper "yices "
 
 (** An Hoa
@@ -429,7 +429,7 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
   let used_rels_defs = List.concat used_rels_defs in
   let res = match prover with
     | Z3 ->  to_smt_v2 ante_str conseq_str logic all_fv used_rels_defs
-    | Cvc3 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
+    | Cvc4 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
   in res
 
 (**

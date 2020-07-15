@@ -8466,7 +8466,7 @@ and imply_conj_orig_x one_ante_only ante_disj0 ante_disj1 conseq_conj t_imply im
 
   let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) imp_no
       : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
-  (* let () = print_string ("\nCpure.ml: CVC3 create process") in *)
+  (* let () = print_string ("\nCpure.ml: CVC4 create process") in *)
   let start = ref false in
   let process =
     match increm_funct with
@@ -8490,7 +8490,7 @@ and imply_conj_orig_x one_ante_only ante_disj0 ante_disj1 conseq_conj t_imply im
       | (Some ifun, Some proc, true) -> ifun#stop_p proc
         (* let () = print_string("\nCpure.ml: stop process") in  *)
       | (_, _, _) -> () in
-  (* let () = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *)
+  (* let () = print_string ("\nCpure.ml: CVC4 stop process \n\n") in *)
   r*)
 
 (*###############################################################################  *)

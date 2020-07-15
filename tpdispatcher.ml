@@ -278,8 +278,8 @@ class incremMethods : [CP.formula] incremMethodsType = object
   method start_p () : prover_process_t =
     let proc = 
       match !pure_tp with
-      | Cvc3 -> Cvc3.start()
-      | _ -> Cvc3.start() (* to be completed for the rest of provers that support incremental proving *) 
+      | Cvc4 -> Cvc4.start()
+      | _ -> Cvc4.start() (* to be completed for the rest of provers that support incremental proving *) 
     in 
     process := Some proc;
     proc
@@ -287,20 +287,20 @@ class incremMethods : [CP.formula] incremMethodsType = object
   (*stops the proving process*)
   method stop_p (process: prover_process_t): unit =
     match !pure_tp with
-    | Cvc3 -> Cvc3.stop process
+    | Cvc4 -> Cvc4.stop process
     | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*saves the state of the process and its context *)
   method push (process: prover_process_t): unit = 
     push_no := !push_no + 1;
     match !pure_tp with
-    | Cvc3 -> Cvc3.cvc3_push process
+    | Cvc4 -> Cvc4.cvc4_push process
     | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*returns the process to the state it was before the push call *)
   method pop (process: prover_process_t): unit = 
     match !pure_tp with
-    | Cvc3 -> Cvc3.cvc3_pop process
+    | Cvc4 -> Cvc4.cvc4_pop process
     | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*returns the process to the state it was before the push call on stack n *)
@@ -312,7 +312,7 @@ class incremMethods : [CP.formula] incremMethodsType = object
       end
       else n in
     match !pure_tp with
-    | Cvc3 -> Cvc3.cvc3_popto process n
+    | Cvc4 -> Cvc4.cvc4_popto process n
     | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   method imply (process: (prover_process_t option * bool) option) (ante: CP.formula) (conseq: CP.formula) (imp_no: string): bool = true
@@ -400,10 +400,10 @@ let set_tp user_flag tp_str =
   else if tp_str = "dp" then pure_tp := DP
   else if tp_str = "cvcl" then 
     (pure_tp := CvcLite; prover_str := "cvcl"::!prover_str;)
-  else if tp_str = "cvc3" then 
-    (pure_tp := Cvc3; prover_str := "cvc3"::!prover_str;)
+  else if tp_str = "cvc4" then 
+    (pure_tp := Cvc4; prover_str := "cvc4"::!prover_str;)
   else if tp_str = "co" then
-    (pure_tp := CO; prover_str := "cvc3"::!prover_str; 
+    (pure_tp := CO; prover_str := "cvc4"::!prover_str; 
      prover_str := "oc"::!prover_str;)
   else if tp_str = "isabelle" then
     (pure_tp := Isabelle; prover_str := "isabelle-process"::!prover_str;)
@@ -420,7 +420,7 @@ let set_tp user_flag tp_str =
   else if tp_str = "set" then
     (pure_tp := SetMONA; prover_str := "mona"::!prover_str;)
   else if tp_str = "cm" then
-    (pure_tp := CM; prover_str := "cvc3"::!prover_str;
+    (pure_tp := CM; prover_str := "cvc4"::!prover_str;
      prover_str := "mona"::!prover_str;)
   else if tp_str = "coq" then
     (pure_tp := Coq; prover_str := "coqtop"::!prover_str;)
@@ -501,7 +501,7 @@ let imm_stk = new Gen.stack_pr "imm-stk" pr_p (fun (x,_) (y,_) -> CP.eq_spec_var
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
   | CvcLite -> "cvcl"
-  | Cvc3 -> "cvc3"
+  | Cvc4 -> "cvc4"
   | CO -> "co"
   | Isabelle -> "isabelle"
   | Mona -> "mona"
@@ -529,7 +529,7 @@ let string_of_tp tp = match tp with
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
   | CvcLite -> "CVC Lite"
-  | Cvc3 -> "CVC3"
+  | Cvc4 -> "CVC4"
   | CO -> "CVC Lite and Omega"
   | Isabelle -> "Isabelle"
   | Mona -> "Mona"
@@ -556,7 +556,7 @@ let name_of_tp tp = match tp with
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
-  | Cvc3 -> "allinput.cvc3"
+  | Cvc4 -> "allinput.cvc4"
   | Isabelle -> "allinput.thy"
   | Mona -> "allinput.mona"
   | Coq -> "allinput.v"
@@ -578,8 +578,8 @@ let start_prover () =
   match !pure_tp with
   | Coq -> Coq.start ();
   | Redlog | OCRed | RM -> Redlog.start ();
-  | Cvc3 -> (
-      provers_process := Some (Cvc3.start ()); (* because of incremental *)
+  | Cvc4 -> (
+      provers_process := Some (Cvc4.start ()); (* because of incremental *)
       let () = match !provers_process with 
         |Some proc ->  !incremMethodsO#set_process proc
         | _ -> () in
@@ -621,9 +621,9 @@ let stop_prover () =
       Redlog.stop();
       Omega.stop();
     )
-  | Cvc3 -> (
+  | Cvc4 -> (
       let () = match !provers_process with
-        |Some proc ->  Cvc3.stop proc;
+        |Some proc ->  Cvc4.stop proc;
         |_ -> () in
       Omega.stop();
     )
@@ -1892,10 +1892,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       if (CP.is_float_formula wf) then (redlog_is_sat wf)
       else (omega_is_sat f);
     | CvcLite -> Cvclite.is_sat f sat_no
-    | Cvc3 -> (
+    | Cvc4 -> (
         match !provers_process with
-        |Some proc -> Cvc3.is_sat_increm !provers_process f sat_no
-        | _ -> Cvc3.is_sat f sat_no
+        |Some proc -> Cvc4.is_sat_increm !provers_process f sat_no
+        | _ -> Cvc4.is_sat f sat_no
       )
     | Z3 -> z3_is_sat f
     | Z3N -> z3n_is_sat f
@@ -1905,7 +1905,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       else (Smtsolver(*Omega*).is_sat f sat_no);
     | Mona | MonaH -> mona_is_sat wf
     | CO -> (
-        let result1 = (Cvc3.is_sat_helper_separate_process wf sat_no) in
+        let result1 = (Cvc4.is_sat_helper_separate_process wf sat_no) in
         match result1 with
         | Some f -> f
         | None -> omega_count := !omega_count + 1;
@@ -1914,7 +1914,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | CM -> (
         if (is_bag_constraint wf) then (mona_is_sat wf)
         else
-          let result1 = (Cvc3.is_sat_helper_separate_process wf sat_no) in
+          let result1 = (Cvc4.is_sat_helper_separate_process wf sat_no) in
           match result1 with
           | Some f -> f
           | None -> omega_count := !omega_count + 1;
@@ -3001,10 +3001,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           redlog_imply ante_w conseq_s
         else (omega_imply ante conseq)
       | CvcLite -> Cvclite.imply ante_w conseq_s
-      | Cvc3 -> (
+      | Cvc4 -> (
           match process with
-          | Some (Some proc, _) -> Cvc3.imply_increm process ante conseq imp_no
-          | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
+          | Some (Some proc, _) -> Cvc4.imply_increm process ante conseq imp_no
+          | _ -> Cvc4.imply_increm (Some (!provers_process,true)) ante conseq imp_no
         )
       | Z3 -> 
         (* let _ = print_endline ("z3 ante"^(Cprinter.string_of_pure_formula ante)) in *)
@@ -3032,7 +3032,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           ((* called_prover :="omega "; *) omega_imply ante conseq)
       | Mona | MonaH -> mona_imply ante_w conseq_s 
       | CO -> (
-          let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
+          let result1 = Cvc4.imply_helper_separate_process ante conseq imp_no in
           match result1 with
           | Some f -> f
           | None -> (* CVC Lite is not sure is this case, try Omega *)
@@ -3043,7 +3043,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           if (is_bag_constraint ante) || (is_bag_constraint conseq) then
             mona_imply ante_w conseq_s
           else
-            let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
+            let result1 = Cvc4.imply_helper_separate_process ante conseq imp_no in
             match result1 with
             | Some f -> f
             | None -> (* CVC Lite is not sure is this case, try Omega *)
