@@ -92,3 +92,6 @@ print residue.
 checkentail @zero[n] & n = 3 |- n > 1.
 print residue.
 
+//(19)
+checkentail h::cell<3> |- h::cell<n>.
+print residue.

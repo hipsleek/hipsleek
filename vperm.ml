@@ -258,7 +258,7 @@ let vperm_sets_of_ann_set ans =
 (* Return: pair sets, rem lhs, rem rhs *)
 let rec pair_ann_sets lhs_as rhs_as = 
   match lhs_as with
-  | [] -> ([], [], rhs_as)
+  | [] -> ([], [], rhs_as) 
   | (vl, lhs_ann)::lhs_as ->
     let ps, ls, rs = pair_ann_sets lhs_as rhs_as in
     try
@@ -270,6 +270,9 @@ let rec pair_ann_sets lhs_as rhs_as =
 let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann = 
   (* let ver_post_flag = es.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in *)
   (* let par_flag = es.CF.es_infer_obj # is_par || infer_const_obj # is_par in *)
+
+  (*************** full > value > lend ***************)
+  (*************** full > frac  > lend ***************)
   let err s = Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann) in
   let rec aux lhs_ann rhs_ann =
     match lhs_ann with
@@ -277,8 +280,10 @@ let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann
       begin match rhs_ann with
         | VP_Full -> VP_Zero
         | VP_Lend -> 
-          if par_flag then raise (err "Par") 
-          else if ver_post_flag then raise (err "verify_post")
+          (* why?? *)
+          (* if par_flag then raise (err "Par")  *)
+          (* else  *)
+          if ver_post_flag then raise (err "verify_post")
           else VP_Full 
         | VP_Value -> 
           if ver_post_flag then raise (err "verify_post")
@@ -292,17 +297,17 @@ let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann
         | VP_Lend -> 
           if ver_post_flag then raise (err "verify_post")
           else VP_Lend
-        | VP_Value -> 
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Lend
+        | VP_Value -> raise (err "lend -> value")
+          (* if ver_post_flag then raise (err "verify_post")
+          else VP_Lend *)
         | VP_Zero -> VP_Lend
         | VP_Frac f -> raise (err "lend -> frac")
       end
     | VP_Value ->
       begin match rhs_ann with
-        | VP_Full -> 
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Zero
+        | VP_Full -> raise (err "value -> full")
+          (* if ver_post_flag then raise (err "verify_post")
+          else VP_Zero *)
         | VP_Lend -> 
           (* VP_Value (\* TODO: to check *\) *)
           if ver_post_flag then raise (err "verify_post")
@@ -311,7 +316,8 @@ let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann
           if ver_post_flag then raise (err "verify_post")
           else VP_Value
         | VP_Zero -> VP_Value
-        | VP_Frac f -> aux (VP_Frac Frac.value2frac) rhs_ann
+        | VP_Frac f -> raise (err "value -> frac")
+          (* aux (VP_Frac Frac.value2frac) rhs_ann *)
       end
     | VP_Zero ->
       begin match rhs_ann with
@@ -322,9 +328,9 @@ let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann
       begin match rhs_ann with
         | VP_Zero -> lhs_ann
         | VP_Full ->  aux lhs_ann (VP_Frac Frac.full2frac)
-        | VP_Value -> 
-          if ver_post_flag then raise (err "verify_post")
-          else lhs_ann
+        | VP_Value -> raise (err "frac -> value") 
+          (* if ver_post_flag then raise (err "verify_post")
+          else lhs_ann *)
         | VP_Lend -> 
           if ver_post_flag then raise (err "verify_post")
           else lhs_ann
@@ -336,8 +342,11 @@ let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann
   in aux lhs_ann rhs_ann
 (* | _ -> lhs_ann*)
 
-(* let vperm_entail_var es sv lhs_ann rhs_ann =  *)
-(*   Debug.no_3 "vperm_entail_var" pr_sv pr_ann pr_ann pr_none (fun _ _ _ -> vperm_entail_var es sv lhs_ann rhs_ann) sv lhs_ann rhs_ann  *)
+let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann = 
+  let pr_sv = !print_sv in
+  (* let pr_sv = Cprinter.string_of_spec_var in *)
+  let pr_ann = string_of_vp_ann in 
+  Debug.no_3 "vperm_entail_var" pr_sv pr_ann pr_ann pr_ann (fun _ _ _ -> vperm_entail_var ~ver_post_flag ~par_flag sv lhs_ann rhs_ann) sv lhs_ann rhs_ann 
 
 let mkFailCtx_vp msg estate conseq pos = 
   (* let msg = "Error in VPerm entailment: " ^ msg in *)
@@ -378,8 +387,9 @@ let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=fal
       else 
         (* let res_f = set_vperm_sets_formula res_vps estate.es_formula in *)
         (* let estate = { estate with es_formula = res_f; } in *)
+        let () = x_tinfo_hp (add_str "None res_vps:" !print_vperm_sets) res_vps no_pos in
         None, res_vps
-    with (Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann)) ->
+    with (Vperm_Entail_Fail (s, sv, lhs_ann, rhs_ann)) ->
       let m = if s="" then "" else "(under "^s^") " in
       let msg = (pr_vp (sv, lhs_ann)) ^ " cannot satisfy "^m^ (pr_vp (sv, rhs_ann)) in
       (* let fctx = mkFailCtx_vp msg estate conseq pos in *)

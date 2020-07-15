@@ -130,7 +130,7 @@ let check_dupl svl =
   | [] -> false
   | v::vs -> aux vs v
 
-let norm_list svl  = 
+let norm_list svl = 
   let svl2 = List.sort (fun v1 v2 -> String.compare (get_unprime v1) (get_unprime v2)) svl in
   (svl2,check_dupl svl2)
 
@@ -160,30 +160,43 @@ let is_frac_false xs =
 (*   List.filter (fun (f,v) -> not(Frac.is_zero f)) frac_vars *)
 
 let is_false_frac_other frac_vars full_vars value_vars =
-  let vs = full_vars@value_vars in
+  (* let vs = full_vars@value_vars in *)
+  (* YF: to differentiate the full and value make the full > value and make frac incomparable w. value *)
+  let vs = full_vars in
   List.exists (fun (f,v) -> not(Frac.is_zero f) && mem v vs) frac_vars 
 
+  (* YF: TODO: what about frac is 1 *)
+let diff_frac l1 l2 =
+  List.filter (fun (_, x) -> not (List.exists (eq_spec_var_ident x) l2)) l1
 
 let norm_vperm_sets vps = 
+  (* full > value > lend *)
+  (* full > frac > lend *)
   let vps = vperm_rm_prime vps in
+  (* YF: this norm_full_value is a little bit strange, why it put the full and value together? *)
   let (full_vars,value_vars,flag1) = norm_full_value vps.vperm_full_vars vps.vperm_value_vars in
   let zero_vars = remove_dups vps.vperm_zero_vars in (* @zero[x] * @zero[x] -> @zero[x] *)
   let lend_vars = remove_dups vps.vperm_lend_vars in (* @lend[x] * @lend[x] -> @lend[x] *)
   (* let full_vars = (\* remove_dups *\) vps.vperm_full_vars in (\* @full[x] * @full[x] -> false *\) *)
   let frac_vars2 = norm_frac_list vps.vperm_frac_vars in
+  let (_,frac_vars1) = List.split frac_vars2 in 
   let false_flag = flag1 || (is_frac_false frac_vars2) 
                    || (is_false_frac_other frac_vars2 full_vars value_vars) in
+  (* let false_flag = (is_frac_false frac_vars2) 
+                   || (is_false_frac_other frac_vars2 full_vars value_vars) in *)
   (* WN : need to check if below correct! *)
   (* let frac_vars_set = List.map (fun (frac, group) ->  *)
   (*   let m_group = List.concat (List.map snd group) in *)
   (*   (frac, m_group)) group_frac_vars_sets  *)
+  (* this diff is that if you have a higher perm, then use the higher one *)
   { vps with
     vperm_full_vars = full_vars;
     vperm_is_false = false_flag;
-    vperm_lend_vars = diff lend_vars full_vars; (* TO FIX Value? *)
-    vperm_value_vars = value_vars;
+    vperm_lend_vars = diff lend_vars (full_vars @ value_vars @ frac_vars1); (* TO FIX Value? *)
+    vperm_value_vars = diff value_vars full_vars; (* YF: in order to set the Value to a lower perm *)
     vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); 
-    vperm_frac_vars = frac_vars2; }
+    vperm_frac_vars = frac_vars2; (* this is wrong: add a default lend in a heap_entail, so how to do a diff here with value and lend? *)
+  }
 
 let norm_vperm_sets vps = 
   if not (!Globals.ann_vp) then vps

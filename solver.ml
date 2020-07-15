@@ -3833,6 +3833,9 @@ and find_common_free_variable (cl : list_context) (conseq : struc_formula) =
   intersect_list_flat
 
 and add_default_val_perm (vps : CVP.vperm_sets) (spcvl : CP.spec_var list) : (CVP.vperm_sets) =
+(* if the var (instead of the whole set) doesn't have any perm on rhs, then give it default lend *)
+  (* if CVP.is_empty_vperm_sets vps then vps  *)
+  (* else  *)
   let vps_new = { vps with vperm_lend_vars = vps.vperm_lend_vars @ spcvl } in
   vps_new
   
@@ -3842,6 +3845,7 @@ and add_value_permission_on_rhs cv_ls conseq : struc_formula =
   else let m_conseq = 
     match conseq with
     | EBase eb ->  
+      let () = x_binfo_pp "enter EBase branch" no_pos in
       (* f is the formula *)
       let f = eb.formula_struc_base in 
       let vps = VP.vperm_sets_of_formula f in (* f.formula_base_vperm  vps inside the formula *)
@@ -3851,7 +3855,7 @@ and add_value_permission_on_rhs cv_ls conseq : struc_formula =
       let new_eb = {eb with formula_struc_base = new_f} in
       EBase {eb with formula_struc_base = new_f}
       (* new_eb *)
-    | _ -> conseq
+    | _ -> let () = x_binfo_pp "enter the default branch" no_pos in conseq
   in m_conseq
 
 and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
@@ -3859,6 +3863,7 @@ and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has
   let () = x_binfo_hp (add_str "common variables list" Cprinter.string_of_spec_var_list) cv_list no_pos in
   (* let () = x_binfo_hp (add_str "common variables list" Cprinter.string_of_ms) cv_list no_pos in *)
   let new_conseq = add_value_permission_on_rhs cv_list conseq in
+  let () = x_binfo_hp (add_str "new_conseq" Cprinter.string_of_struc_formula) new_conseq no_pos in 
   let (ans, prf) = x_add heap_entail_struc_init prog is_folding has_post cl new_conseq pos pid in
   (CF.convert_maymust_failure_to_value_orig ~mark:false ans, prf)
 
@@ -10873,11 +10878,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     Immutable.mkAndOpt ann_rhs view_param_ann_rhs,
     Immutable.mkAndOpt ann_rhs_ex view_param_ann_rhs_ex)
   in
-  x_tinfo_hp (add_str "ann_lhs" (pr_opt Cprinter.string_of_pure_formula)) ann_lhs pos;
-  x_tinfo_hp (add_str "ann_rhs" (pr_opt Cprinter.string_of_pure_formula)) ann_rhs pos;
   x_tinfo_hp (add_str "Imm annotation mismatch" (string_of_bool)) (not(r)) pos;
   if r == false
   then
+    let () = x_binfo_hp (add_str "ann_lhs" (pr_opt Cprinter.string_of_pure_formula)) ann_lhs pos in
+    let () = x_binfo_hp (add_str "ann_rhs" (pr_opt Cprinter.string_of_pure_formula)) ann_rhs pos in 
     let at_par = if es_at_par then " @par " else " " in
     let err_msg = (* ("Imm annotation" ^ at_par ^ "mismatches") *) ("mismatched imm annotation" ^ at_par ^ "for " ^ node_kind ^ " " ^ l_node_name) in
     let fe = CF.mk_failure_must err_msg Globals.sl_error in

@@ -2063,7 +2063,7 @@ let imm_abs_norm_struc_formula (f:CF.struc_formula) conseq prog  unfold_fun: CF.
 let imm_norm_formula prog f unfold_fun pos =
   (* imm_abs_norm_formula modifies f only when Globals.imm_merge is set *)
   let f = imm_abs_norm_formula f prog (unfold_fun prog pos) in
-  let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula f else f in
+  (* let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula f else f in *)
   f
 
 let imm_norm_h_formula prog fh fp unfold_fun pos =
