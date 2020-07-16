@@ -1,0 +1,5 @@
+version=0.14.2
+
+# to enable a whole directory, put "disable=false" in dir/.ocamlformat
+# to enable specific files put them in .ocamlformat-enable
+disable=true

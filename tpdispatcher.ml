@@ -349,7 +349,7 @@ let rec check_prover_existence prover_cmd_str =
     (* let () = print_endline ("prover:" ^ prover) in *)
     let prover = 
       if String.compare prover "z3n" = 0 then "z3-4.2" 
-      else if String.compare prover "mona" = 0 then try FileUtil.which "mona_inter" with Not_found -> ""
+      else if String.compare prover "mona" = 0 then try FileUtil.which "mona" with Not_found -> ""
       else prover
     in
     let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in

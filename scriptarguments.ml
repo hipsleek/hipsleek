@@ -58,6 +58,8 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
+  ("--pprint", Arg.Set Globals.pretty_print,
+   "Pretty print.");
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
   ("--sdp", Arg.Set Globals.simplify_dprint,
    "Simplify the entail state before printing the dprint state."); (* An Hoa *)
@@ -1173,6 +1175,14 @@ let common_arguments = [
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
   ("--en-warning", Arg.Set VarGen.en_warning_msg, "enable warning (default)");
   ("--dis-warning", Arg.Clear VarGen.en_warning_msg, "disable warning (switch to report error)");
+  ("--webprint", Arg.Unit
+    (fun _ ->
+      Debug.webprint := false;
+      VarGen.web_location := false;
+      Globals.enable_count_stats:= false;
+      Globals.enable_time_stats:= false;
+      Globals.tnt_web_mode:=true),
+    "only prints essentials");
   ("--print-min",
    Arg.Unit
      (fun _ ->
@@ -1364,7 +1374,7 @@ let common_arguments = [
         Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
-  ("--force-print-residue", Arg.Set Globals.force_print_residue, "Always print resiude")
+  ("--force-print-residue", Arg.Set Globals.force_print_residue, "Always print residue")
 ]
 
 (* arguments/flags used only by hip *)
