@@ -1,0 +1,42 @@
+#!/bin/bash
+# A job on Travis CI compares the output of `examples/working/run-fast-tests.pl` to expected output in files in `.travis`.
+# A job corresponds to two environment variables, HIPSLEEK_TESTS_START and HIPSLEEK_TESTS_END.
+# These environment variables determine the range of tests run, and which files to use for expected output.
+# For example, HIPSLEEK_TESTS_START=0 and HIPSLEEK_TESTS_END=4 determine that the expected output is in files `run-fast-tests.sleek.0-4` and `run-fast-tests.hip.0-4`.
+#
+# This script:
+# 1. Retrieves job logs from Travis CI.
+# 2. Determines if job failed (given by `Done. Your build exited with 1.`).
+# 3. For each failed job, cleans up job log to leave only the output of `git diff`, then calls `patch` on that job log.
+
+usage() {
+  printf "Usage: %s <build #> <# of jobs>\n" "$0"
+  exit 1
+}
+
+if [ $# -ne 2 ]; then
+  usage
+fi
+
+build_id=$(($1))
+njobs=$(($2))
+open="git diff --exit-code --ignore-submodules=dirty"
+
+for ((job_id=build_id+1; job_id<=build_id+njobs; job_id++)) do
+  log=autopatch.$$.log
+  patch=autopatch.$$.patch
+  isDiff=0
+  wget -nv -O $log "https://api.travis-ci.org/v3/job/$job_id/log.txt"
+  if tail -n 1 $log | grep -q "1"; then
+    while IFS= read -r line; do
+      if (( isDiff == 1 )); then
+        printf "%s\n" "$line" | sed 's/\x1b\[[0-9;]*m//g' # Remove ANSI escape codes
+      fi
+      if [[ "$line" == "$open" ]]; then
+        isDiff=1
+      fi
+    done < $log > $patch
+    sed -i "$(($(wc -l < $patch)-5)),\$d" $patch # Assume last 6 lines are not part of patch
+    patch -p1 < $patch
+  fi
+done
