@@ -16,19 +16,19 @@ from parsimonious.exceptions import ParseError
 grammar = Grammar(
     r"""
     formula = space? head rest? space?
-    head = heapPred / boolExp
+    head = (heapPred / alias / boolExp) / ("(" space? (heapPred / alias / boolExp) space? ")")
     rest = space? restHead space? rest*
-    restHead = operatorsTop (heapPred / boolExp)
-    heapPred = "emp" / (exp "::" exp "<" exp? ">@M")
-    boolExp = "true" / "false" / alias / notAlias / boolPred / boolCompare / quantifierPred
+    restHead = operatorsTop head
+    heapPred = "emp" / "hfalse" / (exp "::" exp "<" exp? ">@M")
+    boolExp = (("true" / "false" / (exp "=" exp) / notAlias / boolPred / quantifierPred / boolCompare) (operatorsBool boolExp)*) / ("(" boolExp ")" (operatorsBool boolExp)*)
     alias = exp "=" exp
-    notAlias = "!(" exp "=" exp ")"
+    notAlias = ("!(" exp "=" exp ")") / (exp "!=" exp)
     boolPred = exp "(" exp ")"
     boolCompare = exp operatorsCompare exp
     quantifierPred = exp "(" exp ":" formula ")"
-    exp = (var (operatorsExp exp)*) / (expEnclosed (operatorsExp exp)*)
-    expEnclosed = "(" exp ")"
+    exp = (var (operatorsExp exp)*) / ("(" exp ")" (operatorsExp exp)*)
     operatorsTop = space? ("|-" / "*" / "&") space?
+    operatorsBool = space? ("|" / "&") space?
     operatorsCompare = space? ("<=" / ">=" / "<" / ">") space?
     operatorsExp = space? ("*" / "+" / "-") space?
     var = ~r"[a-zA-Z0-9_]+"
@@ -79,21 +79,19 @@ class AliasRemover(NodeVisitor):
     """
 
     def visit_head(self, node, visited_children):
-        operand = node.children[0]
-        if operand.expr_name == 'boolExp':
-            child = operand.children[0]
-            if child.expr_name == 'alias':
-                alias, _, value = child
-                if alias.text == value.text:
-                    return ''
-                else:
-                    return ''.join(visited_children)
+        operand = node.children[0].children[0]
+        if operand.expr_name == 'alias':
+            alias, _, value = operand
+            if alias.text == value.text:
+                return ''
+            else:
+                return ''.join(visited_children)
         return ''.join(visited_children)
 
     def visit_restHead(self, node, visited_children):
         _, operand = node.children
-        if operand.expr_name == 'boolExp':
-            child = operand.children[0]
+        if operand.expr_name == 'head':
+            child = operand.children[0].children[0]
             if child.expr_name == 'alias':
                 alias, _, value = child
                 if alias.text == value.text:
@@ -152,15 +150,16 @@ if __name__ == '__main__':
                 raise Exception('Unhandled case')
 
             formula = ''.join(map(lambda x: x.strip(), formulaChunks))
-            formula = formula.split('&{FLOW,(20,21)=__norm#E}[]', 1)[0]
+            formula = formula.split('&{FLOW,(', 1)[0]
 
             # Step 2.
             # Repeat until fixpoint.
+            aliases = []
             formulaOld = formula
             while True:
                 tree = grammar.parse(formula)
                 ac = AliasCollector()
-                aliases = ac.visit(tree)
+                aliases = aliases + ac.visit(tree)
                 vr = VarReplacer(aliases)
                 formula = vr.visit(tree)
                 if formulaOld == formula:
