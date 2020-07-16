@@ -78,15 +78,11 @@ class AliasRemover(NodeVisitor):
     """Remove a trivial alias, and also remove the operator before (if available).
     """
 
-    def __init__(self):
-        self.isTrivialAliasHead = False
-
     def visit_head(self, node, visited_children):
         operand = node.children[0].children[0]
         if operand.expr_name == 'alias':
             alias, _, value = operand
             if alias.text == value.text:
-                self.isTrivialAliasHead = True
                 return ''
             else:
                 return ''.join(visited_children)
@@ -101,16 +97,8 @@ class AliasRemover(NodeVisitor):
                 if alias.text == value.text:
                     return ''
                 else:
-                    if self.isTrivialAliasHead:
-                        self.isTrivialAliasHead = False
-                        return ''.join(visited_children[1:])
-                    else:
-                        return ''.join(visited_children)
-        if self.isTrivialAliasHead:
-            self.isTrivialAliasHead = False
-            return ''.join(visited_children[1:])
-        else:
-            return ''.join(visited_children)
+                    return ''.join(visited_children)
+        return ''.join(visited_children)
 
     def generic_visit(self, node, visited_children):
         return ''.join(visited_children) if visited_children else node.text
