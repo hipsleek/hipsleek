@@ -1,0 +1,48 @@
+//CountDownLatch
+data CDL{
+}.
+
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+// need some ways to declare this counter is thread-local
+// for thread-local, it will not do the imm-merge
+// high-order and pred prim are declared
+// pred_prim CNT{%Thread_Local}<…> inv ..
+pred_prim CNT<n:int@threadlocal> 
+  inv n>=(-1).
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+//lemma "combine-first" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>.
+
+//lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+
+lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+//lemma "norm" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
+
+lemma "combine-first" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>.
+
+
+//3: should be VALID -- ??? after changing the sequences of the lemmas, it becomes VALID
+//checkentail c::CNT<d> * c::CNT<e> & d=1 & e=-3 |- c::CNT<n> & n=-2.
+//print residue.
+
+//heckentail c::CNT<2> * @lend[c] |- c::CNT<1> * c::CNT<1>.
+//print residue.
+
+//checkentail c::CNT<2> * @full[c] |- c::CNT<1> * @lend[c].
+//print residue.
+
+checkentail c::CNT<2> * c::CNT<2> * @full[c] |- c::CNT<1> * @lend[c].
+print residue.
+
+// ???
+//checkentail c::CNT<2>@M |- c::CNT<1>@L.
+//print residue.
