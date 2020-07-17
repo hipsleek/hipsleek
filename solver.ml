@@ -8550,14 +8550,16 @@ and subst_rel_by_def_mix rel_w_defs mf =
 (*   Cformula.formula_base -> *)
 (*   Cformula.MCP.mix_formula -> *)
 (*   Slsat.CP.spec_var list -> VarGen.loc -> CF.list_context * Prooftracer.proof *)
-and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
+and heap_entail_empty_rhs_heap_y i p conseq i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_4_num i "heap_entail_empty_rhs_heap"
     (add_str "es" Cprinter.string_of_entail_state)
     (add_str "lhs-base-f" (fun c-> Cprinter.string_of_formula(Base c)))
     (add_str "rhs-mix" Cprinter.string_of_mix_formula)
     (add_str "is_folding" string_of_bool) pr
-    (fun _ _ _ _ -> TP.wrap_remove_univ_rhs (heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set) pos) es lhs rhs i_f
+    (fun _ _ _ _ -> (heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos)) es lhs rhs i_f
+
+and heap_entail_empty_rhs_heap p conseq i_f es lhs rhs rhs_matched_set pos = TP.wrap_remove_univ_rhs (heap_entail_empty_rhs_heap_y p conseq i_f es lhs rhs rhs_matched_set) pos
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (**** INTERNAL****)
