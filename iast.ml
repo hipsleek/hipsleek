@@ -89,6 +89,7 @@ and view_decl =
     view_labels : LO.t list * bool;
 
     view_is_prim : bool;
+    view_is_threadlocal : bool;
     view_is_hrel : bool option; (* bool is for PostHeap *)
 
     mutable view_data_name : ident;
@@ -655,6 +656,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_formula = f;
           view_inv_lock = None;
           view_is_prim = false;
+          view_is_threadlocal = false;
           view_is_hrel = None;
           view_kind = v_kind (* View_HREL *);
           view_prop_extns = [];
@@ -701,6 +703,7 @@ let mk_view_header vn opt1 cids mvs modes pos =
     view_formula = F.mkETrue top_flow (pos);
     view_inv_lock = None;
     view_is_prim = false;
+    view_is_threadlocal = false;
     view_is_hrel = None;
     view_kind = View_NORM;
     view_prop_extns = [];

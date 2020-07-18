@@ -2532,6 +2532,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (*   | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos *)
       (*   | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in *)
       let is_prim_v = vdef.I.view_is_prim in
+      let is_prim_threadlocal = vdef.I.view_is_threadlocal in
       let rbc = CFE.compute_raw_base_case is_prim_v n_un_str in
       (* let rbc =  *)
       (*   if is_prim_v then None *)
@@ -2799,6 +2800,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;
         C.view_is_prim = is_prim_v;
+        C.view_is_threadlocal = is_prim_threadlocal;
         C.view_is_hrel = is_hrel_v;
         C.view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id);
         C.view_is_touching = false;           (* temporarily assigned *)

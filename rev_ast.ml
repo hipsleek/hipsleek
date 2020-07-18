@@ -245,6 +245,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_formula = struc_body;
                          I.view_inv_lock = None;
                          I.view_is_prim = false;
+                         view_is_threadlocal = false;
                          I.view_is_hrel = None;
                          I.view_invariant = IP.mkTrue no_pos;
                          I.view_baga_inv = None;
@@ -341,6 +342,7 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_vars = List.map CP.name_of_spec_var v.C.view_vars;
     I.view_pos = v.C.view_pos;
     I.view_is_prim = v.C.view_is_prim;
+    I.view_is_threadlocal = v.C.view_is_threadlocal;
     I.view_is_hrel = v.C.view_is_hrel;
     I.view_data_name = v.C.view_data_name;
     I.view_ho_vars = List.map (fun (fk, sv, sk) -> (fk, CP.name_of_spec_var sv, sk)) v.C.view_ho_vars;

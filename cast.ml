@@ -110,6 +110,7 @@ and view_decl = {
   view_pos : loc;
 
   view_is_prim : bool;
+  view_is_threadlocal : bool;
   view_is_hrel : bool option; (* bool is PreHeap *)
 
   view_equiv_set : ((int list) * ident) VarGen.store;
@@ -789,6 +790,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_is_hrel = Some (is_pre);
     view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id) ;
     view_is_prim = false;
+    view_is_threadlocal = false;
     view_data_name = "";
     view_ho_vars = [];
 
@@ -848,7 +850,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_ef_pure_disj = None;
   }
 
-let mk_view_prim v_name v_args v_inv pos =
+let mk_view_prim ?tlf:(tlf=false) v_name v_args v_inv pos =
   let mix_true = MP.mkMTrue pos in
   {
     view_name = v_name;
@@ -856,6 +858,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_pos = pos;
     view_is_hrel = None;
     view_is_prim = true;
+    view_is_threadlocal = tlf;
     view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id);
     view_data_name = "";
     view_ho_vars = [];

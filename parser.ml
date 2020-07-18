@@ -1253,7 +1253,7 @@ view_decl:
  ]];
 
 prim_view_decl:
-  [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
+  [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; tlf = opt_thread_local_flag
       -> let (oi, oboi) = oi in
           { vh with
           (* view_formula = None; *)
@@ -1263,6 +1263,7 @@ prim_view_decl:
           view_baga_under_inv = obui;
           view_kind = View_PRIM;
           view_is_prim = true;
+          view_is_threadlocal = tlf;
           view_is_hrel = None;
           view_inv_lock = li} ]];
 
@@ -1525,7 +1526,9 @@ id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
 
 (* threadlocal_ann: [[ `THREADLOCAL -> THREAD_LOCAL ]]; *)
 
-opt_thread_local_flag : [[ `THREADLOCAL -> true ]];
+thread_local_flag : [[ `THREADLOCAL -> true ]];
+
+opt_thread_local_flag : [[tlf = OPT thread_local_flag -> (un_option tlf false)]];
 
 opt_brace_vars : [[ `OBRACE; sl = id_ann_list_opt; `CBRACE -> sl ]];
 
@@ -1564,6 +1567,7 @@ view_header_ext:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_is_prim = false;
+          view_is_threadlocal = false;
           view_is_hrel = None;
           view_kind = View_EXTN;
           view_prop_extns = sl;

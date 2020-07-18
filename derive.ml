@@ -317,6 +317,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_formula = struc_body;
                   Iast.view_inv_lock = None;
                   Iast.view_is_prim = false;
+                  Iast.view_is_threadlocal = false;
                   Iast.view_is_hrel = None;
                   Iast.view_invariant = Ipure.mkTrue no_pos;
                   Iast.view_mem = None;
@@ -1125,6 +1126,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
           Iast.view_formula = Iformula.mkETrue top_flow no_pos;
           Iast.view_inv_lock = None;
           Iast.view_is_prim = false;
+          Iast.view_is_threadlocal = false;
           Iast.view_is_hrel = None;
           Iast.view_kind = View_DERV;
           Iast.view_prop_extns = [];
