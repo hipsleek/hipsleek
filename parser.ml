@@ -1523,6 +1523,10 @@ id_ann:
 
 id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
 
+(* threadlocal_ann: [[ `THREADLOCAL -> THREAD_LOCAL ]]; *)
+
+opt_thread_local_flag : [[ `THREADLOCAL -> true ]];
+
 opt_brace_vars : [[ `OBRACE; sl = id_ann_list_opt; `CBRACE -> sl ]];
 
 rflow_form_list : [[ `OBRACE; sl = rflow_form_list_opt; `CBRACE ->

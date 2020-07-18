@@ -105,6 +105,7 @@ type sleek_token =
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac |PFRAC (* | PREF *)
   | SPLITANN
+  | THREADLOCAL
   | TUP2
   | PLUS | PRIME 
   | SEMICOLON | SAT | SPEC
@@ -218,6 +219,7 @@ module Token = struct
     | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:" | SAT -> "@S"
     (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero" | PLEND -> "@lend" | PCONST f -> "@" ^ (Frac.string_of_frac f)
     | SPLITANN -> "@Split"
+    | THREADLOCAL -> "@ThreadLocal"
     | TUP2 -> "tup2"
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"
