@@ -167,7 +167,7 @@ let wrap_ana_ni et f a = wrap_gen_global INF_ANA_NI et f a
 
 (* Some f - set allow_field_imm t f *)
 (* None - use the default option *)
-let wrap_field_imm et f a =
+let wrap_field_imm et f a = 
   let flag = !allow_field_ann in
   let flag2 = !imm_merge in
   allow_field_ann := (match et with

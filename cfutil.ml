@@ -2813,6 +2813,10 @@ let is_view_node_segmented vn prog =
   let vdcl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn.h_formula_view_name in
   vdcl.Cast.view_is_segmented
 
+let is_view_node_threadlocal vn prog =
+  let vdcl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn.h_formula_view_name in
+  vdcl.Cast.view_is_threadlocal
+
 let subst_views_form_x map_views is_pre f=
   (***************INTERNAL****************)
   let rec refresh_der_args args orig_args (pure_r,res)=

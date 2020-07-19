@@ -1255,6 +1255,12 @@ view_decl:
 prim_view_decl:
   [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; tlf = opt_thread_local_flag
       -> let (oi, oboi) = oi in
+         let tlf_b =  
+           match tlf with 
+            | THREADL -> true
+            | THREAD_NONE -> false 
+         in
+         let () = print_endline "enter thread local case" in 
           { vh with
           (* view_formula = None; *)
           view_invariant = oi;
@@ -1263,7 +1269,7 @@ prim_view_decl:
           view_baga_under_inv = obui;
           view_kind = View_PRIM;
           view_is_prim = true;
-          view_is_threadlocal = tlf;
+          view_is_threadlocal = tlf_b;
           view_is_hrel = None;
           view_inv_lock = li} ]];
 
@@ -1526,9 +1532,9 @@ id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
 
 (* threadlocal_ann: [[ `THREADLOCAL -> THREAD_LOCAL ]]; *)
 
-thread_local_flag : [[ `THREADLOCAL -> true ]];
+thread_local_flag : [[ `THREADLOCAL -> THREADL ]];
 
-opt_thread_local_flag : [[tlf = OPT thread_local_flag -> (un_option tlf false)]];
+opt_thread_local_flag : [[ t = OPT thread_local_flag -> (un_option t THREAD_NONE)]];
 
 opt_brace_vars : [[ `OBRACE; sl = id_ann_list_opt; `CBRACE -> sl ]];
 

@@ -2690,9 +2690,10 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap =
   let comp, ret_h, _, guards = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
   let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
   let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
-  let () = x_tinfo_hp (add_str "view_is_segmented" string_of_bool) (Cfutil.is_view_node_segmented vn1 prog)  no_pos in
+  let threadlocal_view =  same_view &&  not(Cfutil.is_view_node_threadlocal vn1 prog) in
+  let () = x_tinfo_hp (add_str "view_is_segmented" string_of_bool) (Cfutil.is_view_node_segmented vn1 prog) no_pos in
   (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
-  if comp  && comp_view then
+  if (comp && comp_view) && threadlocal_view then
     let (eqs, subs) = partition_eqs_subs vn1.h_formula_view_arguments vn2.h_formula_view_arguments quantif in
     ([ret_h], eqs, subs, [], [])                      (* should I also add the pure of merged (@A) node? *)
     (* ([], []) *)

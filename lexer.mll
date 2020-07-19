@@ -455,6 +455,7 @@ rule tokenizer file_name = parse
   | "@value" {PVALUE}
   | "@lend" { PLEND }
   | "@Split" { SPLITANN } (*Split annotation*)
+  | "@ThreadLocal" { THREADLOCAL }
   | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }

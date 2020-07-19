@@ -67,6 +67,10 @@ type ho_split_kind =
   | HO_SPLIT
   | HO_NONE
 
+type thread_local_kind =
+  | THREADL
+  | THREAD_NONE  
+
 type ho_flow_kind =
   | INFLOW
   | OUTFLOW

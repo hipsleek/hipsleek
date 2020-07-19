@@ -14,8 +14,11 @@ pred_prim LatchOut{+%P@Split}<>.
 // for thread-local, it will not do the imm-merge
 // high-order and pred prim are declared
 // pred_prim CNT{%Thread_Local}<…> inv ..
-pred_prim CNT<n:int@threadlocal> 
-  inv n>=(-1).
+//pred_prim CNT<n:int>
+  //inv n>=(-1)
+  //ThreadLocal.
+
+pred_prim CNT<n:int> @ThreadLocal.
 
 lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
 
