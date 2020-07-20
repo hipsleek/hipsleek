@@ -1253,7 +1253,7 @@ view_decl:
  ]];
 
 prim_view_decl:
-  [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; tlf = opt_thread_local_flag
+  [[ vh= view_header; tlf = opt_thread_local_flag; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       -> let (oi, oboi) = oi in
          let tlf_b =  
            match tlf with 

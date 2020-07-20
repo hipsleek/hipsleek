@@ -2579,6 +2579,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in *)
       (* let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name prog.I.prog_data_decls in *)
       let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in
+      let ann_params_a, ann_i = List.split ann_params in 
+      let () = Debug.binfo_hprint (add_str "ann_params" Cprinter.string_of_annot_arg_list) ann_params_a no_pos in
       let view_ho_sv = List.map (fun (fk,i,sk) -> (fk, CP.SpecVar (FORM,i,Unprimed), sk)) vdef.I.view_ho_vars in (* TODO;HO *)
       (* TODO:WN : checking for implicit equiv_view *)
       let () = if sf!=[] then

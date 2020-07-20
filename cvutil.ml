@@ -716,6 +716,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
       {mem_formula_mset = m;}
     | ThreadNode _ ->
+      (* when will this threadnode be used? *)
       (* cannot decide just based on the resource, hence empty *)
       {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
     | DataNode ({h_formula_data_node = p;
