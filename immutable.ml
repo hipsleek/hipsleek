@@ -1881,7 +1881,12 @@ let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.form
     (h, lc1@lc2, nv1@nv2)
   | CF.DataNode dn -> auxf h 
   | CF.ViewNode vn -> auxf h 
-  | _ -> (h,[],[])
+  | CF.ThreadNode tn -> let () = x_binfo_pp "this is thread node formula" no_pos in (h,[],[])
+  | CF.HVar _ -> let () = x_binfo_pp "this is HVar formula" no_pos in (h,[],[])
+  | CF.HEmp -> let () = x_binfo_pp "enter this HEmp" no_pos in (h,[],[])
+  | HTrue -> let () = x_binfo_pp "enter this HTrue" no_pos in (h,[],[])
+  | HFalse -> let () = x_binfo_pp "enter this HFalse" no_pos in (h,[],[])
+  | _ -> let () = x_binfo_pp "enter this branch for prim_pred???" no_pos in (h,[],[])
 
 let rec normalize_formula_dn aux_f (f : formula): formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -1956,6 +1961,7 @@ let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.form
 let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   if (!Globals.allow_field_ann) then
     (* if false then *)
+    (* let () = x_binfo_hp (add_str "type of formula in normalize_field_ann_heap_node" Cprinter.string_of_formula_type) (CF.type_of_formula h) no_pos in *)
     let h, constr, new_vars = normalize_h_formula_dn (push_node_imm_to_field_imm 1) h in
     (h,constr,new_vars)
   else (h,[],[])
@@ -2226,14 +2232,16 @@ let initialize_positions_for_args (aa: CP.annot_arg list) (wa: CP.view_arg list)
 (*   let annot_args = CP.imm_ann_to_annot_arg_list  ann_final in *)
 (*   annot_args *)
 
+(* YF: Actually, don't need this data_name, instead it should be view_name like CNT *)
 let collect_view_imm_from_h_iformula h  data_name = (* [] *)
   let rec helper  f data_name =
     match f with
     | IF.HeapNode2 {IF.h_formula_heap2_imm_param = pimm; (* IF.h_formula_heap_imm = imm; *) IF.h_formula_heap2_name = name}
-    | IF.HeapNode  {IF. h_formula_heap_imm_param = pimm; (* IF.h_formula_heap_imm = imm; *) IF.h_formula_heap_name = name}->
-      if name = data_name then (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot)
+    | IF.HeapNode  {IF. h_formula_heap_imm_param = pimm; (* IF.h_formula_heap_imm = imm; *) IF.h_formula_heap_name = name} ->
+      (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot)
+      (* if name = data_name then (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot) *)
       (* List.map (fun p -> update_arg_imm_for_view p imm param_ann emap) pimm *)
-      else []
+      (* else [] *)
     | IF.Star {IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2}
     | IF.Conj {IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2}
     | IF.ConjStar {IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2}
@@ -2287,20 +2295,32 @@ let add_position_to_imm_ann (a: Ipure.ann) (vp_pos: (ident * int) list) =
   in
   a_pos
 
+(* This function should not use the data_name to collect all the field imm ann  *)
+(* Instead it should use the vparam to collect the imm ann *)
 let icollect_imm f vparam data_name ddefs =
   try
+    (* comment the next line *)
     let ddef = x_add I.look_up_data_def_raw ddefs data_name in
-    let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) ddef.I.data_fields in
-    let ann_final =
+    let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) ddef.I.data_fields in (* sub ddef.I.data_fields with vparam *)
+    let () = x_binfo_hp (add_str "icollect_imm def_ann" (pr_list pr_none)) def_ann no_pos in
+    let ann_final = 
       if not (!Globals.allow_field_ann) then def_ann
       else
         let ann_params = collect_imm_from_struc_iformula f data_name (* def_ann *) in
+        let () = x_binfo_hp (add_str "icollect_imm ann_params" (pr_list pr_none)) ann_params no_pos in
         let vp_pos = CP.initialize_positions_for_view_params vparam in
         let ann_pos = List.map (fun a ->  add_position_to_imm_ann a vp_pos) ann_params in
+        let () = x_binfo_hp (add_str "icollect_imm ann_pos" (pr_list pr_none)) ann_pos no_pos in
         ann_pos
     in
     ann_final
-  with Not_found -> [] (* this is for prim pred *)
+  (* YF: prim pred should not be Not_found *)
+  with Not_found -> 
+    let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) vparam in (* sub ddef.I.data_fields with vparam *)
+    let () = x_binfo_hp (add_str "icollect_imm def_ann" (pr_list pr_none)) def_ann no_pos in
+    let ann_final = def_ann in
+    ann_final
+  (* this is for prim pred *)
 
 let icollect_imm f vparam data_name ddefs =
   Debug.no_3 "icollect_imm" Iprinter.string_of_struc_formula 
@@ -2555,7 +2575,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
           let p2 = List.combine dn2.h_formula_data_arguments dn2.h_formula_data_param_imm in
           let imm = List.combine p1 p2 in
           (p1,p2,imm,[])
-        with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
+        with Invalid_argument _ -> failwith "1: Immutable.ml, compatible_at_field_lvl" in
       let (comp, updated_elements, guards) = List.fold_left (fun (comp,lst,guard) ((a1,i1), (a2,i2)) ->
           match i1, i2 with
           | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)],guard)
@@ -2573,20 +2593,40 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
       (* needs revision *)
       let imm1 = get_node_param_imm h1 in
       let imm2 = get_node_param_imm h2 in
-      let imm  = 
+      let node_name1 = vn1.h_formula_view_name in
+      let node_name2 = vn2.h_formula_view_name in
+      let same_node_name n1 n2 =
+        try
+          n2=n1
+        with _ -> false
+      in
+      let same_name_f = same_node_name node_name1 node_name2 in
+      (* let imm = 
+        if same_name_f then
+          let () = x_binfo_pp "they have the same name (true)" no_pos in
+          let imm0 =    
+            try List.combine imm1 imm2 
+            with Invalid_argument _ -> failwith "2: Immutable.ml, compatible_at_field_lvl" in
+          imm0
+        else 
+          let () = x_binfo_pp "they have the diff name (false)" no_pos in
+          [] 
+      in *)
+      let imm = 
         try List.combine imm1 imm2 
-        with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
+        with Invalid_argument _ -> failwith "2: Immutable.ml, compatible_at_field_lvl" in
       let comp, pimm, guards = List.fold_left (fun (comp,lst,guard) (i1,i2) -> 
-          match i1, i2 with
-          | CP.ConstAnn(Accs), a 
-          | a, CP.ConstAnn(Accs) -> true && comp, lst@[a], guard
-          |  CP.ConstAnn _,  CP.ConstAnn _ -> (false, [], [])
-          | _, _ -> let imm, guards = merge_guards emap i1 i2 in
-            (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
-            (* false && comp *)
-            (true && comp, lst@[imm],guard@guards)
-        ) (true,[],[]) imm in 
+            match i1, i2 with
+            | CP.ConstAnn(Accs), a 
+            | a, CP.ConstAnn(Accs) -> true && comp, lst@[a], guard
+            | CP.ConstAnn _,  CP.ConstAnn _ -> (false, [], [])
+            | _, _ -> let imm, guards = merge_guards emap i1 i2 in
+              (* Debug.print_info "Warning: " "possible unsoundess (\* between overlapping heaps) " no_pos; *)
+              (* false && comp *)
+              (true && comp, lst@[imm],guard@guards)
+          ) (true,[],[]) imm in
       (comp, h1, None, guards)
+      (* if same_name_f then (comp, h1, None, guards) else (false, h1, None, guards) *)
     | DataNode dn, ((ViewNode vn) as vh)
     | ((ViewNode vn) as vh), DataNode dn ->
       let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.h_formula_view_annot_arg in
@@ -2595,7 +2635,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
         if (List.length dn.h_formula_data_param_imm == List.length (pimm) ) then 
           let imm = 
             try List.combine dn.h_formula_data_param_imm pimm 
-            with Invalid_argument _ -> failwith "Immutable.ml, compatible_at_field_lvl" in
+            with Invalid_argument _ -> failwith "3: Immutable.ml, compatible_at_field_lvl" in
           let () = x_tinfo_hp (add_str "imm:" (pr_list (pr_pair Cprinter.string_of_imm Cprinter.string_of_imm))) imm no_pos in
           let comp = List.fold_left (fun acc (i1,i2) -> 
               match i1, i2 with
@@ -2612,7 +2652,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
         (* incompatible for merging *)
       else (comp, h1, None, [])
     | _, _ -> 
-      Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos; 
+      Debug.print_info "4: Warning: " "combining different kind of nodes not yet implemented" no_pos; 
       (false, h1, None,[])
   in (comp, ret_h, unfold_f, guards)
 

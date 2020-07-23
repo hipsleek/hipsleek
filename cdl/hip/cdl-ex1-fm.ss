@@ -47,21 +47,21 @@ void main()
   dprint;
   par {h, r, v, c@L}
   {
-    case {h, c@L} c'::LatchIn{- h'::cell<1>}<> * c'::CNT<(1)>@L ->
+    case {h, c@L} c'::LatchIn{- h'::cell<1>}<> * c'::CNT<(1)> ->
       dprint;
       h = new cell(1);
       assert @lend[h'];
       countDown(c);
       dprint;
     ||
-    case {r, c@L} c'::LatchIn{- r'::cell<2>}<> * c'::CNT<(1)>@L ->
+    case {r, c@L} c'::LatchIn{- r'::cell<2>}<> * c'::CNT<(1)> ->
       dprint;
       r = new cell(2);
       countDown(c);
       dprint;
     ||
     //else ->
-    case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2> * @full[h', r']}<> * c'::CNT<0>@L ->
+    case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2> * @full[h', r']}<> * c'::CNT<0> ->
       dprint;
       await(c);
       dprint;
