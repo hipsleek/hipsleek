@@ -298,11 +298,12 @@ let cvc4_pop (process: prover_process_t) =
   send_cmd process cmd
 
 (*returns to the state before the last call of PUSH made from stack level n*)
-let cvc4_popto (process: prover_process_t) (n: int) = 
+(* POPTO command currently unsupported in CVC4 *)
+(* let cvc4_popto (process: prover_process_t) (n: int) = 
   let cmd = "POPTO " ^ (string_of_int n)  ^ ";\n" in
-  send_cmd process cmd
+  send_cmd process cmd *)
 
-(*creates a new "cvc4 +int" process*)
+(*creates a new "cvc4 --interactive" process*)
 let start () : prover_process_t =
   let () = print_string ("\nStarting CVC4\n") in
   let proc = ref {name = "cvc4"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin} in
@@ -311,7 +312,7 @@ let start () : prover_process_t =
   let () = cvc4_push !proc in
   !proc
 
-(*stop the "cvc4 +int" process*)
+(*stop the "cvc4 --interactive" process*)
 let stop (process: prover_process_t) : unit = 
   let () = Procutils.PrvComms.stop !log_cvc4_formula !cvc4_log process !test_number 9 (fun () -> ()) in
   let () = print_string_if !Globals.enable_count_stats ("\nCVC4 stop process: " ^ (string_of_int !test_number) ^ " invocations \n") in 
@@ -379,7 +380,8 @@ let cvc4_checksat (process: prover_process_t) (f : CP.formula): bool option * st
   in  (r, answer)
 
 (*restarts an invalid QUERY or satisfiable CHECKSAT with an additional assumption represented by f, using what it has been learnt by now*)
-let cvc4_restart_query (process: prover_process_t) (f: CP.formula) : bool option = 
+(* RESTART command currently unsupported in CVC4 *)
+(* let cvc4_restart_query (process: prover_process_t) (f: CP.formula) : bool option = 
   let () = log_text_to_cvc4 ("%%% restart " ^ (*sat_no ^*) "\n") in
   let n_f = prepare_formula_for_sending f in 
   let restart_str = "RESTART ( "^ n_f ^ " );\n" in 
@@ -393,7 +395,7 @@ let cvc4_restart_query (process: prover_process_t) (f: CP.formula) : bool option
     | "Unsatisfiable" ->  Some _unsat
     | "Unknown" ->  None
     | _ -> None
-  in r
+  in r *)
 
 (*simplify f formula and return the simplified formula *)
 let cvc4_transform (process: prover_process_t) (f: CP.formula) (*: CP.formula*) = ()
@@ -405,7 +407,7 @@ let imply_helper (process: prover_process_t) (send_ante: bool) (ante : CP.formul
   let () = log_text_to_cvc4  ("%%% imply " ^ imp_no  ^ "\n") in
   let () = 
     if (send_ante) then
-      let () = cvc4_popto process 0 in
+      (* let () = cvc4_popto process 0 in *)
       let () = cvc4_push process in
       let ante_fv = CP.fv ante in
       let conseq_fv = CP.fv conseq in
@@ -445,7 +447,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
 let is_sat_helper (process: prover_process_t) (f : CP.formula) (sat_no : string) : bool option =
   incr test_number;
   let () = log_text_to_cvc4 ("%%% is_sat " ^ sat_no ^ "\n") in
-  let () = cvc4_popto process 0 in
+  (* let () = cvc4_popto process 0 in *)
   let () = cvc4_push process in
   let () = cvc4_declare_vars_of_formula process f in
   let (answer, answer_str) = cvc4_checksat process f in

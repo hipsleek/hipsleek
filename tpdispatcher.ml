@@ -312,7 +312,7 @@ class incremMethods : [CP.formula] incremMethodsType = object
       end
       else n in
     match !pure_tp with
-    | Cvc4 -> Cvc4.cvc4_popto process n
+    (* | Cvc4 -> Cvc4.cvc4_popto process n *)
     | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   method imply (process: (prover_process_t option * bool) option) (ante: CP.formula) (conseq: CP.formula) (imp_no: string): bool = true
