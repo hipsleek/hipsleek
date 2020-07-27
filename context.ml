@@ -4132,27 +4132,7 @@ and compute_pretty_actions prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
 and compute_pretty_actions_no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = Debug.ho_aux_no s (f e1 e2 e3) in
-  compute_pretty_actions_splitter s code_none code_gen compute_pretty_actions_go_4
-
-and compute_pretty_actions_splitter s f_none f_gen f_norm =
-  let () = VarGen.last_posn # set_name s in
-  let at_call_site =
-    let x_call_site = VarGen.last_posn # get s in
-    if x_call_site = "" then "" else " @" ^ x_call_site
-  in
-  let () = if !Debug.dump_callers_flag then Debug.debug_calls # push_call s at_call_site in
-  let () = if !Debug.dump_calls then Debug.debug_calls # print_call s at_call_site in
-  let fn =
-    if !VarGen.z_debug_flag then
-      match (Debug.in_debug s) with
-      | DO_Normal -> f_gen (f_norm false false)
-      | DO_Trace -> f_gen (f_norm true false) 
-      | DO_Loop -> f_gen (f_norm false true)
-      | DO_Both -> f_gen (f_norm true true)
-      | DO_None -> f_none
-    else
-      f_none in 
-  if !Debug.dump_calls then Debug.wrap_pop_call fn else fn
+  Debug.splitter s code_none code_gen compute_pretty_actions_go_4
 
 and compute_pretty_actions_go_4 t_flag l_flag s = compute_pretty_actions_ho_4_opt_aux t_flag [] l_flag (fun _ -> true) None s
 
