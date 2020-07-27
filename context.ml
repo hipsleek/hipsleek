@@ -4092,7 +4092,6 @@ and compute_pretty_actions prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 xs = String.concat " *" (List.map (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) xs) in
   let pr2 = string_of_action_res in
-  let action = compute_actions_y prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos in
   (* let rec get_match_res_level_of_action (a: action): match_res_level =
    *   match a with
    *   | M_match e -> One [e]
@@ -4127,7 +4126,7 @@ and compute_pretty_actions prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
    *   | One l -> List.iter show_match_res l
    *   | Many l -> List.iter show_match_res_level l
    * in *)
-  compute_pretty_actions_no_4 "compute_actions" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> action) lhs_h lhs_p rhs_lst rhs_p
+  compute_pretty_actions_no_4 "compute_actions" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> compute_actions_y prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos) lhs_h lhs_p rhs_lst rhs_p
 
 and compute_pretty_actions_no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
