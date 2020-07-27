@@ -4127,7 +4127,7 @@ and compute_pretty_actions prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
    *   | One l -> List.iter show_match_res l
    *   | Many l -> List.iter show_match_res_level l
    * in *)
-  compute_pretty_actions_no_4 "compute_pretty_actions" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> action) lhs_h lhs_p rhs_lst rhs_p
+  compute_pretty_actions_no_4 "compute_actions" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> action) lhs_h lhs_p rhs_lst rhs_p
 
 and compute_pretty_actions_no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
