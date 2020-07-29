@@ -14,6 +14,7 @@ let cvc4_log = ref stdout
 let infilename = !tmp_files_path ^ "input.cvc4." ^ (string_of_int (Unix.getpid ()))
 let resultfilename = !tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid()))
 let cvc4_command = "cvc4 " ^ infilename ^ " > " ^ resultfilename
+let pop_count = 50
 
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 let test_number = ref 0
@@ -297,8 +298,13 @@ let cvc4_pop (process: prover_process_t) =
   let cmd = "POP;\n" in
   send_cmd process cmd
 
+(*equivalent to POP repeated n times*)
+let cvc4_pop_n (process: prover_process_t) (n: int) =
+  let cmd = "POP " ^ (string_of_int n) ^ ";\n" in
+  send_cmd process cmd
+
+(*** POPTO command currently unsuspported in CVC4 ***) 
 (*returns to the state before the last call of PUSH made from stack level n*)
-(* POPTO command currently unsupported in CVC4 *)
 (* let cvc4_popto (process: prover_process_t) (n: int) = 
   let cmd = "POPTO " ^ (string_of_int n)  ^ ";\n" in
   send_cmd process cmd *)
@@ -360,8 +366,8 @@ let cvc4_query (process: prover_process_t) (f : CP.formula) : bool option * stri
   let conseq_str =  "QUERY ( " ^ n_formula ^ ");\n" in
   let answer = send_cmd_with_answer process conseq_str in
   let r = match answer with
-    | "Valid" -> Some _valid
-    | "Invalid" -> Some _invalid
+    | "Valid" | "valid" | "entailed" -> Some _valid
+    | "Invalid" | "invalid" | "not_entailed" -> Some _invalid
     | "Unknown" -> None
     | _ -> None
   in
@@ -373,14 +379,14 @@ let cvc4_checksat (process: prover_process_t) (f : CP.formula): bool option * st
   let checksat_str = "CHECKSAT (" ^ n_f ^ ");\n" in
   let answer = send_cmd_with_answer process checksat_str in
   let r = match answer with
-    | "Satisfiable" ->  Some _sat
-    | "Unsatisfiable" ->  Some _unsat
+    | "Satisfiable" | "satisfiable" | "sat" ->  Some _sat
+    | "Unsatisfiable" | "unsatisfiable" | "unsat" ->  Some _unsat
     | "Unknown" ->  None
     | _ -> None 
   in  (r, answer)
 
+(***RESTART command currently unsupported in CVC4***)
 (*restarts an invalid QUERY or satisfiable CHECKSAT with an additional assumption represented by f, using what it has been learnt by now*)
-(* RESTART command currently unsupported in CVC4 *)
 (* let cvc4_restart_query (process: prover_process_t) (f: CP.formula) : bool option = 
   let () = log_text_to_cvc4 ("%%% restart " ^ (*sat_no ^*) "\n") in
   let n_f = prepare_formula_for_sending f in 
@@ -389,10 +395,10 @@ let cvc4_checksat (process: prover_process_t) (f : CP.formula): bool option * st
   let answer = send_cmd_with_answer process restart_str in
   let () = (log_text_to_cvc4  ("%%% Res: " ^ answer ^ " \n\n");  flush !cvc4_log) in
   let r = match answer with
-    | "Valid" -> Some _valid
-    | "Invalid" -> Some _invalid
-    | "Satisfiable" ->  Some _sat
-    | "Unsatisfiable" ->  Some _unsat
+    | "Valid" | "valid" | "entailed" -> Some _valid
+    | "Invalid" | "invalid" | "not_entailed" -> Some _invalid
+    | "Satisfiable" | "satisfiable" | "sat" ->  Some _sat
+    | "Unsatisfiable" | "unsatisfiable" | "unsat" ->  Some _unsat
     | "Unknown" ->  None
     | _ -> None
   in r *)
@@ -408,6 +414,7 @@ let imply_helper (process: prover_process_t) (send_ante: bool) (ante : CP.formul
   let () = 
     if (send_ante) then
       (* let () = cvc4_popto process 0 in *)
+      let () = cvc4_pop_n process pop_count in
       let () = cvc4_push process in
       let ante_fv = CP.fv ante in
       let conseq_fv = CP.fv conseq in
@@ -448,6 +455,7 @@ let is_sat_helper (process: prover_process_t) (f : CP.formula) (sat_no : string)
   incr test_number;
   let () = log_text_to_cvc4 ("%%% is_sat " ^ sat_no ^ "\n") in
   (* let () = cvc4_popto process 0 in *)
+  let () = cvc4_pop_n process pop_count in
   let () = cvc4_push process in
   let () = cvc4_declare_vars_of_formula process f in
   let (answer, answer_str) = cvc4_checksat process f in
