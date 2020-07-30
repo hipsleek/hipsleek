@@ -20,7 +20,7 @@ $EX cpure.ml
 $EX cpure_pred.ml
 $EX cputil.ml
 $EX csvutil.ml
-$EX cvc3.ml
+$EX cvc4.ml
 $EX cvclite.ml
 $EX cvpermUtils.ml
 $EX cvutil.ml

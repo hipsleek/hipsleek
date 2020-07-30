@@ -145,15 +145,15 @@ let wrap_proving_kind (tk) exec_function args =
 type tp_type =
   | OmegaCalc
   | CvcLite
-  | Cvc3
-  | CO (* CVC3 then Omega combination *)
+  | Cvc4
+  | CO (* CVC4 then Omega combination *)
   | Isabelle
   | Mona
   | MonaH
   | OM
   | OI
   | SetMONA
-  | CM (* CVC3 then MONA *)
+  | CM (* CVC4 then MONA *)
   | Coq
   | Z3
   | Z3N
@@ -173,7 +173,7 @@ type tp_type =
 let string_of_prover prover = match prover with
   | OmegaCalc -> "OMEGA CALCULATOR"
   | CvcLite -> "CVC Lite"
-  | Cvc3 -> "CVC3"
+  | Cvc4 -> "CVC4"
   | CO  -> "CO"
   | Isabelle -> "ISABELLE"
   | Mona -> "MONA"
@@ -205,7 +205,7 @@ let string_of_ato () =
 let string_of_prover_code prover = match prover with
   | OmegaCalc -> "1"^(string_of_ato ())
   | CvcLite -> "2"
-  | Cvc3 -> "3"
+  | Cvc4 -> "3"
   | CO  -> "4"
   | Isabelle -> "5"
   | Mona -> "6"
