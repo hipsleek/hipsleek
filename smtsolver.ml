@@ -709,7 +709,8 @@ let restart reason =
     ()
   )
 
-let add_push_pop f = "(push)\n" ^ f ^ "(pop)\n"
+(* Add (push) and (pop) only if (reset) is not the first SMT-LIB input *)
+let add_push_pop f = if String.equal "(reset)" (String.sub f 0 (String.index f '\n')) then f else "(push)\n" ^ f ^ "(pop)\n"
 
 let rec iget_answer_x chn input timeout =
   let check_error_msg s=
