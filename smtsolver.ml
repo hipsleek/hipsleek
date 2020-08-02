@@ -560,32 +560,6 @@ let iget_answer2 chn input =
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
-let iget_answer chn input =
-  let check_error_msg s=
-    try
-      (* let _ = print_endline ("s : " ^ s) in *)
-      let _ = Str.search_forward (Str.regexp "error ") s 0 in
-      let _ = Error.report_warning { Error.error_loc = no_pos; Error.error_text =("Z3 error message: "^s)} in
-      true
-    with _ -> false
-  in
-  let output = icollect_output chn [] in
-  let solver_sat_result = List.nth output (List.length output - 1) in
-  let last_z3_sat_type = sat_type_from_string solver_sat_result input in
-  let st = if List.length output > 1 then
-      try
-        let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
-        (* if b then Sat else *) last_z3_sat_type
-      with _ -> last_z3_sat_type
-    else last_z3_sat_type
-  in
-  { original_output_text = output;
-    sat_result =  st; }
-
-let iget_answer chn input =
-  Debug.no_1 "Z3.iget_answer" idf (fun o -> pr_list idf o.original_output_text)
-    (fun _ -> iget_answer chn input) input
-
 let get_answer chn input =
   let output = collect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
@@ -735,8 +709,36 @@ let restart reason =
     ()
   )
 
+let rec iget_answer_x chn input timeout =
+  let check_error_msg s=
+    try
+      (* let _ = print_endline ("s : " ^ s) in *)
+      let _ = Str.search_forward (Str.regexp "error ") s 0 in
+      let _ = Error.report_warning { Error.error_loc = no_pos; Error.error_text =("Z3 error message: "^s)} in
+      true
+    with _ -> false
+  in
+  let output = icollect_output chn [] in
+  let solver_sat_result = List.nth output (List.length output - 1) in
+  let last_z3_sat_type = sat_type_from_string solver_sat_result input in
+  let st = if List.length output > 1 then
+      try
+        let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
+        (* if b then Sat else *) last_z3_sat_type
+      with _ -> last_z3_sat_type
+    else last_z3_sat_type
+  in
+  (* match st with
+   * | Unknown -> let input = "(reset)\n" ^ input in let () = print_endline ("[smtsolver.ml] Z3 outputted unknown, retry with (reset) instead of (push) and (pop), new input:\n" ^ input) in check_formula input timeout
+   * | _ -> { original_output_text = output; sat_result =  st; } *)
+  { original_output_text = output; sat_result =  st; }
+
+and iget_answer chn input timeout =
+  Debug.no_1 "Z3.iget_answer" idf (fun o -> pr_list idf o.original_output_text)
+    (fun _ -> iget_answer_x chn input timeout) input
+
 (* send formula to z3 and receive result -true/false/unknown*)
-let check_formula f timeout =
+and check_formula f timeout =
   let tstartlog = Gen.Profiling.get_time () in 
   if not !is_z3_running then start ()
   else if (!z3_call_count = !z3_restart_interval) then (
@@ -754,7 +756,7 @@ let check_formula f timeout =
     if (!Globals.get_model && !smtsolver_name="z3-4.2") then
       iget_answer2 (!prover_process.inchannel) f
     else
-      iget_answer (!prover_process.inchannel) f
+      iget_answer (!prover_process.inchannel) f timeout
   ) in
   let fail_with_timeout () = (
     (* let () = print_endline ("#### fail_with_timeout f = " ^ f) in *)
