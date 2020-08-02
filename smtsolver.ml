@@ -709,6 +709,8 @@ let restart reason =
     ()
   )
 
+let add_push_pop f = "(push)\n" ^ f ^ "(pop)\n"
+
 let rec iget_answer_x chn input timeout =
   let check_error_msg s=
     try
@@ -748,8 +750,9 @@ and check_formula f timeout =
     let () = incr z3_call_count in
     (*due to global stack - incremental, push current env into a stack before working and
       removing it after that. may be improved *)
-    let new_f = "(push)\n" ^ f ^ "(pop)\n" in
+    let new_f = add_push_pop f in
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
+    let () = print_endline ("[smtsolver.ml] check_formula\n" ^ new_f) in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
     if (!Globals.get_model && !smtsolver_name="z3-4.2") then
@@ -1310,7 +1313,7 @@ let push_smt_input is_opt inp timeout f_timeout =
   );
   let fnc f = (
     let () = incr z3_call_count in
-    let new_f = if not is_opt then "(push)\n" ^ f ^ "(pop)\n" else f in
+    let new_f = if not is_opt then add_push_pop f else f in
     let () = x_tinfo_hp (add_str "SMT input" idf) new_f no_pos in
     let () = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
