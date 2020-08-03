@@ -732,7 +732,7 @@ let rec iget_answer_x chn input timeout =
     else last_z3_sat_type
   in
   match st with
-  | Unknown -> let input = "(reset)\n" ^ input ^ "(reset)\n" in let () = print_endline ("[smtsolver.ml] Z3 outputted unknown, retry with (reset)") in check_formula input timeout
+  | Unknown -> let input = "(reset)\n" ^ input ^ "(reset)\n" in check_formula input timeout
   | _ -> { original_output_text = output; sat_result =  st; }
 
 and iget_answer chn input timeout =
@@ -753,7 +753,6 @@ and check_formula f timeout =
       removing it after that. may be improved *)
     let new_f = add_push_pop f in
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
-    let () = print_endline ("[smtsolver.ml] check_formula\n" ^ new_f) in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
     if (!Globals.get_model && !smtsolver_name="z3-4.2") then
