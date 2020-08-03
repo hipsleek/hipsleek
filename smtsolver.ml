@@ -732,7 +732,7 @@ let rec iget_answer_x chn input timeout =
     else last_z3_sat_type
   in
   match st with
-  | Unknown -> let input = "(reset)\n" ^ input in let () = print_endline ("[smtsolver.ml] Z3 outputted unknown, retry with (reset) instead of (push) and (pop), new input:\n" ^ input) in check_formula input timeout
+  | Unknown -> let input = "(reset)\n" ^ input ^ "(reset)\n" in let () = print_endline ("[smtsolver.ml] Z3 outputted unknown, retry with (reset)") in check_formula input timeout
   | _ -> { original_output_text = output; sat_result =  st; }
 
 and iget_answer chn input timeout =
