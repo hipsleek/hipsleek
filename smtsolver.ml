@@ -560,32 +560,6 @@ let iget_answer2 chn input =
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
-let iget_answer chn input =
-  let check_error_msg s=
-    try
-      (* let _ = print_endline ("s : " ^ s) in *)
-      let _ = Str.search_forward (Str.regexp "error ") s 0 in
-      let _ = Error.report_warning { Error.error_loc = no_pos; Error.error_text =("Z3 error message: "^s)} in
-      true
-    with _ -> false
-  in
-  let output = icollect_output chn [] in
-  let solver_sat_result = List.nth output (List.length output - 1) in
-  let last_z3_sat_type = sat_type_from_string solver_sat_result input in
-  let st = if List.length output > 1 then
-      try
-        let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
-        (* if b then Sat else *) last_z3_sat_type
-      with _ -> last_z3_sat_type
-    else last_z3_sat_type
-  in
-  { original_output_text = output;
-    sat_result =  st; }
-
-let iget_answer chn input =
-  Debug.no_1 "Z3.iget_answer" idf (fun o -> pr_list idf o.original_output_text)
-    (fun _ -> iget_answer chn input) input
-
 let get_answer chn input =
   let output = collect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
@@ -735,8 +709,38 @@ let restart reason =
     ()
   )
 
+(* Add (push) and (pop) only if (reset) is not the first SMT-LIB input *)
+let add_push_pop f = if String.equal "(reset)" (String.sub f 0 (String.index f '\n')) then f else "(push)\n" ^ f ^ "(pop)\n"
+
+let rec iget_answer_x chn input timeout =
+  let check_error_msg s=
+    try
+      (* let _ = print_endline ("s : " ^ s) in *)
+      let _ = Str.search_forward (Str.regexp "error ") s 0 in
+      let _ = Error.report_warning { Error.error_loc = no_pos; Error.error_text =("Z3 error message: "^s)} in
+      true
+    with _ -> false
+  in
+  let output = icollect_output chn [] in
+  let solver_sat_result = List.nth output (List.length output - 1) in
+  let last_z3_sat_type = sat_type_from_string solver_sat_result input in
+  let st = if List.length output > 1 then
+      try
+        let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
+        (* if b then Sat else *) last_z3_sat_type
+      with _ -> last_z3_sat_type
+    else last_z3_sat_type
+  in
+  match st with
+  | Unknown -> let input = "(reset)\n" ^ input ^ "(reset)\n" in check_formula input timeout
+  | _ -> { original_output_text = output; sat_result =  st; }
+
+and iget_answer chn input timeout =
+  Debug.no_1 "Z3.iget_answer" idf (fun o -> pr_list idf o.original_output_text)
+    (fun _ -> iget_answer_x chn input timeout) input
+
 (* send formula to z3 and receive result -true/false/unknown*)
-let check_formula f timeout =
+and check_formula f timeout =
   let tstartlog = Gen.Profiling.get_time () in 
   if not !is_z3_running then start ()
   else if (!z3_call_count = !z3_restart_interval) then (
@@ -747,14 +751,14 @@ let check_formula f timeout =
     let () = incr z3_call_count in
     (*due to global stack - incremental, push current env into a stack before working and
       removing it after that. may be improved *)
-    let new_f = "(push)\n" ^ f ^ "(pop)\n" in
+    let new_f = add_push_pop f in
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
     if (!Globals.get_model && !smtsolver_name="z3-4.2") then
       iget_answer2 (!prover_process.inchannel) f
     else
-      iget_answer (!prover_process.inchannel) f
+      iget_answer (!prover_process.inchannel) f timeout
   ) in
   let fail_with_timeout () = (
     (* let () = print_endline ("#### fail_with_timeout f = " ^ f) in *)
@@ -1309,7 +1313,7 @@ let push_smt_input is_opt inp timeout f_timeout =
   );
   let fnc f = (
     let () = incr z3_call_count in
-    let new_f = if not is_opt then "(push)\n" ^ f ^ "(pop)\n" else f in
+    let new_f = if not is_opt then add_push_pop f else f in
     let () = x_tinfo_hp (add_str "SMT input" idf) new_f no_pos in
     let () = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
