@@ -2238,10 +2238,10 @@ let collect_view_imm_from_h_iformula h  data_name = (* [] *)
     match f with
     | IF.HeapNode2 {IF.h_formula_heap2_imm_param = pimm; (* IF.h_formula_heap_imm = imm; *) IF.h_formula_heap2_name = name}
     | IF.HeapNode  {IF. h_formula_heap_imm_param = pimm; (* IF.h_formula_heap_imm = imm; *) IF.h_formula_heap_name = name} ->
-      (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot)
-      (* if name = data_name then (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot) *)
+      (* (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot) *)
+      if name = data_name then (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot)
       (* List.map (fun p -> update_arg_imm_for_view p imm param_ann emap) pimm *)
-      (* else [] *)
+      else []
     | IF.Star {IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2}
     | IF.Conj {IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2}
     | IF.ConjStar {IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2}
@@ -2601,7 +2601,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
         with _ -> false
       in
       let same_name_f = same_node_name node_name1 node_name2 in
-      (* let imm = 
+      let imm = 
         if same_name_f then
           let () = x_binfo_pp "they have the same name (true)" no_pos in
           let imm0 =    
@@ -2611,10 +2611,10 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
         else 
           let () = x_binfo_pp "they have the diff name (false)" no_pos in
           [] 
-      in *)
-      let imm = 
+      in
+      (* let imm = 
         try List.combine imm1 imm2 
-        with Invalid_argument _ -> failwith "2: Immutable.ml, compatible_at_field_lvl" in
+        with Invalid_argument _ -> failwith "2: Immutable.ml, compatible_at_field_lvl" in *)
       let comp, pimm, guards = List.fold_left (fun (comp,lst,guard) (i1,i2) -> 
             match i1, i2 with
             | CP.ConstAnn(Accs), a 
@@ -2625,8 +2625,8 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
               (* false && comp *)
               (true && comp, lst@[imm],guard@guards)
           ) (true,[],[]) imm in
-      (comp, h1, None, guards)
-      (* if same_name_f then (comp, h1, None, guards) else (false, h1, None, guards) *)
+      (* (comp, h1, None, guards) *)
+      if same_name_f then (comp, h1, None, guards) else (false, h1, None, guards)
     | DataNode dn, ((ViewNode vn) as vh)
     | ((ViewNode vn) as vh), DataNode dn ->
       let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.h_formula_view_annot_arg in

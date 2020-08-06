@@ -16,6 +16,10 @@ pred_prim CNT<n:int>
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
 
+lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+lemma "release" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+
 lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
 /********************************************/
@@ -34,8 +38,8 @@ void countDown(CDL c)
 void await(CDL c)
   requires c::LatchOut{+%P}<> * c::CNT<0>
   ensures c::CNT<(-1)> * %P;
-  //requires c::CNT<(-1)>
-  //ensures c::CNT<(-1)>;
+  requires c::CNT<(-1)>
+  ensures c::CNT<(-1)>;
   
 void main()
   requires emp ensures emp;
@@ -66,6 +70,7 @@ void main()
       await(c);
       dprint;
       assert @lend[h'];
+      assert @full[h'];
       v = h.val + r.val;
   }
   //v = h.val + r.val;

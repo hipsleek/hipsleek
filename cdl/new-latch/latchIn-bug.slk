@@ -23,7 +23,7 @@ pred_prim CNT<n:int>
 
 
 //1: should be VALID
-checkentail c::LatchIn{-z::cell<n> & n=6}<>  |- c::LatchIn{-z::cell<n> & n=6}<>.
+checkentail c::LatchIn{-z::cell<n> & n=6}<> |- c::LatchIn{-z::cell<n> & n=6}<>.
 print residue.
 
 //2: should be VALID
