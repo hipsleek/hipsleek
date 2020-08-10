@@ -11,8 +11,10 @@ pred_prim LatchIn{-%P@Split}<>;
 
 pred_prim LatchOut{+%P@Split}<>;
 
-pred_prim CNT<n:int>
+pred_prim CNT<n:int> @ThreadLocal
   inv n>=(-1);
+
+lemma "norm" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
 
@@ -65,15 +67,22 @@ void main()
       dprint;
     ||
     //else ->
-    case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2> * @full[h', r']}<> * c'::CNT<0> ->
+    case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2> 
+                    * @lend[h',r']}<> * c'::CNT<0> ->
       dprint;
       await(c);
       dprint;
       assert @lend[h'];
       assert @full[h'];
+      assert @full[r'];
+      assert @full[v];
+      assert h'::cell<1>;
+      assert r'::cell<2>;
       v = h.val + r.val;
+      dprint;
   }
   //v = h.val + r.val;
-  //dprint;
+  dprint;
   assert h'::cell<1> * r'::cell<2> & v' = 3;
+  //assert h'::cell<1>;
 }

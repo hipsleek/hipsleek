@@ -38,7 +38,7 @@ lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fa
 //checkentail c::CNT<d> * c::CNT<e> & d=1 & e=-3 |- c::CNT<n> & n=-2.
 //print residue.
 
-//heckentail c::CNT<2> * @lend[c] |- c::CNT<1> * c::CNT<1>.
+//checkentail c::CNT<2> * @lend[c] |- c::CNT<1> * c::CNT<1>.
 //print residue.
 
 checkentail c::CNT<2> * @full[c] |- c::CNT<1> * @lend[c].
@@ -60,6 +60,9 @@ print residue.
 
 //
 checkentail x::cell<3>@M * @lend[x] |- x::cell<b>@L.
+print residue.
+
+check_norm x::cell<3>@M * @lend[x] |- x::cell<b>@L.
 print residue.
 
 

@@ -4,13 +4,22 @@ data cell{ int v; }.
 pred_prim CNT<n:int>.
 
 //synchronization lemma
-lemma_prop "wait-for" ddd::CNT<aaa> * ddd::CNT<bbb> & bbb=(-1)  ->  ddd::CNT<bbb>.
+//lemma_prop "wait-for" ddd::CNT<aaa> * ddd::CNT<bbb> & bbb=(-1)  ->  ddd::CNT<bbb>.
 
+lemma "norm" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
 
 // # bug-8a2
 
-check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & c1>=c2 & c2>=c1
+checkentail  c1::CNT<(-1)> * c1::CNT<0> * x::cell<n> * @full[c1] |- c1::CNT<(-1)>.
+print residue.
+
+
+check_normalize  c1::CNT<(-1)> * c1::CNT<0> * x::cell<n> * @full[c1].
+print residue.
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<0> * x::cell<n> * @full[c1] & c1>=c2 & c2>=c1
    & n > 0.
+
 // failure may be OK here.
 /* 
   no simplification? did we use transitive closure?
@@ -21,6 +30,7 @@ CheckNorm (4) :  c1::CNT{}<flted_16_97> * c2::CNT{}<flted_16_96> * x::cell<n>&fl
 */
 
 check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & n=0 & n > 0.
+
 /* 
 
    no unsat check?
@@ -30,7 +40,9 @@ CheckNorm (5) :  c1::CNT{}<flted_20_116> * c2::CNT{}<flted_20_115> * x::cell<n>&
 */
 
 
+
 check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & exists(z:c1=z & c2=z) & n > 0.
+
 /*
   cannot handle? maybe some simplifier could help
 

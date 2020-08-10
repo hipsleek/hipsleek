@@ -2932,7 +2932,7 @@ let process_check_norm_x (f : meta_formula) =
     else ()
   in
   let _ = x_dinfo_pp ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
-  let (n_tl, cf) = x_add meta_to_formula f false [] []  in
+  let (n_tl, cf) = x_add meta_to_formula f false [] [] in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
   let newf = x_add Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in

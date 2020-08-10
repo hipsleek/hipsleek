@@ -1,6 +1,6 @@
 /*
   Example with simple CountDownLatch
- */
+*/
 
 //CountDownLatch
 data CDL {}
@@ -11,12 +11,18 @@ pred_prim LatchIn{-%P@Split}<>;
 
 pred_prim LatchOut{+%P@Split}<>;
 
-pred_prim CNT<n:int>
+pred_prim CNT<n:int> @ThreadLocal
   inv n>=(-1);
 
-lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
+lemma "norm" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
+
+lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+lemma "release" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
 /********************************************/
 CDL create_latch(int n) with %P
@@ -59,7 +65,7 @@ void main()
       //dprint;
     ||
     //else ->
-    case {v, c@L} c'::LatchOut{+ h'::cell<_> * r'::cell<_>}<> * c'::CNT<0> ->
+    case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2> * @lend[h',r']}<> * c'::CNT<0> ->
       //dprint;
       await(c);
       v = h.val + r.val;
