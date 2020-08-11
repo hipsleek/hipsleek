@@ -1,0 +1,53 @@
+//CountDownLatch
+data CDL{
+}.
+
+data cell{
+  int v;
+}.
+
+pred ll<k:int> == self::cell<k>.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+pred_prim CNT<n:int> @ThreadLocal
+  inv n>=(-1).
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+lemma "combine-first" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>.
+
+//lemma "normalize" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+
+lemma "error-second" self::CNT<a> * self::CNT<b> & a>0 & b<0 -> emp & flow __Fail.
+
+lemma "norm" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
+
+// # bug-8a2
+
+//checkentail  c1::CNT<(-1)> * c1::CNT<(-1)> * x::cell<n> * @full[c1] |- c1::CNT<(-1)>.
+//print residue.
+
+
+//check_normalize  c1::CNT<(-1)> * c1::CNT<0> * x::cell<n> * @full[c1].
+//print residue.
+
+//check_normalize  c1::CNT<(-1)> * c2::CNT<0> * x::cell<n> * @full[c1] & c1>=c2 & c2>=c1
+//   & n > 0.
+
+
+checkentail c'::LatchIn{ - (exists flted_52_2286,
+flted_52_2287: h'::cell<flted_52_2287@M>@M * r'::cell<flted_52_2286@M>@M * 
+@full[h',r'] & flted_52_2287=1 & flted_52_2286=2)}<>@M * 
+ c'::LatchOut{ + (exists flted_52_2288,
+flted_52_2289: h'::cell<flted_52_2289@M>@M * r'::cell<flted_52_2288@M>@M* 
+@full[h',r'] & flted_52_2289=1 & flted_52_2288=2)}<>@M * 
+c'::CNT<v_int_52_2328>@M * @full[h,r,v] * @lend[c] & v_int_52_2328=2 & 0<v_int_52_2328
+ |-  (exists flted_56_98: c'::LatchIn{ - (exists flted_56_96: h'::cell<flted_56_96@M>@M* @full[h'] & flted_56_96=1)}<>@M * 
+                      c'::CNT<flted_56_98>@M * @full[h] * @lend[c]&flted_56_98=1). 
+
+
+
+
