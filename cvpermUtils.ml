@@ -87,8 +87,8 @@ let is_empty_frac_leak fr =
 (* WN : need to filter frac list *)
 let is_leak_vperm vps = 
   match vps with
-  | { vperm_full_vars = full; vperm_frac_vars = frac } ->
-    not(is_empty full) || not(is_empty_frac_leak frac)
+  | { vperm_full_vars = full; vperm_frac_vars = frac } -> not(is_empty_frac_leak frac)
+    (* not(is_empty full) || not(is_empty_frac_leak frac) *)
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with

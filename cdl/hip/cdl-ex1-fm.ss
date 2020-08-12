@@ -73,16 +73,16 @@ void main()
       await(c);
       dprint;
       assert @lend[h'];
-      assert @full[h'];
-      assert @full[r'];
-      assert @full[v];
-      assert h'::cell<1>;
-      assert r'::cell<2>;
+      assert @full[h']; // ok
+      assert @full[r']; // ok
+      assert @full[v]; // ok
+      assert h'::cell<1>; // ok
+      assert r'::cell<2>; // ok
       v = h.val + r.val;
       dprint;
   }
   //v = h.val + r.val;
   dprint;
-  assert h'::cell<1> * r'::cell<2> & v' = 3;
+  assert h'::cell<1> * r'::cell<2> & v' = 3; // ok
   //assert h'::cell<1>;
 }
