@@ -47,8 +47,8 @@ EXTRA_TAGS = {
       "warn_error(+4+8+9+11+12+25+28)",
       "warn(-26)"
     ],
-  "<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>" => "pp(camlp4of)",
-  "not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>)" => "pp(cppo -I ../ -D TRACE)",
+  "<src/{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>" => "pp(camlp4of)",
+  "not(<src/{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>)" => "pp(cppo -I ../ -D TRACE)",
   "\"joust\"" => "include",
   "\"ints\"" => "include",
   "<dependencies/**/*>" => "not_hygienic",
