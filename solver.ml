@@ -5,7 +5,6 @@ open VarGen
 26.11.2008
 todo: disable the default logging for omega
 *)
-
 open Globals
 open Others
 open Stat_global
@@ -47,6 +46,8 @@ let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unpri
 
 (*used for classic*)
 let rhs_rest_emp = ref true
+
+let created_latex = ref false
 
 let rhs_pure_stk = new Gen.stack_pr "rhs_pure" (Cprinter.string_of_mix_formula) (==)         (* used for detecting pure contra inside folding *)
 
@@ -12898,7 +12899,24 @@ and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_s
     pr4
     pr (fun _ _ _ _ -> process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos lhs_node lhs_rest rhs_node rhs_rest holes) lhs_node rhs_node lhs_rest estate
 
-and process_action ?(caller="") i cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
+and generate_msg a estate conseq = 
+  let action_name = Context.string_of_action_name a in
+  if (Str.string_match (Str.regexp_string "SEARCH") action_name 1 || Str.string_match (Str.regexp_string "COND") action_name 1) then ""
+  else (Cprinter.latex_of_action_name (Context.string_of_action_name a))^(Cprinter.latex_of_estate_formula estate.es_formula)^(Cprinter.latex_of_conseq_formula conseq)
+
+and create_latex_file msg =
+  let dir = Sys.getcwd() in
+  let index = Str.search_forward (Str.regexp_string "/hipsleek") dir 0 in 
+  let file = (Str.string_before dir index)^"/hipsleek/latex/temp.tex" in
+  if (not (Sys.file_exists file)) then
+    let () = 
+      let oc = open_out file in
+      output_string oc msg;
+      close_out oc in
+    true
+  else false
+
+and process_action_y ?(caller="") i cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
   : (Cformula.list_context * Prooftracer.proof) =
   let pr1 = Context.string_of_action_res_simpl in
   let length_ctx ctx = match ctx with
@@ -12909,6 +12927,7 @@ and process_action ?(caller="") i cont_act prog estate conseq lhs_b rhs_b a (rhs
   let filter _ = match a with
     | Context.M_Nothing_to_do _ -> false
     | _ -> true in
+
   Debug.no_5_all i "process_action" (Some filter) None [] pr1
     (add_str "estate" Cprinter.string_of_entail_state(* _short *))
     (add_str "conseq" Cprinter.string_of_formula)
@@ -12916,6 +12935,14 @@ and process_action ?(caller="") i cont_act prog estate conseq lhs_b rhs_b a (rhs
     (add_str "rhs_b" pr3) pr2
     (fun _ _ _ _ _ -> process_action_x ~caller:caller cont_act prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos)
     a estate conseq (Base lhs_b) (Base rhs_b)
+
+and process_action ?(caller="") i cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
+  : (Cformula.list_context * Prooftracer.proof) = 
+  let result = process_action_y ~caller:caller i cont_act prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos in
+  let str = (generate_msg a estate conseq)^(Cprinter.string_of_es_latex_trace estate.es_latex_trace) in
+  let created = 
+    if (!VarGen.print_latex) then create_latex_file str else false in
+  result 
 
 (* this will perform a simple action and return a (estate,conseq) *)
 (*  it won't run to completion *)
@@ -12938,6 +12965,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                            ^ "\n"))  pos
         end
     end;
+
   (* (*add tracing into the entailment state*)                               *)
   (* let action_name:string = Context.string_of_action_name a in             *)
   (* let estate = { estate with es_trace = action_name::estate.es_trace } in *)
@@ -12945,7 +12973,10 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
   let rec pm_aux_x estate lhs_b a =
     (* Add tracing into the entailment state *)
     let action_name = Context.string_of_action_name a in
-    let estate = { estate with es_trace = action_name::estate.es_trace } in
+    let latex_formula = generate_msg a estate conseq in
+    let estate = { estate with es_trace = action_name::estate.es_trace;
+                               es_latex_trace = latex_formula::estate.es_latex_trace; } in
+
     match a with  (* r1: list_context, r2: proof *)
     | Context.M_match ({
         Context.match_res_lhs_node = lhs_node;
@@ -13072,7 +13103,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
             let new_act = x_add_1 Context.lookup_lemma_action prog m_res in
             let str = "(Match-->try split/combine)" in (*convert means ignore previous MATCH and replaced by lemma*)
             let new_trace = str::(List.tl estate.es_trace) in
-            let new_estate = {estate with es_trace = new_trace} in
+            let new_estate = {estate with es_trace = new_trace;
+                                          es_latex_trace = List.tl estate.es_trace;} in
             (*re-process action*)
             let (r,prf) = x_add (process_action ~caller:(x_loc ^ ":" ^ caller)) 5 cont_act prog new_estate conseq lhs_b rhs_b new_act rhs_h_matched_set is_folding pos in
             if isFailCtx r then None (*if try SPLIT failed, try MATCH*)
@@ -13183,6 +13215,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       let new_trace = str::(List.tl estate.es_trace) in
       let new_estate = {estate with CF.es_trace = new_trace;
                                     CF.es_conseq_pure_lemma = CP.mkTrue no_pos;
+                                    CF.es_latex_trace = (List.tl estate.es_trace);
                        } in
       x_add (process_action ~caller:(x_loc ^ ":" ^ caller)) 6 cont_act prog new_estate conseq lhs_b rhs_b n_act rhs_h_matched_set is_folding pos
     | Context.M_split_match {

@@ -28,7 +28,8 @@ let last_posn = ref (None:string option)
 
 let suppress_warning_msg = ref false
 let en_warning_msg = ref true
-let web_location = ref true
+let web_location = ref false
+let print_latex = ref false
 
 let sap = ref false
 
@@ -76,7 +77,7 @@ let record_backtrace_quite () =
   else
     Printexc.record_backtrace !trace_failure
 
-let string_of_loc (p : loc) = if (!web_location) then
+let string_of_loc (p : loc) = if (not !web_location) then
   p.start_pos.Lexing.pos_fname ^ "_" ^ 
   (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
   (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^

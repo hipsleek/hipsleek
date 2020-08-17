@@ -9655,6 +9655,11 @@ let extract_abs_formula_branch fs v_base_name v_new_name extn_args ls_ann_infos
   type formula_cache_no_list = formula_cache_no list*)
 type formula_trace = string list
 
+type latex_trace = string list
+
+let empty_latex_trace = 
+  []
+
 type list_formula_trace = formula_trace list
 
 class infer_acc =
@@ -9771,6 +9776,7 @@ type entail_state = {
   es_final_error: (string * fail_type * failure_kind) list;
   (* es_must_error : string option *)
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
+  es_latex_trace : latex_trace; (* trace used for creating proof tree in latex*)
   (*for cyclic proof*)
   es_proof_traces: (formula*formula) list;
   (* WN : isn't above the same as prior steps? *)
@@ -10281,6 +10287,7 @@ let empty_es flowt grp_lbl pos =
     es_may_error = None;
     es_final_error = [];
     es_trace = [];
+    es_latex_trace = empty_latex_trace;
     es_proof_traces = [];
     es_is_normalizing = false;
     es_infer_post = false;

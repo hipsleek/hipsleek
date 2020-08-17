@@ -629,7 +629,7 @@ let _ =
         print_endline_quiet (str_res)
       else ()
     in
-    if (not (!Globals.web_compile_flag || not !Debug.webprint)) then 
+    if (not (!Globals.web_compile_flag || !Debug.webprint)) then 
       let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in
       print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                           (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
@@ -641,7 +641,7 @@ let _ =
           let ptime4 = Unix.times () in
           let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
           Timelog.logtime # dump;
-          if (!Debug.webprint) then
+          if (not !Debug.webprint) then
             silenced_print print_string ("\nTotal verification time: "
                                          ^ (string_of_float t4) ^ " second(s)\n"
                                          ^ "\tTime spent in main process: "

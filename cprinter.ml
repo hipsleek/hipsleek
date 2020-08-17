@@ -1086,12 +1086,14 @@ let rec pr_b_formula (e:P.b_formula) =
       let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in
       fmt_string ")" (* An Hoa *)
 
+
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e
   in
   match e with
-  | P.BForm (bf,lbl) -> (*pr_formula_label_opt lbl;*) pr_b_formula bf
+  | P.BForm (bf,lbl) -> 
+  (*pr_formula_label_opt lbl;*) pr_b_formula bf
   | P.And (f1, f2, l) ->
     let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
     let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
@@ -1116,6 +1118,27 @@ and pr_pure_formula  (e:P.formula) =
     pr_formula_label_opt lbl;
     fmt_string "exists("; pr_spec_var x; fmt_string ":";
     pr_pure_formula f; fmt_string ")"
+
+and latex_of_pure_formula (e:P.formula) = 
+  let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e in
+  match e with
+  | P.BForm (bf,lbl) -> poly_string_of_pr pr_b_formula bf
+  | P.And (f1, f2, l) ->
+  let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
+  let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
+  let args = arg1@arg2 in
+  (poly_string_of_pr (pr_list_op " \\wedge " f_b) args)
+  | P.Or (f1, f2, lbl,l) ->
+  let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
+  let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
+  let args = arg1@arg2 in
+  (poly_string_of_pr (pr_list_op " \\vee " f_b) args)
+  | P.Forall (x, f,lbl, l) ->
+  latex_of_pure_formula f
+  | P.Exists (x, f, lbl, l) ->
+  latex_of_pure_formula f
+  | _ -> ""
+
 
 and pr_term_ann_debug pr_short ann =
   match ann with
@@ -1297,6 +1320,63 @@ let string_of_cperm perm =
     | None -> ""
     | Some f -> string_of_formula_exp f
   in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
+
+let detokenize str =
+  if (String.contains str '_') then "\\detokenize{"^str^"}" else str
+
+let detokenize_multiple str =
+  let str_list = String.split_on_char ' ' str in
+  let str_list1 = List.map detokenize str_list in
+  String.concat " " str_list1
+
+let rec latex_of_h_formula h = 
+  match h with
+
+    | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) ->
+              let h1_latex = latex_of_h_formula h1 in
+              let h2_latex = latex_of_h_formula h2 in
+              h1_latex^" \\sep "^h2_latex
+
+    | DataNode ({h_formula_data_node = sv;
+               h_formula_data_name = c;
+               h_formula_data_derv = dr;
+               h_formula_data_split = split;
+               h_formula_data_imm = imm;
+               h_formula_data_param_imm = ann_param;
+               h_formula_data_arguments = svs;
+               h_formula_data_holes = hs; (* An Hoa *)
+               h_formula_data_perm = perm; (*LDK*)
+               h_formula_data_origins = origs;
+               h_formula_data_original = original;
+               h_formula_data_pos = pos;
+               h_formula_data_remaining_branches = ann;
+               h_formula_data_label = pid}) -> "\\hform{"^(detokenize (string_of_spec_var sv))^"}{"^(detokenize c)^"}{"^(detokenize (poly_string_of_pr pr_list_of_spec_var svs))^"}"^(detokenize (poly_string_of_pr pr_remaining_branches ann))
+
+    | ViewNode ({h_formula_view_node = sv;
+               h_formula_view_name = c;
+               h_formula_view_derv = dr;
+               h_formula_view_split = split;
+               h_formula_view_imm = imm;
+               h_formula_view_perm = perm; (*LDK*)
+               h_formula_view_arguments = svs;
+               h_formula_view_ho_arguments = ho_svs;
+               h_formula_view_args_orig = svs_orig;
+               h_formula_view_annot_arg = anns;
+               h_formula_view_origins = origs;
+               h_formula_view_original = original;
+               h_formula_view_lhs_case = lhs_case;
+               h_formula_view_label = pid;
+               h_formula_view_remaining_branches = ann;
+               h_formula_view_pruning_conditions = pcond;
+               h_formula_view_unfold_num = ufn;
+               h_formula_view_pos =pos}) -> 
+    let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
+    " \\view{"^(detokenize c)^"}{"^(detokenize (string_of_spec_var sv))^","^(detokenize (poly_string_of_pr pr_list_of_view_arg params))^"}"
+    | HTrue -> "htrue"
+    | HFalse -> "hfalse"
+    | HEmp ->  "emp"
+    | HVar (v,ls) -> "HVar "^(string_of_spec_var v)^(string_of_spec_var_list ls)
+    | _ -> ""
 
 let rec pr_h_formula h =
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e in
@@ -2252,7 +2332,12 @@ and pr_mix_formula f = match f with
   | MCP.MemoF f -> pr_memo_pure_formula f
   | MCP.OnePF f -> pr_pure_formula f
 
+and latex_mix_formula f = match f with
+  | MCP.MemoF f -> poly_string_of_pr  pr_memo_pure_formula f
+  | MCP.OnePF f -> latex_of_pure_formula f
+
 and string_of_flow_formula f c =
+  if (!Debug.disable_flow) then "" else
   "{"^f^","^string_of_flow c.formula_flow_interval^"="^(exlist # get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
 (* let rec string_of_nflow n = (exlist # get_closest n) *)
@@ -2296,6 +2381,22 @@ and pr_one_formula_list (ls:one_formula list) =
 (*         fmt_string ("\nAND "); pr_one_formula_list fs *)
 
 and string_of_one_formula_list ls = poly_string_of_pr  pr_one_formula_list ls
+
+and latex_of_mix_formula p =
+  let str = latex_mix_formula p in
+  if (String.trim str) = "true" then "}" else " \\wedge "^(detokenize_multiple str)^"}"
+
+
+and latex_of_formula_base e =
+  match e with 
+  | ({formula_base_heap = h;
+      formula_base_vperm = vp;
+      formula_base_pure = p;
+      formula_base_type = t;
+      formula_base_flow = fl;
+      formula_base_and = a;
+      formula_base_label = lbl;
+      formula_base_pos = pos}) -> (latex_of_h_formula h)^(latex_of_mix_formula p)
 
 and pr_formula_base e =
   match e with
@@ -2383,6 +2484,34 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
+
+and latex_of_estate_formula e = 
+  "{\\entail{"^(latex_of_formula e)
+
+and latex_of_conseq_formula e =
+  (latex_of_formula e)^"\n"
+
+and latex_of_action_name (name:string) : string = 
+  "\\infer1["^(detokenize (String.trim name))^"]"
+
+
+and latex_of_formula e = 
+  match e with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+    let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in
+    let arg2 = bin_op_to_list op_f_or_short formula_assoc_op f2 in
+    let args = arg1@arg2 in
+    ""
+  | Base e -> latex_of_formula_base e
+  | Exists ({formula_exists_qvars = svs;
+             formula_exists_heap = h;
+             formula_exists_vperm = vp;
+             formula_exists_pure = p;
+             formula_exists_type = t;
+             formula_exists_flow = fl;
+             formula_exists_and = a;
+             formula_exists_label = lbl;
+             formula_exists_pos = pos}) -> ""
 
 and pr_formula_1 e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula_1 e in
@@ -2689,6 +2818,12 @@ let pr_es_trace (trace:string list) : unit =
       | [hd] -> fmt_string hd
       | hd::tl -> fmt_string (hd ^ " ==> "); helper tl
     in helper trace
+
+let string_of_es_trace (trace: string list) = 
+  poly_string_of_pr pr_es_trace trace
+
+let string_of_es_latex_trace (trace: string list) =
+  (String.concat "" trace)
 
 (* type: Cformula.CP.rel_cat * Cformula.formula * Cformula.formula -> unit *)
 let pr_hp_rel hp_rel =
@@ -5589,7 +5724,6 @@ let string_of_html_hprel_short_inst prog hp =
 let string_of_html_hprel_def_short hp =
   poly_string_of_pr pr_html_hprel_def_short hp;;
 
-
 (* let cprog = ref {  *)
 (*     Cast.prog_data_decls = []; *)
 (*     Cast.prog_view_decls = []; *)
@@ -5607,6 +5741,7 @@ let string_of_html_hprel_def_short hp =
 (*     (\*Cast.prog_left_coercions = []; *)
 (*       Cast.prog_right_coercions = [];*\) *)
 (*     Cast. prog_barrier_decls = []} ;; *)
+
 
 Slicing.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure_D.print_mp_f := string_of_memo_pure_formula ;;

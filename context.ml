@@ -399,6 +399,8 @@ let string_of_match_type e = poly_string_of_pr pr_match_type e
 
 let string_of_match_res e = poly_string_of_pr pr_match_res e
 
+let latex_of_action_name (e:action) = "\\infer["^(string_of_action_name e)^"] "
+
 let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl (=) *)
 
 let pr_l_act_wt = pr_list string_of_action_wt_res_simpl

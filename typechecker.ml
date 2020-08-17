@@ -3343,6 +3343,53 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   let res = helper true proc_lst in
   res (*()*)
 
+
+let read_file filename = 
+let lines = ref [] in
+let chan = open_in filename in
+try
+  while true; do
+    lines := input_line chan :: !lines
+  done; !lines
+with End_of_file ->
+  close_in chan;
+  Sys.remove filename;
+  List.rev !lines
+
+let create_latex_file (name : string) (create: bool)=
+  let new_name = Str.global_replace (Str.regexp_string "~") "_" name in
+  let dir = Sys.getcwd() in
+  let index = Str.search_forward (Str.regexp_string "/hipsleek") dir 0 in
+  let file_out = (Str.string_before dir index)^"/hipsleek/latex/"^new_name^".tex" in
+  let file_in = (Str.string_before dir index)^"/hipsleek/latex/temp.tex" in
+  let lst1 = read_file file_in in
+  let msg = List.fold_left (fun x y -> String.concat "\n" [y;x]) "" lst1 in
+
+  let top_of_doc = 
+  "\\documentclass[8pt]{extarticle}
+\\input{notation}
+
+\\usepackage{ebproof}
+\\usepackage[margin=0.2in,landscape]{geometry}
+\\begin{document}
+\\tiny
+\\[
+\\begin{prooftree}
+\\hypo{emp}" in
+
+  let bot_of_doc = 
+  "\n\\end{prooftree}
+\\]
+\\end{document}" in
+
+  let final_msg = if (create) then top_of_doc^msg^bot_of_doc else "" in
+  let () = 
+    let oc = open_out file_out in
+    output_string oc final_msg;
+    close_out oc in
+  final_msg
+
+
 let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
   let _ =  Debug.ninfo_hprint (add_str "proc_mutual_scc_shape_infer: STARTING" (
       let pr proc = Cprinter.string_of_struc_formula_for_spec_inst prog (proc.proc_stk_of_static_specs # top) in
@@ -3653,8 +3700,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           if pr_flag then
             begin
               let separator = if (!Debug.webprint) 
-                then ""
-              else "=======================================================================================================================" in
+                then "======================================================================================================================="
+              else "" in
               print_string_web_mode ((separator^"\nChecking procedure ") ^ proc.proc_name ^ "...\n"); flush stdout;
               (* x_binfo_hp (add_str "Static spec (proc)" Cprinter.string_of_struc_formula) proc.proc_static_specs; flush stdout;           *)
               (* x_binfo_hp (add_str "Static spec (stk of proc)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top);   *)
@@ -4106,6 +4153,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           in
           if pr_flag then
             begin
+              let msg = if (!VarGen.print_latex) then create_latex_file proc.proc_name pp else "" in
               if pp then
                 (* let () = Debug.info_hprint (add_str "proc.proc_sel_hps"  !CP.print_svl) proc.proc_sel_hps  no_pos in *)
                 if !Globals.web_compile_flag then
@@ -4275,9 +4323,9 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
         (* dummy_exception(); *)
         let () = Infer.rel_ass_stk # reset in
         print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
-        if (!Debug.webprint) then print_web_mode ("\nException "^(Printexc.to_string e)^" Occurred!\n");
+        if (not !Debug.webprint) then print_web_mode ("\nException "^(Printexc.to_string e)^" Occurred!\n");
         print_backtrace_quiet ();
-        if (!Debug.webprint) then print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+        if (not !Debug.webprint) then print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
         Log.last_cmd # dumping (proc.proc_name^" FAIL2");
         (* print_endline "Last PURE PROOF FAILURE:"; *)
         (* Log.last_proof_command # dump; *)

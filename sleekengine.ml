@@ -1,5 +1,9 @@
 #include "xdebug.cppo"
 open VarGen
+open Printf
+open Sys
+open Filename
+open Option
 (*
   The frontend engine of SLEEK.
 *)
@@ -2675,12 +2679,58 @@ let run_entail_check (iante : meta_formula list) (iconseq : meta_formula) (etype
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_2 "run_entail_check" (pr_list pr) pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
+let read_file filename = 
+let lines = ref [] in
+let chan = open_in filename in
+try
+  while true; do
+    lines := input_line chan :: !lines
+  done; !lines
+with End_of_file ->
+  close_in chan;
+  Sys.remove filename;
+  List.rev !lines
+
+let create_latex_file (num: int) (create: bool)=
+  let dir = Sys.getcwd() in
+  let index = Str.search_forward (Str.regexp_string "/hipsleek") dir 0 in
+  let file_out = (Str.string_before dir index)^"/hipsleek/latex/"^"Entail_"^(string_of_int num)^".tex" in
+  let file_in = (Str.string_before dir index)^"/hipsleek/latex/temp.tex" in
+  let lst1 = read_file file_in in
+  let msg = List.fold_left (fun x y -> String.concat "" [x;y]) "" lst1 in
+
+  let top_of_doc = 
+  "\\documentclass[8pt]{extarticle}
+\\input{notation}
+
+\\usepackage{ebproof}
+\\usepackage[margin=0.2in,landscape]{geometry}
+\\begin{document}
+\\tiny
+\\[
+\\begin{prooftree}
+\\hypo{emp}" in
+
+  let bot_of_doc = 
+  "\n\\end{prooftree}
+\\]
+\\end{document}" in
+
+  let final_msg = if (create) then top_of_doc^msg^bot_of_doc else "" in
+  let () = 
+    let oc = open_out file_out in
+    output_string oc final_msg;
+    close_out oc in
+  final_msg
+
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) lerr_exc:bool =
   Debug.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   Debug.ninfo_hprint (add_str "valid: " string_of_bool) valid no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
+  let num = Str.last_chars num_id 1 in
+  let str = if (!VarGen.print_latex) then create_latex_file (int_of_string num) t_valid else "" in
   let term_output =
     if t_valid then ""
     else
@@ -2772,6 +2822,8 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       in
       if t_valid then
         let _ = (* if !Globals.smt_compete_mode then print_string "UNSAT" else *)
+(*         let num = Str.last_chars num_id 1 in
+        let str = if (!VarGen.print_latex) then create_latex_file (int_of_string num) true else "" in *)
           silenced_print print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
         in
         true
@@ -2882,23 +2934,72 @@ let process_nondet_check (v: ident) (mf: meta_formula) =
   let msg = "\nNondet constraint " ^ (string_of_int nn) ^ ": " ^ res_str ^ "." in
   print_endline_quiet msg
 
+(* let read_file filename = 
+let lines = ref [] in
+let chan = open_in filename in
+try
+  while true; do
+    lines := input_line chan :: !lines
+  done; !lines
+with End_of_file ->
+  close_in chan;
+  Sys.remove filename;
+  List.rev !lines
+
+let create_latex_file (num: int) =
+  let file_out = "/home/fadisng/hipsleek/latex/"^"Entail_"^(string_of_int num)^".tex" in
+  let file_in = "/home/fadisng/hipsleek/latex/temp.tex" in
+  let lst1 = read_file file_in in
+  let str = List.fold_right (fun x y -> String.concat "" [x;y]) lst1 "" in
+  let lst2 = Str.split (Str.regexp_string "##") str in
+  let msg = List.fold_right (fun x y -> String.concat "\n" [y;x]) lst2 "" in
+
+  let top_of_doc = 
+  "\\documentclass[8pt]{extarticle}
+\\input{notation}
+
+\\usepackage{ebproof}
+\\usepackage[margin=0.2in,landscape]{geometry}
+\\begin{document}
+\\small
+\\[
+\\begin{prooftree}
+\\hypo{emp}" in
+
+  let bot_of_doc = 
+  "\n\\end{prooftree}
+\\]
+\\end{document}" in
+
+  let final_msg = top_of_doc^msg^bot_of_doc in
+
+  let () = 
+    let oc = open_out file_out in
+    output_string oc final_msg;
+    close_out oc in
+  final_msg *)
+
+
+
+
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) (etype : entail_type) =
-  if (not !Debug.webprint) then print_string "=======================================================================================================================";
   let nn = (sleek_proof_counter#inc_and_get) in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
+  if (!Debug.webprint && not(pnum>0 & pnum!=nn)) then print_string "=======================================================================================================================\n";
+
   if pnum>0 & pnum!=nn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
-    let num_id = "\nEntail "^(string_of_int nn) in
+    let num_id = "Entail "^(string_of_int nn) in
     try
       let valid, rs, _(*sel_hps*) =
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
-      print_entail_result [] (*sel_hps*) valid rs num_id false
+     print_entail_result [] (*sel_hps*) valid rs num_id false
     with ex ->
       let exs = (Printexc.to_string ex) in
       let _ = print_exception_result exs (*sel_hps*) num_id in
