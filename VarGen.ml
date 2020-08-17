@@ -29,6 +29,7 @@ let last_posn = ref (None:string option)
 let suppress_warning_msg = ref false
 let en_warning_msg = ref true
 let web_location = ref false
+let print_latex = ref false
 
 let sap = ref false
 

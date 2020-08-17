@@ -1179,8 +1179,14 @@ let common_arguments = [
       VarGen.web_location := true;
       Globals.enable_count_stats:= false;
       Globals.enable_time_stats:= false;
-      Globals.tnt_web_mode:=true),
+      Globals.tnt_web_mode:=true;
+      Debug.disable_flow := true),
     "only prints essentials");
+  ("--print-latex", Arg.Unit
+    (fun _ ->
+      Debug.disable_flow := true;
+      VarGen.print_latex := true),
+    "creates latex files of proof trees in hipsleek/latex");
   ("--print-min",
    Arg.Unit
      (fun _ ->

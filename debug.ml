@@ -3,6 +3,7 @@ open Gen.Basic
 open VarGen
 
 let webprint = ref false
+let disable_flow = ref false
 let debug_on = ref false
 let devel_debug_on = ref false
 let devel_debug_steps = ref false
