@@ -1379,6 +1379,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* CF.residues := Some (rs, res); *)
   ((res, rs,v_hp_rel), (ante,conseq))
 
+let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  TP.wrap_remove_univ_rhs (run_infer_one_pass itype ivars iante0) iconseq0
+
 let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in

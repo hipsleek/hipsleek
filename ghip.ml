@@ -29,7 +29,7 @@ class mainwindow () =
      <menu action='TheoremProverMenu'>\
      <menuitem action='Omega'/>\
      <menuitem action='Mona'/>\
-     <menuitem action='Cvc3'/>\
+     <menuitem action='Cvc4'/>\
      <menuitem action='Redlog'/>\
      <menuitem action='Coq'/>\
      </menu>\
@@ -175,7 +175,7 @@ class mainwindow () =
         radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
-          ra "Cvc3" 2 ~label:"_Cvc3";
+          ra "Cvc4" 2 ~label:"_Cvc4";
           ra "Redlog" 3 ~label:"_Redlog";
           ra "Coq" 4 ~label:"Co_q";
         ];
@@ -294,7 +294,7 @@ class mainwindow () =
       original_digest <> digest
 
     method set_theorem_prover id =
-      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.Coq] in
+      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc4; TP.Redlog; TP.Coq] in
       let tp = List.nth provers id in
       args <- {args with HH.tp = tp};
       let tp_name = TP.name_of_tp tp in

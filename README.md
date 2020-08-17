@@ -10,13 +10,13 @@
    Please move it to some default location,
    such as `/usr/local/bin`.
 
-2. Compile Mona modified as follows:
+2. Compile Mona as follows:
    ```
-   tar -xvf mona-1.4-modif.tar
+   tar -xvf mona-1.4-modif.tar.gz
    cd mona-1.4
    ./install.sh
    ```
-   The mona executable mona_inter is now placed in
+   The mona executable is now placed in
    `/usr/local/bin`.
 
 3. Please install latest Ocaml compiler in your directory.

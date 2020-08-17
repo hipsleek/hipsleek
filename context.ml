@@ -4094,7 +4094,6 @@ and compute_pretty_actions prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 xs = String.concat " *" (List.map (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) xs) in
   let pr2 = string_of_action_res in
-  let action = compute_actions_y prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos in
   (* let rec get_match_res_level_of_action (a: action): match_res_level =
    *   match a with
    *   | M_match e -> One [e]
@@ -4129,32 +4128,12 @@ and compute_pretty_actions prog estate es lhs_h lhs_p rhs_p posib_r_alias (rhs_l
    *   | One l -> List.iter show_match_res l
    *   | Many l -> List.iter show_match_res_level l
    * in *)
-  compute_pretty_actions_no_4 "compute_pretty_actions" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> action) lhs_h lhs_p rhs_lst rhs_p
+  compute_pretty_actions_no_4 "compute_actions" pr pr3 pr1 pr3 pr2 (fun _ _ _ _ -> compute_actions_y prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos) lhs_h lhs_p rhs_lst rhs_p
 
 and compute_pretty_actions_no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = Debug.ho_aux_no s (f e1 e2 e3) in
-  compute_pretty_actions_splitter s code_none code_gen compute_pretty_actions_go_4
-
-and compute_pretty_actions_splitter s f_none f_gen f_norm =
-  let () = VarGen.last_posn # set_name s in
-  let at_call_site =
-    let x_call_site = VarGen.last_posn # get s in
-    if x_call_site = "" then "" else " @" ^ x_call_site
-  in
-  let () = if !Debug.dump_callers_flag then Debug.debug_calls # push_call s at_call_site in
-  let () = if !Debug.dump_calls then Debug.debug_calls # print_call s at_call_site in
-  let fn =
-    if !VarGen.z_debug_flag then
-      match (Debug.in_debug s) with
-      | DO_Normal -> f_gen (f_norm false false)
-      | DO_Trace -> f_gen (f_norm true false) 
-      | DO_Loop -> f_gen (f_norm false true)
-      | DO_Both -> f_gen (f_norm true true)
-      | DO_None -> f_none
-    else
-      f_none in 
-  if !Debug.dump_calls then Debug.wrap_pop_call fn else fn
+  Debug.splitter s code_none code_gen compute_pretty_actions_go_4
 
 and compute_pretty_actions_go_4 t_flag l_flag s = compute_pretty_actions_ho_4_opt_aux t_flag [] l_flag (fun _ -> true) None s
 
@@ -4168,7 +4147,7 @@ and compute_pretty_actions_ho_4_opt_aux df (flags:bool list) (loop_d:bool) (test
   let lz = Debug.choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3)); (4,lazy (pr4 e4))] in
   let f  = f e1 e2 e3 in
   let g  = match g with None -> None | Some g -> Some (g e1 e2 e3) in
-  Debug.ho_aux ~call_site:call_site df lz loop_d test g s ["[e|"^a1^" &"^a2^" |-"^a3^" &"^a4^"|e]"] pr_o f e4
+  Debug.ho_aux ~call_site:call_site df lz loop_d test g s ["[f|"^a1^" &"^a2^" |-"^a3^" &"^a4^"|f]"] pr_o f e4
 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =

@@ -71,7 +71,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo 
 	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvclite.cmo cvc4.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo\
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo\
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
@@ -97,7 +97,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.c
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   rlparser.cmo rllexer.cmo \
   net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvclite.cmo cvc4.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
@@ -121,7 +121,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvclite.cmo cvc4.cmo smtsolver.cmo \
 	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
@@ -148,7 +148,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 	rlparser.cmo rllexer.cmo \
   ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo\
+	cvclite.cmo cvc4.cmo smtsolver.cmo\
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
@@ -171,7 +171,7 @@ WEB_FILES=globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo \
   net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvclite.cmo cvc4.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
