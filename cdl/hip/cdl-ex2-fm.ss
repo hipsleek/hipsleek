@@ -1,7 +1,3 @@
-/*
-  Example with simple CountDownLatch
- */
-
 //CountDownLatch
 data CDL {}
 
@@ -11,12 +7,18 @@ pred_prim LatchIn{-%P@Split}<>;
 
 pred_prim LatchOut{+%P@Split}<>;
 
-pred_prim CNT<n:int>
+pred_prim CNT<n:int> @ThreadLocal
   inv n>=(-1);
 
-lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
+lemma "norm" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
+
+lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+lemma "release" self::LatchOut{+%P}<> * self::CNT<n> & n<0 -> %P.
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
 /********************************************/
 CDL create_latch(int n) with %P
@@ -36,27 +38,27 @@ void await(CDL c)
   ensures c::CNT<(-1)> * %P;
   requires c::CNT<(-1)>
   ensures c::CNT<(-1)>;
-  
+
 void main()
   requires emp ensures emp;
 {
   cell p, q;
   dprint;
-  CDL c = create_latch(1) with p'::cell<_> * q'::cell<_>;
+  CDL c = create_latch(1) with p'::cell<_> * q'::cell<_> * @full[p', q'];
   par {p, q, c@L}
   {
-    case {p, q, c@L} c'::LatchIn{- p'::cell<_> * q'::cell<_>}<> * c'::CNT<(1)> ->
+    case {p, q, c@L} c'::LatchIn{- p'::cell<_> * q'::cell<_> * @full[p', q']}<> * c'::CNT<(1)> ->
       dprint;
       p = new cell(1);
       q = new cell(2);
       countDown(c);
     ||
-    case {c@L} c'::LatchOut{+ p'::cell<_>}<> * c'::CNT<(0)> ->
+    case {c@L} c'::LatchOut{+ p'::cell<_> * @full[p']}<> * c'::CNT<(0)> ->
       await(c);
       p.val = p.val + 1;
     ||
     //else ->
-    case {c@L} c'::LatchOut{+ q'::cell<_>}<> * c'::CNT<0> ->
+    case {c@L} c'::LatchOut{+ q'::cell<_> * @full[q']}<> * c'::CNT<0> ->
       await(c);
       q.val = q.val + 1;
   }

@@ -52,7 +52,7 @@ void main()
   //dprint;
   countDown(c);
   //dprint;
-  assert x'::cell<10>; // fail ??
+  assert x'::cell<10>; // fail
   await(c);
   //dprint;
   assert x'::cell<10>; // ok

@@ -64,7 +64,7 @@ void main()
       countDown(c);
     ||
     case {q, c@L} c'::LatchIn{- q'::cell<2>}<> * c'::CNT<(0)> ->
-      skip;
+      //skip;
   }
   dprint;
 }
