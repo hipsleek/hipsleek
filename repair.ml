@@ -806,7 +806,7 @@ let infest_and_output src (iprog: I.prog_decl) =
       output_infestor_prog src buggy_prog 1) in
   let _ = level_two_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 2) in
-  let injected_programs = List.length level_one_progs in
+  let injected_programs = List.length (level_one_progs @ level_two_progs) in
   let () = x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " RP.pr_int)
       injected_programs no_pos in
   x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
