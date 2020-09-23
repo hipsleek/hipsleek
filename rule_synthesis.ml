@@ -558,6 +558,7 @@ let choose_rule_fwrite goal =
       rfw_bound_var = var;
       rfw_field = field;
       rfw_value = n_val;
+      rfw_free_vars = [];
     } in
   tuples |> List.map mk_fwrite_rule
 

@@ -82,8 +82,20 @@ let process_rule_fwrite goal rc =
   let n_pre = aux_fun pre var field rhs data_decls in
   (* let n_goal = {goal with gl_pre_cond = n_pre;
    *                         gl_trace = (RlFWrite rc)::goal.gl_trace} in *)
-  let ent, _ = check_entail_wrapper goal.gl_prog n_pre goal.gl_post_cond in
-  if ent then Syn.mk_derivation_success goal (Syn.RlFWrite rc)
+  let ent, residue = check_entail_wrapper goal.gl_prog n_pre goal.gl_post_cond in
+  if ent then
+    let residue = Gen.unsome residue in
+    if CF.is_emp_formula residue then
+      Syn.mk_derivation_success goal (Syn.RlFWrite rc)
+    else
+      let free_vars = Syn.get_heap_variables residue in
+      if List.length free_vars = 1 &&
+         List.for_all (fun x -> List.mem x goal.Syn.gl_vars) free_vars
+      then
+        let n_rc = {rc with rfw_free_vars = free_vars} in
+        Syn.mk_derivation_success goal (Syn.RlFWrite n_rc)
+      else
+        Syn.mk_derivation_success goal (Syn.RlFWrite rc)
   else
     Syn.mk_derivation_fail goal (Syn.RlFWrite rc)
   (* mk_derivation_subgoals goal (RlFWrite rc) [n_goal] *)

@@ -20,11 +20,11 @@ void delete(node x, int a)
 // ~>
 //  (exists f_r_4454,q_21: x::node<q_21> * q_21::ll<f_r_4454>&2+f_r_4454=n).
 
-synthesize [node q_79,node x,int a]
- q_79::node<q_102> * q_102::ll<flted_6_101> * x::node<q_79>&
-2<=n & a=1 & 1+flted_6_78=n & 1+flted_6_101=flted_6_78
-~>
- (exists f_r_58,q_59: x::node<q_59> * q_59::ll<f_r_58>&2+f_r_58=n).
+// synthesize [node q_79,node x,int a]
+//  q_79::node<q_102> * q_102::ll<flted_6_101> * x::node<q_79>&
+// 2<=n & a=1 & 1+flted_6_78=n & 1+flted_6_101=flted_6_78
+// ~>
+//  (exists f_r_58,q_59: x::node<q_59> * q_59::ll<f_r_58>&2+f_r_58=n).
 
 // q_79::node<q_102> * x::node<q_79> &
 // 2<=n & a=1 & 1+flted_6_78=n & 1+flted_6_101=flted_6_78

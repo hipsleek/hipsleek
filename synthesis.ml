@@ -191,6 +191,7 @@ and rule_field_write = {
   rfw_bound_var: CP.spec_var;
   rfw_field: typed_ident;
   rfw_value: CP.spec_var;
+  rfw_free_vars: CP.spec_var list;
 }
 
 and rule_field_read = {
@@ -2332,7 +2333,8 @@ let rec synthesize_st_core st : Iast.exp option =
     let i_exp = I.Empty no_pos in
     Some i_exp
   (* | RlExistsRight _ *)
-  | RlFramePred _ | RlFrameData _ | RlFree _
+  | RlFramePred _ | RlFrameData _
+  (* | RlFree _ *)
   | RlUnfoldPost _ | RlUnfoldPre _ -> helper st
   | RlHeapAssign rc ->
     let lhs = rc.rha_left in
@@ -2345,16 +2347,16 @@ let rec synthesize_st_core st : Iast.exp option =
         I.exp_assign_pos = no_pos;
       } in
     aux_subtrees st assign
-  (* | RlFree rc ->
-   *   let vars = rc.rd_vars in
-   *   let mk_rule var =
-   *     I.Free {
-   *       exp_free_exp = mkVar var;
-   *       exp_free_pos = no_pos
-   *     } in
-   *   let exp_list = List.map mk_rule vars in
-   *   let d_exp = mk_exp_list exp_list in
-   *   aux_subtrees st d_exp *)
+  | RlFree rc ->
+    let vars = rc.rd_vars in
+    let mk_rule var =
+      I.Free {
+        exp_free_exp = mkVar var;
+        exp_free_pos = no_pos
+      } in
+    let exp_list = List.map mk_rule vars in
+    let d_exp = mk_exp_list exp_list in
+    aux_subtrees st d_exp
   | RlAllocate rc ->
     let r_data = rc.ra_data in
     let r_var = rc.ra_var in
@@ -2437,7 +2439,20 @@ let rec synthesize_st_core st : Iast.exp option =
         exp_member_pos = no_pos
       } in
     let bind = mkAssign exp_mem rhs_var in
-    aux_subtrees st bind
+    begin
+      match rbind.rfw_free_vars with
+      | [] -> aux_subtrees st bind
+      | _ ->
+        let mk_rule var =
+          I.Free {
+            exp_free_exp = mkVar var;
+            exp_free_pos = no_pos
+          } in
+        let free_exp_list = List.map mk_rule rbind.rfw_free_vars in
+        let f_exp = mk_exp_list free_exp_list in
+        let sub_exp = mkSeq bind f_exp in
+        aux_subtrees st sub_exp
+    end
   | RlFRead rc ->
     let lhs = rc.rfr_value in
     let bvar, (typ, f_name) = rc.rfr_bound_var, rc.rfr_field in
@@ -2455,7 +2470,8 @@ let rec synthesize_st_core st : Iast.exp option =
       } in
     let lhs = mkVar lhs in
     let body = mkAssign lhs mem_var in
-    let seq = mkSeq exp_decl body in aux_subtrees st seq
+    let seq = mkSeq exp_decl body in
+    aux_subtrees st seq
   | RlFuncCall rc ->
     let args = rc.rfc_params |> List.map mkVar in
     let fcall = Iast.CallNRecv {
