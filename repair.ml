@@ -678,15 +678,15 @@ let get_num_cases num list =
   aux list []
 
 let create_buggy_proc_wrapper (body : I.exp) var_decls data_decls =
-  let n_body_w_level_one = buggy_level_one body var_decls data_decls
-                           |> get_num_cases 11 in
-  let n_body_w_level = buggy_level_two body var_decls data_decls
-                       |> get_num_cases 11 in
+  let n_body_w_level_one = buggy_level_one body var_decls data_decls in
+  let n_body_w_level_one = List.map (fun (x,_) -> (x,1)) n_body_w_level_one in
+  let n_body_w_level_two = buggy_level_two body var_decls data_decls in
+  let n_body_w_level_two = List.map (fun (x,_) -> (x,2)) n_body_w_level_two in
   let () = x_binfo_hp (add_str "level_one: " RP.pr_int)
       (List.length n_body_w_level_one) no_pos in
   let () = x_binfo_hp (add_str "level_two: " RP.pr_int)
-      (List.length n_body_w_level) no_pos in
-  let all_cases = n_body_w_level_one @ n_body_w_level in
+      (List.length n_body_w_level_two) no_pos in
+  let all_cases = n_body_w_level_one @ n_body_w_level_two in
   all_cases
 
 let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
@@ -698,7 +698,9 @@ let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   n_body_list |> List.map (fun (x, y) -> ({proc with I.proc_body = Some x}, y))
 
 let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
-  let file_name, dir = Filename.basename src, Filename.dirname src in
+  let file_name = Filename.basename src in
+  (* let dir = Filename.dirname src in *)
+  let dir = Sys.getcwd() in
   let suffix = Filename.extension file_name in
   let f_name = Filename.chop_suffix file_name suffix in
   let b_file = f_name ^ "_buggy_" ^ (RP.pr_int !RP.infestor_num) ^ suffix in
@@ -724,6 +726,7 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
                            I.prog_proc_decls = procs;
                            I.prog_data_decls = data_decls} in
   let output = RP.pr_iprog n_prog in
+  let () = x_binfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in
   let oc = open_out to_saved_file in
   fprintf oc "%s\n" output; close_out oc;
   to_saved_file
@@ -790,68 +793,75 @@ let infest_and_output src (iprog: I.prog_decl) =
   let () = x_tinfo_hp (add_str "input_prog: " Iprinter.string_of_program) iprog no_pos in
   (* buggy program with one location*)
   let level_one_progs = buggy_progs
-                        (* |> List.filter (fun (_, y) -> y = 1) *)
+                        |> List.filter (fun (_, y) -> y = 1)
                         |> List.map fst
                         |> List.filter filter_prog
-                        |> get_num_cases 20 in
+                        |> get_num_cases 10 in
+  let level_two_progs = buggy_progs
+                        |> List.filter (fun (_, y) -> y = 2)
+                        |> List.map fst
+                        |> List.filter filter_prog
+                        |> get_num_cases 10 in
   let _ = level_one_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 1) in
+  let _ = level_two_progs |> List.map (fun buggy_prog ->
+      output_infestor_prog src buggy_prog 2) in
   let injected_programs = List.length level_one_progs in
   let () = x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " RP.pr_int)
       injected_programs no_pos in
   x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
 
 
-let infest_and_repair src (iprog : I.prog_decl) start_time =
-  let buggy_progs = create_buggy_prog src iprog in
-  let () = enable_repair := true in
-  let () = RP.infestor_num := 0 in
-  let repair_time = ref 0.0 in
-  let aux_one (buggy_prog, level) =
-    let () = Syn.repair_res := None in
-    let cprog, _ = Astsimp.trans_prog buggy_prog in
-    try
-      let _ = Typechecker.check_prog_wrapper buggy_prog cprog in
-      let () = Syn.check_post_list := [] in
-      let () = Z3.stop () in
-      let () = x_binfo_pp "INFESTED PROGRAM IS NOT BUGGY W.R.T THE SPECIFICATION" no_pos in
-      (0, 0)
-    with _ ->
-      (* let start_time = get_time () in *)
-      let r_iprog = start_repair_wrapper buggy_prog start_time in
-      let () = Syn.check_post_list := [] in
-      let duration = get_time () -. start_time in
-      (* to kill process *)
-      let () = Z3.stop () in
-      let () = repair_time := (!repair_time) +. duration in
-      let s_file = output_infestor_prog src buggy_prog level in
-      if r_iprog then
-        let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " SUCCESSFULLY") no_pos in
-        (1, 1)
-      else
-        let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " FAIL") no_pos in
-        (1, 0) in
-  let reset_timing () =
-    let () = Syn.inference_time := 0.0 in
-    let () = Syn.synthesis_time := 0.0 in
-    let () = repair_time := 0.0 in
-    () in
-  let aux level =
-    let level1 = List.filter (fun (_, x) -> x = level) buggy_progs in
-    let res_level1 = level1 |> List.map aux_one in
-    let b_sum = res_level1 |> List.map fst |> RP.sum_list in
-    let r_sum = res_level1 |> List.map snd |> RP.sum_list in
-    let b_sum = float_of_int b_sum in
-    let r_sum = float_of_int r_sum in
-    let r_time = !repair_time /. b_sum in
-    let inference_t = !Syn.inference_time/. b_sum in
-    let r_time = r_time/. b_sum in
-    let syn_t = !Syn.synthesis_time/. b_sum in
-    let l1_stats = [b_sum; r_sum; inference_t; syn_t; r_time] in
-    l1_stats in
-  let l1_stats = aux 1 in
-  let () = reset_timing () in
-  let l2_stats = aux 2 in
-  let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln RP.pr_float)) l1_stats no_pos in
-  let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln RP.pr_float)) l2_stats no_pos in
-  x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos
+(* let infest_and_repair src (iprog : I.prog_decl) start_time =
+ *   let buggy_progs = create_buggy_prog src iprog in
+ *   let () = enable_repair := true in
+ *   let () = RP.infestor_num := 0 in
+ *   let repair_time = ref 0.0 in
+ *   let aux_one (buggy_prog, level) =
+ *     let () = Syn.repair_res := None in
+ *     let cprog, _ = Astsimp.trans_prog buggy_prog in
+ *     try
+ *       let _ = Typechecker.check_prog_wrapper buggy_prog cprog in
+ *       let () = Syn.check_post_list := [] in
+ *       let () = Z3.stop () in
+ *       let () = x_binfo_pp "INFESTED PROGRAM IS NOT BUGGY W.R.T THE SPECIFICATION" no_pos in
+ *       (0, 0)
+ *     with _ ->
+ *       (\* let start_time = get_time () in *\)
+ *       let r_iprog = start_repair_wrapper buggy_prog start_time in
+ *       let () = Syn.check_post_list := [] in
+ *       let duration = get_time () -. start_time in
+ *       (\* to kill process *\)
+ *       let () = Z3.stop () in
+ *       let () = repair_time := (!repair_time) +. duration in
+ *       let s_file = output_infestor_prog src buggy_prog level in
+ *       if r_iprog then
+ *         let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " SUCCESSFULLY") no_pos in
+ *         (1, 1)
+ *       else
+ *         let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " FAIL") no_pos in
+ *         (1, 0) in
+ *   let reset_timing () =
+ *     let () = Syn.inference_time := 0.0 in
+ *     let () = Syn.synthesis_time := 0.0 in
+ *     let () = repair_time := 0.0 in
+ *     () in
+ *   let aux level =
+ *     let level1 = List.filter (fun (_, x) -> x = level) buggy_progs in
+ *     let res_level1 = level1 |> List.map aux_one in
+ *     let b_sum = res_level1 |> List.map fst |> RP.sum_list in
+ *     let r_sum = res_level1 |> List.map snd |> RP.sum_list in
+ *     let b_sum = float_of_int b_sum in
+ *     let r_sum = float_of_int r_sum in
+ *     let r_time = !repair_time /. b_sum in
+ *     let inference_t = !Syn.inference_time/. b_sum in
+ *     let r_time = r_time/. b_sum in
+ *     let syn_t = !Syn.synthesis_time/. b_sum in
+ *     let l1_stats = [b_sum; r_sum; inference_t; syn_t; r_time] in
+ *     l1_stats in
+ *   let l1_stats = aux 1 in
+ *   let () = reset_timing () in
+ *   let l2_stats = aux 2 in
+ *   let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln RP.pr_float)) l1_stats no_pos in
+ *   let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln RP.pr_float)) l2_stats no_pos in
+ *   x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos *)
