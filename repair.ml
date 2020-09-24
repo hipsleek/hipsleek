@@ -797,11 +797,12 @@ let infest_and_output src (iprog: I.prog_decl) =
                         |> List.map fst
                         |> List.filter filter_prog
                         |> get_num_cases 10 in
-  let level_two_progs = buggy_progs
-                        |> List.filter (fun (_, y) -> y = 2)
-                        |> List.map fst
-                        |> List.filter filter_prog
-                        |> get_num_cases 10 in
+  let level_two_progs = [] in
+    (* buggy_progs
+     *                     |> List.filter (fun (_, y) -> y = 2)
+     *                     |> List.map fst
+     *                     |> List.filter filter_prog
+     *                     |> get_num_cases 10 in *)
   let _ = level_one_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 1) in
   let _ = level_two_progs |> List.map (fun buggy_prog ->
