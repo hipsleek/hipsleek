@@ -81,20 +81,20 @@ type priority =
 exception EPrio of priority
 
 type rule =
-  | RlSkip
-  | RlReturn of rule_return
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlFrameData of rule_frame_data
   | RlFramePred of rule_frame_pred
-  | RlAllocate of rule_allocate
-  | RlFree of rule_free
   | RlMkNull of rule_mk_null
   | RlNewNum of rule_new_num
   | RlAssign of rule_assign
   | RlHeapAssign of rule_heap_assign
+  | RlSkip
+  | RlReturn of rule_return
   | RlFRead of rule_field_read
   | RlFWrite of rule_field_write
+  | RlAllocate of rule_allocate
+  | RlFree of rule_free
   | RlFuncCall of rule_func_call
 
 and rule_heap_assign = {
