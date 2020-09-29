@@ -1680,7 +1680,7 @@ let choose_synthesis_rules goal : Syn.rule list =
       let _ = choose_rule_assign_end goal |> Syn.raise_rules in
       let _ = choose_rule_allocate_return goal |> Syn.raise_rules in
       let _ = choose_rule_numeric goal |> Syn.raise_rules in
-      (* let _ = choose_rule_heap_assign goal |> Syn.raise_rules in *)
+      let _ = choose_rule_heap_assign goal |> Syn.raise_rules in
       let _ = choose_rule_fwrite goal |> Syn.raise_rules in
       let _ = choose_main_rules goal |> Syn.raise_rules in
       []

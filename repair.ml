@@ -726,7 +726,7 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
                            I.prog_proc_decls = procs;
                            I.prog_data_decls = data_decls} in
   let output = RP.pr_iprog n_prog in
-  let () = x_binfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in
+  (* let () = x_binfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in *)
   let oc = open_out to_saved_file in
   fprintf oc "%s\n" output; close_out oc;
   to_saved_file
@@ -797,12 +797,12 @@ let infest_and_output src (iprog: I.prog_decl) =
                         |> List.map fst
                         |> List.filter filter_prog
                         |> get_num_cases 10 in
-  let level_two_progs = [] in
-    (* buggy_progs
-     *                     |> List.filter (fun (_, y) -> y = 2)
-     *                     |> List.map fst
-     *                     |> List.filter filter_prog
-     *                     |> get_num_cases 10 in *)
+  let level_two_progs =
+    buggy_progs
+                        |> List.filter (fun (_, y) -> y = 2)
+                        |> List.map fst
+                        |> List.filter filter_prog
+                        |> get_num_cases 10 in
   let _ = level_one_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 1) in
   let _ = level_two_progs |> List.map (fun buggy_prog ->
