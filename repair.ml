@@ -170,7 +170,10 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       begin
         match patch with
         | None -> None
-        | Some pt -> Some [(candidate, pt)]
+        | Some pt ->
+          let () = x_binfo_hp (add_str "BUGGY STMT" Iprinter.string_of_exp) candidate no_pos in
+          let () = x_binfo_hp (add_str "PATCH" Iprinter.string_of_exp) pt no_pos in
+          Some [(candidate, pt)]
       end
     with _ -> None
 
@@ -470,7 +473,8 @@ let repair_iprog (iprog:I.prog_decl) repair_proc =
   if res == None then
     let () = Syn.is_return_cand := false in
     repair_level_two iprog repair_proc r_iproc
-  else res
+  else
+    res
 
 (* let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)
  *     trace orig_proc proc block (specs:CF.formula * CF.formula) =
@@ -726,7 +730,7 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
                            I.prog_proc_decls = procs;
                            I.prog_data_decls = data_decls} in
   let output = RP.pr_iprog n_prog in
-  (* let () = x_binfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in *)
+  let () = x_binfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in
   let oc = open_out to_saved_file in
   fprintf oc "%s\n" output; close_out oc;
   to_saved_file

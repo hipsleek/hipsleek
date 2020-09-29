@@ -82,20 +82,8 @@ let process_rule_fwrite goal rc =
   let n_pre = aux_fun pre var field rhs data_decls in
   (* let n_goal = {goal with gl_pre_cond = n_pre;
    *                         gl_trace = (RlFWrite rc)::goal.gl_trace} in *)
-  let ent, residue = check_entail_wrapper goal.gl_prog n_pre goal.gl_post_cond in
-  if ent then
-    let residue = Gen.unsome residue in
-    if CF.is_emp_formula residue then
-      Syn.mk_derivation_success goal (Syn.RlFWrite rc)
-    else
-      let free_vars = Syn.get_heap_variables residue in
-      if List.length free_vars = 1 &&
-         List.for_all (fun x -> List.mem x goal.Syn.gl_vars) free_vars
-      then
-        let n_rc = {rc with rfw_free_vars = free_vars} in
-        Syn.mk_derivation_success goal (Syn.RlFWrite n_rc)
-      else
-        Syn.mk_derivation_success goal (Syn.RlFWrite rc)
+  let ent, _ = check_entail_wrapper goal.gl_prog n_pre goal.gl_post_cond in
+  if ent then Syn.mk_derivation_success goal (Syn.RlFWrite rc)
   else
     Syn.mk_derivation_fail goal (Syn.RlFWrite rc)
   (* mk_derivation_subgoals goal (RlFWrite rc) [n_goal] *)
@@ -364,17 +352,17 @@ let synthesize_program goal =
       | _ -> goal
     else goal in
   let goal = simplify goal in
-  let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = Syn.get_synthesis_tree_status st in
   let () = x_tinfo_hp (add_str "synthesis tree " Syn.pr_st) st no_pos in
   match st_status with
   | StValid st_core ->
-    let () = x_binfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
+    let () = x_tinfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
     let i_exp = Syn.synthesize_st_core st_core in
-    let () = x_binfo_hp (add_str "iast exp" Syn.pr_i_exp_opt) i_exp no_pos in
+    let () = x_tinfo_hp (add_str "iast exp" Syn.pr_i_exp_opt) i_exp no_pos in
     i_exp
-  | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
+  | StUnkn _ -> let () = x_tinfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     let () = x_tinfo_hp (add_str "fail branches" Syn.pr_int) (!Syn.fail_branch_num) no_pos in
     None
 
@@ -393,7 +381,7 @@ let synthesize_cast_stmts goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = Syn.mk_goal_w_procs prog called_procs pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let start_time = get_time () in
   let iast_exp = synthesize_program goal in
   let duration = get_time () -. start_time in
