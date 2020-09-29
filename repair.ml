@@ -404,8 +404,10 @@ let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
     begin
       match res with
       | Some (fst_patch, snd_patch) ->
-        let () = x_binfo_hp (add_str "fst patch" Iprinter.string_of_exp) fst_patch no_pos in
-        let () = x_binfo_hp (add_str "snd patch" Iprinter.string_of_exp) snd_patch no_pos in
+        let () = x_binfo_hp (add_str "fst buggy stmt" Iprinter.string_of_exp) fst_cand no_pos in
+        let () = x_binfo_hp (add_str "fst PATCH" Iprinter.string_of_exp) fst_patch no_pos in
+        let () = x_binfo_hp (add_str "snd buggy stmt" Iprinter.string_of_exp) snd_cand no_pos in
+        let () = x_binfo_hp (add_str "snd PATCH" Iprinter.string_of_exp) snd_patch no_pos in
         let iprocs = tp_iprog.I.prog_proc_decls in
         let iproc = List.find (fun x -> contains r_iproc.I.proc_name x.I.proc_name) iprocs in
         let n_proc = Syn.replace_exp_proc fst_patch iproc 1 in
@@ -703,12 +705,12 @@ let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
 
 let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
   let file_name = Filename.basename src in
-  (* let dir = Filename.dirname src in *)
   let dir = Sys.getcwd() in
   let suffix = Filename.extension file_name in
   let f_name = Filename.chop_suffix file_name suffix in
   let b_file = f_name ^ "_buggy_" ^ (RP.pr_int !RP.infestor_num) ^ suffix in
-  (* let b_file = f_name ^ "_buggy_" ^ (RP.pr_int level) ^ "_" ^ (RP.pr_int !infestor_num) ^ suffix in *)
+  (* let b_file = f_name ^ "_buggy_" ^ (RP.pr_int level) ^
+     "_" ^ (RP.pr_int !infestor_num) ^ suffix in *)
   let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
   let () = RP.infestor_num := !RP.infestor_num + 1 in
   let view_decls = iprog.I.prog_view_decls in
@@ -799,14 +801,14 @@ let infest_and_output src (iprog: I.prog_decl) =
   let level_one_progs = buggy_progs
                         |> List.filter (fun (_, y) -> y = 1)
                         |> List.map fst
-                        |> List.filter filter_prog
-                        |> get_num_cases 10 in
-  let level_two_progs =
-    buggy_progs
-                        |> List.filter (fun (_, y) -> y = 2)
-                        |> List.map fst
-                        |> List.filter filter_prog
-                        |> get_num_cases 10 in
+                        |> List.filter filter_prog in
+                        (* |> get_num_cases 10 in *)
+  let level_two_progs = [] in
+    (* buggy_progs
+     *                     |> List.filter (fun (_, y) -> y = 2)
+     *                     |> List.map fst
+     *                     |> List.filter filter_prog
+     *                     |> get_num_cases 10 in *)
   let _ = level_one_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 1) in
   let _ = level_two_progs |> List.map (fun buggy_prog ->
