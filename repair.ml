@@ -76,10 +76,10 @@ let mutating_proc iprog (iproc: I.proc_decl): bool =
 
 let repair_iprog_by_mutation (iprog: I.prog_decl) repair_proc =
   let () = x_binfo_pp "START USING MUTATION" no_pos in
-    let p_name = Cast.unmingle_name repair_proc in
-    let procs = iprog.I.prog_proc_decls in
-    let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
-    mutating_proc iprog r_iproc
+  let p_name = Cast.unmingle_name repair_proc in
+  let procs = iprog.I.prog_proc_decls in
+  let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
+  mutating_proc iprog r_iproc
 
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
   let () = x_tinfo_hp (add_str "candidate" RP.pr_exp) candidate no_pos in
@@ -105,7 +105,7 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
   let hps = n_prog.I.prog_hp_decls in
   let () = x_tinfo_hp (add_str "hp" RP.pr_hps) hps no_pos in
   let helper_proc proc = if proc.I.proc_name = iproc.I.proc_name
-                           then n_iproc else proc in
+    then n_iproc else proc in
   let n_procs = List.map helper_proc iprog.I.prog_proc_decls in
   let n_procs = n_prog.I.prog_proc_decls @ n_procs in
   let n_hps = n_prog.I.prog_hp_decls @ iprog.I.prog_hp_decls in
@@ -285,11 +285,11 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
 let map_stmt_with_level (bck_tree : RP.bck_tree) =
   let calculate_level traces =
     let rec aux_node traces = match traces with
-    | RP.BckEmp -> 0
-    | RP.BckNode node ->
-      let l1 = aux_node node.bck_left in
-      let l2 = aux_node node.bck_right in
-      if l1 > l2 then l1 + 1 else l2 + 1 in
+      | RP.BckEmp -> 0
+      | RP.BckNode node ->
+        let l1 = aux_node node.bck_left in
+        let l2 = aux_node node.bck_right in
+        if l1 > l2 then l1 + 1 else l2 + 1 in
     aux_node traces in
   let rec aux traces bck_list = match traces with
     | RP.BckEmp -> bck_list
@@ -353,10 +353,10 @@ let mk_pair_candidate_iprog iprog iproc (fst_cand, snd_cand) =
     let typ = RP.type_of_exp candidate [] [] in
     let fc_str = fcode_str ^ (RP.pr_int num) in
     let fcode = hp_str ^ " P" ^ (RP.pr_int num) ^ "(" ^ arg_str ^ ").\n" ^
-              hp_str ^ " Q" ^ (RP.pr_int num) ^ "(" ^ arg_str ^ ").\n" ^
-              (string_of_typ typ) ^  " " ^ fc_str ^ "(" ^ arg_str ^ ")\n" ^
-              "requires P" ^ (RP.pr_int num) ^ "(" ^ arg_names ^ ")\n" ^
-              "ensures Q" ^ (RP.pr_int num) ^ "(" ^ arg_names ^ ");" in
+                hp_str ^ " Q" ^ (RP.pr_int num) ^ "(" ^ arg_str ^ ").\n" ^
+                (string_of_typ typ) ^  " " ^ fc_str ^ "(" ^ arg_str ^ ")\n" ^
+                "requires P" ^ (RP.pr_int num) ^ "(" ^ arg_names ^ ")\n" ^
+                "ensures Q" ^ (RP.pr_int num) ^ "(" ^ arg_names ^ ");" in
 
     let () = x_tinfo_hp (add_str "fcode" pr_id) fcode no_pos in
     let n_prog = Parser.parse_hip_string "fcode" fcode in
@@ -666,7 +666,7 @@ let buggy_level_two body var_decls data_decls =
       let left = buggy_level_one t_arm var_decls data_decls
                  |> List.filter (fun (_, x) -> x == 1) in
       let right = buggy_level_one e_arm var_decls data_decls
-          |> List.filter (fun (_, x) -> x == 1) in
+                  |> List.filter (fun (_, x) -> x == 1) in
       if left != [] && right != [] then
         let aux_lelf (lf, l1) =
           right |> List.map (fun (rt, l2) -> (lf, rt, l1 + l2)) in
@@ -768,9 +768,9 @@ let create_buggy_prog src (iprog : I.prog_decl)=
 
 let start_repair_wrapper (iprog: I.prog_decl) start_time =
   match (!Typechecker.repair_proc) with
-  | Some repair_proc_name ->
+  | Some r_pname ->
     let start_time = get_time () in
-    let res = repair_iprog iprog repair_proc_name in
+    let res = repair_iprog iprog r_pname in
     if res != None then
       let duration = get_time() -. start_time in
       let () = x_binfo_hp (add_str "TOTAL REPAIR TIME: " RP.pr_float)
@@ -778,7 +778,7 @@ let start_repair_wrapper (iprog: I.prog_decl) start_time =
       let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
       true
     else
-      let mutated_res = repair_iprog_by_mutation iprog repair_proc_name in
+      let mutated_res = repair_iprog_by_mutation iprog r_pname in
       if mutated_res then
         let duration = get_time() -. start_time in
         let () = x_binfo_hp (add_str "TOTAL REPAIR TIME: " RP.pr_float) duration no_pos in
@@ -808,13 +808,13 @@ let infest_and_output src (iprog: I.prog_decl) =
                         |> List.filter (fun (_, y) -> y = 1)
                         |> List.map fst
                         |> List.filter filter_prog in
-                        (* |> get_num_cases 10 in *)
+  (* |> get_num_cases 10 in *)
   let level_two_progs = [] in
-    (* buggy_progs
-     *                     |> List.filter (fun (_, y) -> y = 2)
-     *                     |> List.map fst
-     *                     |> List.filter filter_prog
-     *                     |> get_num_cases 10 in *)
+  (* buggy_progs
+   *                     |> List.filter (fun (_, y) -> y = 2)
+   *                     |> List.map fst
+   *                     |> List.filter filter_prog
+   *                     |> get_num_cases 10 in *)
   let _ = level_one_progs |> List.map (fun buggy_prog ->
       output_infestor_prog src buggy_prog 1) in
   let _ = level_two_progs |> List.map (fun buggy_prog ->
@@ -823,58 +823,3 @@ let infest_and_output src (iprog: I.prog_decl) =
   let () = x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " RP.pr_int)
       injected_programs no_pos in
   x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
-
-
-(* let infest_and_repair src (iprog : I.prog_decl) start_time =
- *   let buggy_progs = create_buggy_prog src iprog in
- *   let () = enable_repair := true in
- *   let () = RP.infestor_num := 0 in
- *   let repair_time = ref 0.0 in
- *   let aux_one (buggy_prog, level) =
- *     let () = Syn.repair_res := None in
- *     let cprog, _ = Astsimp.trans_prog buggy_prog in
- *     try
- *       let _ = Typechecker.check_prog_wrapper buggy_prog cprog in
- *       let () = Syn.check_post_list := [] in
- *       let () = Z3.stop () in
- *       let () = x_binfo_pp "INFESTED PROGRAM IS NOT BUGGY W.R.T THE SPECIFICATION" no_pos in
- *       (0, 0)
- *     with _ ->
- *       (\* let start_time = get_time () in *\)
- *       let r_iprog = start_repair_wrapper buggy_prog start_time in
- *       let () = Syn.check_post_list := [] in
- *       let duration = get_time () -. start_time in
- *       (\* to kill process *\)
- *       let () = Z3.stop () in
- *       let () = repair_time := (!repair_time) +. duration in
- *       let s_file = output_infestor_prog src buggy_prog level in
- *       if r_iprog then
- *         let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " SUCCESSFULLY") no_pos in
- *         (1, 1)
- *       else
- *         let () = x_binfo_pp ("REPAIRING " ^ s_file ^ " FAIL") no_pos in
- *         (1, 0) in
- *   let reset_timing () =
- *     let () = Syn.inference_time := 0.0 in
- *     let () = Syn.synthesis_time := 0.0 in
- *     let () = repair_time := 0.0 in
- *     () in
- *   let aux level =
- *     let level1 = List.filter (fun (_, x) -> x = level) buggy_progs in
- *     let res_level1 = level1 |> List.map aux_one in
- *     let b_sum = res_level1 |> List.map fst |> RP.sum_list in
- *     let r_sum = res_level1 |> List.map snd |> RP.sum_list in
- *     let b_sum = float_of_int b_sum in
- *     let r_sum = float_of_int r_sum in
- *     let r_time = !repair_time /. b_sum in
- *     let inference_t = !Syn.inference_time/. b_sum in
- *     let r_time = r_time/. b_sum in
- *     let syn_t = !Syn.synthesis_time/. b_sum in
- *     let l1_stats = [b_sum; r_sum; inference_t; syn_t; r_time] in
- *     l1_stats in
- *   let l1_stats = aux 1 in
- *   let () = reset_timing () in
- *   let l2_stats = aux 2 in
- *   let () = x_binfo_hp (add_str "L1 STATS" (pr_list_mln RP.pr_float)) l1_stats no_pos in
- *   let () = x_binfo_hp (add_str "L2 STATS" (pr_list_mln RP.pr_float)) l2_stats no_pos in
- *   x_binfo_pp "ENDING INFESTING AND REPAIRING" no_pos *)
