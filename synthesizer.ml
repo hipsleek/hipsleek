@@ -233,15 +233,6 @@ let process_rule_allocate goal rc =
                               gl_trace = (RlAllocate rc)::goal.gl_trace} in
       Syn.mk_derivation_subgoals goal (RlAllocate rc) [n_goal]
 
-let process_rule_heap_assign (goal: Syn.goal) (rc: Syn.rule_heap_assign) =
-  let lhs = rc.Syn.rha_left in
-  let rhs = rc.Syn.rha_right in
-  let n_pf = CP.mkEqVar lhs rhs no_pos in
-  let n_pre = CF.add_pure_formula_to_formula n_pf goal.Syn.gl_pre_cond in
-  let n_goal = {goal with gl_trace = (RlHeapAssign rc)::goal.Syn.gl_trace;
-                          gl_pre_cond = n_pre} in
-  Syn.mk_derivation_subgoals goal (Syn.RlHeapAssign rc) [n_goal]
-
 (*********************************************************************
  * The search procedure
  *********************************************************************)
@@ -307,7 +298,6 @@ and process_one_rule goal rule : Syn.derivation =
     | RlSkip -> process_rule_skip goal
     | RlMkNull rc -> process_rule_mk_null goal rc
     | RlNewNum rc -> process_rule_new_num goal rc
-    | RlHeapAssign rc -> process_rule_heap_assign goal rc
     | RlFree rc -> process_rule_free goal rc
 
 and process_conjunctive_subgoals goal rule (sub_goals: Syn.goal list)

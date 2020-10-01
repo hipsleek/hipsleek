@@ -92,7 +92,6 @@ type rule =
   | RlMkNull of rule_mk_null
   | RlNewNum of rule_new_num
   | RlAssign of rule_assign
-  | RlHeapAssign of rule_heap_assign
   | RlFRead of rule_field_read
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
@@ -372,7 +371,6 @@ let pr_rule rule = match rule with
   | RlNewNum r -> "RlNewNum " ^ (pr_rule_new_num r)
   | RlAllocate r -> "RlAllocate " ^ (pr_rule_alloc r)
   | RlFree r -> "RlFree " ^ (pr_vars r.rd_vars)
-  | RlHeapAssign r -> "RlHeapAssign (" ^ (pr_var r.rha_left) ^ ", " ^ (pr_var r.rha_right)
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlReturn rule -> "RlReturn " ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
@@ -1881,21 +1879,6 @@ let rec has_allocate trace cur_params = match trace with
       | _ -> has_allocate t cur_params
     end
 
-let has_heap_assign lhs rhs trace =
-  let rec aux trace = match trace with
-    | [] -> false
-    | head::tail ->
-      begin
-        match head with
-        | RlHeapAssign r ->
-          let r_lhs = r.rha_left in
-          let r_rhs = r.rha_right in
-          if CP.eq_sv lhs r_lhs && CP.eq_sv rhs r_rhs then true
-          else aux tail
-        | _ -> aux tail
-      end in
-  aux trace
-
 let has_unfold_post trace =
   let rec aux trace num = match trace with
   | [] -> false
@@ -2394,17 +2377,6 @@ let synthesize_st_core st : Iast.exp option =
   let rules = st_core2rule_list st in
   let () = x_binfo_hp (add_str "rules" pr_rules) rules no_pos in
   let aux_rule list rule = match rule with
-    | RlHeapAssign rc ->
-      let lhs = rc.rha_left in
-      let rhs = rc.rha_right in
-      let assign = I.Assign {
-          I.exp_assign_op = OpAssign;
-          I.exp_assign_lhs = mkVar lhs;
-          I.exp_assign_rhs = mkVar rhs;
-          I.exp_assign_path_id = None;
-          I.exp_assign_pos = no_pos;
-        } in
-      assign::list
   (* | RlFree rc ->
    *   let vars = rc.rd_vars in
    *   let mk_rule var =
@@ -3145,7 +3117,6 @@ let compare_rule goal r1 r2 =
   | RlMkNull r1 -> compare_rule_mk_null_vs_other r1 r2
   | RlFree _ -> PriHigh
   | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
-  | RlHeapAssign _ -> PriEqual
   | RlFRead r1 -> compare_rule_fread_vs_other r1 r2
   | RlFWrite _ -> PriHigh
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
@@ -3155,8 +3126,7 @@ let is_code_rule trace = match trace with
   | [] -> false
   | h::_ ->
     match h with
-    | RlAssign _ | RlReturn _ | RlFWrite _ | RlHeapAssign _ | RlFree _
-    (* | RlFuncRes _ *)
+    | RlAssign _ | RlReturn _ | RlFWrite _ | RlFree _
     | RlFuncCall _ -> true
     | _ -> false
 

@@ -451,61 +451,59 @@ let get_node_vars post_cond =
     | None -> false in
   post_vars |> List.filter filter_fun
 
-let choose_rule_heap_assign goal =
-  let pre = goal.Syn.gl_pre_cond in
-  let post = goal.Syn.gl_post_cond in
-  let all_vars = goal.gl_vars in
-  let pre_nodes = get_node_vars pre in
-  let post_nodes = get_node_vars post in
-  let pre_pf = pre |> Syn.remove_exists |> CF.get_pure in
-  let post_pf = post |> Syn.remove_exists |> CF.get_pure in
-  let ante_pf = CP.mkAnd pre_pf post_pf no_pos in
-  let mk_rule lhs rhs =
-    if Syn.has_heap_assign lhs rhs goal.Syn.gl_trace then []
-    else
-      let rule =
-        Syn.RlHeapAssign {
-          rha_left = lhs;
-          rha_right = rhs
-        } in
-      [rule] in
-  let check_eq_var var1 var2 =
-    let conseq = CP.mkEqVar var1 var2 no_pos in
-    check_pure_entail_sleek goal.gl_prog ante_pf conseq in
-  if List.length pre_nodes = 1 && List.length post_nodes = 1 then
-    let pre_node = List.hd pre_nodes in
-    let post_node = List.hd post_nodes in
-    let post = Syn.remove_exists post in
-    let pre_f = Syn.extract_var_f pre pre_node |> Gen.unsome in
-    let post_f = Syn.extract_var_f post post_node |> Gen.unsome in
-    let pre_hf = Syn.get_hf pre_f in
-    let post_hf = Syn.get_hf post_f in
-    match pre_hf, post_hf with
-    | CF.DataNode dn1, CF.DataNode dn2 ->
-      let args1 = dn1.CF.h_formula_data_arguments in
-      let args2 = dn2.CF.h_formula_data_arguments in
-      let var1 = dn1.CF.h_formula_data_node in
-      let var2 = dn2.CF.h_formula_data_node in
-      if not(CP.eq_sv var1 var2) && CP.mem var1 all_vars &&
-         CP.mem var2 all_vars && List.for_all2 check_eq_var args1 args2 then
-        mk_rule var2 var1
-      else []
-    | CF.ViewNode vn1, CF.ViewNode vn2 ->
-      let args1 = vn1.CF.h_formula_view_arguments in
-      let args2 = vn2.CF.h_formula_view_arguments in
-      let var1 = vn1.CF.h_formula_view_node in
-      let var2 = vn2.CF.h_formula_view_node in
-      if not(CP.eq_sv var1 var2) && CP.mem var1 all_vars &&
-         CP.mem var2 all_vars &&
-         List.for_all2 check_eq_var args1 args2 then
-        mk_rule var2 var1
-      else []
-    | _ -> []
-  else []
+(* let choose_rule_heap_assign goal =
+ *   let pre = goal.Syn.gl_pre_cond in
+ *   let post = goal.Syn.gl_post_cond in
+ *   let all_vars = goal.gl_vars in
+ *   let pre_nodes = get_node_vars pre in
+ *   let post_nodes = get_node_vars post in
+ *   let pre_pf = pre |> Syn.remove_exists |> CF.get_pure in
+ *   let post_pf = post |> Syn.remove_exists |> CF.get_pure in
+ *   let ante_pf = CP.mkAnd pre_pf post_pf no_pos in
+ *   let mk_rule lhs rhs =
+ *     if Syn.has_heap_assign lhs rhs goal.Syn.gl_trace then []
+ *     else
+ *       let rule =
+ *         Syn.RlHeapAssign {
+ *           rha_left = lhs;
+ *           rha_right = rhs
+ *         } in
+ *       [rule] in
+ *   let check_eq_var var1 var2 =
+ *     let conseq = CP.mkEqVar var1 var2 no_pos in
+ *     check_pure_entail_sleek goal.gl_prog ante_pf conseq in
+ *   if List.length pre_nodes = 1 && List.length post_nodes = 1 then
+ *     let pre_node = List.hd pre_nodes in
+ *     let post_node = List.hd post_nodes in
+ *     let post = Syn.remove_exists post in
+ *     let pre_f = Syn.extract_var_f pre pre_node |> Gen.unsome in
+ *     let post_f = Syn.extract_var_f post post_node |> Gen.unsome in
+ *     let pre_hf = Syn.get_hf pre_f in
+ *     let post_hf = Syn.get_hf post_f in
+ *     match pre_hf, post_hf with
+ *     | CF.DataNode dn1, CF.DataNode dn2 ->
+ *       let args1 = dn1.CF.h_formula_data_arguments in
+ *       let args2 = dn2.CF.h_formula_data_arguments in
+ *       let var1 = dn1.CF.h_formula_data_node in
+ *       let var2 = dn2.CF.h_formula_data_node in
+ *       if not(CP.eq_sv var1 var2) && CP.mem var1 all_vars &&
+ *          CP.mem var2 all_vars && List.for_all2 check_eq_var args1 args2 then
+ *         mk_rule var2 var1
+ *       else []
+ *     | CF.ViewNode vn1, CF.ViewNode vn2 ->
+ *       let args1 = vn1.CF.h_formula_view_arguments in
+ *       let args2 = vn2.CF.h_formula_view_arguments in
+ *       let var1 = vn1.CF.h_formula_view_node in
+ *       let var2 = vn2.CF.h_formula_view_node in
+ *       if not(CP.eq_sv var1 var2) && CP.mem var1 all_vars &&
+ *          CP.mem var2 all_vars &&
+ *          List.for_all2 check_eq_var args1 args2 then
+ *         mk_rule var2 var1
+ *       else []
+ *     | _ -> []
+ *   else [] *)
 
 let choose_rule_fwrite goal =
-  (* if check_head_allocate_wrapper goal then []
-   * else *)
   let pre = goal.Syn.gl_pre_cond in
   let post = goal.Syn.gl_post_cond in
   let all_vars = goal.gl_vars in
@@ -1679,7 +1677,6 @@ let choose_synthesis_rules goal : Syn.rule list =
       let _ = choose_rule_assign_end goal |> Syn.raise_rules in
       let _ = choose_rule_allocate_return goal |> Syn.raise_rules in
       let _ = choose_rule_numeric goal |> Syn.raise_rules in
-      (* let _ = choose_rule_heap_assign goal |> Syn.raise_rules in *)
       let _ = choose_rule_fwrite goal |> Syn.raise_rules in
       let _ = choose_main_rules goal |> Syn.raise_rules in
       []
