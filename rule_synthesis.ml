@@ -556,6 +556,7 @@ let choose_rule_fwrite goal =
       rfw_bound_var = var;
       rfw_field = field;
       rfw_value = n_val;
+      rfw_fvars = [];
     } in
   tuples |> List.map mk_fwrite_rule
 
@@ -1184,7 +1185,7 @@ let choose_rule_new_num goal =
     (fun _ -> choose_rule_new_num goal) goal
 
 let find_frame_node_var goal all_vars post_var =
-  let all_vars = List.filter (fun x -> not(CP.eq_sv x post_var)) all_vars in
+  (* let all_vars = List.filter (fun x -> not(CP.eq_sv x post_var)) all_vars in *)
   let () = x_tinfo_hp (add_str "post var" Syn.pr_var) post_var no_pos in
   let pre = goal.Syn.gl_pre_cond in
   let post = goal.Syn.gl_post_cond in
@@ -1286,25 +1287,25 @@ let choose_rule_allocate goal : Syn.rule list =
   let others = ["__Exc"; "thrd"; "Object"; "int_ptr"; "barrier"] in
   let filter_fun x = not(List.mem x.CA.data_name others) in
   let data_decls = data_decls |> List.filter filter_fun in
-  let filter_rule rule =
-    let n_pre = rule.Syn.ra_pre in
-    let n_vars = rule.Syn.ra_var::goal.Syn.gl_vars in
-    let n_goal = {goal with Syn.gl_vars = n_vars;
-                            Syn.gl_pre_cond = n_pre;
-                            Syn.gl_trace = (RlAllocate rule)::goal.gl_trace} in
-    let n_rules = [] in
-    (* let n_rules = (choose_rule_assign n_goal) @ n_rules in *)
-    let n_rules = (choose_rule_fwrite n_goal) @ n_rules in
-    let n_rules = (choose_rule_return n_goal) @ n_rules in
-    let n_rules = (choose_rule_frame_data n_goal) @ n_rules in
-    let () = x_tinfo_hp (add_str "arg" Syn.pr_var) rule.ra_var no_pos in
-    let () = x_tinfo_hp (add_str "pre" Syn.pr_f) n_pre no_pos in
-    let () = x_tinfo_hp (add_str "rules" Syn.pr_rules) n_rules no_pos in
-    if List.exists (Syn.rule_use_var rule.Syn.ra_var) n_rules then
-      let n_goal = {n_goal with Syn.gl_lookahead = n_rules} in
-      let n_rule = {rule with ra_lookahead = Some n_goal} in
-      (true, n_rule)
-    else (false, rule) in
+  (* let filter_rule rule =
+   *   let n_pre = rule.Syn.ra_pre in
+   *   let n_vars = rule.Syn.ra_var::goal.Syn.gl_vars in
+   *   let n_goal = {goal with Syn.gl_vars = n_vars;
+   *                           Syn.gl_pre_cond = n_pre;
+   *                           Syn.gl_trace = (RlAllocate rule)::goal.gl_trace} in
+   *   let n_rules = [] in
+   *   (\* let n_rules = (choose_rule_assign n_goal) @ n_rules in *\)
+   *   let n_rules = (choose_rule_fwrite n_goal) @ n_rules in
+   *   let n_rules = (choose_rule_return n_goal) @ n_rules in
+   *   let n_rules = (choose_rule_frame_data n_goal) @ n_rules in
+   *   let () = x_tinfo_hp (add_str "arg" Syn.pr_var) rule.ra_var no_pos in
+   *   let () = x_tinfo_hp (add_str "pre" Syn.pr_f) n_pre no_pos in
+   *   let () = x_tinfo_hp (add_str "rules" Syn.pr_rules) n_rules no_pos in
+   *   if List.exists (Syn.rule_use_var rule.Syn.ra_var) n_rules then
+   *     let n_goal = {n_goal with Syn.gl_lookahead = n_rules} in
+   *     let n_rule = {rule with ra_lookahead = Some n_goal} in
+   *     (true, n_rule)
+   *   else (false, rule) in *)
   let filter_eq_var rule =
     let params = rule.Syn.ra_params in
     let rec aux params = match params with
@@ -1395,30 +1396,30 @@ let choose_rule_mk_null goal : Syn.rule list =
                     "__RET"; "__ArrBoundErr"; "__DivByZeroErr"; "String"] in
       let filter_fun x = not(List.mem x.CA.data_name others) in
       let data_decls = data_decls |> List.filter filter_fun in
-      let filter_rule (rule : Syn.rule_mk_null) =
-        let var = rule.rmn_var in
-        let n_exp = rule.rmn_null in
-        let all_vars = var::goal.Syn.gl_vars in
-        let var_e = CP.mkVar var no_pos in
-        let pf = CP.mkEqExp var_e n_exp no_pos in
-        let n_pre = CF.add_pure_formula_to_formula pf goal.Syn.gl_pre_cond in
-        let n_post = Syn.remove_exists_vars goal.Syn.gl_post_cond [var] in
-        let n_goal = {goal with Syn.gl_vars = all_vars;
-                                Syn.gl_pre_cond = n_pre;
-                                Syn.gl_post_cond = n_post;
-                                gl_trace = (RlMkNull rule)::goal.gl_trace} in
-        let () = x_tinfo_hp (add_str "var" Syn.pr_var) var no_pos in
-        (* let n_rules = [] in
-         * let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
-         * (\* let n_rules = n_rules @ (choose_rule_func_call n_goal) in *\)
-         * let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
-         * let () = x_tinfo_hp (add_str "rules" Syn.pr_rules) n_rules no_pos in
-         * let n_goal = {n_goal with gl_lookahead = n_rules} in
-         * let rule = {rule with rmn_lookahead = Some n_goal} in
-         * if List.exists (Syn.rule_use_var var) n_rules then *)
-        (true, rule)
-        (* else (false, rule) *)
-      in
+      (* let filter_rule (rule : Syn.rule_mk_null) =
+       *   let var = rule.rmn_var in
+       *   (\* let n_exp = rule.rmn_null in *\)
+       *   (\* let all_vars = var::goal.Syn.gl_vars in *\)
+       *   (\* let var_e = CP.mkVar var no_pos in *\)
+       *   (\* let pf = CP.mkEqExp var_e n_exp no_pos in *\)
+       *   (\* let n_pre = CF.add_pure_formula_to_formula pf goal.Syn.gl_pre_cond in *\)
+       *   (\* let n_post = Syn.remove_exists_vars goal.Syn.gl_post_cond [var] in *\)
+       *   (\* let n_goal = {goal with Syn.gl_vars = all_vars;
+       *    *                         Syn.gl_pre_cond = n_pre;
+       *    *                         Syn.gl_post_cond = n_post;
+       *    *                         gl_trace = (RlMkNull rule)::goal.gl_trace} in *\)
+       *   let () = x_tinfo_hp (add_str "var" Syn.pr_var) var no_pos in
+       *   (\* let n_rules = [] in
+       *    * let n_rules = n_rules @ (choose_rule_allocate_return n_goal) in
+       *    * (\\* let n_rules = n_rules @ (choose_rule_func_call n_goal) in *\\)
+       *    * let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
+       *    * let () = x_tinfo_hp (add_str "rules" Syn.pr_rules) n_rules no_pos in
+       *    * let n_goal = {n_goal with gl_lookahead = n_rules} in
+       *    * let rule = {rule with rmn_lookahead = Some n_goal} in
+       *    * if List.exists (Syn.rule_use_var var) n_rules then *\)
+       *   (true, rule)
+       *   (\* else (false, rule) *\)
+       * in *)
       let aux_rule data_decl =
         let data_name = data_decl.CA.data_name in
         let typ = Globals.Named data_name in
@@ -1435,9 +1436,10 @@ let choose_rule_mk_null goal : Syn.rule list =
       let list1 = data_decls |> List.map aux_rule in
       let list2 = aux_post_assign goal in
       (* let list2 = [] in *)
-      let list = list1 @ list2 |> List.map filter_rule
-                 |> List.filter (fun (x,y) -> x)
-                 |> List.map snd in
+      let list = list1 @ list2 in
+                 (* |> List.map filter_rule
+                  * |> List.filter (fun (x,y) -> x)
+                  * |> List.map snd in *)
       list |> List.map (fun x -> Syn.RlMkNull x)
 
 let choose_rule_mk_null goal : Syn.rule list =

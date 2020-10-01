@@ -190,6 +190,7 @@ and rule_field_write = {
   rfw_bound_var: CP.spec_var;
   rfw_field: typed_ident;
   rfw_value: CP.spec_var;
+  rfw_fvars: CP.spec_var list;
 }
 
 and rule_field_read = {
