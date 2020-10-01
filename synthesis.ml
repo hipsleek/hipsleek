@@ -2320,6 +2320,58 @@ let rec mk_exp_list e_list = match e_list with
   | h::tail -> let n_exp = mk_exp_list tail in
     mkSeq h n_exp
 
+let rule_use_var var (rule: rule): bool = match rule with
+  | RlFree rc ->
+    let params = rc.rd_vars in
+    CP.mem var params
+  | RlFuncCall rc ->
+    let params = rc.rfc_params in
+    CP.mem var params
+  | RlFWrite rc ->
+    let var1 = rc.rfw_bound_var in
+    let var2 = rc.rfw_value in
+    CP.eq_sv var1 var || CP.eq_sv var2 var
+  | RlAllocate rc ->
+    let r_var = rc.ra_var in
+    let r_params = rc.ra_params in
+    CP.eq_sv var r_var || CP.mem var r_params
+  | RlAssign rc ->
+    let var1 = rc.ra_lhs in
+    let vars2 = CP.afv rc.ra_rhs in
+    CP.eq_sv var var1 || CP.mem var vars2
+  | RlReturn rc ->
+    let vars = rc.r_exp |> CP.afv in
+    CP.mem var vars
+  | RlFrameData rc ->
+    CP.eq_sv rc.rfd_rhs var
+  | RlUnfoldPre rc ->
+    CP.eq_sv rc.unfold_pre_var var
+  | _ -> false
+
+let rule_use_var var rule =
+  Debug.no_2 "rule_use_var" pr_var pr_rule string_of_bool
+    (fun _ _ -> rule_use_var var rule) var rule
+
+let rm_redundant_rules (rules: rule list) : rule list =
+  let rec aux rules = match rules with
+    | [] -> []
+    | h_rule::t_rules ->
+      begin
+        match h_rule with
+        | RlMkNull rc ->
+          let r_var = rc.rmn_var in
+          if List.exists (fun rule -> rule_use_var r_var rule) t_rules then
+            h_rule::(aux t_rules)
+          else aux t_rules
+        | _ -> h_rule::(aux t_rules)
+      end in
+  aux rules
+
+
+let rm_redundant_rules (rules: rule list) : rule list =
+  Debug.no_1 "rm_redundant_rules" pr_rules pr_rules
+    (fun _ -> rm_redundant_rules rules) rules
+
 let st_core2rule_list (st: synthesis_tree_core) =
   let rec aux_fun st list =
     match st.stc_rule with
@@ -2336,13 +2388,7 @@ let st_core2rule_list (st: synthesis_tree_core) =
     | [h_rule] -> aux_fun h_rule list
     | _ -> report_error no_pos "syn_st_core: no more than one st" in
   aux_fun st [] |> List.rev
-
-let rm_redundant_rules (rules: rule list) : rule list =
-  rules
-
-let rm_redundant_rules (rules: rule list) : rule list =
-  Debug.no_1 "rm_redundant_rules" pr_rules pr_rules
-    (fun _ -> rm_redundant_rules rules) rules
+  |> rm_redundant_rules
 
 let synthesize_st_core st : Iast.exp option =
   let rules = st_core2rule_list st in
@@ -2909,37 +2955,6 @@ let is_rule_fread_usable goal r =
       | Some arg_f -> if CF.is_emp_formula arg_f then false
         else true
 
-let rule_use_var var rule = match rule with
-  | RlFree rc ->
-    let params = rc.rd_vars in
-    CP.mem var params
-  | RlFuncCall rc ->
-    let params = rc.rfc_params in
-    CP.mem var params
-  | RlFWrite rc ->
-    let var1 = rc.rfw_bound_var in
-    let var2 = rc.rfw_value in
-    CP.eq_sv var1 var || CP.eq_sv var2 var
-  | RlAllocate rc ->
-    let r_var = rc.ra_var in
-    let r_params = rc.ra_params in
-    CP.eq_sv var r_var || CP.mem var r_params
-  | RlAssign rc ->
-    let var1 = rc.ra_lhs in
-    let vars2 = CP.afv rc.ra_rhs in
-    CP.eq_sv var var1 || CP.mem var vars2
-  | RlReturn rc ->
-    let vars = rc.r_exp |> CP.afv in
-    CP.mem var vars
-  | RlFrameData rc ->
-    CP.eq_sv rc.rfd_rhs var
-  | RlUnfoldPre rc ->
-    CP.eq_sv rc.unfold_pre_var var
-  | _ -> false
-
-let rule_use_var var rule =
-  Debug.no_2 "rule_use_var" pr_var pr_rule string_of_bool
-    (fun _ _ -> rule_use_var var rule) var rule
 
 let eliminate_useless_rules goal rules =
   (* let contain_sym_rules rule = match rule with
