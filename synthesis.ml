@@ -254,7 +254,6 @@ and synthesis_tree_core = {
   stc_goal : goal;
   stc_rule : rule;
   stc_subtrees : synthesis_tree_core list;
-  
 }
 
 and synthesis_tree_status =
@@ -2321,31 +2320,45 @@ let rec mk_exp_list e_list = match e_list with
   | h::tail -> let n_exp = mk_exp_list tail in
     mkSeq h n_exp
 
-let rec synthesize_st_core st : Iast.exp option =
-  let helper st =
-    let sts = List.map synthesize_st_core st.stc_subtrees in
-    match sts with
-    | [] -> None
-    | [h] -> h
+let st_core2rule_list (st: synthesis_tree_core) =
+  let rec aux_fun st list =
+    match st.stc_rule with
+    | RlSkip -> list
+    | RlFramePred _ | RlFrameData _
+    | RlUnfoldPost _ | RlUnfoldPre _ ->
+      aux_sub_trees st list
+    | _ ->
+      let n_list = st.stc_rule :: list in
+      aux_sub_trees st n_list
+  and aux_sub_trees st list =
+    match st.stc_subtrees with
+    | [] -> list
+    | [h_rule] -> aux_fun h_rule list
     | _ -> report_error no_pos "syn_st_core: no more than one st" in
-  match st.stc_rule with
-  | RlSkip ->
-    let i_exp = I.Empty no_pos in
-    Some i_exp
-  (* | RlExistsRight _ *)
-  | RlFramePred _ | RlFrameData _ | RlFree _
-  | RlUnfoldPost _ | RlUnfoldPre _ -> helper st
-  | RlHeapAssign rc ->
-    let lhs = rc.rha_left in
-    let rhs = rc.rha_right in
-    let assign = I.Assign {
-        I.exp_assign_op = OpAssign;
-        I.exp_assign_lhs = mkVar lhs;
-        I.exp_assign_rhs = mkVar rhs;
-        I.exp_assign_path_id = None;
-        I.exp_assign_pos = no_pos;
-      } in
-    aux_subtrees st assign
+  aux_fun st [] |> List.rev
+
+let rm_redundant_rules (rules: rule list) : rule list =
+  rules
+
+let rm_redundant_rules (rules: rule list) : rule list =
+  Debug.no_1 "rm_redundant_rules" pr_rules pr_rules
+    (fun _ -> rm_redundant_rules rules) rules
+
+let synthesize_st_core st : Iast.exp option =
+  let rules = st_core2rule_list st in
+  let () = x_binfo_hp (add_str "rules" pr_rules) rules no_pos in
+  let aux_rule list rule = match rule with
+    | RlHeapAssign rc ->
+      let lhs = rc.rha_left in
+      let rhs = rc.rha_right in
+      let assign = I.Assign {
+          I.exp_assign_op = OpAssign;
+          I.exp_assign_lhs = mkVar lhs;
+          I.exp_assign_rhs = mkVar rhs;
+          I.exp_assign_path_id = None;
+          I.exp_assign_pos = no_pos;
+        } in
+      assign::list
   (* | RlFree rc ->
    *   let vars = rc.rd_vars in
    *   let mk_rule var =
@@ -2356,53 +2369,38 @@ let rec synthesize_st_core st : Iast.exp option =
    *   let exp_list = List.map mk_rule vars in
    *   let d_exp = mk_exp_list exp_list in
    *   aux_subtrees st d_exp *)
-  | RlAllocate rc ->
-    let r_data = rc.ra_data in
-    let r_var = rc.ra_var in
-    let r_params = rc.ra_params in
-    let params = List.map (mkVar) r_params in
-    let e_new = I.New {
-        I.exp_new_class_name = r_data;
-        I.exp_new_arguments = params;
-        I.exp_new_pos = no_pos;
-      } in
-    let assign = if CP.is_res_sv r_var then
-        I.Return { I.exp_return_val = Some e_new;
-                   I.exp_return_path_id = None;
-                   I.exp_return_pos = no_pos}
-      else
-        I.Assign { I.exp_assign_op = I.OpAssign;
-                   I.exp_assign_lhs = mkVar r_var;
-                   I.exp_assign_path_id = None;
-                   I.exp_assign_rhs = e_new;
-                   I.exp_assign_pos = no_pos} in
-    let seq = if rc.ra_end then assign
-      else
-        let lhs = I.VarDecl {
-            I.exp_var_decl_type = CP.type_of_sv r_var;
-            I.exp_var_decl_decls = [(CP.name_of_sv r_var, None, no_pos)];
-            I.exp_var_decl_pos = no_pos;
-          } in
-        mkSeq lhs assign in
-    aux_subtrees st seq
-  | RlNewNum rc ->
-    let var = rc.rnn_var in
-    let null_e = rc.rnn_num in
-    let n_e = exp_to_iast null_e in
-    let v_decl = I.VarDecl {
-        exp_var_decl_type = CP.type_of_sv var;
-        exp_var_decl_decls = [(CP.name_of_sv var, None, no_pos)];
-        exp_var_decl_pos = no_pos;
-      } in
-    let assign = mkAssign (mkVar var) n_e in
-    let seq = mkSeq v_decl assign in
-    aux_subtrees st seq
-  | RlMkNull rc ->
-    let var = rc.rmn_var in
-    let var_typ = CP.type_of_sv var in
-    if is_null_type var_typ then helper st
-    else
-      let null_e = rc.rmn_null in
+    | RlAllocate rc ->
+      let r_data = rc.ra_data in
+      let r_var = rc.ra_var in
+      let r_params = rc.ra_params in
+      let params = List.map (mkVar) r_params in
+      let e_new = I.New {
+          I.exp_new_class_name = r_data;
+          I.exp_new_arguments = params;
+          I.exp_new_pos = no_pos;
+        } in
+      let assign = if CP.is_res_sv r_var then
+          I.Return { I.exp_return_val = Some e_new;
+                     I.exp_return_path_id = None;
+                     I.exp_return_pos = no_pos}
+        else
+          I.Assign { I.exp_assign_op = I.OpAssign;
+                     I.exp_assign_lhs = mkVar r_var;
+                     I.exp_assign_path_id = None;
+                     I.exp_assign_rhs = e_new;
+                     I.exp_assign_pos = no_pos} in
+      let seq = if rc.ra_end then assign
+        else
+          let lhs = I.VarDecl {
+              I.exp_var_decl_type = CP.type_of_sv r_var;
+              I.exp_var_decl_decls = [(CP.name_of_sv r_var, None, no_pos)];
+              I.exp_var_decl_pos = no_pos;
+            } in
+          mkSeq lhs assign in
+      seq::list
+    | RlNewNum rc ->
+      let var = rc.rnn_var in
+      let null_e = rc.rnn_num in
       let n_e = exp_to_iast null_e in
       let v_decl = I.VarDecl {
           exp_var_decl_type = CP.type_of_sv var;
@@ -2411,82 +2409,98 @@ let rec synthesize_st_core st : Iast.exp option =
         } in
       let assign = mkAssign (mkVar var) n_e in
       let seq = mkSeq v_decl assign in
-      aux_subtrees st seq
-  | RlAssign rassign ->
-    let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
-    let c_exp = exp_to_iast rhs in
-    let assgn = mkAssign (mkVar lhs) c_exp in
-    aux_subtrees st assgn
-  | RlReturn rcore ->
-    let c_exp = exp_to_iast rcore.r_exp in
-    Some (I.Return {
-        exp_return_val = Some c_exp;
-        exp_return_path_id = None;
-        exp_return_pos = no_pos})
-  | RlFWrite rbind ->
-    let bvar, (typ, f_name) = rbind.rfw_bound_var, rbind.rfw_field in
-    let rhs = rbind.rfw_value in
-    let rhs_var =
-      let rhs_typ = CP.type_of_sv rhs in
-      if is_null_type rhs_typ then I.Null no_pos
-      else mkVar rhs in
-    let mem_var = mkVar bvar in
-    let exp_mem = I.Member {
-        exp_member_base = mem_var;
-        exp_member_fields = [f_name];
-        exp_member_path_id = None;
-        exp_member_pos = no_pos
-      } in
-    let bind = mkAssign exp_mem rhs_var in
-    aux_subtrees st bind
-  | RlFRead rc ->
-    let lhs = rc.rfr_value in
-    let bvar, (typ, f_name) = rc.rfr_bound_var, rc.rfr_field in
-    let exp_decl = I.VarDecl {
-        exp_var_decl_type = CP.type_of_sv lhs;
-        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
-       exp_var_decl_pos = no_pos;
-      } in
-    let bound_var = mkVar bvar in
-    let mem_var = Iast.Member {
-        exp_member_base = bound_var;
-        exp_member_fields = [f_name];
-        exp_member_path_id = None;
-        exp_member_pos = no_pos;
-      } in
-    let lhs = mkVar lhs in
-    let body = mkAssign lhs mem_var in
-    let seq = mkSeq exp_decl body in aux_subtrees st seq
-  | RlFuncCall rc ->
-    let args = rc.rfc_params |> List.map mkVar in
-    let fcall = Iast.CallNRecv {
-        exp_call_nrecv_method = rc.rfc_fname |> C.unmingle_name;
-        exp_call_nrecv_lock = None;
-        exp_call_nrecv_ho_arg = None;
-        exp_call_nrecv_arguments = args;
-        exp_call_nrecv_path_id = None;
-        exp_call_nrecv_pos = no_pos} in
-    let seq = match rc.rfc_return with
-      | None -> fcall
-      | Some rvar ->
-        let r_var = I.VarDecl {
-            I.exp_var_decl_type = CP.type_of_sv rvar;
-            I.exp_var_decl_decls = [(CP.name_of_sv rvar, None, no_pos)];
-            I.exp_var_decl_pos = no_pos;
+      seq::list
+    | RlMkNull rc ->
+      let var = rc.rmn_var in
+      let var_typ = CP.type_of_sv var in
+      if is_null_type var_typ then list
+      else
+        let null_e = rc.rmn_null in
+        let n_e = exp_to_iast null_e in
+        let v_decl = I.VarDecl {
+            exp_var_decl_type = CP.type_of_sv var;
+            exp_var_decl_decls = [(CP.name_of_sv var, None, no_pos)];
+            exp_var_decl_pos = no_pos;
           } in
-        let asgn = mkAssign (mkVar rvar) fcall in
-        mkSeq r_var asgn in
-    aux_subtrees st seq
-
-and aux_subtrees st cur_codes =
-  let st_code = List.map synthesize_st_core st.stc_subtrees in
-  match st_code with
-  | [] -> Some cur_codes
-  | [h] ->
-    if h = None then Some cur_codes
-    else let st_code = Gen.unsome h in
-      let seq = mkSeq cur_codes st_code in Some seq
-  | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
+        let assign = mkAssign (mkVar var) n_e in
+        let seq = mkSeq v_decl assign in
+        seq::list
+    | RlAssign rassign ->
+      let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
+      let c_exp = exp_to_iast rhs in
+      let assign = mkAssign (mkVar lhs) c_exp in
+      assign::list
+    | RlReturn rcore ->
+      let c_exp = exp_to_iast rcore.r_exp in
+      let exp =  (I.Return {
+          exp_return_val = Some c_exp;
+          exp_return_path_id = None;
+          exp_return_pos = no_pos}) in
+          exp::list
+    | RlFWrite rbind ->
+      let bvar, (typ, f_name) = rbind.rfw_bound_var, rbind.rfw_field in
+      let rhs = rbind.rfw_value in
+      let rhs_var =
+        let rhs_typ = CP.type_of_sv rhs in
+        if is_null_type rhs_typ then I.Null no_pos
+        else mkVar rhs in
+      let mem_var = mkVar bvar in
+      let exp_mem = I.Member {
+          exp_member_base = mem_var;
+          exp_member_fields = [f_name];
+          exp_member_path_id = None;
+          exp_member_pos = no_pos
+        } in
+      let bind = mkAssign exp_mem rhs_var in
+      bind::list
+    | RlFRead rc ->
+      let lhs = rc.rfr_value in
+      let bvar, (typ, f_name) = rc.rfr_bound_var, rc.rfr_field in
+      let exp_decl = I.VarDecl {
+          exp_var_decl_type = CP.type_of_sv lhs;
+          exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+          exp_var_decl_pos = no_pos;
+        } in
+      let bound_var = mkVar bvar in
+      let mem_var = Iast.Member {
+          exp_member_base = bound_var;
+          exp_member_fields = [f_name];
+          exp_member_path_id = None;
+          exp_member_pos = no_pos;
+        } in
+      let lhs = mkVar lhs in
+      let body = mkAssign lhs mem_var in
+      let seq = mkSeq exp_decl body in
+      seq::list
+    | RlFuncCall rc ->
+      let args = rc.rfc_params |> List.map mkVar in
+      let fcall = Iast.CallNRecv {
+          exp_call_nrecv_method = rc.rfc_fname |> C.unmingle_name;
+          exp_call_nrecv_lock = None;
+          exp_call_nrecv_ho_arg = None;
+          exp_call_nrecv_arguments = args;
+          exp_call_nrecv_path_id = None;
+          exp_call_nrecv_pos = no_pos} in
+      let seq = match rc.rfc_return with
+        | None -> fcall
+        | Some rvar ->
+          let r_var = I.VarDecl {
+              I.exp_var_decl_type = CP.type_of_sv rvar;
+              I.exp_var_decl_decls = [(CP.name_of_sv rvar, None, no_pos)];
+              I.exp_var_decl_pos = no_pos;
+            } in
+          let asgn = mkAssign (mkVar rvar) fcall in
+          mkSeq r_var asgn in
+      seq::list
+    | _ -> list in
+  match rules with
+  | [] -> None
+  | _ ->
+    let exp_list = rules |> List.fold_left (fun r l -> aux_rule r l) []
+                   |> List.rev in
+    let i_exp = mk_exp_list exp_list in
+    let () = x_binfo_hp (add_str "i_exp" pr_i_exp) i_exp no_pos in
+    Some i_exp
 
 let rec replace_cexp_aux nexp exp : C.exp =
   match (exp:C.exp) with

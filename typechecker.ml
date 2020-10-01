@@ -2240,10 +2240,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             if List.length list1 = List.length list2 then
               List.for_all2 (fun x y -> CP.eq_sv x y) list1 list2
             else false in
-          let () = x_binfo_hp (add_str "actual_svs:"
+          let () = x_tinfo_hp (add_str "actual_svs:"
                                  Cprinter.string_of_spec_var_list)
               actual_spec_vars no_pos in
-          let () = x_binfo_hp (add_str "actual_paras:"
+          let () = x_tinfo_hp (add_str "actual_paras:"
                                  Cprinter.string_of_spec_var_list)
               actual_parameters no_pos in
           if eq_para_argument actual_spec_vars actual_parameters then
