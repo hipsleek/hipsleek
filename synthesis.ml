@@ -2240,16 +2240,15 @@ let synthesize_st_core st : Iast.exp option =
   let rules = st_core2rule_list st in
   let () = x_binfo_hp (add_str "rules" pr_rules) rules no_pos in
   let aux_rule list rule = match rule with
-  (* | RlFree rc ->
-   *   let vars = rc.rd_vars in
-   *   let mk_rule var =
-   *     I.Free {
-   *       exp_free_exp = mkVar var;
-   *       exp_free_pos = no_pos
-   *     } in
-   *   let exp_list = List.map mk_rule vars in
-   *   let d_exp = mk_exp_list exp_list in
-   *   aux_subtrees st d_exp *)
+    | RlFree rc ->
+      let vars = rc.rd_vars in
+      let mk_rule var =
+        I.Free {
+          exp_free_exp = mkVar var;
+          exp_free_pos = no_pos
+        } in
+      let exp_list = List.map mk_rule vars in
+      exp_list @ list
     | RlAllocate rc ->
       let r_data = rc.ra_data in
       let r_var = rc.ra_var in
@@ -2317,10 +2316,10 @@ let synthesize_st_core st : Iast.exp option =
           exp_return_val = Some c_exp;
           exp_return_path_id = None;
           exp_return_pos = no_pos}) in
-          exp::list
-    | RlFWrite rbind ->
-      let bvar, (typ, f_name) = rbind.rfw_bound_var, rbind.rfw_field in
-      let rhs = rbind.rfw_value in
+      exp::list
+    | RlFWrite rc ->
+      let bvar, (typ, f_name) = rc.rfw_bound_var, rc.rfw_field in
+      let rhs = rc.rfw_value in
       let rhs_var =
         let rhs_typ = CP.type_of_sv rhs in
         if is_null_type rhs_typ then I.Null no_pos
@@ -2333,7 +2332,15 @@ let synthesize_st_core st : Iast.exp option =
           exp_member_pos = no_pos
         } in
       let bind = mkAssign exp_mem rhs_var in
-      bind::list
+      let free_vars = rc.rfw_fvars in
+      let mk_free_exp var =
+        I.Free {
+          exp_free_exp = mkVar var;
+          exp_free_pos = no_pos
+        } in
+      let free_exp_list = List.map mk_free_exp free_vars in
+      let n_list = bind::list in
+      free_exp_list @ n_list
     | RlFRead rc ->
       let lhs = rc.rfr_value in
       let bvar, (typ, f_name) = rc.rfr_bound_var, rc.rfr_field in
@@ -2413,7 +2420,7 @@ let rec replace_cexp_aux nexp exp : C.exp =
     let n_e1 = replace_cexp_aux nexp e.C.exp_seq_exp1 in
     let n_e2 = replace_cexp_aux nexp e.C.exp_seq_exp2 in
     C.Seq {e with C.exp_seq_exp1 = n_e1;
-                C.exp_seq_exp2 = n_e2}
+                  C.exp_seq_exp2 = n_e2}
   | _ -> exp
 
 let replace_exp_proc n_exp proc num =
@@ -2501,7 +2508,7 @@ let rec subst_term_formula sst (formula:CF.formula) = match formula with
     let n_f1 = subst_term_formula sst bf.CF.formula_or_f1 in
     let n_f2 = subst_term_formula sst bf.CF.formula_or_f2 in
     CF.Or {bf with CF.formula_or_f1 = n_f1;
-                CF.formula_or_f2 = n_f2}
+                   CF.formula_or_f2 = n_f2}
 
 
 let get_heap_vars (hf:CF.h_formula) : CP.spec_var list =
@@ -2567,7 +2574,7 @@ let rec check_hp_hf hp_names hf =
     if List.exists (fun x -> eq_str x sv_name) hp_names
     then true else false
   | CF.Star sf -> (check_hp_hf hp_names sf.CF.h_formula_star_h1) ||
-               (check_hp_hf hp_names sf.CF.h_formula_star_h2)
+                  (check_hp_hf hp_names sf.CF.h_formula_star_h2)
   | _ -> report_error no_pos ("unhandled case of check_conseq_hp" ^ (pr_hf hf))
 
 let rec rm_hp_hf hf =
@@ -2593,7 +2600,7 @@ let rec get_hp_hf hp_names hf =
     if List.exists (fun x -> eq_str x sv_name) hp_names
     then [sv_name] else []
   | CF.Star sf -> (get_hp_hf hp_names sf.CF.h_formula_star_h1) @
-               (get_hp_hf hp_names sf.CF.h_formula_star_h2)
+                  (get_hp_hf hp_names sf.CF.h_formula_star_h2)
   | _ -> report_error no_pos ("unhandled case of get_conseq_hp" ^ (pr_hf hf))
 
 let rec get_all_hp_hf hf =
@@ -2602,7 +2609,7 @@ let rec get_all_hp_hf hf =
   | CF.HFalse -> []
   | CF.HRel (sv, args, _) -> [CP.name_of_sv sv]
   | CF.Star sf  -> (get_all_hp_hf sf.CF.h_formula_star_h1) @
-               (get_all_hp_hf sf.CF.h_formula_star_h2)
+                   (get_all_hp_hf sf.CF.h_formula_star_h2)
   | _ -> report_error no_pos "unhandled case of get_conseq_hp"
 
 let check_hp_hf hp_names hf =
@@ -2785,10 +2792,10 @@ let is_rule_fread_usable goal r =
   let post_vars = CF.fv goal.gl_post_cond in
   if List.exists (fun x -> CP.eq_sv x var) post_vars then true
   else let arg_f = extract_var_f goal.gl_pre_cond var in
-      match arg_f with
-      | None -> false
-      | Some arg_f -> if CF.is_emp_formula arg_f then false
-        else true
+    match arg_f with
+    | None -> false
+    | Some arg_f -> if CF.is_emp_formula arg_f then false
+      else true
 
 
 let eliminate_useless_rules goal rules =
@@ -3006,9 +3013,9 @@ let is_end_rule rule =
   | _ -> false
 
 let is_generate_code_rule rule = match rule with
-    | RlAssign _ | RlReturn _ | RlFWrite _ (* | RlFuncRes _ *)
-    | RlFuncCall _ -> true
-    | _ -> false
+  | RlAssign _ | RlReturn _ | RlFWrite _ (* | RlFuncRes _ *)
+  | RlFuncCall _ -> true
+  | _ -> false
 
 let get_rule_vars rule = match rule with
   | RlAssign rc ->
