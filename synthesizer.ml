@@ -361,19 +361,6 @@ let synthesize_program goal =
     let () = x_tinfo_hp (add_str "fail branches" Syn.pr_int) (!Syn.fail_branch_num) no_pos in
     None
 
-let synthesize_cast_stmts goal =
-  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
-  let st = synthesize_one_goal goal in
-  let st_status = Syn.get_synthesis_tree_status st in
-  match st_status with
-  | StValid st_core ->
-    let () = x_tinfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
-    let c_exp = Syn.st_core2cast st_core in
-    let () = x_tinfo_hp (add_str "c_exp" Syn.pr_c_exp_opt) c_exp no_pos in
-    c_exp
-  | StUnkn _ -> let () = x_tinfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
-    None
-
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = Syn.mk_goal_w_procs prog called_procs pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
@@ -389,20 +376,6 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num 
   let n_iprocs = List.map (fun x -> if contains pname x.IA.proc_name
                             then n_proc else x) i_procs in
   ({iprog with IA.prog_proc_decls = n_iprocs}, res)
-
-let synthesize_block_wrapper prog orig_proc proc pre_cond post_cond vars =
-  (* let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in *)
-  let goal = Syn.mk_goal_w_procs prog [orig_proc] pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
-  let c_exp = synthesize_cast_stmts goal in
-  match c_exp with
-  | None -> None
-  | Some exp ->
-    let body = proc.CA.proc_body |> Gen.unsome in
-    let () = x_tinfo_hp (add_str "body" Syn.pr_c_exp) body no_pos in
-    let n_body = Syn.replace_cexp_aux exp body in
-    let () = x_tinfo_hp (add_str "n_body" Syn.pr_c_exp) n_body no_pos in
-    Some n_body
 
 let get_spec_from_hps prog num hps =
   let num_str = string_of_int num in
@@ -521,62 +494,3 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
       (* To Validate *)
       else None
     else None
-
-let synthesize_block_statements iprog prog orig_proc proc decl_vars =
-  let entailments = !Synthesis.entailments |> List.rev in
-  let hps = SB.solve_entailments_one prog entailments in
-  let syn_vars = proc.CA.proc_args
-                 |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
-  let helper cur_res hps =
-    if cur_res != None then cur_res
-    else
-      let post_hp = List.find (fun x -> x.CA.hp_name = "QQ") hps in
-      let pre_hp = List.find (fun x -> x.CA.hp_name = "PP") hps in
-      let post = post_hp.CA.hp_formula in
-      let pre = pre_hp.CA.hp_formula |> Syn.remove_exists in
-      let n_block = synthesize_block_wrapper prog orig_proc proc
-          pre post syn_vars in
-      match n_block with
-      | None -> None
-      | Some block ->
-        let orig_body = orig_proc.CA.proc_body |> Gen.unsome in
-        x_tinfo_hp (add_str "o_body" Syn.pr_c_exp) orig_body no_pos;
-        let n_body = Syn.replace_cexp_aux block orig_body in
-        let n_proc = {orig_proc with CA.proc_body = Some n_body} in
-        let () = verified_procs := [] in
-        try
-          (* need to check later*)
-          let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
-          let () = x_tinfo_hp (add_str "n_body" Syn.pr_c_exp) n_body no_pos in
-          Some n_proc
-        with _ -> None in
-  match hps with
-  | None -> None
-  | Some hps_list ->
-    let hp = hps_list |> List.hd in
-    helper None hp
-
-let infer_block_specs (iprog:IA.prog_decl) prog proc =
-  let entailments = !Synthesis.entailments |> List.rev in
-  let hps = SB.solve_entailments_one prog entailments in
-  match hps with
-  | None -> None
-  | Some hps_list ->
-    (* let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
-     *     iprog.IA.prog_proc_decls in *)
-    (* let decl_vars = match iproc.IA.proc_body with
-     *   | None -> []
-     *   | Some exp -> Syn.get_var_decls (Gen.unsome !Syn.repair_pos) exp in *)
-    (* let syn_vars = proc.CA.proc_args
-     *                |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in *)
-    (* let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in *)
-    let helper hps =
-      let post_hp = List.find (fun x -> x.CA.hp_name = "QQ") hps in
-      let pre_hp = List.find (fun x -> x.CA.hp_name = "PP") hps in
-      let post = post_hp.CA.hp_formula in
-      let pre = pre_hp.CA.hp_formula |> Syn.remove_exists in
-      (pre, post) in
-    let specs = hps_list |> List.map helper in
-    Some specs
-
