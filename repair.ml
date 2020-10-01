@@ -82,9 +82,9 @@ let repair_iprog_by_mutation (iprog: I.prog_decl) repair_proc =
     mutating_proc iprog r_iproc
 
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
-  let () = x_binfo_hp (add_str "candidate" RP.pr_exp) candidate no_pos in
+  let () = x_tinfo_hp (add_str "candidate" RP.pr_exp) candidate no_pos in
   let n_iproc, args = mk_candidate_proc iproc args candidate num in
-  let () = x_binfo_hp (add_str "proc" RP.pr_proc) n_iproc no_pos in
+  let () = x_tinfo_hp (add_str "proc" RP.pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
   let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
   let () = Syn.block_var_decls := decl_vars in
@@ -157,22 +157,27 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       let () = repair_collect_constraint := true in
       let () = Typechecker.check_prog_wrapper iprog cprog in
       let () = repair_collect_constraint := false in
-      let () = x_binfo_pp "start synthesis process" no_pos in
+      let () = x_tinfo_pp "start synthesis process" no_pos in
       let iprog = !Syn.syn_iprog |> Gen.unsome in
       let prog = !Syn.syn_cprog |> Gen.unsome in
       let proc = C.find_proc prog proc_name in
       let () = x_tinfo_hp (add_str "procs" RP.pr_cproc) proc no_pos in
       let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
       let proc_names = RP.get_all_func r_iproc in
-      let () = x_binfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in
+      let () = x_tinfo_hp (add_str "procs" (pr_list pr_id)) proc_names no_pos in
       let patch = Synthesizer.synthesize_entailments_one iprog prog
           proc proc_names in
       begin
         match patch with
         | None -> None
         | Some pt ->
-          let () = x_binfo_hp (add_str "BUGGY STMT" Iprinter.string_of_exp) candidate no_pos in
-          let () = x_binfo_hp (add_str "PATCH" Iprinter.string_of_exp) pt no_pos in
+          let r_position = I.get_exp_pos candidate in
+          let () = x_binfo_hp (add_str "BUGGY STMT" Iprinter.string_of_exp)
+              candidate no_pos in
+          let () = x_binfo_hp (add_str "BUGGY POSITION" Globals.string_of_loc)
+              r_position no_pos in
+          let () = x_binfo_hp (add_str "PATCH" Iprinter.string_of_exp)
+              pt no_pos in
           Some [(candidate, pt)]
       end
     with _ -> None
@@ -216,7 +221,7 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let () = x_tinfo_hp (add_str "traces" RP.pr_bck) i_tree no_pos in
   let i_traces = RP.get_iast_traces i_tree in
   let check_post = !Syn.check_post_list in
-  let () = x_binfo_hp (add_str "check_post" (pr_list string_of_bool)) check_post no_pos in
+  let () = x_tinfo_hp (add_str "check_post" (pr_list string_of_bool)) check_post no_pos in
   let pr_traces = pr_list (pr_list (pr_list RP.pr_exp)) in
   let traces =
     if List.length check_post = List.length i_traces then
@@ -239,12 +244,12 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
         | _ -> true
       end
     | _ -> true in
-  let () = x_binfo_hp (add_str "candidates: " RP.pr_exps) cands no_pos in
+  let () = x_tinfo_hp (add_str "candidates: " RP.pr_exps) cands no_pos in
   let cands = cands |> List.filter not_var_decl in
-  let () = x_binfo_hp (add_str "candidates: " RP.pr_exps) cands no_pos in
+  let () = x_tinfo_hp (add_str "candidates: " RP.pr_exps) cands no_pos in
   let cands, others = List.partition (filter_cand !repair_loc) cands in
   let cands = ranking_suspicious_exp cands in
-  let () = x_binfo_hp (add_str "candidates: " RP.pr_exps) cands no_pos in
+  let () = x_tinfo_hp (add_str "candidates: " RP.pr_exps) cands no_pos in
   (* failwith "stop to debug" *)
 
   let locs = cands |> List.map I.get_exp_pos in
@@ -270,7 +275,7 @@ let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
         else aux_list cur_res tail in
   let res = aux_list None cands in
   if res != None then
-    let () = x_binfo_hp (add_str "failed branches" RP.pr_int) !Syn.fail_branch_num
+    let () = x_tinfo_hp (add_str "failed branches" RP.pr_int) !Syn.fail_branch_num
         no_pos in
     res
   else
@@ -367,7 +372,7 @@ let mk_pair_candidate_iprog iprog iproc (fst_cand, snd_cand) =
     (n_prog, n_iproc) in
   let (n_prog, n_iproc) = aux iprog iproc fst_cand 1 in
   let (n_prog, n_iproc) = aux n_prog n_iproc snd_cand 2 in
-  let () = x_binfo_hp (add_str "level2_proc" RP.pr_proc) n_iproc no_pos in
+  let () = x_tinfo_hp (add_str "level2_proc" RP.pr_proc) n_iproc no_pos in
   n_prog
 
 let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
@@ -391,7 +396,7 @@ let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
     let () = repair_collect_constraint := true in
     let () = Typechecker.check_prog_wrapper iprog cprog in
     let () = repair_collect_constraint := false in
-    let () = x_binfo_pp "start synthesis process" no_pos in
+    let () = x_tinfo_pp "start synthesis process" no_pos in
     let iprog = !Syn.syn_iprog |> Gen.unsome in
     let prog = !Syn.syn_cprog |> Gen.unsome in
     let proc = C.find_proc prog proc_name in
@@ -437,7 +442,7 @@ let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
         snd |> List.map (fun y -> (x,y))) |> List.concat in
   let pairs = List.map aux_pair candidates |> List.concat in
   let pr_pairs = pr_list (pr_pair RP.pr_exp RP.pr_exp) in
-  let () = x_binfo_hp (add_str "candidates" pr_pairs) pairs no_pos in
+  let () = x_tinfo_hp (add_str "candidates" pr_pairs) pairs no_pos in
   let cproc = !Syn.repair_proc |> Gen.unsome in
   let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
   let res_vars = specs |> Syn.get_pre_post |> List.map snd
@@ -467,7 +472,7 @@ let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
 
 let repair_iprog (iprog:I.prog_decl) repair_proc =
   let p_name = Cast.unmingle_name repair_proc in
-  let () = x_binfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
+  let () = x_tinfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
   let () = start_repair := true in
   let procs = iprog.I.prog_proc_decls in
   let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
@@ -779,7 +784,7 @@ let start_repair_wrapper (iprog: I.prog_decl) start_time =
         let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
         mutated_res
       else
-        let () = x_binfo_pp "REPAIRING FAIL" no_pos in
+        let () = x_binfo_pp "REPAIR FAIL" no_pos in
         false
   | _ -> false
 

@@ -2983,13 +2983,13 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         else if fst_head_num < snd_head_num then -1
         else compare_trace fst_tail snd_tail in
     let all_traces = all_traces |> List.map (fun x -> List.rev x) in
-    let () = x_binfo_hp (add_str "all paths" pr_paths) all_traces no_pos in
+    let () = x_tinfo_hp (add_str "repair all paths" pr_paths) all_traces no_pos in
     let all_traces = all_traces |> List.sort compare_trace in
     let aux_trace fail_traces trace =
       let eq_trace t1 = t1 = trace in
       List.exists eq_trace fail_traces in
-    let () = x_binfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
-    let () = x_binfo_hp (add_str "all paths" pr_paths) all_traces no_pos in
+    let () = x_tinfo_hp (add_str "repair paths" pr_paths) fail_traces no_pos in
+    let () = x_tinfo_hp (add_str "repair all paths" pr_paths) all_traces no_pos in
     let check_post = List.map (aux_trace fail_traces) all_traces in
     let () = Synt.check_post_list := check_post in
     let _ =
