@@ -2232,9 +2232,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                          ) farg_names farg_types in
           let actual_spec_vars =
             List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
-          let () = x_tinfo_hp (add_str "actual_svs:"
+          let actual_parameters =
+            List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+          let eq_para_argument list1 list2 =
+            if Synthesis.contains mn "fcode" then false
+            else
+            if List.length list1 = List.length list2 then
+              List.for_all2 (fun x y -> CP.eq_sv x y) list1 list2
+            else false in
+          let () = x_binfo_hp (add_str "actual_svs:"
                                  Cprinter.string_of_spec_var_list)
               actual_spec_vars no_pos in
+          let () = x_binfo_hp (add_str "actual_paras:"
+                                 Cprinter.string_of_spec_var_list)
+              actual_parameters no_pos in
+          if eq_para_argument actual_spec_vars actual_parameters then
+            raise (Err.Ppf ({
+                          Err.error_loc = pos;
+                          Err.error_text = "NON-TERMINATION"
+                        }, 1, 1))
+          else
           (* let b = true in
            * if not b then ctx
            * else *)

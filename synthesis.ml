@@ -254,6 +254,7 @@ and synthesis_tree_core = {
   stc_goal : goal;
   stc_rule : rule;
   stc_subtrees : synthesis_tree_core list;
+  
 }
 
 and synthesis_tree_status =
