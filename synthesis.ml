@@ -2238,7 +2238,7 @@ let st_core2rule_list (st: synthesis_tree_core) =
 
 let synthesize_st_core st : Iast.exp option =
   let rules = st_core2rule_list st in
-  let () = x_binfo_hp (add_str "rules" pr_rules) rules no_pos in
+  let () = x_tinfo_hp (add_str "rules" pr_rules) rules no_pos in
   let aux_rule list rule = match rule with
     | RlFree rc ->
       let vars = rc.rd_vars in
@@ -2387,7 +2387,7 @@ let synthesize_st_core st : Iast.exp option =
     let exp_list = rules |> List.fold_left (fun r l -> aux_rule r l) []
                    |> List.rev in
     let i_exp = mk_exp_list exp_list in
-    let () = x_binfo_hp (add_str "i_exp" pr_i_exp) i_exp no_pos in
+    let () = x_tinfo_hp (add_str "i_exp" pr_i_exp) i_exp no_pos in
     Some i_exp
 
 let rec replace_cexp_aux nexp exp : C.exp =
