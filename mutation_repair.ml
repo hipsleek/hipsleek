@@ -465,9 +465,5 @@ let mutate_iast_exp iprog iproc (input_exp: I.exp) : I.exp list =
   let list = (aux_mutate4 input_exp 1 [])@list in
   let list = (aux_mutate5 input_exp 1 [])@list in
   let list = (aux_mutate6 input_exp 1 [])@list in
-
-  (* let list = (remove_field_in_condition input_exp var_decls data_decls)::list in
-   * let list = (remove_field_in_cond_two_left input_exp var_decls data_decls)::list in
-   * let list = (remove_field_in_cond_two_right input_exp var_decls data_decls)::list in *)
   list |> List.filter (fun (_,y) -> y) |> List.map fst
 

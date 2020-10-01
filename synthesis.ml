@@ -39,6 +39,7 @@ let sb_num = ref 0
 let sb_ent_num = ref 0
 let sb_ent_time = ref 0.0
 let fail_branch_num = ref 0
+let disable_new_num = ref false
 let check_entail_num = ref 0
 let r_pre = ref 0
 
@@ -213,7 +214,7 @@ and rule_return = {
 
 and goal = {
   gl_prog : C.prog_decl;
-  gl_proc_decls: C.proc_decl list;
+  gl_proc_decls : (string * CF.formula * CF.formula * (CP.spec_var list)) list;
   gl_pre_cond : CF.formula;
   gl_post_cond : CF.formula;
   gl_start_time : float;
@@ -2234,11 +2235,12 @@ let st_core2rule_list (st: synthesis_tree_core) =
     | [h_rule] -> aux_fun h_rule list
     | _ -> report_error no_pos "syn_st_core: no more than one st" in
   aux_fun st [] |> List.rev
-  |> rm_redundant_rules
 
 let synthesize_st_core st : Iast.exp option =
   let rules = st_core2rule_list st in
-  let () = x_tinfo_hp (add_str "rules" pr_rules) rules no_pos in
+  let () = x_binfo_hp (add_str "rules" pr_rules) rules no_pos in
+  let rules = rules |> rm_redundant_rules in
+  let () = x_binfo_hp (add_str "rules" pr_rules) rules no_pos in
   let aux_rule list rule = match rule with
     | RlFree rc ->
       let vars = rc.rd_vars in
@@ -2387,7 +2389,8 @@ let synthesize_st_core st : Iast.exp option =
     let exp_list = rules |> List.fold_left (fun r l -> aux_rule r l) []
                    |> List.rev in
     let i_exp = mk_exp_list exp_list in
-    let () = x_tinfo_hp (add_str "i_exp" pr_i_exp) i_exp no_pos in
+    (* TODO: *)
+    let () = x_binfo_hp (add_str "i_exp" pr_i_exp) i_exp no_pos in
     Some i_exp
 
 let rec replace_cexp_aux nexp exp : C.exp =
@@ -2881,6 +2884,7 @@ let compare_rule_frame_data_vs_other r1 r2 =
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
   | RlMkNull _ -> PriLow
+  | RlNewNum _ -> PriHigh
   | RlUnfoldPre _ -> PriHigh
   | _ -> PriHigh
 
@@ -2973,6 +2977,10 @@ let compare_rule_mk_null_vs_other r1 r2 = match r2 with
     else PriEqual
   | _ -> PriHigh
 
+let compare_rule_new_num_vs_other r1 r2 = match r2 with
+  | RlFuncCall _ -> PriLow
+  | _ -> PriHigh
+
 let compare_rule goal r1 r2 =
   match r1 with
   | RlSkip -> PriHigh
@@ -2990,7 +2998,7 @@ let compare_rule goal r1 r2 =
   | RlFRead r1 -> compare_rule_fread_vs_other r1 r2
   | RlFWrite _ -> PriHigh
   | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
-  | RlNewNum _ -> PriHigh
+  | RlNewNum r1 -> compare_rule_new_num_vs_other r1 r2
 
 let is_code_rule trace = match trace with
   | [] -> false
@@ -3110,32 +3118,40 @@ let reorder_rules goal rules =
  * Constructors
  *********************************************************************)
 
-let mk_goal cprog pre post vars =
-  (* let primed_vars = vars |> List.map CP.to_primed in
-   * let vars = vars @ primed_vars |> CP.remove_dups_svl in *)
-  let () = allocate_list := [] in
-  { gl_prog = cprog;
-    gl_start_time = get_time ();
-    gl_lookahead = [];
-    gl_proc_decls = [];
-    gl_pre_cond = pre;
-    gl_post_cond = post;
-    gl_trace = [];
-    gl_vars = vars;  }
-
-let mk_goal_w_procs cprog proc_decls pre post vars =
-  (* let primed_vars = vars |> List.map CP.to_primed in
-   * let vars = vars @ primed_vars |> CP.remove_dups_svl in *)
+let mk_goal cprog proc_decls pre post vars =
   let () = fail_branch_num := 0 in
   let pre = unprime_formula pre in
   let post = unprime_formula post in
   let () = allocate_list := [] in
+  let aux_proc proc_decl =
+    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+    let spec_pairs = get_pre_post specs in
+    let proc_args = proc_decl.Cast.proc_args |>
+                    List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let (pre, post) = List.hd spec_pairs in
+    let pname = proc_decl.Cast.proc_name in
+    (pname, pre, post, proc_args) in
+  let proc_decls = List.map aux_proc proc_decls in
+  let dis_new_num_val =
+    if List.exists CP.is_int_var vars then
+      if List.for_all (
+          fun (_,pre_cond,_,p_vars) ->
+            let p_int_vars = p_vars |> List.filter CP.is_int_var in
+            let pre_int_vars = pre_cond |> CF.fv |> List.filter CP.is_int_var in
+            if p_int_vars = [] then true
+            else
+              let int_vars_in_spec = CP.intersect p_int_vars pre_int_vars in
+              int_vars_in_spec = []
+        ) proc_decls then true
+      else false
+    else true in
+  let () = disable_new_num := dis_new_num_val in
   { gl_prog = cprog;
     gl_lookahead = [];
-    gl_proc_decls = proc_decls;
     gl_start_time = get_time ();
     gl_pre_cond = pre;
     gl_post_cond = post;
+    gl_proc_decls = proc_decls;
     gl_trace = [];
     gl_vars = vars;  }
 

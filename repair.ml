@@ -74,7 +74,7 @@ let mutating_proc iprog (iproc: I.proc_decl): bool =
       with _ -> false in
   List.fold_left aux_repair false n_proc_list
 
-let repair_iprog_by_mutation (iprog: I.prog_decl) repair_proc =
+let repair_iprog_by_mutation (iprog: I.prog_decl) repair_proc : bool =
   let () = x_binfo_pp "START USING MUTATION" no_pos in
   let p_name = Cast.unmingle_name repair_proc in
   let procs = iprog.I.prog_proc_decls in

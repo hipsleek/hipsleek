@@ -60,44 +60,6 @@ let check_mk_null pre post =
   let post_vars = post |> Syn.get_heap |> Syn.get_heap_nodes in
   List.length post_vars - List.length pre_vars = 1
 
-(* let find_equal_var formula var =
- *   let pf = formula |> CF.get_pure |> remove_exists_pf in
- *   let eq_pairs = get_equality_pairs pf in
- *   let find_fun (x,y) = CP.eq_sv x var || CP.eq_sv y var in
- *   let pair = List.find find_fun eq_pairs in
- *   let (fst, snd) = pair in
- *   if CP.eq_sv fst var then snd else fst
- * 
- * let find_equal_var formula var =
- *   Debug.no_2 "find_equal_var" pr_f pr_var pr_var
- *     (fun _ _ -> find_equal_var formula var) formula var *)
-
-let check_goal_procs goal =
-  let procs = goal.Syn.gl_proc_decls in
-  let aux proc_decl =
-    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-    let specs = Syn.get_pre_post specs in
-    let aux_pre_post (pre, post) =
-      let post_vars = post |> Syn.get_heap_variables in
-      let pre_vars = pre |> Syn.get_heap_variables in
-      let () = x_tinfo_hp (add_str "pre vars" Syn.pr_vars) pre_vars no_pos in
-      let () = x_tinfo_hp (add_str "post vars" Syn.pr_vars) post_vars no_pos in
-      List.length post_vars > List.length pre_vars in
-    List.exists aux_pre_post specs in
-  List.exists aux procs
-
-let check_goal_procs goal =
-  Debug.no_1 "check_goal_procs" Syn.pr_goal string_of_bool
-    (fun _ -> check_goal_procs goal) goal
-
-let check_head_allocate_wrapper goal =
-  let vars = check_head_allocate goal in
-  vars != [] && not (check_goal_procs goal)
-
-let check_head_allocate_wrapper goal =
-  Debug.no_1 "check_head_allocate_wrapper" Syn.pr_goal string_of_bool
-    (fun _ -> check_head_allocate_wrapper goal) goal
-
 (* END CHECKING FOR MAKING RULES *)
 
 let get_subst_from_list_context (l_ctx: CF.list_context) =
@@ -571,16 +533,15 @@ let rec mk_args_input args = match args with
     let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
     List.concat head_added
 
-let unify_arg goal proc_decl (argument: CP.spec_var) =
+let unify_arg goal (argument: CP.spec_var) =
   let vars = goal.Syn.gl_vars in
   vars |> List.filter (Syn.equal_type argument)
 
 let check_func_arguments goal proc_decl (args: CP.spec_var list) =
+  let (proc_name, proc_pre, proc_post, proc_args) = proc_decl in
   let prog = goal.Syn.gl_prog in
-  let proc_args = proc_decl.CA.proc_args
-                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let args_called = Syn.is_fcall_called goal.Syn.gl_trace args in
-  let called = Syn.is_fcall_ever_called goal.gl_trace proc_decl.CA.proc_name in
+  let called = Syn.is_fcall_ever_called goal.gl_trace proc_name in
   let eq_args = List.for_all2 CP.eq_sv args proc_args in
   let pre_vars = goal.Syn.gl_pre_cond |> CF.fv in
   let post_vars = goal.Syn.gl_post_cond |> CF.fv in
@@ -591,10 +552,6 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
     let () = x_tinfo_hp (add_str "args" Syn.pr_vars) args no_pos in
     let pre_cond = goal.Syn.gl_pre_cond in
     let substs = List.combine proc_args args in
-    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-    let specs = Syn.get_pre_post specs in
-    let (proc_pre, proc_post) = List.hd specs in
-    let () = x_tinfo_hp (add_str "proc_pre" Syn.pr_f) proc_pre no_pos in
     let n_proc_pre = CF.subst substs proc_pre in
     let n_proc_post = CF.subst substs proc_post in
     let () = x_tinfo_hp (add_str "proc_pre" Syn.pr_f) n_proc_pre no_pos in
@@ -625,7 +582,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
         else None, n_pre in
       let () = x_tinfo_hp (add_str "n_pre" Syn.pr_f) n_pre no_pos in
       let rule = Syn.RlFuncCall {
-          rfc_fname = proc_decl.Cast.proc_name;
+          rfc_fname = proc_name;
           rfc_params = args;
           rfc_new_pre = n_pre;
           rfc_return = n_var;
@@ -667,15 +624,10 @@ let check_eq_args prog proc_args proc_pre proc_post args1 args2 =
     else false
   else false
 
-let unify_fcall proc_decl proc_pre proc_post goal =
-  let proc_args = proc_decl.Cast.proc_args |>
-                  List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let ss_args = proc_args |> List.map (unify_arg goal proc_decl) in
+let aux_choose_rule_fun_call goal proc_decl =
+  let (_, _, _, proc_args) = proc_decl in
+  let ss_args = proc_args |> List.map (unify_arg goal) in
   let ss_args = mk_args_input ss_args in
-  let () = x_tinfo_hp (add_str "proc pre" Syn.pr_f) proc_pre no_pos in
-  let () = x_tinfo_hp (add_str "proc pre" Syn.pr_f) proc_post no_pos in
-  (* let eq_args args1 args2 = check_eq_args goal.Syn.gl_prog proc_args proc_pre
-   *     proc_post args1 args2 in *)
   let pre_nodes = goal.Syn.gl_pre_cond |> Syn.get_heap_variables in
   let filter_nodes args =
     let node_args = args |> List.filter Syn.is_node_var in
@@ -694,26 +646,14 @@ let unify_fcall proc_decl proc_pre proc_post goal =
   rules |> List.concat
 
 let choose_rule_func_call goal =
-  (* if check_head_allocate_wrapper goal then []
-   * else *)
   let procs = goal.Syn.gl_proc_decls in
-  let aux proc_decl =
-    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-    let spec_pairs = Syn.get_pre_post specs in
-    let pre_cond, post_cond = List.hd spec_pairs in
-    let () = x_tinfo_hp (add_str "pre" Syn.pr_f) pre_cond no_pos in
-    let () = x_tinfo_hp (add_str "post" Syn.pr_f) post_cond no_pos in
-    let rules = unify_fcall proc_decl pre_cond post_cond goal in
-    rules in
-  procs |> List.map aux |> List.concat
+  procs |> List.map (aux_choose_rule_fun_call goal) |> List.concat
 
 let choose_rule_func_call goal =
   Debug.no_1 "choose_rule_func_call" Syn.pr_goal Syn.pr_rules
     (fun _ -> choose_rule_func_call goal) goal
 
 let choose_rule_unfold_pre goal =
-  (* if check_head_allocate_wrapper goal then []
-   * else *)
   let pre, post = goal.Syn.gl_pre_cond, goal.Syn.gl_post_cond in
   let vnodes = Syn.get_unfold_view goal.Syn.gl_vars pre in
   let helper vnode =
@@ -1123,7 +1063,9 @@ let choose_rule_fread goal =
     (fun _ -> choose_rule_fread goal) goal
 
 let choose_rule_new_num goal : Syn.rule list =
-  if Syn.has_new_num goal.Syn.gl_trace then []
+  if !Syn.disable_new_num then []
+  else if
+    Syn.has_new_num goal.Syn.gl_trace then []
   else
     let int_vars = goal.Syn.gl_vars |> List.filter Syn.is_int_var |> List.rev in
     let aux_int var =
@@ -1156,10 +1098,11 @@ let choose_rule_new_num goal : Syn.rule list =
                               gl_trace = (RlNewNum rule)::goal.gl_trace} in
       let () = x_tinfo_hp (add_str "var" Syn.pr_var) var no_pos in
       let () = x_tinfo_hp (add_str "exp" Syn.pr_exp) n_exp no_pos in
-      let n_rules = choose_rule_allocate_return n_goal in
+      (* let n_rules = choose_rule_allocate_return n_goal in *)
+      let n_rules = [] in
       let n_rules, early_end = if n_rules = [] then
           let n_rules = n_rules @ (choose_rule_func_call n_goal) in
-          let n_rules = n_rules @ (choose_rule_fwrite n_goal) in
+          (* let n_rules = n_rules @ (choose_rule_fwrite n_goal) in *)
           (n_rules, false)
         else (n_rules, true) in
       let () = x_tinfo_hp (add_str "rules" Syn.pr_rules) n_rules no_pos in

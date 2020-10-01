@@ -347,10 +347,12 @@ let synthesize_program goal =
       | _ -> goal
     else goal in
   let goal = simplify goal in
-  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+  (* TODO: to print info *)
+  let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = Syn.get_synthesis_tree_status st in
-  let () = x_tinfo_hp (add_str "synthesis tree " Syn.pr_st) st no_pos in
+  (* TODO: to print info *)
+  let () = x_binfo_hp (add_str "synthesis tree " Syn.pr_st) st no_pos in
   match st_status with
   | StValid st_core ->
     let () = x_tinfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
@@ -362,7 +364,7 @@ let synthesize_program goal =
     None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
-  let goal = Syn.mk_goal_w_procs prog called_procs pre_cond post_cond vars in
+  let goal = Syn.mk_goal prog called_procs pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let start_time = get_time () in
   let iast_exp = synthesize_program goal in
@@ -473,7 +475,7 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
       let proc_name = proc.CA.proc_name |> CA.unmingle_name in
       List.mem proc_name proc_names in
     let called_procs = List.filter filter_fun all_procs in
-    let goal = Syn.mk_goal_w_procs prog called_procs pre post syn_vars in
+    let goal = Syn.mk_goal prog called_procs pre post syn_vars in
     synthesize_program goal in
   match hps with
   | None -> None
