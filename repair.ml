@@ -85,7 +85,7 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate num =
   let () = x_tinfo_hp (add_str "candidate" RP.pr_exp) candidate no_pos in
   let n_iproc, args = mk_candidate_proc iproc args candidate num in
   (* TODO: *)
-  let () = x_tinfo_hp (add_str "proc" RP.pr_proc) n_iproc no_pos in
+  let () = x_binfo_hp (add_str "proc" RP.pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
   let decl_vars = List.map (fun (x,y) -> CP.mk_typed_sv x y) args in
   let () = Syn.block_var_decls := decl_vars in

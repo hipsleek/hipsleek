@@ -11,11 +11,11 @@ void delete(node x, int a)
 	requires x::ll<n> & n > a & a > 0 
 	ensures (exists k: x::ll<k> & k = n-1);.
 
+
 synthesize [node x,int a,node tmp]
- x::ll<n>&a!=1 & 1<=a & (1+a)<=n
+ x::node<ann64,tmp> * tmp::ll<flt63>&
+1<=flt63 & n=1+flt63 & a=1
 ~>
- (exists flted_8_28823,Anon_28824,q_28825,flted_8_28820,Anon_28821,q_28822,
-f_r_28819: q_28822::node<Anon_28824,q_28825> * q_28825::ll<flted_8_28823> * 
-           x::node<Anon_28821,q_28822>&
-f_r_28819=n-1 & flted_8_28820+1=f_r_28819 & 0<f_r_28819 & 
-flted_8_28823+1=flted_8_28820 & 0<flted_8_28820).
+ (exists flt11,Anon_4512,
+q_4513: x::node<Anon_4512,q_4513> * q_4513::ll<flt11>&
+flt11+1=flt63 & 0<flt63).
