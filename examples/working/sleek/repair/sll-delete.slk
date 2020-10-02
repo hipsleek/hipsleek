@@ -1,33 +1,21 @@
 data node {
-     node next
+	int val; 
+	node next;	
 }.
 
-pred ll<n> == self = null & n = 0
-	or (exists q: self::node<q> * q::ll<n-1>).
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> & n > 0
+  inv n >= 0.
 
 void delete(node x, int a)
 	requires x::ll<n> & n > a & a > 0 
 	ensures (exists k: x::ll<k> & k = n-1);.
 
-// synthesize [node x,int a]
-// x::ll<n> & (1-n)<0 & a-1=0
-// ~>
-// (exists fr54,q_3: x::node<q_3> * q_3::ll<fr54> & a-1=0 & fr54=n-2).
-
-// x.next = x.next.next
-// synthesize [node x,int a]
-//  x::ll<n>&2<=n & a=1
-// ~>
-//  (exists f_r_4454,q_21: x::node<q_21> * q_21::ll<f_r_4454>&2+f_r_4454=n).
-
-// synthesize [node q_79,node x,int a]
-//  q_79::node<q_102> * q_102::ll<flted_6_101> * x::node<q_79>&
-// 2<=n & a=1 & 1+flted_6_78=n & 1+flted_6_101=flted_6_78
-// ~>
-//  (exists f_r_58,q_59: x::node<q_59> * q_59::ll<f_r_58>&2+f_r_58=n).
-
-// q_79::node<q_102> * x::node<q_79> &
-// 2<=n & a=1 & 1+flted_6_78=n & 1+flted_6_101=flted_6_78
-// ~>
-// (exists f_r_65,q_66: x::node<q_66> &
-// q_66=q_102 & f_r_65=flted_6_101 & 2+f_r_65=n)
+synthesize [node x,int a,node tmp]
+ x::ll<n>&a!=1 & 1<=a & (1+a)<=n
+~>
+ (exists flted_8_28823,Anon_28824,q_28825,flted_8_28820,Anon_28821,q_28822,
+f_r_28819: q_28822::node<Anon_28824,q_28825> * q_28825::ll<flted_8_28823> * 
+           x::node<Anon_28821,q_28822>&
+f_r_28819=n-1 & flted_8_28820+1=f_r_28819 & 0<f_r_28819 & 
+flted_8_28823+1=flted_8_28820 & 0<flted_8_28820).
