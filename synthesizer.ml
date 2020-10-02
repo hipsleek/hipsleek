@@ -80,16 +80,16 @@ let process_rule_fwrite goal rc =
   let field, prog = rc.Syn.rfw_field, goal.Syn.gl_prog in
   let rhs, data_decls = rc.rfw_value, prog.prog_data_decls in
   let n_pre = aux_fun pre var field rhs data_decls in
-  let ent, residue = check_entail_wrapper goal.gl_prog
+  let ent, _ = check_entail_wrapper goal.gl_prog
       n_pre goal.gl_post_cond in
   if ent then
-    let residue = Gen.unsome residue in
-    if CF.is_emp_formula residue then
+    (* let residue = Gen.unsome residue in
+     * if CF.is_emp_formula residue then *)
       Syn.mk_derivation_success goal (Syn.RlFWrite rc)
-    else
-      let free_vars = Syn.get_heap_variables residue in
-      let n_rc = {rc with rfw_fvars = free_vars} in
-      Syn.mk_derivation_success goal (Syn.RlFWrite n_rc)
+    (* else
+     *   let free_vars = Syn.get_heap_variables residue in
+     *   let n_rc = {rc with rfw_fvars = free_vars} in
+     *   Syn.mk_derivation_success goal (Syn.RlFWrite n_rc) *)
   else
     Syn.mk_derivation_fail goal (Syn.RlFWrite rc)
 

@@ -538,6 +538,8 @@ let unify_arg goal (argument: CP.spec_var) =
   vars |> List.filter (Syn.equal_type argument)
 
 let check_func_arguments goal proc_decl (args: CP.spec_var list) =
+  let check_eq_heap_var_pair (x, y) =
+    not(CP.is_int_var x) && not(CP.is_int_var y) && CP.eq_sv x y in
   let (proc_name, proc_pre, proc_post, proc_args) = proc_decl in
   let prog = goal.Syn.gl_prog in
   let args_called = Syn.is_fcall_called goal.Syn.gl_trace args in
@@ -552,6 +554,8 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
     let () = x_tinfo_hp (add_str "args" Syn.pr_vars) args no_pos in
     let pre_cond = goal.Syn.gl_pre_cond in
     let substs = List.combine proc_args args in
+    if List.exists check_eq_heap_var_pair substs then []
+    else
     let n_proc_pre = CF.subst substs proc_pre in
     let n_proc_post = CF.subst substs proc_post in
     let () = x_tinfo_hp (add_str "proc_pre" Syn.pr_f) n_proc_pre no_pos in
