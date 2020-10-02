@@ -538,8 +538,10 @@ let unify_arg goal (argument: CP.spec_var) =
   vars |> List.filter (Syn.equal_type argument)
 
 let check_func_arguments goal proc_decl (args: CP.spec_var list) =
-  let check_eq_heap_var_pair (x, y) =
-    not(CP.is_int_var x) && not(CP.is_int_var y) && CP.eq_sv x y in
+  let check_eq_heap_pairs pairs =
+    let pairs = pairs |> List.filter (fun (x,y) ->
+        not(CP.is_int_var x) && not(CP.is_int_var y)) in
+    pairs != [] && List.for_all (fun (x,y) -> CP.eq_sv x y) pairs in
   let (proc_name, proc_pre, proc_post, proc_args) = proc_decl in
   let prog = goal.Syn.gl_prog in
   let args_called = Syn.is_fcall_called goal.Syn.gl_trace args in
@@ -554,7 +556,7 @@ let check_func_arguments goal proc_decl (args: CP.spec_var list) =
     let () = x_tinfo_hp (add_str "args" Syn.pr_vars) args no_pos in
     let pre_cond = goal.Syn.gl_pre_cond in
     let substs = List.combine proc_args args in
-    if List.exists check_eq_heap_var_pair substs then []
+    if check_eq_heap_pairs substs then []
     else
     let n_proc_pre = CF.subst substs proc_pre in
     let n_proc_post = CF.subst substs proc_post in
@@ -1443,9 +1445,9 @@ let choose_rule_mk_null goal : Syn.rule list =
                   * |> List.map snd in *)
       list |> List.map (fun x -> Syn.RlMkNull x)
 
-let choose_rule_mk_null goal : Syn.rule list = []
-  (* Debug.no_1 "choose_rule_mk_null" Syn.pr_goal Syn.pr_rules
-   *   (fun _ -> choose_rule_mk_null goal) goal *)
+let choose_rule_mk_null goal : Syn.rule list =
+  Debug.no_1 "choose_rule_mk_null" Syn.pr_goal Syn.pr_rules
+    (fun _ -> choose_rule_mk_null goal) goal
 
 let rec choose_rule_interact goal rules =
   if rules = [] then
