@@ -217,6 +217,7 @@ let ranking_suspicious_exp (candidates: I.exp list) =
     | Syn.PriHigh -> -1 in
   List.sort cmp_exp candidates
 
+(* TODO: repair free statements *)
 let repair_level_one (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
   let i_tree = RP.get_ast_traces (Gen.unsome r_iproc.proc_body) in
   let () = x_tinfo_hp (add_str "traces" RP.pr_bck) i_tree no_pos in
@@ -485,123 +486,6 @@ let repair_iprog (iprog:I.prog_decl) repair_proc =
    *   repair_level_two iprog repair_proc r_iproc
    * else *)
   res
-
-(* let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)
- *     trace orig_proc proc block (specs:CF.formula * CF.formula) =
- *   let block_specs = RP.mk_specs specs in
- *   let helper t = match t with
- *     | Named _ | Int -> true
- *     | _ -> false in
- *   let () = x_binfo_hp (add_str "block" RP.pr_c_exps) block no_pos in
- *   let sub_blocks = RP.create_sub_blocks block in
- *   let aux sub_block =
- *     let () = x_binfo_hp (add_str "sub_block" RP.pr_c_exps) sub_block no_pos in
- *     (\* let block_exp = create_block_exp block in *\)
- *     let replace_pos = List.map C.pos_of_exp sub_block |> List.hd in
- *     (\* let body = proc.C.proc_body |> Gen.unsome in *\)
- *     (\* let orig_body = orig_proc.C.proc_body |> Gen.unsome in *\)
- *     (\* let var_decls = get_block_var_decls replace_pos orig_body in *\)
- *     let var_decls = RP.get_trace_var_decls replace_pos trace in
- *     let var_decls = var_decls @ (orig_proc.C.proc_args)
- *                     |> List.filter (fun (x, _) -> helper x) in
- *     let fcode_cprocs = RP.mk_fcode_cprocs iprog var_decls in
- *     let n_block_body = RP.create_tmpl_body_stmt block var_decls sub_block in
- *     let () = x_binfo_hp (add_str "block body" RP.pr_c_exp) n_block_body no_pos in
- *     let block_proc = RP.mk_block_proc proc n_block_body block_specs in
- *     let all_procs = C.list_of_procs n_prog in
- *     let all_procs = all_procs @ fcode_cprocs in
- *     let all_procs = block_proc::all_procs in
- *     let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
- *     let n_prog = {n_prog with new_proc_decls = n_hashtbl} in
- *     let var_decls = List.map (fun (x,y) -> CP.mk_typed_sv x y) var_decls in
- *     let var_decls = var_decls |> List.filter Syn.is_node_or_int_var in
- *     let () = RP.reset_repair_straight_line var_decls replace_pos in
- *     let () = if RP.is_return_block sub_block then
- *         let res_vars = specs |> snd |> CF.fv |> List.filter CP.is_res_sv
- *                        |> CP.remove_dups_svl in
- *         let () = Syn.syn_res_vars := res_vars in
- *         Syn.is_return_cand := true
- *       else
- *         let () = Syn.syn_res_vars := [] in
- *         Syn.is_return_cand := false in
- *     begin
- *       try
- *         let _ = Typechecker.check_proc iprog n_prog block_proc None [] in
- *         let () = x_binfo_pp "START SYNTHESIS REPAIR-BLOCK SOLUTION" no_pos in
- *         Synthesizer.synthesize_block_statements iprog n_prog proc
- *           block_proc var_decls
- *       with _ -> None
- *     end in
- *   let repair_block_stmt cur_res statement =
- *     if cur_res != None then cur_res
- *     else aux statement in
- *   List.fold_left repair_block_stmt None sub_blocks *)
-
-(* let repair_one_block (iprog: I.prog_decl) (prog : C.prog_decl) trace
- *     (proc : C.proc_decl) (block: C.exp list) =
- *   let orig_proc = proc in
- *   let () = x_binfo_hp (add_str "block" RP.pr_c_exps) block no_pos in
- *   let (n_iprog, n_prog, n_proc) = RP.create_tmpl_proc iprog prog proc trace block in
- *   let () = RP.reset_repair_block() in
- *   try
- *     let () = x_tinfo_hp (add_str "n_proc" RP.pr_cproc) n_proc no_pos in
- *     let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
- *     let specs = Synthesizer.infer_block_specs n_iprog n_prog n_proc in
- *     if specs = None then None
- *     else
- *       let specs_list = specs |> Gen.unsome in
- *       if specs_list = [] then None
- *       else
- *         let pr_specs = (pr_list (pr_pair RP.pr_formula RP.pr_formula)) in
- *         let () = x_binfo_hp (add_str "specs" pr_specs) specs_list no_pos in
- *         let specs = specs_list |> List.hd in
- *         repair_straight_line n_iprog n_prog trace orig_proc n_proc block specs
- *   (\* let helper cur_res specs =
- *    *   if cur_res = None then
- *    *     repair_straight_line n_iprog n_prog orig_proc n_proc block specs
- *    *   else cur_res in
- *    * List.fold_left helper None specs_list *\)
- *   with _ -> None *)
-
-(* let repair_cproc iprog =
- *   match !Typechecker.repair_proc with
- *   | Some r_proc_name ->
- *     let () = x_binfo_pp "marking" no_pos in
- *     let () = start_repair := true in
- *     let cprog, _ = Astsimp.trans_prog iprog in
- *     let cproc = !Syn.repair_proc |> Gen.unsome in
- *     let blocks = RP.get_block_traces cproc in
- *     let () = x_tinfo_hp (add_str "blocks" RP.pr_bt) blocks no_pos in
- *     let check_post = !Syn.check_post_list in
- *     let traces = RP.get_statement_traces blocks in
- *     let pr_traces = pr_list (pr_list RP.pr_c_exps) in
- *     let traces =
- *       if List.length check_post = List.length traces then
- *         let pairs = List.combine traces check_post in
- *         let blocks = pairs |> List.filter (fun (_, x) -> x) |> List.map fst in
- *         let blocks = List.filter (fun x -> x != []) blocks in
- *         blocks
- *       else if !repair_loc != None then
- *         let repair_pos = !repair_loc |> Gen.unsome in
- *         let helper pos exp_list =
- *           let pos_list = exp_list |> List.map C.pos_of_exp in
- *           List.exists (RP.eq_loc_ln pos) pos_list in
- *         let helper2 trace = trace |> List.exists (helper repair_pos) in
- *         let traces = traces |> List.filter helper2 in
- *         traces
- *       else [] in
- *     let () = x_binfo_hp (add_str "traces" pr_traces) traces no_pos in
- *     let helper cur_res trace =
- *       if cur_res = None then
- *         let trace = List.rev trace in
- *         let aux cur_res block =
- *           if cur_res = None then
- *             repair_one_block iprog cprog trace cproc block
- *           else cur_res in
- *         List.fold_left aux None trace
- *       else cur_res in
- *     List.fold_left helper None traces
- *   | _ -> None *)
 
 let buggy_level_one body var_decls data_decls =
   let n_body_list = [] in
