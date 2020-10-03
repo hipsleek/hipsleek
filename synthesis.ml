@@ -355,7 +355,8 @@ let pr_frame_data rcore =
 let pr_rule_alloc r =
   let data = r.ra_data in
   let params = r.ra_params in
-  data ^ "(" ^ (pr_vars params) ^ ")"
+  let n_var = r.ra_var in
+  (pr_var n_var) ^ " <-" ^ data ^ "(" ^ (pr_vars params) ^ ")"
 
 let pr_rule_mk_null r =
   let var = r.rmn_var in
@@ -2200,7 +2201,20 @@ let rule_use_var var rule =
     (fun _ _ -> rule_use_var var rule) var rule
 
 let rm_redundant_rules (rules: rule list) : rule list =
-  let rec aux rules = match rules with
+  let rec filter_allocate_rule rules = match rules with
+    | [] -> []
+    | h_rule::t_rules ->
+      begin
+        match h_rule with
+        | RlAllocate rc ->
+          let r_var = rc.ra_var in
+          if List.exists (fun rule -> rule_use_var r_var rule) t_rules then
+            h_rule::(filter_allocate_rule t_rules)
+          else filter_allocate_rule t_rules
+        | _ -> h_rule::(filter_allocate_rule t_rules)
+      end in
+  let n_rules = filter_allocate_rule rules in
+  let rec filter_mk_null_rule rules = match rules with
     | [] -> []
     | h_rule::t_rules ->
       begin
@@ -2208,11 +2222,11 @@ let rm_redundant_rules (rules: rule list) : rule list =
         | RlMkNull rc ->
           let r_var = rc.rmn_var in
           if List.exists (fun rule -> rule_use_var r_var rule) t_rules then
-            h_rule::(aux t_rules)
-          else aux t_rules
-        | _ -> h_rule::(aux t_rules)
+            h_rule::(filter_mk_null_rule t_rules)
+          else filter_mk_null_rule t_rules
+        | _ -> h_rule::(filter_mk_null_rule t_rules)
       end in
-  aux rules
+    filter_mk_null_rule n_rules
 
 
 let rm_redundant_rules (rules: rule list) : rule list =
@@ -2466,11 +2480,11 @@ let replace_exp_proc n_exp proc num =
       | _ -> exp in
     aux exp in
   let body = proc.I.proc_body |> Gen.unsome in
-  let () = x_tinfo_hp (add_str "proc body" pr_i_exp) body no_pos in
+  let () = x_binfo_hp (add_str "proc body" pr_i_exp) body no_pos in
   let () = x_tinfo_hp (add_str "num" pr_int) num no_pos in
   let n_body = Some (replace_exp_aux n_exp body num) in
-  let () = x_tinfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos in
-  let () = x_tinfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
+  let () = x_binfo_hp (add_str "n_exp" pr_i_exp) n_exp no_pos in
+  let () = x_binfo_hp (add_str "n_body" pr_i_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
 
 let replace_exp_cproc n_exp proc =
@@ -2849,8 +2863,6 @@ let compare_rule_assign_vs_assign goal r1 r2 =
   else if CP.is_res_spec_var r2.ra_lhs then PriLow
   else PriEqual
 
-let compare_rule_unfold_post_vs_mk_null r1 r2 =
-  PriLow
 
 let compare_rule_assign_vs_other goal r1 r2 = match r2 with
   | RlAssign r2 -> compare_rule_assign_vs_assign goal r1 r2
@@ -2874,16 +2886,15 @@ let compare_rule_frame_data_vs_other r1 r2 =
     else PriLow
   | RlSkip
   | RlAllocate _ -> PriLow
-  | RlMkNull _ -> PriLow
+  | RlMkNull _ -> PriHigh
   | RlReturn _ -> PriLow
   | RlFree _ -> PriLow
   | RlFRead _ -> PriLow
-  (* | RlMkNull _ -> PriLow *)
   | _ -> PriHigh
 
 let compare_rule_fun_call_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
-  | RlMkNull _ -> PriLow
+  | RlMkNull _ -> PriHigh
   | RlNewNum _ -> PriHigh
   | RlUnfoldPre _ -> PriHigh
   | _ -> PriHigh
@@ -2895,7 +2906,7 @@ let compare_rule_unfold_post_vs_unfold_post r1 r2 =
 
 let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
   | RlUnfoldPost r2 -> compare_rule_unfold_post_vs_unfold_post r1 r2
-  | RlMkNull r2 -> compare_rule_unfold_post_vs_mk_null r1 r2
+  | RlMkNull _ -> PriHigh
   | RlReturn _ -> PriLow
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
   | _ -> PriLow
@@ -2919,7 +2930,7 @@ let compare_rule_fread_vs_fread r1 r2 =
 
 let compare_rule_unfold_pre_vs_other r1 r2 = match r2 with
   | RlReturn _ -> PriLow
-  | RlMkNull _ -> PriLow
+  | RlMkNull _ -> PriHigh
   | RlNewNum _ -> PriLow
   | RlFuncCall _ -> PriLow
   | RlAllocate r2 -> if r2.ra_end then PriLow else PriHigh
@@ -2930,10 +2941,6 @@ let compare_rule_allocate_vs_other r1 r2 = match r2 with
   | RlAllocate r2 ->
     if r2.ra_end then PriLow else PriEqual
   | _ -> PriLow
-
-let compare_rule_return_vs_other r r2 = match r2 with
-  | RlReturn _ -> PriEqual
-  | _ -> PriHigh
 
 let compare_rule_post_assign_vs_other r1 r2 = match r2 with
   | RlSkip | RlReturn _ -> PriLow
@@ -2975,7 +2982,8 @@ let compare_rule_mk_null_vs_other r1 r2 = match r2 with
     if CP.is_int_type (CP.get_exp_type r1.rmn_null) then PriHigh
     else if CP.is_int_type (CP.get_exp_type r2.rmn_null) then PriLow
     else PriEqual
-  | _ -> PriHigh
+(* | _ -> PriHigh *)
+  | _ -> PriLow
 
 let compare_rule_new_num_vs_other r1 r2 = match r2 with
   | RlFuncCall _ -> PriLow
@@ -2984,7 +2992,7 @@ let compare_rule_new_num_vs_other r1 r2 = match r2 with
 let compare_rule goal r1 r2 =
   match r1 with
   | RlSkip -> PriHigh
-  | RlReturn r -> compare_rule_return_vs_other r r2
+  | RlReturn _ -> PriHigh
   | RlUnfoldPre r1 -> compare_rule_unfold_pre_vs_other r1 r2
   | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2

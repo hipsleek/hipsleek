@@ -373,7 +373,8 @@ let mk_pair_candidate_iprog iprog iproc (fst_cand, snd_cand) =
     (n_prog, n_iproc) in
   let (n_prog, n_iproc) = aux iprog iproc fst_cand 1 in
   let (n_prog, n_iproc) = aux n_prog n_iproc snd_cand 2 in
-  let () = x_tinfo_hp (add_str "level2_proc" RP.pr_proc) n_iproc no_pos in
+  (* TODO: *)
+  let () = x_binfo_hp (add_str "level2_proc" RP.pr_proc) n_iproc no_pos in
   n_prog
 
 let repair_one_pair proc_name iprog r_iproc (fst_cand, snd_cand) =
@@ -478,11 +479,12 @@ let repair_iprog (iprog:I.prog_decl) repair_proc =
   let procs = iprog.I.prog_proc_decls in
   let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
   let res = repair_level_one iprog repair_proc r_iproc in
-  if res == None then
-    let () = Syn.is_return_cand := false in
-    repair_level_two iprog repair_proc r_iproc
-  else
-    res
+  (* TODO: un-comment when fix bug *)
+  (* if res == None then
+   *   let () = Syn.is_return_cand := false in
+   *   repair_level_two iprog repair_proc r_iproc
+   * else *)
+  res
 
 (* let repair_straight_line (iprog:I.prog_decl) (n_prog:C.prog_decl)
  *     trace orig_proc proc block (specs:CF.formula * CF.formula) =

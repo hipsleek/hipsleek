@@ -911,7 +911,7 @@ let solve_entailments_one prog entails =
   let sb_ents = List.map translate_entailment entails in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let () = x_tinfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let start_time = get_time () in
   let ptree = SBPU.solve_entailments ~pre:"N_P1" ~post:"N_Q1" ~timeout:(Some 20)
       sb_prog sb_ents in
@@ -936,7 +936,6 @@ let get_entails entails str_list =
   let all_str = List.fold_left aux str_list entails in
   entails |> List.filter (fun (x,y) -> Syn.get_hp_formula all_str x != [] ||
                                        Syn.get_hp_formula all_str y != [])
-
 let solve_entailments_two prog entails =
   let entails = List.map (fun (x, y) -> (Syn.remove_exists x, y)) entails in
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in

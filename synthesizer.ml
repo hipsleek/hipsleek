@@ -357,7 +357,7 @@ let synthesize_program goal =
   | StValid st_core ->
     let () = x_tinfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in
     let i_exp = Syn.synthesize_st_core st_core in
-    let () = x_tinfo_hp (add_str "iast exp" Syn.pr_i_exp_opt) i_exp no_pos in
+    let () = x_binfo_hp (add_str "iast exp" Syn.pr_i_exp_opt) i_exp no_pos in
     i_exp
   | StUnkn _ -> let () = x_tinfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
     let () = x_tinfo_hp (add_str "fail branches" Syn.pr_int) (!Syn.fail_branch_num) no_pos in
@@ -365,9 +365,10 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars called_procs num =
   let goal = Syn.mk_goal prog called_procs pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" Syn.pr_goal) goal no_pos in
   let start_time = get_time () in
   let iast_exp = synthesize_program goal in
+  let () = x_binfo_hp (add_str "iast exp" Syn.pr_i_exp_opt) iast_exp no_pos in
   let duration = get_time () -. start_time in
   let () = Syn.synthesis_time := (!Syn.synthesis_time) +. duration in
   let pname, i_procs = proc.CA.proc_name, iprog.IA.prog_proc_decls in
@@ -484,13 +485,13 @@ let synthesize_entailments_two (iprog:IA.prog_decl) prog proc proc_names =
     let spec_list1 = ranking_specs spec_list1 in
     let spec1 = List.hd spec_list1 in
     let pr_spec = pr_pair Syn.pr_f Syn.pr_f in
-    let () = x_tinfo_hp (add_str "spec1" pr_spec) spec1 no_pos in
+    let () = x_binfo_hp (add_str "spec1" pr_spec) spec1 no_pos in
     let res1 = helper spec1 fst_pos in
     if res1 != None then
       let spec_list2 = List.map (get_spec_from_hps prog snd_pos) hps2 in
       let spec_list2 = ranking_specs spec_list2 in
       let spec2 = List.hd spec_list2 in
-      let () = x_tinfo_hp (add_str "spec2" pr_spec) spec2 no_pos in
+      let () = x_binfo_hp (add_str "spec2" pr_spec) spec2 no_pos in
       let res2 = helper spec2 snd_pos in
       if res2 != None then Some (unsome res1, unsome res2)
       (* To Validate *)
