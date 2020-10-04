@@ -352,7 +352,7 @@ let synthesize_program goal =
   let st = synthesize_one_goal goal in
   let st_status = Syn.get_synthesis_tree_status st in
   (* TODO: to print info *)
-  let () = x_binfo_hp (add_str "synthesis tree " Syn.pr_st) st no_pos in
+  let () = x_tinfo_hp (add_str "synthesis tree " Syn.pr_st) st no_pos in
   match st_status with
   | StValid st_core ->
     let () = x_tinfo_hp (add_str "tree_core " Syn.pr_st_core) st_core no_pos in

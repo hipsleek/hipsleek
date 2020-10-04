@@ -2971,6 +2971,7 @@ let compare_rule_frame_pred_vs_other goal r1 r2 =
   | RlFree _ -> PriLow
   | RlReturn _ -> PriLow
   | RlNewNum _ -> PriLow
+  | RlFuncCall _ -> PriLow
   (* | RlMkNull _ -> PriLow *)
   (* | RlUnfoldPost _
    * | RlFuncCall _ -> PriLow *)
