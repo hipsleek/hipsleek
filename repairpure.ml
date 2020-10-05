@@ -385,46 +385,53 @@ let eq_exp e1 e2 = let loc1 = I.get_exp_pos e1 in
   loc1 = loc2
 
 let rec replace_exp exp n_exp old_exp : I.exp =
-  match (exp: I.exp) with
-  | Assign e -> if eq_exp exp old_exp then n_exp else
+  if eq_exp exp old_exp then n_exp else
+    match (exp: I.exp) with
+    | I.Assign e ->
       let r1 = replace_exp e.exp_assign_lhs n_exp old_exp in
       let r2 = replace_exp e.exp_assign_rhs n_exp old_exp in
-      Assign {e with exp_assign_lhs = r1;
-                     exp_assign_rhs = r2}
-  | Binary e -> if eq_exp exp old_exp then n_exp else
-      let r1 = replace_exp e.exp_binary_oper1 n_exp old_exp in
-      let r2 = replace_exp e.exp_binary_oper2 n_exp old_exp in
-      Binary {e with exp_binary_oper1 = r1;
-                     exp_binary_oper2 = r2}
-  | Bind e -> if eq_exp exp old_exp then n_exp else
+      I.Assign {e with exp_assign_lhs = r1;
+                       exp_assign_rhs = r2}
+    | I.Binary e -> if eq_exp exp old_exp then n_exp else
+        let r1 = replace_exp e.exp_binary_oper1 n_exp old_exp in
+        let r2 = replace_exp e.exp_binary_oper2 n_exp old_exp in
+        Binary {e with exp_binary_oper1 = r1;
+                       exp_binary_oper2 = r2}
+    | I.Free f_exp ->
+      let n_exp = replace_exp f_exp.I.exp_free_exp n_exp old_exp in
+      I.Free {f_exp with I.exp_free_exp = n_exp}
+    | I.Bind e ->
       let r_exp = replace_exp e.exp_bind_body n_exp n_exp in
       Bind {e with exp_bind_body = r_exp}
-  | Block e -> let r_exp = replace_exp e.exp_block_body n_exp old_exp in
+    | I.Block e ->
+      let r_exp = replace_exp e.exp_block_body n_exp old_exp in
       Block {e with exp_block_body = r_exp}
-  | Cast e ->
-    Cast {e with exp_cast_body = replace_exp e.exp_cast_body n_exp old_exp}
-  | Cond e ->
-    let r1 = replace_exp e.exp_cond_condition n_exp old_exp in
-    let r2 = replace_exp e.exp_cond_then_arm n_exp old_exp in
-    let r3 = replace_exp e.exp_cond_else_arm n_exp old_exp in
-    Cond {e with exp_cond_condition = r1;
-                 exp_cond_then_arm = r2;
-                 exp_cond_else_arm = r3}
-  | Catch e -> Catch {
-      e with exp_catch_body = replace_exp e.exp_catch_body n_exp old_exp }
-  | IntLit e -> if eq_exp exp old_exp then n_exp else exp
-  | Label (a, body) -> Label (a, replace_exp body n_exp old_exp)
-  | Member e ->
-    Member {e with exp_member_base = replace_exp e.exp_member_base n_exp old_exp}
-  | Return e -> if eq_exp exp old_exp then n_exp else exp
-  | Seq e -> let r_e1 = replace_exp e.exp_seq_exp1 n_exp old_exp in
-    let r_e2 = replace_exp e.exp_seq_exp2 n_exp old_exp in
-    Seq {e with exp_seq_exp1 = r_e1; exp_seq_exp2 = r_e2}
-  | Unary e -> let n_e = replace_exp e.exp_unary_exp n_exp old_exp in
-    Unary {e with exp_unary_exp = n_e}
-  | CallRecv _
-  | CallNRecv _ -> if eq_exp exp old_exp then n_exp else exp
-  | _ -> exp
+    | I.Cast e ->
+      I.Cast {e with exp_cast_body =
+                       replace_exp e.exp_cast_body n_exp old_exp}
+    | I.Cond e ->
+      let r1 = replace_exp e.exp_cond_condition n_exp old_exp in
+      let r2 = replace_exp e.exp_cond_then_arm n_exp old_exp in
+      let r3 = replace_exp e.exp_cond_else_arm n_exp old_exp in
+      I.Cond {e with exp_cond_condition = r1;
+                   exp_cond_then_arm = r2;
+                     exp_cond_else_arm = r3}
+    | I.Catch e ->
+      I.Catch {
+        e with exp_catch_body = replace_exp e.exp_catch_body n_exp old_exp }
+    | I.Label (a, body) ->
+      I.Label (a, replace_exp body n_exp old_exp)
+    | I.Member e ->
+      I.Member {e with exp_member_base =
+                         replace_exp e.exp_member_base n_exp old_exp}
+    | I.Seq e ->
+      let r_e1 = replace_exp e.exp_seq_exp1 n_exp old_exp in
+      let r_e2 = replace_exp e.exp_seq_exp2 n_exp old_exp in
+      I.Seq {e with exp_seq_exp1 = r_e1; exp_seq_exp2 = r_e2}
+    | I.Unary e ->
+      let n_e = replace_exp e.exp_unary_exp n_exp old_exp in
+      I.Unary {e with exp_unary_exp = n_e}
+    | _ -> exp
 
 let rec replace_exp_with_loc exp n_exp loc : I.exp =
   match (exp:I.exp) with
