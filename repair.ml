@@ -480,12 +480,11 @@ let repair_iprog (iprog:I.prog_decl) repair_proc =
   let procs = iprog.I.prog_proc_decls in
   let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) procs in
   let res = repair_one_stmt iprog repair_proc r_iproc in
-  (* TODO: un-comment when fix bug *)
-  (* if res == None then
-   *   let () = Syn.is_return_cand := false in
-   *   repair_level_two iprog repair_proc r_iproc
-   * else *)
-  res
+  if res == None then
+    let () = Syn.is_return_cand := false in
+    repair_level_two iprog repair_proc r_iproc
+  else
+    res
 
 let buggy_level_one body var_decls data_decls =
   let n_body_list = [] in
@@ -615,12 +614,14 @@ let iprog2string (iprog: I.prog_decl) : string =
                            I.prog_data_decls = data_decls} in
   RP.pr_iprog n_prog
 
-let store_infested_prog (src: string) (iprog_str : string) : string =
+let store_infested_prog (src: string) level (iprog_str : string) : string =
   let file_name = Filename.basename src in
   let dir = Sys.getcwd() in
   let suffix = Filename.extension file_name in
   let f_name = Filename.chop_suffix file_name suffix in
-  let b_file = f_name ^ "_buggy_" ^ (RP.pr_int !RP.infestor_num) ^ suffix in
+  let b_file = f_name ^ "_buggy_" ^
+               (string_of_int level) ^ "_" ^
+               (RP.pr_int !RP.infestor_num) ^ suffix in
   let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
   let () = RP.infestor_num := !RP.infestor_num + 1 in
   let () = x_tinfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in
@@ -692,23 +693,26 @@ let infest_and_output src (iprog: I.prog_decl) =
   let level_one_progs = buggy_progs
                         |> List.filter (fun (_, y) -> y = 1)
                         |> List.map fst
-                        |> List.filter filter_prog in
-  (* |> get_num_cases 10 in *)
-  let level_two_progs = [] in
-  (* buggy_progs
-   *                     |> List.filter (fun (_, y) -> y = 2)
-   *                     |> List.map fst
-   *                     |> List.filter filter_prog
-   *                     |> get_num_cases 10 in *)
-  (* let _ = level_one_progs |> List.map (fun buggy_prog ->
-   *     output_infestor_prog src buggy_prog 1) in
-   * let _ = level_two_progs |> List.map (fun buggy_prog ->
-   *     output_infestor_prog src buggy_prog 2) in *)
-  let injected_programs = level_one_progs @ level_two_progs
+                        |> List.filter filter_prog
+                        |> get_num_cases 20 in
+  (* let level_two_progs = [] in *)
+  let level_two_progs =
+    if List.length level_one_progs >= 20 then []
+    else
+      buggy_progs
+      |> List.filter (fun (_, y) -> y = 2)
+      |> List.map fst
+      |> List.filter filter_prog
+      |> get_num_cases (20 - (List.length level_one_progs)) in
+  let store_l_one = level_one_progs
                           |> List.map iprog2string
                           |> Gen.BList.remove_dups_eq eq_str
-                          |> List.map (store_infested_prog src) in
-  let injected_prog_num = List.length injected_programs in
+                          |> List.map (store_infested_prog src 1) in
+  let store_l_two = level_two_progs
+                          |> List.map iprog2string
+                          |> Gen.BList.remove_dups_eq eq_str
+                          |> List.map (store_infested_prog src 2) in
+  let injected_prog_num = List.length (store_l_one @ store_l_two) in
   let () = x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " RP.pr_int)
       injected_prog_num no_pos in
   x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
