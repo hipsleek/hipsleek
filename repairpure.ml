@@ -220,7 +220,8 @@ let get_ast_traces (exp: I.exp) =
     | I.Seq s_exp ->
       let block_tree = aux s_exp.I.exp_seq_exp1 block_tree in
       aux s_exp.I.exp_seq_exp2 block_tree
-    | I.Return _ | I.CallRecv _ | I.CallNRecv _ | I.VarDecl _
+    | I.Return _ | I.CallRecv _ | I.CallNRecv _
+    | I.Free _
     | I.Assign _ ->
       let stmts = (block_tree.bck_statements) @ [exp] in
       {block_tree with bck_statements = stmts}
