@@ -1427,6 +1427,9 @@ let remove_field_infestor body dif_num var_decls data_decls =
       | I.Block block ->
         let n_block, res = aux block.I.exp_block_body changed in
         (I.Block {block with exp_block_body = n_block}, res)
+      | I.Free free_exp ->
+        let n_exp, res = aux free_exp.I.exp_free_exp changed in
+        (I.Free {free_exp with exp_free_exp = n_exp}, res)
       | I.Label (a, l) ->
         let n_l, res = aux l changed in
         (I.Label (a, n_l), res)
@@ -1521,6 +1524,9 @@ let add_field_infestor body dif_num var_decls data_decls =
       | I.Label (a, l) ->
         let n_l, res = aux l changed in
         (I.Label (a, n_l), res)
+      | I.Free free_exp ->
+        let n_exp, res = aux free_exp.I.exp_free_exp changed in
+        (I.Free {free_exp with exp_free_exp = n_exp}, res)
       | I.Seq seq ->
         let (n_e1, r1) = aux seq.I.exp_seq_exp1 changed in
         let (n_e2, r2) = aux seq.I.exp_seq_exp2 r1 in
@@ -1553,15 +1559,22 @@ let add_field_infestor body dif_num var_decls data_decls =
         let filter_fun x =
           type_of_exp exp var_decls data_decls =
           type_of_exp x var_decls data_decls in
-        let aux_field x =
+        let aux_field field =
+          let () = x_tinfo_hp (add_str "field_name" pr_id) field no_pos in
           I.Member {
             I.exp_member_base = exp;
-            I.exp_member_fields = [x];
+            I.exp_member_fields = [field];
             I.exp_member_path_id = None;
             I.exp_member_pos = e.I.exp_member_pos;
           } in
-        let n_members = e.I.exp_member_fields |> List.map aux_field in
+        let () = x_tinfo_hp (add_str "c_exp" pr_exp) exp no_pos in
+        let n_members = e.I.exp_member_fields
+                        |> Gen.BList.remove_dups_eq (fun a b ->
+                            String.compare a b == 0)
+                        |> List.map aux_field in
+        let () = x_tinfo_hp (add_str "n_members" pr_exps) n_members no_pos in
         let n_members = n_members |> List.filter filter_fun in
+        let () = x_tinfo_hp (add_str "n_members" pr_exps) n_members no_pos in
         if List.length n_members > 0 then
           if changed <= (List.length n_members) then
             let () = pos_list := (e.I.exp_member_pos)::(!pos_list) in
@@ -1626,8 +1639,9 @@ let add_field_infestor body dif_num var_decls data_decls =
 let add_field_infestor body dif_num var_decls data_decls =
   let pr_exp = Iprinter.string_of_exp_repair in
   let pr_skip _ = "" in
-  Debug.no_1 "add_field_infestor"  pr_exp (pr_triple pr_exp string_of_int pr_skip)
-    (fun _ -> add_field_infestor body dif_num var_decls data_decls) body
+  Debug.no_2 "add_field_infestor" pr_exp string_of_int
+    (pr_triple pr_exp string_of_int pr_skip)
+    (fun _ _ -> add_field_infestor body dif_num var_decls data_decls) body dif_num
 
 (* x->next : x->prev *)
 let modify_field_infestor body dif_num var_decls data_decls =

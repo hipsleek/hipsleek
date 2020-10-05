@@ -508,20 +508,16 @@ let buggy_level_one body var_decls data_decls =
       let n_list = (n_body, level)::list in
       aux2 body (num+1) n_list
     else list in
-  let n_body_list =
-    if List.length n_body_list >= 10 then n_body_list
-    else n_body_list @ (aux2 body 1 []) in
+  let n_body_list = n_body_list @ (aux2 body 1 []) in
   let rec aux3 body num list =
     let n_body, r_num, pos_list = RP.add_field_infestor body num var_decls
         data_decls in
     if r_num = 0 then
       let level = RP.find_infest_level n_body pos_list in
       let n_list = (n_body, level)::list in
-      aux3 body (num+1) n_list
+      aux3 body (num + 1) n_list
     else list in
-  let n_body_list =
-    if List.length n_body_list >= 10 then n_body_list
-    else n_body_list @ (aux3 body 1 []) in
+  let n_body_list = n_body_list @ (aux3 body 1 []) in
   let rec aux4 body num list =
     let n_body, r_num, pos_list = RP.modify_operator_infestor body num in
     if r_num = 0 then
@@ -529,9 +525,7 @@ let buggy_level_one body var_decls data_decls =
       let n_list = (n_body, level)::list in
       aux4 body (num+1) n_list
     else list in
-  let n_body_list =
-    if List.length n_body_list >= 10 then n_body_list
-    else n_body_list @ (aux4 body 1 []) in
+  let n_body_list = n_body_list @ (aux4 body 1 []) in
   n_body_list
 
 let buggy_level_two body var_decls data_decls =
@@ -595,16 +589,7 @@ let create_buggy_proc (iprog: I.prog_decl) (proc : I.proc_decl) =
   let n_body_list = create_buggy_proc_wrapper body var_decls data_decls in
   n_body_list |> List.map (fun (x, y) -> ({proc with I.proc_body = Some x}, y))
 
-let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
-  let file_name = Filename.basename src in
-  let dir = Sys.getcwd() in
-  let suffix = Filename.extension file_name in
-  let f_name = Filename.chop_suffix file_name suffix in
-  let b_file = f_name ^ "_buggy_" ^ (RP.pr_int !RP.infestor_num) ^ suffix in
-  (* let b_file = f_name ^ "_buggy_" ^ (RP.pr_int level) ^
-     "_" ^ (RP.pr_int !infestor_num) ^ suffix in *)
-  let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
-  let () = RP.infestor_num := !RP.infestor_num + 1 in
+let iprog2string (iprog: I.prog_decl) : string =
   let view_decls = iprog.I.prog_view_decls in
   let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"; "size"] in
   let pre_datas = ["barrier"; "phase"; "thrd"; "__RET"; "__ArrBoundErr"; "lock";
@@ -623,10 +608,19 @@ let output_infestor_prog (src: string) (iprog : I.prog_decl) _level : string =
   let n_prog = {iprog with I.prog_view_decls = view_decls;
                            I.prog_proc_decls = procs;
                            I.prog_data_decls = data_decls} in
-  let output = RP.pr_iprog n_prog in
-  let () = x_binfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in
+  RP.pr_iprog n_prog
+
+let store_infested_prog (src: string) (iprog_str : string) : string =
+  let file_name = Filename.basename src in
+  let dir = Sys.getcwd() in
+  let suffix = Filename.extension file_name in
+  let f_name = Filename.chop_suffix file_name suffix in
+  let b_file = f_name ^ "_buggy_" ^ (RP.pr_int !RP.infestor_num) ^ suffix in
+  let to_saved_file = dir ^ Filename.dir_sep ^ b_file in
+  let () = RP.infestor_num := !RP.infestor_num + 1 in
+  let () = x_tinfo_hp (add_str "STORING: " pr_id) to_saved_file no_pos in
   let oc = open_out to_saved_file in
-  fprintf oc "%s\n" output; close_out oc;
+  fprintf oc "%s\n" iprog_str; close_out oc;
   to_saved_file
 
 let create_buggy_prog src (iprog : I.prog_decl)=
@@ -701,11 +695,15 @@ let infest_and_output src (iprog: I.prog_decl) =
    *                     |> List.map fst
    *                     |> List.filter filter_prog
    *                     |> get_num_cases 10 in *)
-  let _ = level_one_progs |> List.map (fun buggy_prog ->
-      output_infestor_prog src buggy_prog 1) in
-  let _ = level_two_progs |> List.map (fun buggy_prog ->
-      output_infestor_prog src buggy_prog 2) in
-  let injected_programs = List.length (level_one_progs @ level_two_progs) in
+  (* let _ = level_one_progs |> List.map (fun buggy_prog ->
+   *     output_infestor_prog src buggy_prog 1) in
+   * let _ = level_two_progs |> List.map (fun buggy_prog ->
+   *     output_infestor_prog src buggy_prog 2) in *)
+  let injected_programs = level_one_progs @ level_two_progs
+                          |> List.map iprog2string
+                          |> Gen.BList.remove_dups_eq eq_str
+                          |> List.map (store_infested_prog src) in
+  let injected_prog_num = List.length injected_programs in
   let () = x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " RP.pr_int)
-      injected_programs no_pos in
+      injected_prog_num no_pos in
   x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
