@@ -1056,7 +1056,7 @@ let create_tmpl_proc (iprog: I.prog_decl) (prog : C.prog_decl)
   let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
   let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
   let n_body = create_tmpl_body_block body block var_decls in
-  let () = x_binfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
+  let () = x_tinfo_hp (add_str "n_body" pr_c_exp) n_body no_pos in
   let n_proc = {proc with C.proc_body = Some n_body} in
   (* report_error no_pos "to debug template proc" *)
   let fcode_cprocs = C.list_of_procs fcode_cprog in
@@ -1621,7 +1621,7 @@ let add_field_infestor body dif_num var_decls data_decls =
         else (exp, changed)
       | I.Var var ->
         let v_name = var.I.exp_var_name in
-        let () = x_binfo_hp (add_str "v_name: " pr_id) v_name no_pos in
+        let () = x_tinfo_hp (add_str "v_name: " pr_id) v_name no_pos in
         begin
           try
             let typed_v = List.find (fun (y, x) -> eq_str x v_name &&
@@ -1630,7 +1630,7 @@ let add_field_infestor body dif_num var_decls data_decls =
             let typ_name = match typ with
               | Named str -> str
               | _ -> "" in
-            let () = x_binfo_hp (add_str "field" pr_id) typ_name no_pos in
+            let () = x_tinfo_hp (add_str "field" pr_id) typ_name no_pos in
             let data = List.find (fun x -> eq_str x.I.data_name typ_name) data_decls in
             let fields = data.I.data_fields |> List.map (fun (x,_,_,_) -> x) in
             let fields = fields |> List.filter (fun (x, _) -> is_node_type x) in
