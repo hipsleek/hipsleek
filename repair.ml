@@ -69,7 +69,7 @@ let mutating_proc iprog (iproc: I.proc_decl): bool =
         let cprog, _ = Astsimp.trans_prog n_iprog in
         let () = Typechecker.check_prog_wrapper n_iprog cprog in
         let () = x_binfo_pp " MUTATION STRATEGY" no_pos in
-        let () = x_binfo_hp (add_str "mutated_proc" RP.pr_proc) mutated_proc no_pos in
+        let () = x_binfo_hp (add_str "MUTATION PATCH" RP.pr_proc) mutated_proc no_pos in
         true
       with _ -> false in
   List.fold_left aux_repair false n_proc_list

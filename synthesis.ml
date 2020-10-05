@@ -2226,7 +2226,21 @@ let rm_redundant_rules (rules: rule list) : rule list =
           else filter_mk_null_rule t_rules
         | _ -> h_rule::(filter_mk_null_rule t_rules)
       end in
-    filter_mk_null_rule n_rules
+  let n_rules = filter_mk_null_rule n_rules in
+  let rec filter_fread_rule rules = match rules with
+    | [] -> []
+    | h_rule::t_rules ->
+      begin
+        match h_rule with
+        | RlFRead rc ->
+          let r_var = rc.rfr_value in
+          if List.exists (fun rule -> rule_use_var r_var rule) t_rules then
+            h_rule::(filter_fread_rule t_rules)
+          else filter_fread_rule t_rules
+        | _ -> h_rule::(filter_fread_rule t_rules)
+      end in
+  let n_rules = filter_fread_rule n_rules in
+  n_rules
 
 
 let rm_redundant_rules (rules: rule list) : rule list =
