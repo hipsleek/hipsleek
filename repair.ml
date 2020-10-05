@@ -489,26 +489,26 @@ let repair_iprog (iprog:I.prog_decl) repair_proc =
 
 let buggy_level_one body var_decls data_decls =
   let n_body_list = [] in
-  (* let rec aux1 body num list =
-   *   let n_body, r_num, pos_list = RP.modify_num_infestor body num in
-   *   if r_num = 0 then
-   *     let level = RP.find_infest_level n_body pos_list in
-   *     let n_list = (n_body, level)::list in
-   *     aux1 body (num+1) n_list
-   *   else list in
-   * let n_body_list = n_body_list @ (aux1 body 1 []) in
-   * let rec aux2 body num list =
-   *   let n_body, r_num, pos_list = RP.remove_field_infestor body num var_decls
-   *       data_decls in
-   *   if r_num = 0 then
-   *     let () = x_tinfo_hp (add_str "body" RP.pr_exp) body no_pos in
-   *     let () = x_tinfo_hp (add_str "n_body" RP.pr_exp) n_body no_pos in
-   *     let level = RP.find_infest_level n_body pos_list in
-   *     let () = x_tinfo_hp (add_str "level" RP.pr_int) level no_pos in
-   *     let n_list = (n_body, level)::list in
-   *     aux2 body (num+1) n_list
-   *   else list in
-   * let n_body_list = n_body_list @ (aux2 body 1 []) in *)
+  let rec aux1 body num list =
+    let n_body, r_num, pos_list = RP.modify_num_infestor body num in
+    if r_num = 0 then
+      let level = RP.find_infest_level n_body pos_list in
+      let n_list = (n_body, level)::list in
+      aux1 body (num+1) n_list
+    else list in
+  let n_body_list = n_body_list @ (aux1 body 1 []) in
+  let rec aux2 body num list =
+    let n_body, r_num, pos_list = RP.remove_field_infestor body num var_decls
+        data_decls in
+    if r_num = 0 then
+      let () = x_tinfo_hp (add_str "body" RP.pr_exp) body no_pos in
+      let () = x_tinfo_hp (add_str "n_body" RP.pr_exp) n_body no_pos in
+      let level = RP.find_infest_level n_body pos_list in
+      let () = x_tinfo_hp (add_str "level" RP.pr_int) level no_pos in
+      let n_list = (n_body, level)::list in
+      aux2 body (num+1) n_list
+    else list in
+  let n_body_list = n_body_list @ (aux2 body 1 []) in
   let rec aux3 body num list =
     let n_body, r_num, pos_list = RP.add_field_infestor body num var_decls
         data_decls in
@@ -518,47 +518,47 @@ let buggy_level_one body var_decls data_decls =
       aux3 body (num + 1) n_list
     else list in
   let n_body_list = n_body_list @ (aux3 body 1 []) in
-  (* let rec aux4 body num list =
-   *   let n_body, r_num, pos_list = RP.modify_operator_infestor body num in
-   *   if r_num = 0 then
-   *     let level = RP.find_infest_level n_body pos_list in
-   *     let n_list = (n_body, level)::list in
-   *     aux4 body (num+1) n_list
-   *   else list in
-   * let n_body_list = n_body_list @ (aux4 body 1 []) in *)
+  let rec aux4 body num list =
+    let n_body, r_num, pos_list = RP.modify_operator_infestor body num in
+    if r_num = 0 then
+      let level = RP.find_infest_level n_body pos_list in
+      let n_list = (n_body, level)::list in
+      aux4 body (num+1) n_list
+    else list in
+  let n_body_list = n_body_list @ (aux4 body 1 []) in
   n_body_list
 
-let buggy_level_two body var_decls data_decls = []
-  (* let rec aux (body: I.exp) = match body with
-   *   | I.Block block ->
-   *     let n_blocks = aux block.I.exp_block_body in
-   *     let aux_a (x,y) =
-   *       (I.Block {block with I.exp_block_body = x}, y) in
-   *     let n_blocks = n_blocks |> List.map aux_a in
-   *     n_blocks
-   *   | I.Label (a, l) ->
-   *     let n_labels = aux l in
-   *     let aux_f (x,y) = (I.Label (a, x), y) in
-   *     n_labels |> List.map aux_f
-   *   | I.Cond cond ->
-   *     let t_arm = cond.I.exp_cond_then_arm in
-   *     let e_arm = cond.I.exp_cond_else_arm in
-   *     let left = buggy_level_one t_arm var_decls data_decls
-   *                |> List.filter (fun (_, x) -> x == 1) in
-   *     let right = buggy_level_one e_arm var_decls data_decls
-   *                 |> List.filter (fun (_, x) -> x == 1) in
-   *     if left != [] && right != [] then
-   *       let aux_lelf (lf, l1) =
-   *         right |> List.map (fun (rt, l2) -> (lf, rt, l1 + l2)) in
-   *       let triples = left |> List.map aux_lelf |> List.concat in
-   *       let aux_triple (x,y,z) =
-   *         let n_cond = I.Cond { cond with I.exp_cond_then_arm = x;
-   *                                         I.exp_cond_else_arm = y} in
-   *         (n_cond, z) in
-   *       triples |> List.map aux_triple
-   *     else []
-   *   | _ -> [] in
-   * aux body *)
+let buggy_level_two body var_decls data_decls =
+  let rec aux (body: I.exp) = match body with
+    | I.Block block ->
+      let n_blocks = aux block.I.exp_block_body in
+      let aux_a (x,y) =
+        (I.Block {block with I.exp_block_body = x}, y) in
+      let n_blocks = n_blocks |> List.map aux_a in
+      n_blocks
+    | I.Label (a, l) ->
+      let n_labels = aux l in
+      let aux_f (x,y) = (I.Label (a, x), y) in
+      n_labels |> List.map aux_f
+    | I.Cond cond ->
+      let t_arm = cond.I.exp_cond_then_arm in
+      let e_arm = cond.I.exp_cond_else_arm in
+      let left = buggy_level_one t_arm var_decls data_decls
+                 |> List.filter (fun (_, x) -> x == 1) in
+      let right = buggy_level_one e_arm var_decls data_decls
+                  |> List.filter (fun (_, x) -> x == 1) in
+      if left != [] && right != [] then
+        let aux_lelf (lf, l1) =
+          right |> List.map (fun (rt, l2) -> (lf, rt, l1 + l2)) in
+        let triples = left |> List.map aux_lelf |> List.concat in
+        let aux_triple (x,y,z) =
+          let n_cond = I.Cond { cond with I.exp_cond_then_arm = x;
+                                          I.exp_cond_else_arm = y} in
+          (n_cond, z) in
+        triples |> List.map aux_triple
+      else []
+    | _ -> [] in
+  aux body
 
 let get_num_cases num list =
   let rec aux list cur_list =
