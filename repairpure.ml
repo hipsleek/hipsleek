@@ -1411,6 +1411,34 @@ let delete_one_branch body dif_num =
  *       | _ -> (exp, changed) in
  *   aux body dif_num *)
 
+let get_local_vars body_exp =
+  let rec aux (exp: I.exp) =
+      match exp with
+      | I.Block block -> aux block.I.exp_block_body
+      | I.Label (_, l) -> aux l
+      | I.Seq seq ->
+        let seq1 = aux seq.I.exp_seq_exp1 in
+        let seq2 = aux seq.I.exp_seq_exp2 in
+        seq1 @ seq2
+      | I.Cond cond ->
+        let res1 = aux cond.I.exp_cond_then_arm in
+        let res2 = aux cond.I.exp_cond_else_arm in
+        res1 @ res2
+      | I.VarDecl v_exp ->
+        let typ = v_exp.I.exp_var_decl_type in
+        let v_decls = v_exp.I.exp_var_decl_decls |>
+                      List.map (fun (x,_,_) -> x)
+                      |> List.map (fun x -> (typ, x)) in
+        v_decls
+      | _ -> []
+  in
+  aux body_exp
+
+let get_local_vars (body: I.exp) =
+  Debug.no_1 "get_local_vars" pr_exp (pr_list (pr_pair string_of_typ pr_id))
+    (fun _ -> get_local_vars body) body
+
+
 (* x->next : x *)
 let remove_field_infestor body dif_num var_decls data_decls =
   let pos_list = ref [] in
@@ -1584,7 +1612,7 @@ let add_field_infestor body dif_num var_decls data_decls =
         else (exp, changed)
       | I.Var var ->
         let v_name = var.I.exp_var_name in
-        let () = x_tinfo_hp (add_str "v_name: " pr_id) v_name no_pos in
+        let () = x_binfo_hp (add_str "v_name: " pr_id) v_name no_pos in
         begin
           try
             let typed_v = List.find (fun (y, x) -> eq_str x v_name &&
@@ -1593,6 +1621,7 @@ let add_field_infestor body dif_num var_decls data_decls =
             let typ_name = match typ with
               | Named str -> str
               | _ -> "" in
+            let () = x_binfo_hp (add_str "field" pr_id) typ_name no_pos in
             let data = List.find (fun x -> eq_str x.I.data_name typ_name) data_decls in
             let fields = data.I.data_fields |> List.map (fun (x,_,_,_) -> x) in
             let fields = fields |> List.filter (fun (x, _) -> is_node_type x) in

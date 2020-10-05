@@ -1661,7 +1661,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       } ->
       let (n_ctx, res) = Synthesis.free_ctx prog ctx (typ, name) in
       if res then n_ctx
-      else if (!enable_repair) then ctx
+      (* else if (!enable_repair) then ctx *)
       else
         let to_print = "Free variable failedxxx." in
         raise (Err.Ppf ({
