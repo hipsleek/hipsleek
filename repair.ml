@@ -444,6 +444,19 @@ let repair_level_two (iprog: I.prog_decl) repair_proc (r_iproc: I.proc_decl) =
     fst |> List.map (fun x ->
         snd |> List.map (fun y -> (x,y))) |> List.concat in
   let pairs = List.map aux_pair candidates |> List.concat in
+  let not_var_decl (exp: I.exp) = match (exp:I.exp) with
+    | I.VarDecl _ -> false
+    | I.Return e_return ->
+      begin
+        match e_return.I.exp_return_val with
+        | Some (I.CallNRecv call_fun) ->
+          if eq_str call_fun.I.exp_call_nrecv_method "node_error" then false
+          else true
+        | _ -> true
+      end
+    | _ -> true in
+  let pairs = pairs |> List.filter (fun (x,y) -> not_var_decl x
+                                                 && not_var_decl y) in
   let pr_pairs = pr_list (pr_pair RP.pr_exp RP.pr_exp) in
   let () = x_tinfo_hp (add_str "candidates" pr_pairs) pairs no_pos in
   let cproc = !Syn.repair_proc |> Gen.unsome in
@@ -656,20 +669,20 @@ let start_repair_wrapper (iprog: I.prog_decl) start_time =
   match (!Typechecker.repair_proc) with
   | Some r_pname ->
     let start_time = get_time () in
-    let res = repair_iprog iprog r_pname in
-    if res != None then
+    let mutated_res = repair_iprog_by_mutation iprog r_pname in
+    if mutated_res then
       let duration = get_time() -. start_time in
-      let () = x_binfo_hp (add_str "TOTAL REPAIR TIME: " RP.pr_float)
-          duration no_pos in
+      let () = x_binfo_hp (add_str "TOTAL REPAIR TIME: " RP.pr_float) duration no_pos in
       let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
-      true
+      mutated_res
     else
-      let mutated_res = repair_iprog_by_mutation iprog r_pname in
-      if mutated_res then
+      let res = repair_iprog iprog r_pname in
+      if res != None then
         let duration = get_time() -. start_time in
-        let () = x_binfo_hp (add_str "TOTAL REPAIR TIME: " RP.pr_float) duration no_pos in
+        let () = x_binfo_hp (add_str "TOTAL REPAIR TIME: " RP.pr_float)
+            duration no_pos in
         let () = x_binfo_pp "REPAIRING SUCCESSFUL" no_pos in
-        mutated_res
+        true
       else
         let () = x_binfo_pp "REPAIR FAIL" no_pos in
         false
@@ -695,7 +708,6 @@ let infest_and_output src (iprog: I.prog_decl) =
                         |> List.map fst
                         |> List.filter filter_prog
                         |> get_num_cases 20 in
-  (* let level_two_progs = [] in *)
   let level_two_progs =
     if List.length level_one_progs >= 20 then []
     else
@@ -713,6 +725,10 @@ let infest_and_output src (iprog: I.prog_decl) =
                           |> Gen.BList.remove_dups_eq eq_str
                           |> List.map (store_infested_prog src 2) in
   let injected_prog_num = List.length (store_l_one @ store_l_two) in
+  let () = x_binfo_hp (add_str "INJECTION LEVEL 1: " RP.pr_int)
+      (List.length store_l_one) no_pos in
+  let () = x_binfo_hp (add_str "INJECTION LEVEL 2: " RP.pr_int)
+      (List.length store_l_two) no_pos in
   let () = x_binfo_hp (add_str "TOTAL INJECTED PROGRAMS: " RP.pr_int)
       injected_prog_num no_pos in
   x_binfo_pp "END INJECTING FAULT TO CORRECT PROGRAM" no_pos
