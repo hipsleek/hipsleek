@@ -60,8 +60,6 @@ This process should work on an Ubuntu-like system.
 1. Install [hipsleek/hipsleek].
 
 ## Omega for MAC:
-(by Yahui Song, 25th May 2020, e0210374@u.nus.edu,
-email me if you have difficulties compiling on mac)
 
 1. uncompress this `omega_modified_for_mac.zip` folder and use it to replace your `omega_modified` folder under `sleekex/`
 2. run
