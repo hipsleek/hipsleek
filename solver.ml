@@ -30,7 +30,7 @@ module Err = Error
 module TP = Tpdispatcher
 module VP = Vperm
 module CVP = CvpermUtils
-module SB = Songbird
+
 
 exception False_from_explicit_inst of string
 
@@ -2637,19 +2637,19 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
   else
     let () = Debug.tinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
     let result, prf =
-      if Synthesis.contains_lseg prog ||            (* SLEEK does not handle lseg well *)
-        SB.contains_hps prog ctx conseq then (* unknown predicate *)
-        SB.heap_entail_after_sat_struc prog ctx conseq
-      else
-      if !songbird || !songbird_disproof then
-        SB.heap_entail_after_sat_struc prog ctx conseq
-      else
+      (* if Synthesis.contains_lseg prog ||            (\* SLEEK does not handle lseg well *\)
+       *   SB.contains_hps prog ctx conseq then (\* unknown predicate *\)
+       *   SB.heap_entail_after_sat_struc prog ctx conseq
+       * else
+       * if !songbird || !songbird_disproof then
+       *   SB.heap_entail_after_sat_struc prog ctx conseq
+       * else *)
         let res = x_add heap_entail_after_sat_struc 1 prog is_folding
                     has_post ctx conseq tid delayed_f join_id pos pid [] in
         (* TRUNG: very temporarily way to export. to remove later *)
-        let _ = if !songbird_export_all_entails then
-            let _ = SB.heap_entail_after_sat_struc prog ctx conseq in
-            () in
+        (* let _ = if !songbird_export_all_entails then
+         *     let _ = SB.heap_entail_after_sat_struc prog ctx conseq in
+         *     () in *)
         res in
     let result = subs_crt_holes_list_ctx result in
     let () = Debug.dinfo_hprint (add_str "result 2766: " Cprinter.string_of_list_context) result no_pos in

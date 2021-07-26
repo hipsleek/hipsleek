@@ -479,7 +479,7 @@ let process_source_full source =
   (* ========= lemma process (normalize, translate, verify) ========= *)
   let fun_lem lem = lem.Iast.coercion_name in
   let () = y_tinfo_hp (add_str "lemma list" (pr_list (fun l -> pr_list fun_lem
-                                    l.Iast.coercion_list_elems)))
+                                                         l.Iast.coercion_list_elems)))
       tiprog.Iast.prog_coercion_decls in
   let () = Lemma.sort_list_lemma tiprog in
   let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog
@@ -708,27 +708,28 @@ let process_source_full source =
   else (try
           Typechecker.check_prog_wrapper intermediate_prog cprog;
           let () = Z3.stop () in
-          if (!enable_repair_template) then
-            Repair.repair_heap_template();
+          ()
+          (* if (!enable_repair_template) then
+           *   Repair.repair_heap_template(); *)
         with _ as e ->
           begin
             let () = Z3.stop () in
-            if (!Globals.enable_repair) then
-              let () = x_binfo_pp "START REPAIR" no_pos in
-              let r_iprog = Repair.start_repair_wrapper intermediate_prog start_time in
-              match r_iprog with
-              | false -> raise e
-              | true ->
-                let () = repaired := true in
-                let () = Globals.verified_procs := [] in ()
-            else
-              let () = if !songbird_disproof then
-                  let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
-                  let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
-                  x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos
-                else () in
+            (* if (!Globals.enable_repair) then
+             *   let () = x_binfo_pp "START REPAIR" no_pos in
+             *   let r_iprog = Repair.start_repair_wrapper intermediate_prog start_time in
+             *   match r_iprog with
+             *   | false -> raise e
+             *   | true ->
+             *     let () = repaired := true in
+             *     let () = Globals.verified_procs := [] in ()
+             * else
+             *   let () = if !songbird_disproof then
+             *       let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
+             *       let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
+             *       x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos
+             *     else () in *)
               let () = print_string_quiet
-                     ("\nException MAIN"
+                  ("\nException MAIN"
                    ^(Printexc.to_string e)^"Occurred!\n") in
               let () = print_string_quiet
                   ("\nError1(s) detected at main "^"\n") in
@@ -747,9 +748,9 @@ let process_source_full source =
   else ();
 
   (* Infestor *)
-  let () = if !infestor then
-      Repair.infest_and_output source intermediate_prog in
-      (* Repair.infest_and_repair source intermediate_prog in *)
+  (* let () = if !infestor then
+   *     Repair.infest_and_output source intermediate_prog in *)
+  (* Repair.infest_and_repair source intermediate_prog in *)
 
   (* Stopping the prover *)
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();

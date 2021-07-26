@@ -3011,35 +3011,36 @@ let process_simplify (f : meta_formula) =
     else print_cf_result rs num_id
   with _ -> print_exc num_id
 
-let process_synthesize typed_vars pre post =
-  let () = x_tinfo_hp (add_str "post: " string_of_meta_formula) post no_pos in
-  let vars_env = List.map (fun (typ, id) ->
-    (id, Typeinfer.mk_spec_var_info typ)) typed_vars in
-  let pre_env, pre_f = meta_to_formula_not_rename pre false [] vars_env in
-  let pre_f = Synthesis.rm_emp_formula pre_f in
-  let post_env, post_f =
-    meta_to_formula_not_rename post false [] (vars_env @ pre_env) in
-  let pr_formula = Cprinter.string_of_formula in
-  let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
-  let post_f = Synthesis.rm_emp_formula post_f in
-  let () = x_tinfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
-  let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
-  let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
-  let start_time = get_time() in
-  let goal = Synt.mk_goal !cprog !cprog_proc_decls pre_f post_f svs in
-  let res = Synthesizer.synthesize_program goal in
-  let duration = get_time() -. start_time in
-  let () = x_binfo_hp (add_str "SYNTHESIS TIME: " string_of_float)
-      duration no_pos in
-  let () = x_binfo_hp (add_str "failed branches" string_of_int) !Synthesis.fail_branch_num
-      no_pos in
-  let () = x_binfo_hp (add_str "average sb time" string_of_float)
-      (!Synthesis.sb_ent_time /. (float_of_int !Synthesis.sb_ent_num)) no_pos in
-  let () = match res with
-    | None -> let () = x_binfo_pp "SYNTHESIS: FAIL" no_pos in ()
-    | _ -> let () = x_binfo_pp "SYNTHESIS RESULT: SUCCESS" no_pos in
-      () in
+let process_synthesize _typed_vars _pre _post =
   ()
+  (* let () = x_tinfo_hp (add_str "post: " string_of_meta_formula) post no_pos in
+   * let vars_env = List.map (fun (typ, id) ->
+   *   (id, Typeinfer.mk_spec_var_info typ)) typed_vars in
+   * let pre_env, pre_f = meta_to_formula_not_rename pre false [] vars_env in
+   * let pre_f = Synthesis.rm_emp_formula pre_f in
+   * let post_env, post_f =
+   *   meta_to_formula_not_rename post false [] (vars_env @ pre_env) in
+   * let pr_formula = Cprinter.string_of_formula in
+   * let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
+   * let post_f = Synthesis.rm_emp_formula post_f in
+   * let () = x_tinfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
+   * let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
+   * let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
+   * let start_time = get_time() in
+   * let goal = Synt.mk_goal !cprog !cprog_proc_decls pre_f post_f svs in
+   * let res = Synthesizer.synthesize_program goal in
+   * let duration = get_time() -. start_time in
+   * let () = x_binfo_hp (add_str "SYNTHESIS TIME: " string_of_float)
+   *     duration no_pos in
+   * let () = x_binfo_hp (add_str "failed branches" string_of_int) !Synthesis.fail_branch_num
+   *     no_pos in
+   * let () = x_binfo_hp (add_str "average sb time" string_of_float)
+   *     (!Synthesis.sb_ent_time /. (float_of_int !Synthesis.sb_ent_num)) no_pos in
+   * let () = match res with
+   *   | None -> let () = x_binfo_pp "SYNTHESIS: FAIL" no_pos in ()
+   *   | _ -> let () = x_binfo_pp "SYNTHESIS RESULT: SUCCESS" no_pos in
+   *     () in
+   * () *)
 
 let process_hull (f : meta_formula) =
   let num_id = "Hull  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
