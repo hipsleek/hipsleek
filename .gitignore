@@ -47,3 +47,4 @@ cil/doc/index.html$
 cil/bin/CilConfig.pm$
 /mona.failure
 mona-1.4/
+omega_modified/*/obj/*
