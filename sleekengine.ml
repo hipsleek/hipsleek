@@ -1369,7 +1369,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let () = x_tinfo_hp (add_str "XXX sst(old)" pr) sst0 no_pos in
   let () = x_tinfo_hp (add_str "XXX sst(new)" pr) sst no_pos in
-  let ante1 = if sst==[] then ante else x_add CF.subst sst ante in
+  let ante1 = if sst==[] then ante else x_add (CF.subst ~incl_ho:true) sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
