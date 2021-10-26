@@ -73,8 +73,8 @@ let parse_file_full file_name (primitive: bool) =
     ) in
     (* start parsing *)
     if not primitive then
-      if (not !Globals.web_compile_flag) then
-        print_endline_quiet ("Parsing file \"" ^ file_name ^ "\" by "
+      if (not (!Globals.web_compile_flag || not !Debug.webprint)) then
+        print_endline_quiet ("Parsing file \"" ^ file_name ^ "\" by " 
                              ^ parser_to_use ^ " parser...");
     let () = Gen.Profiling.push_time "Parsing" in
     let prog = (
@@ -878,14 +878,15 @@ let process_source_full source =
   (* print mapping table control path id and loc *)
   (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   (* hip_epilogue (); *)
-  if (not !Globals.web_compile_flag) then
-    let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in
+  if (not (!Globals.web_compile_flag || not !Debug.webprint)) then 
+    let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in 
     print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                         (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
                                                    ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" rev_false_ctx_line_list )^")\n")
   else ();
   Timelog.logtime # dump;
-  silenced_print print_string ("\nTotal verification time: "
+  if (!Debug.webprint) then 
+    silenced_print print_string ("\nTotal verification time: " 
                                ^ (string_of_float t4) ^ " second(s)\n"
                                ^ "\tTime spent in main process: "
                                ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
@@ -1101,7 +1102,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-  if (not !Globals.web_compile_flag) then
+  if (not (!Globals.web_compile_flag || not !Debug.webprint)) then 
     print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                         (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
                                                    ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")

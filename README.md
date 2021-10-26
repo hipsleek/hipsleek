@@ -10,13 +10,13 @@
    Please move it to some default location,
    such as `/usr/local/bin`.
 
-2. Compile Mona modified as follows:
+2. Compile Mona as follows:
    ```
-   tar -xvf mona-1.4-modif.tar
+   tar -xvf mona-1.4-modif.tar.gz
    cd mona-1.4
    ./install.sh
    ```
-   The mona executable mona_inter is now placed in
+   The mona executable is now placed in
    `/usr/local/bin`.
 
 3. Please install latest Ocaml compiler in your directory.
@@ -60,8 +60,6 @@ This process should work on an Ubuntu-like system.
 1. Install [hipsleek/hipsleek].
 
 ## Omega for MAC:
-(by Yahui Song, 25th May 2020, e0210374@u.nus.edu,
-email me if you have difficulties compiling on mac)
 
 1. uncompress this `omega_modified_for_mac.zip` folder and use it to replace your `omega_modified` folder under `sleekex/`
 2. run

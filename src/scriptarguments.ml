@@ -58,6 +58,8 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
+  ("--pprint", Arg.Set Globals.pretty_print,
+   "Pretty print.");
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
   ("--sdp", Arg.Set Globals.simplify_dprint,
    "Simplify the entail state before printing the dprint state."); (* An Hoa *)
@@ -321,8 +323,8 @@ let common_arguments = [
    "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
    "Log all CVC Lite formula to specified log file");
-  (* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
-  ("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
+  (* ("--log-cvc4", Arg.String Cvc4.set_log_file, *)
+  ("--log-cvc4", Arg.Unit Cvc4.set_log_file,    "Log all formulae sent to CVC4 in file allinput.cvc4");
   ("--log-chr", Arg.Unit Chr.set_log_file,    "Log all formulae sent to CHR in file allinput.chr");
   ("--log-omega", Arg.Set Omega.log_all_flag,
    "Log all formulae sent to Omega Calculator in file allinput.oc");
@@ -653,9 +655,9 @@ let common_arguments = [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
+  ("-tp", Arg.Symbol (["cvcl"; "cvc4"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
                        "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"; "chr"], (set_tp) (* Tpdispatcher.set_tp *)),
-   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc4: CVC4\n\tomega: Omega Calculator (default)\n\tco: CVC4 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC4 then MONA.\n\tchr: CHR");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
    "Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
@@ -1185,6 +1187,14 @@ let common_arguments = [
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
   ("--en-warning", Arg.Set VarGen.en_warning_msg, "enable warning (default)");
   ("--dis-warning", Arg.Clear VarGen.en_warning_msg, "disable warning (switch to report error)");
+  ("--webprint", Arg.Unit
+    (fun _ ->
+      Debug.webprint := false;
+      VarGen.web_location := false;
+      Globals.enable_count_stats:= false;
+      Globals.enable_time_stats:= false;
+      Globals.tnt_web_mode:=true),
+    "only prints essentials");
   ("--print-min",
    Arg.Unit
      (fun _ ->
@@ -1376,7 +1386,7 @@ let common_arguments = [
         Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
-  ("--force-print-residue", Arg.Set Globals.force_print_residue, "Always print resiude")
+  ("--force-print-residue", Arg.Set Globals.force_print_residue, "Always print residue")
 ]
 
 (* arguments/flags used only by hip *)

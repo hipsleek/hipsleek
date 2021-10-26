@@ -3336,7 +3336,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
       let turel = collect_tu_rel ctx in
       let term_err = collect_term_err ctx in
       fmt_open_vbox 0;
-      pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
+      pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); if !Globals.pretty_print then fmt_string "[f|"; pr_formula a; if !Globals.pretty_print then fmt_string "|f]") ();
       pr_wrap_test "" Gen.is_empty (pr_seq "" fmt_string) term_err;
       pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh);
       pr_wrap_test "inferred templ: " Gen.is_empty  (pr_seq "" pr_templ_assume) lt;
@@ -5808,7 +5808,7 @@ Cformula.print_entail_state := string_of_entail_state(* _short *);;
 Cformula.print_entail_state_short := string_of_entail_state_short;;
 (* Cformula.print_formula_br := string_of_formula_branches;; *)
 Redlog.print_formula := string_of_pure_formula;;
-Cvc3.print_pure := string_of_pure_formula;;
+Cvc4.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_hvar := string_of_hvar;;
 Cformula.print_mix_f := string_of_mix_formula;;

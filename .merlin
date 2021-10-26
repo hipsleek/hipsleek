@@ -6,7 +6,7 @@ S cil/
 B _build/**/*
 
 # Dependencies
-PKG extlib fileutils batteries ocamlgraph camlp4 camlp4.lib xml-light
+PKG extlib fileutils batteries ocamlgraph ocamlformat camlp4 camlp4.lib xml-light
 
 # Extra flags
 FLG -debug locate,/tmp/merlin-debug

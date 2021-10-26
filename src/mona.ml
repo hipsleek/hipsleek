@@ -1306,9 +1306,9 @@ let start () =
             raise e
           end
       end
-      else
-        (print_endline  ("\nCannot find MONA code..."); flush stdout;)
-    end
+  else 
+    (print_endline  ("\nCannot find mona_inter code..."); flush stdout;)
+  end
 
 
 let start () =
@@ -1508,6 +1508,7 @@ let create_file_for_mona (filename: string) (fv: CP.spec_var list) (f: CP.formul
 let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs: bool =
   let mona_filename = "test" ^ imp_no ^ ".mona" in
   let file_content = ((create_file_for_mona mona_filename fv f imp_no vs) ^ ";\n") in
+  (* let () = print_string("\nFile content of ["^mona_filename^"]:\n"^file_content^"[end of file]\n") in *)
   if !log_all_flag == true then
     begin
       output_string log_all (mona_filename ^ Gen.new_line_str);
@@ -1590,12 +1591,14 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   (* let () = find_order tmp_form vs in    (\* deprecated *\) *)
   let (var1,var2,var0) = new_order_formula tmp_form in
   let () = set_prover_type () in (* change to MONA logging *)
-  if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
+  (* if not !is_mona_running then
+      write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
     (* write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs (\* deprecated *\) *)
   else
-    imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
+    imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2) *)
 (* imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no vs (\* deprecated *\)  *)
+
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool
@@ -1607,7 +1610,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let f = Trans_arr.translate_array_one_formula f in
-  let () = if not !is_mona_running then start () else () in
+  (* let () = if not !is_mona_running then start () else () in *)
   let () = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
@@ -1622,15 +1625,16 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let () = set_prover_type () in (* change to MONA logging *)
   (* WN : what if var0 is non-empty? *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
-  let sat =
-    if not !is_mona_running then
+  let sat = 
+    write_to_file true f_fv f sat_no (var1, var2) in
+  (* if not !is_mona_running then
       begin
-        (* print_endline "mona not running?.."; *)
-        write_to_file true f_fv f sat_no (var1, var2)
+          let () = print_string ("mona not running?..\n") in
+          write_to_file true f_fv f sat_no (var1, var2)
         (* write_to_file true f_fv f sat_no vs (\* deprecated *\) *)
       end
     else
-      imply_sat_helper true f_fv f sat_no (var1, var2) in
+      imply_sat_helper true f_fv f sat_no (var1, var2) in *)
   (* imply_sat_helper true f_fv f sat_no vs in (\* deprecated *\) *)
   sat_optimize := false;
   sat
