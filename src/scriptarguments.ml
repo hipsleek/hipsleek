@@ -1498,7 +1498,8 @@ Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)->
         let rec process_arg s1 s2 f : unit= match f with
           |	Arg.Unit f -> f ()
           | Arg.Expand _
-          |   Arg.Rest _
+          | Arg.Rest _
+          | Arg.Rest_all _
           |	Arg.Bool _-> ()
           |	Arg.Set b -> b:=true
           |	Arg.Clear b -> b:=false

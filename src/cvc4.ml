@@ -139,6 +139,7 @@ and cvc4_of_b_formula b =
   | CP.LexVar _ -> failwith ("LexVar not supported in cvc4")
   | CP.ImmRel _ -> failwith ("ImmRel not supported in cvc4")
   | CP.XPure _  -> Error.report_no_pattern ()
+  | CP.TVar _ ->  failwith x_tbi
 and cvc4_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
   | CP.SpecVar ( Bool, _, _) -> "INT" (* "BOOLEAN" *)
