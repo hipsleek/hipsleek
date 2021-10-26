@@ -1487,6 +1487,7 @@ Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)->
           |	Arg.Unit f -> f ()
           | Arg.Expand _
           |   Arg.Rest _
+          |   Arg.Rest_all _
           |	Arg.Bool _-> ()
           |	Arg.Set b -> b:=true
           |	Arg.Clear b -> b:=false
