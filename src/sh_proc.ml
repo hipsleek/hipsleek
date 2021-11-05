@@ -511,12 +511,12 @@ let collect_call_name_all dirlst =
         let line = input_line ff in
         let () =
           begin
-            can_match_2 line reg5;
-            can_match_2 line reg7;
-            can_match_2 line reg9;
-            can_match_1 line reg6;
-            can_match_1 line reg8;
-            can_match_1 line reg10;
+            can_match_2 line reg5 |> ignore;
+            can_match_2 line reg7 |> ignore;
+            can_match_2 line reg9 |> ignore;
+            can_match_1 line reg6 |> ignore;
+            can_match_1 line reg8 |> ignore;
+            can_match_1 line reg10 |> ignore;
             ()
           end
         in

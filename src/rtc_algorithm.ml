@@ -153,7 +153,7 @@ class graphFindBCC =
                     (*															else print_endline ("BACK EDGE "^ w ^ " "^v1)*)
               in true
             with Not_found -> false 	
-          ) neib
+          ) neib |> ignore
 
       in loopFindBCC graph v11 v22
 

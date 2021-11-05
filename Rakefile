@@ -3,6 +3,7 @@ OPAM_PKGS = [
   "fileutils",
   "batteries",
   "ocamlgraph",
+  "ocamlformat",
   "camlp4",
   "xml-light"
 ]

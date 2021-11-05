@@ -452,7 +452,7 @@ let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog =
-  manage_infer_lemmas_x "proved" repo iprog cprog; None (*Loc: while return None? instead full result*)
+  manage_infer_lemmas_x "proved" repo iprog cprog |> ignore; None (*Loc: while return None? instead full result*)
 
 let manage_test_lemmas1 ?(force_pr=false) repo iprog cprog =
   manage_infer_lemmas_x ~force_pr:force_pr "proved" repo iprog cprog

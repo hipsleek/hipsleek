@@ -1,0 +1,23 @@
+(library
+  (name cil)
+  (libraries hipsleek_common)
+  (wrapped false)
+  )
+;(libraries cil_src_ext cil_src_frontc cil_src cil_ocamlutil)
+
+;(dirs src)
+
+; does not work with ocamllex
+(include_subdirs unqualified)
+
+(ocamllex
+  (modules clexer))
+
+(ocamlyacc
+  (modules cparser))
+
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))
+
