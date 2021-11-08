@@ -39,6 +39,8 @@ cd examples/working
 
 # External Provers
 
+Executables for custom provers will be installed in their respective directories and should be made available on the PATH, either by appending those directories or moving them some global location like `/usr/local/bin`.
+
 ## Omega
 
 ```sh
@@ -47,19 +49,18 @@ make oc
 ```
 
 The omega executable is now at `omega_calc/obj/oc`.
-Either move it to some global location like `/usr/local/bin` or append `omega_modified/omega_calc/obj` to your PATH.
 
 ## Mona
-
-Compile Mona as follows:
 
 ```sh
 tar -xvf mona-1.4-modif.tar.gz
 cd mona-1.4
-./install.sh
+./configure --prefix=$(pwd)
+make install
+cp mona_predicates.mona ..
 ```
 
-The mona executable is now in `/usr/local/bin`.
+The mona executable is now in `bin`.
 
 Try some tests:
 
