@@ -1,76 +1,77 @@
-# Installation Guide for hip/sleek
 
-## Normal Installation
-1. Compile Omega modified as follows:
-   ```
-   cd omega_modified
-   make oc
-   ```
-   The omega executable is now in `omega_calc/obj/oc`.
-   Please move it to some default location,
-   such as `/usr/local/bin`.
+# Installation Guide for HIP/SLEEK
 
-2. Compile Mona as follows:
-   ```
-   tar -xvf mona-1.4-modif.tar.gz
-   cd mona-1.4
-   ./install.sh
-   ```
-   The mona executable is now placed in
-   `/usr/local/bin`.
+You will need opam and a recent OCaml compiler (tested on 4.12.1).
 
-3. Please install latest Ocaml compiler in your directory.
-   Please also install Coq prover.
+```sh
+# Install opam dependencies
+OPAMYES=true rake dependencies:install
 
-4. You are now ready to install hip/sleek, as follows:
-   ```
-   cd ..
-   make
+# Build everything
+rake
 
-   The executables `hip` and `sleek` can now be used (or moved
-   to `/usr/local/bin`)
+# Build only some targets
+rake hip
+rake sleek
 
-5. Sleek examples can be found in `examples/working/sleek`
-   subdirectory. You can test it as follows:
+# To use ocamldebug
+rake debug:hip debug:sleek
+```
 
-   1. Entailment using default Omega
-      ```
-      ./sleek examples/working/sleek/sleek2.slk
-      ```
+Try verifying some small programs.
+You will need [Z3](https://github.com/Z3Prover/z3/wiki#platforms) and [Omega](#omega) on the PATH.
 
-   2. Entailment using Mona
-      ```
-      ./sleek -tp mona examples/working/sleek/sleek2.slk
-      ```
+```sh
+./hip examples/working/hip/ll.ss
+./sleek examples/working/sleek/sleek2.slk
+```
 
-   3. Verification using default Omega
-      ```
-      ./hip examples/working/hip/ll.ss
-      ```
+To run tests,
 
-   4. Verification using Mona
-      ```
-      ./hip -tp mona examples/working/hip/ll.ss
-      ```
+```sh
+# Tested on Perl 5.34
+cpanm File::NCopy Spreadsheet::WriteExcel Spreadsheet::ParseExcel
 
-## Installation with [hipsleek/dependencies]
+cd examples/working
+./run-fast-tests.pl sleek # around 4 mins
+./run-fast-tests.pl hip # around 40 mins
+```
+
+# External Provers
+
+## Omega
+
+```sh
+cd omega_modified
+make oc
+```
+
+The omega executable is now at `omega_calc/obj/oc`.
+Either move it to some global location like `/usr/local/bin` or append `omega_modified/omega_calc/obj` to your PATH.
+
+## Mona
+
+Compile Mona as follows:
+
+```sh
+tar -xvf mona-1.4-modif.tar.gz
+cd mona-1.4
+./install.sh
+```
+
+The mona executable is now in `/usr/local/bin`.
+
+Try some tests:
+
+```sh
+./hip -tp mona examples/working/hip/ll.ss
+./sleek -tp mona examples/working/sleek/sleek2.slk
+```
+
+# Installation with [hipsleek/dependencies](https://github.com/hipsleek/dependencies)
+
 This process should work on an Ubuntu-like system.
-1. Clone this repository with `git clone --recursive https://github.com/hipsleek/dependencies`.
-1. Install [hipsleek/dependencies].
-1. Install [hipsleek/hipsleek].
 
-## Omega for MAC:
-
-1. uncompress this `omega_modified_for_mac.zip` folder and use it to replace your `omega_modified` folder under `sleekex/`
-2. run
-   ```
-   cd omega_modified
-     make depend
-   cd omega_calc/obj
-   make
-   sudo cp oc /usr/local/bin/
-   ```
-3. and then you go back and make the sleekex again.
-
-[hipsleek/dependencies]: https://github.com/hipsleek/dependencies
-[hipsleek/hipsleek]: https://github.com/hipsleek/hipsleek
+1. Clone this repository with `git clone --recursive https://github.com/hipsleek/hipsleek`
+1. Follow the instructions in the `dependencies` directory
+1. Follow the compilation instructions above
