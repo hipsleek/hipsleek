@@ -1,4 +1,4 @@
-true: warn_error(+4+8+9+11+12+25+28), warn(-26), bin_annot, package(extlib), package(fileutils), package(batteries), package(ocamlgraph), package(ocamlformat), package(camlp4), package(camlp4.lib), package(xml-light)
+true: warn_error(+4+8+9+11+12+25+28), warn(-26), bin_annot, package(extlib), package(fileutils), package(batteries), package(ocamlgraph), package(camlp4), package(camlp4.lib), package(xml-light)
 <src/{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>: pp(camlp4of)
 not(<src/{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>): pp(cppo -I ../ -D TRACE)
 "joust": include
