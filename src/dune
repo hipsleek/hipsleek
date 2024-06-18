@@ -1,6 +1,6 @@
 (library
-  (name hipsleek)
-  (libraries hipsleek_common cil extlib batteries ocamlgraph camlp4 camlp4.lib xml-light)
+  (public_name hipsleek)
+  (libraries hipsleek.common hipsleek.cil extlib batteries ocamlgraph camlp4 camlp4.lib xml-light)
   (wrapped false)
   (preprocessor_deps ../xdebug.cppo) (preprocess (per_module
     ((action (run camlp4of %{input-file})) parse_cmd parse_fix parse_fixbag parse_shape)

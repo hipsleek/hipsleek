@@ -1,5 +1,6 @@
 (library
-  (name cil)
+  (name hipsleek_cil)
+  (public_name hipsleek.cil)
   (libraries hipsleek_common)
   (wrapped false)
   )
