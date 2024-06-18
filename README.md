@@ -1,18 +1,11 @@
 
 # Installation Guide for HIP/SLEEK
 
-You will need opam and a recent OCaml compiler (tested on 4.12.1).
+You will need opam and a recent OCaml compiler (tested on 4.14.1).
 
 ```sh
-# Install opam dependencies
-OPAMYES=true rake dependencies:install
-
-# Build everything
-rake
-
-# Build only some targets
-rake hip
-rake sleek
+opam install . --deps-only
+dune build ./hip.exe ./sleek.exe
 
 # To use ocamldebug
 rake debug:hip debug:sleek
