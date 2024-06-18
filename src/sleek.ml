@@ -555,6 +555,14 @@ let sleek_proof_log_Z3 src_files =
     end
 
 let _ =
+  (* Initialize Debugorg *)
+  let file_mode =
+    (Debugorg.Option.bind (Sys.getenv_opt "FILE") int_of_string_opt
+     |> Debugorg.Option.value ~default:0) > 0 in
+  let ctf =
+    Debugorg.Option.bind (Sys.getenv_opt "CTF") int_of_string_opt
+    |> Debugorg.Option.value ~default:0 > 0 in
+  Debugorg.init ctf None file_mode;
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   Tpdispatcher.init_tp();
@@ -614,6 +622,7 @@ let _ =
         end
       else ()
     in
+    silenced_print print_string ("\n* final summary");
     let () = sleek_epilogue () in
     let () = if !Globals.smt_compete_mode then
         (* let () = print_endline "SMT Compete OUTCOME" in *)

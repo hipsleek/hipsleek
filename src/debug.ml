@@ -2,6 +2,8 @@
 open Gen.Basic
 open VarGen
 
+let ( let@ ) f x = f x
+
 let webprint = ref true
 let debug_on = ref false
 let devel_debug_on = ref false
@@ -553,7 +555,7 @@ struct
             stk_trace # push (lastline^"\n");
             (summarized_stack stk_trace) # dump_no_ln
           end;
-        print_endline "\nDEBUGGED CALLS";
+        print_endline "\n\nDEBUGGED CALLS";
         print_endline   "==============";
         print_endline (string_of_int (List.length cnt));
         print_endline (pr cnt);
@@ -689,7 +691,7 @@ struct
         in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
     ()
 
-  let ho_aux ?(call_site="") ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+let ho_aux ?(call_site="") ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
     (* let call_site, _ = VarGen.last_posn # get_rm in *)
     (* let call_site, call_name = VarGen.last_posn # get in *)
     (* let call_site =                                      *)
@@ -699,7 +701,7 @@ struct
     (*   else ""                                            *)
     (* in                                                   *)
     let call_site = 
-      if call_site="" then VarGen.last_posn # get_rm s 
+      if call_site="" then VarGen.last_posn # get_rm s
       else call_site in
     let pre_str = "(=="^call_site^"==)" in
     (* if s=="" thenmatch s with  *)
@@ -749,6 +751,7 @@ struct
                          ("\n NOW :"^(pr_o x)))) in
         (new_test, new_pr_o) in
     let s,h = push_call_gen s df in
+    (* TRISTAN : s is now s@n and h is s@n_1@n_2... *)
     let lc = (Gen.StackTrace.ctr # get_last_call) in
     let () = debug_calls # add_id lc in
     let h = pre_str^"\n"^h in
@@ -757,25 +760,40 @@ struct
     (if loop_d || !VarGen.trace_loop 
      then print_string ("\n"^h^" ENTRY :"^arg^"\n"));
     flush stdout;
+    (*  *)
+    let string_of_args args =
+      let rec helper (i:int) args = 
+        match args with
+        | [] -> ""
+        | a::args -> ("inp"^(string_of_int i)^" :"^a^"\n") ^ (helper (i+1) args)
+      in
+      helper 1 args
+    in
+    Debugorg.on_entry (fun () -> 
+      Debugorg.debug ~at:1 ~title: s "%s ==> \n..." (string_of_args args));
     let r = (try
                pop_aft_apply_with_exc s f e
              with ex -> 
                (
-                 (* if not df then *) 
-                 let flag = check_args args in
-                 if flag then
-                   begin
-                     let () = print_string ("\n"^h^"\n") in
-                     (pr_args args; pr_lazy_res lz);
-                     let () = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
-                     flush stdout;
-                     raise ex 
-                   end
-                 else raise ex
-               )) in
+                (* if not df then *) 
+                let flag = check_args args in
+                if flag then
+                  begin
+                    Debugorg.on_exit (fun () -> 
+                      Debugorg.debug ~at:1 ~title: s "%s ==> \n%s" (string_of_args args) (Printexc.to_string ex));
+                    let () = print_string ("\n"^h^"\n") in
+                    (pr_args args; pr_lazy_res lz);
+                    let () = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+                    flush stdout;
+                    raise ex 
+                  end
+                else raise ex
+              )) in
+    let res_str = pr_o r in
+    Debugorg.on_exit (fun () ->
+      Debugorg.debug ~at:1 ~title: s "%s ==> \n%s" (string_of_args args) res_str);
     (if not(test r) then r else
        (* if not df then *)
-       let res_str = pr_o r in
        let flag = check_args (res_str::args) in
        if not(flag) then r
        else
@@ -787,6 +805,105 @@ struct
            r
          end
     )
+
+  (* let ho_aux ?(call_site="") ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z = *)
+  (*   (\* let call_site, _ = VarGen.last_posn # get_rm in *\) *)
+  (*   (\* let call_site, call_name = VarGen.last_posn # get in *\) *)
+  (*   (\* let call_site =                                      *\) *)
+  (*   (\*   if String.compare call_name s = 0 then             *\) *)
+  (*   (\*     let () = VarGen.last_posn # reset in             *\) *)
+  (*   (\*     call_site                                        *\) *)
+  (*   (\*   else ""                                            *\) *)
+  (*   (\* in                                                   *\) *)
+  (*   let call_site =  *)
+  (*     if call_site="" then VarGen.last_posn # get_rm s  *)
+  (*     else call_site in *)
+  (*   let pre_str = "(=="^call_site^"==)" in *)
+  (*   (\* if s=="" thenmatch s with  *\) *)
+  (*   (\*   | None -> "" *\) *)
+  (*   (\*   | Some s ->  *\) *)
+  (*   (\*         (\\* let () = VarGen.last_posn := None in *\\) *\) *)
+  (*   (\*         "("^s^")" in *\) *)
+  (*   let pr_args xs = *)
+  (*     let rec helper (i:int) args = match args with *)
+  (*       | [] -> () *)
+  (*       | a::args -> (print_string (s^" inp"^(string_of_int i)^" :"^a^"\n");(helper (i+1) args)) in *)
+  (*     helper 1 xs in *)
+  (*   let pr_lazy_res xs = *)
+  (*     let rec helper xs = match xs with *)
+  (*       | [] -> () *)
+  (*       | (i,a)::xs -> let a1=Lazy.force a in *)
+  (*         if (a1=(List.nth args (i-1))) then helper xs *)
+  (*         else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in *)
+  (*     helper xs in *)
+  (*   let check_args args = true *)
+  (*   (\* match !z_debug_arg with *\) *)
+  (*   (\*   | None -> false  *\) *)
+  (*   (\*   | Some re ->  *\) *)
+  (*   (\*         (\\* let () = print_endline ("check_args:"^s) in *\\) *\) *)
+  (*   (\*         List.exists (fun x ->  *\) *)
+  (*   (\*             try  *\) *)
+  (*   (\*               (Str.search_forward re x 0);true *\) *)
+  (*   (\*             with _ -> false) args *\) *)
+  (*   in *)
+  (*   let (test,pr_o) = match g with *)
+  (*     | None -> (test,pr_o) *)
+  (*     | Some g ->  *)
+  (*       let res = ref (None:(string option)) in *)
+  (*       let new_test z = *)
+  (*         (try *)
+  (*            let r = g e in *)
+  (*            let rs = pr_o r in               *)
+  (*            if String.compare (pr_o z) rs==0 then false *)
+  (*            else (res := Some rs; true) *)
+  (*          with ex ->   *)
+  (*            (res := Some (" OLD COPY : EXIT Exception"^(Printexc.to_string ex)^"!\n"); *)
+  (*             true)) in *)
+  (*       let new_pr_o x = (match !res with *)
+  (*           | None -> pr_o x *)
+  (*           | Some s -> ("DIFFERENT RESULT from PREVIOUS METHOD"^ *)
+  (*                        ("\n PREV :"^s)^ *)
+  (*                        ("\n NOW :"^(pr_o x)))) in *)
+  (*       (new_test, new_pr_o) in *)
+  (*   let s,h = push_call_gen s df in *)
+  (*   let lc = (Gen.StackTrace.ctr # get_last_call) in *)
+  (*   let () = debug_calls # add_id lc in *)
+  (*   let h = pre_str^"\n"^h in *)
+  (*   let arg = if loop_d || !VarGen.trace_loop_all  *)
+  (*     then String.concat "  " (pick_front 80 args) else "" in *)
+  (*   (if loop_d || !VarGen.trace_loop  *)
+  (*    then print_string ("\n"^h^" ENTRY :"^arg^"\n")); *)
+  (*   flush stdout; *)
+  (*   let r = (try *)
+  (*              pop_aft_apply_with_exc s f e *)
+  (*            with ex ->  *)
+  (*              ( *)
+  (*                (\* if not df then *\)  *)
+  (*                let flag = check_args args in *)
+  (*                if flag then *)
+  (*                  begin *)
+  (*                    let () = print_string ("\n"^h^"\n") in *)
+  (*                    (pr_args args; pr_lazy_res lz); *)
+  (*                    let () = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in *)
+  (*                    flush stdout; *)
+  (*                    raise ex  *)
+  (*                  end *)
+  (*                else raise ex *)
+  (*              )) in *)
+  (*   (if not(test r) then r else *)
+  (*      (\* if not df then *\) *)
+  (*      let res_str = pr_o r in *)
+  (*      let flag = check_args (res_str::args) in *)
+  (*      if not(flag) then r *)
+  (*      else *)
+  (*        begin *)
+  (*          let () = print_string ("\n"^h^"\n") in *)
+  (*          (pr_args args; pr_lazy_res lz); *)
+  (*          let () = print_string (s^" EXIT:"^(res_str)^"\n") in *)
+  (*          flush stdout; *)
+  (*          r *)
+  (*        end *)
+  (*   ) *)
 
   let choose bs xs = 
     let rec hp bs xs = match bs,xs with

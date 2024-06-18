@@ -884,6 +884,7 @@ let process_source_full source =
   else ();
   Timelog.logtime # dump;
   if (!Debug.webprint) then 
+    silenced_print print_string ("\n* final summary");
     silenced_print print_string ("\nTotal verification time: " 
                                ^ (string_of_float t4) ^ " second(s)\n"
                                ^ "\tTime spent in main process: " 
@@ -1195,6 +1196,14 @@ let finalize_bug () =
 let old_main () =
   let () = y_tinfo_pp "XXXX old_main" in
   try
+    (* Initialize Debugorg *)
+    let file_mode =
+      (Debugorg.Option.bind (Sys.getenv_opt "FILE") int_of_string_opt
+      |> Debugorg.Option.value ~default:0) > 0 in
+    let ctf =
+      Debugorg.Option.bind (Sys.getenv_opt "CTF") int_of_string_opt
+      |> Debugorg.Option.value ~default:0 > 0 in
+    Debugorg.init ctf None file_mode;
     main1 ();
     (* let () =  *)
     (*   if !Global.enable_counters then *)
