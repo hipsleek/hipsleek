@@ -33,13 +33,11 @@ let print_version () =
   print_endline ("IT IS FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
-
-
 (******************************************)
 (* main function                          *)
 (******************************************)
 
-
+(* TRISTAN: Returns prog1 which is of type Iast.prog_decl *)
 let parse_file_full file_name (primitive: bool) =
   proc_files # push file_name;
   let org_in_chnl = open_in file_name in
@@ -99,7 +97,6 @@ let parse_file_full file_name (primitive: bool) =
         (*   parseresult                                                                          *)
         (* else                                                                                   *)
         (* Parser.parse_hip file_name (Stream.of_channel org_in_chnl) *)
-
         let (s,p) = Parser.parse_hip_with_option file_name (Stream.of_channel org_in_chnl) in
         let _ = Scriptarguments.parse_arguments_with_string s in
         p
@@ -416,6 +413,7 @@ let process_source_full source =
     Debug.info_zprint (lazy (("Full processing file \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
   let () = Gen.Profiling.push_time "Preprocessing" in
+  (* TRISTAN: call to parse_file_full, parsing source file, returns Iast.prog_decl *)
   let prog = parse_file_full source false in
   let () = Debug.ninfo_zprint (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
   let () = Gen.Profiling.push_time "Process compare file" in
@@ -424,7 +422,7 @@ let process_source_full source =
     )
     else prog
   in
-  let prog = process_lib_file prog in
+  let prog: Iast.prog_decl = process_lib_file prog in
   let () = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
@@ -464,6 +462,7 @@ let process_source_full source =
     let () = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
   else
+  (* TRISTAN: start theorem prover, currently Z3 *)
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)
   let () = Gen.Profiling.push_time "Translating global var" in
@@ -484,7 +483,7 @@ let process_source_full source =
   (* let _=print_endline_quiet ("PROG: "^Iprinter.string_of_program prog) in *)
   let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
 
-  (*let () = print_string (Iprinter.string_of_program prog^"haha") in*)
+  (* let () = print_string (Iprinter.string_of_program prog^"haha") in *)
 
   (* let tnt_prim_proc_decls = Hashtbl.fold (fun id _ acc ->                                             *)
   (*     if List.exists (fun (p, _) -> String.compare p id == 0) acc then acc                            *)
@@ -501,8 +500,8 @@ let process_source_full source =
         (prog, acc @ [id]))
     Iast.tnt_prim_proc_tbl (prog, [])
   in
-  
-  let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
+
+  let intermediate_prog: Iast.prog_decl = x_add_1 Globalvars.trans_global_to_param prog in
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
   let tnl = List.sort String.compare tnl in
@@ -511,10 +510,11 @@ let process_source_full source =
   (* let () = print_endline "hello" in *)
   (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
   (* let () = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
-  let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
+  (* TRISTAN: preprocessing of Iast, not sure what this does *)
+  let intermediate_prog: Iast.prog_decl = IastUtil.pre_process_of_iprog iprims intermediate_prog in
 
   (* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
-  let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
+  let intermediate_prog: Iast.prog_decl = Iast.label_procs_prog intermediate_prog true in
   (* let _= print_string ("\n*After label_procs_prog iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
 
   (*let intermediate_prog_reverif = 
@@ -553,15 +553,19 @@ let process_source_full source =
       let todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
       ()
   in
+
   (**************************************)
   (*to improve: annotate field*)
+  (* TRISTAN : mutates intermediate_prog.prog_data_decls *)
   let () = Iast.annotate_field_pure_ext intermediate_prog in
   (*END: annotate field*)
   (*used in lemma*)
   (* let () =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
   (* let () = I.set_iprog intermediate_prog in *)
-  (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
+  (* let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in *)
+  (* TRISTAN: transform I.prog_decl to C.prog_decl *)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  
   let () = saved_cprog := cprog in
   (* let () = if !Globals.sa_pure then *)
   (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
@@ -581,6 +585,8 @@ let process_source_full source =
   let () = Lemma.sort_list_lemma tiprog in
   let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
   (* ========= end - lemma process (normalize, translate, verify) ========= *)
+      
+  
   let c = cprog in
   let () = if !Globals.gen_coq_file 
     then 
@@ -782,6 +788,7 @@ let process_source_full source =
   (* let ptime2 = Unix.times () in
      let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
      let () = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
+  (* TRISTAN : compile specified predicate to Java *)
   let _ =
     if !Scriptarguments.comp_pred then begin
       let () = print_string ("Compiling predicates to Java..."); flush stdout in
@@ -801,6 +808,7 @@ let process_source_full source =
       exit 0
     end 
   in
+  (* TRISTAN : compile to Java with runtime checks *)
   let _ =
     if !Scriptarguments.rtc then begin
       Rtc.compile_prog cprog source;
@@ -812,7 +820,8 @@ let process_source_full source =
   (* An Hoa : initialize html *)
   let () = Prooftracer.initialize_html source in
 
-  if (!Scriptarguments.typecheck_only) 
+  (* TRISTAN : typechecking and core-preprocessing only *)
+  if (!Scriptarguments.typecheck_only)
   then print_string (Cprinter.string_of_program cprog)
   else (try
           (* let () =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
@@ -884,6 +893,8 @@ let process_source_full source =
   else ();
   Timelog.logtime # dump;
   if (!Debug.webprint) then 
+    (* TRISTAN : added to have a org mode heading for summary *)
+    silenced_print print_string ("\n* final summary");
     silenced_print print_string ("\nTotal verification time: " 
                                ^ (string_of_float t4) ^ " second(s)\n"
                                ^ "\tTime spent in main process: " 
@@ -1191,10 +1202,18 @@ let finalize_bug () =
        (*   let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in () *)
     ) in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
-
+  
 let old_main () =
   let () = y_tinfo_pp "XXXX old_main" in
   try
+    (* TRISTAN : added to initialize Debugorg *)
+    let file_mode =
+      (Debugorg.Option.bind (Sys.getenv_opt "FILE") int_of_string_opt
+      |> Debugorg.Option.value ~default:0) > 0 in
+    let ctf =
+      Debugorg.Option.bind (Sys.getenv_opt "CTF") int_of_string_opt
+      |> Debugorg.Option.value ~default:0 > 0 in
+    Debugorg.init ctf None file_mode;
     main1 ();
     (* let () =  *)
     (*   if !Global.enable_counters then *)
@@ -1223,7 +1242,44 @@ let old_main () =
       hip_epilogue ()
     end
 
+let test_api () =
+  let () = print_string "\n TESTING API" in
+
+  (* true |- true *)
+  let true_f = Sleekapi.bool_pure_f true in
+  let empty_heap_f = Sleekapi.empty_heap_f () in
+  let ante_f = Sleekapi.ante_f empty_heap_f true_f in
+  let conseq_f = Sleekapi.conseq_f empty_heap_f true_f in
+  let () = print_string "\n Entail 1: \n" in
+  let () = print_string (Sleekapi.ante_printer ante_f) in
+  let () = print_string (Sleekapi.conseq_printer conseq_f) in
+  let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
+
+  (* x > 0 /\ y = x + 1 |- y > 1 *)
+  let ante_f = Sleekapi.ante_f empty_heap_f
+      (Sleekapi.and_f
+         (Sleekapi.gt_pure_f 
+            (Sleekapi.var_pure_exp "x" false)
+            (Sleekapi.int_pure_exp 0))
+         (Sleekapi.eq_pure_f
+            (Sleekapi.var_pure_exp "y" false)
+            (Sleekapi.add_pure_exp
+               (Sleekapi.var_pure_exp "x" false)
+               (Sleekapi.int_pure_exp 1)))) in
+  let conseq_f = Sleekapi.conseq_f empty_heap_f
+      (Sleekapi.gt_pure_f
+         (Sleekapi.var_pure_exp "y" false)
+         (Sleekapi.int_pure_exp 1)) in
+  let () = print_string "\n Entail 2: \n" in
+  let () = print_string (Sleekapi.ante_printer ante_f) in
+  let () = print_string (Sleekapi.conseq_printer conseq_f) in
+  let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
+            
+  let () = print_string "\n API TEST COMPLETE" in
+  ()
+
 let () = 
+  let () = test_api() in
   if not(!Globals.do_infer_inc) then
     let () = x_dinfo_pp "Executing old_main() " no_pos in
     old_main ()
@@ -1246,7 +1302,7 @@ let () =
           (*   else () in *)
           let () = Gen.Profiling.print_counters_info () in
           let () = Gen.Profiling.print_info () in
-           ()
+          ()
       with _ as e -> begin
           finalize_bug ();
           print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
@@ -1262,6 +1318,4 @@ let () =
         end
     done;
     hip_epilogue ()
-
-
 

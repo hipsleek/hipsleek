@@ -89,9 +89,20 @@ module M = Lexer.Make(Token.Token)
 (*       raise t) *)
 
   let proc_one_cmd c = 
+    let rec ante_printer i xs =
+      match xs with
+      | [] -> ""
+      | x::xs' -> "Ante 1 : " ^ (string_of_meta_formula x) ^ "\n" ^ (ante_printer (i+1) xs')
+    in
+    let conseq_printer x =
+      "Conseq : " ^ (string_of_meta_formula x)
+    in
     match c with
     | UiDef uidef -> process_ui_def uidef
-    | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
+    | EntailCheck (iante, iconseq, etype) -> 
+      let () = print_string (ante_printer 1 iante) in
+      let () = print_string (conseq_printer iconseq) in
+      (process_entail_check iante iconseq etype; ())
     (* let pr_op () = process_entail_check_common iante iconseq in  *)
     (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
     | SatCheck f -> (process_sat_check f; ())
@@ -555,6 +566,14 @@ let sleek_proof_log_Z3 src_files =
     end
 
 let _ =
+  (* TRISTAN : added to initialize Debugorg *)
+  let file_mode =
+    (Debugorg.Option.bind (Sys.getenv_opt "FILE") int_of_string_opt
+    |> Debugorg.Option.value ~default:0) > 0 in
+  let ctf =
+    Debugorg.Option.bind (Sys.getenv_opt "CTF") int_of_string_opt
+    |> Debugorg.Option.value ~default:0 > 0 in
+  Debugorg.init ctf None file_mode;
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   Tpdispatcher.init_tp();
@@ -614,6 +633,8 @@ let _ =
         end
       else ()
     in
+    (* TRISTAN : added to have a org mode heading for summary *)
+    silenced_print print_string ("\n* final summary");
     let () = sleek_epilogue () in
     let () = if !Globals.smt_compete_mode then
         (* let () = print_endline "SMT Compete OUTCOME" in *)
