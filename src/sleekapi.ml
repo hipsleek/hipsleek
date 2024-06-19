@@ -47,11 +47,14 @@ let var_pure_exp (ident : string) (primed : bool) =
   | true ->  IP.Var((ident, VG.Primed), no_pos) 
   | false -> IP.Var((ident, VG.Unprimed), no_pos)
 let int_pure_exp (int : int) = IP.IConst((int, no_pos))
+let float_pure_exp (float : float) = IP.FConst((float, no_pos))
+
 let add_pure_exp lhs rhs = IP.Add((lhs, rhs, no_pos))
+(* let sub_pure_exp lhs rhs = IP. *)
 
 (* Building pure formula *)
 
-(* boolean constraints *)
+(* terms *)
 let bool_pure_f (bool : bool) = IP.BForm((IP.BConst((bool, no_pos)), None), None)
 let gt_pure_f lhs rhs = IP.BForm((IP.Gt(lhs, rhs, no_pos), None), None)
 let eq_pure_f lhs rhs = IP.BForm((IP.Eq(lhs, rhs, no_pos), None), None)
