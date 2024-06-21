@@ -14,8 +14,8 @@ type mf                                 (* meta formulae *)
 
 (* Pure formulae *)
 
-val null_pure_exp : unit -> pe
-(** [null_pure_exp ()] returns an expresion that represents a [null]
+val null_pure_exp : pe
+(** [null_pure_exp] is an expresion that represents a [null]
     value at program level *)
 
 val var_pure_exp : string -> bool -> pe
@@ -27,41 +27,42 @@ val int_pure_exp : int -> pe
 (** [int_pure_exp i] returns a expression with the value of the integer [i] *)
 
 val float_pure_exp : float -> pe
+(** [float_pure_exp i] returns a expression with the value of the float [i] *)
 
 val add_pure_exp : pe -> pe -> pe
 val sub_pure_exp : pe -> pe -> pe
-
-(* val binop_pure_exp : BinOp -> pe -> pe -> pe *)
-(* BinOp = Add | Sub | Mul | Div *)
-
-val bool_pure_f : bool -> pf
-(** [bool_pure_f b] returns a pure formula that is either true of false *)
+val mul_pure_exp : pe -> pe -> pe
+val div_pure_exp : pe -> pe -> pe
 
 val true_f : pf
+(** [true_f] is a true pure formula *)
+
 val false_f : pf
+(** [false_f] is a false pure formula *)
 
-val not_f : pf
+val gt_pure_f  : pe -> pe -> pf
+val eq_pure_f  : pe -> pe -> pf
+val lt_pure_f  : pe -> pe -> pf
+val lte_pure_f : pe -> pe -> pf
+val eq_pure_f  : pe -> pe -> pf
 
-val gt_pure_f : pe -> pe -> pf
-val eq_pure_f : pe -> pe -> pf
-(* BoolBinOp = And | Or | Implies | ... *)
+val not_f      : pf -> pf
+val and_f.     : pf -> pf -> pf
+val or_f       : pf -> pf -> pf
+val implies_f  : pf -> pf -> pf
+val iff_f      : pf -> pf -> pf
 
-val and_f : pf -> pf -> pf
-val or_f : pf -> pf -> pf
-val implies_f : pf -> pf -> pf
-val iff : pf -> pf -> pf
+(* Heap formulae *)
+val empty_heap_f : hf
 
-  (* Heap formulae *)
-val emp_f : unit -> hf
-val sep_conj_f : hf -> hf -> hf
-val points_to_f : unit
+(* val sep_conj_f : hf -> hf -> hf *)
+(* val points_to_f : unit *)
 (* TODO: figure out the type of this function *)
 
 val ante_f : hf -> pf -> mf list
 (** why is the returned value a list here? *)
 
 val conseq_f : hf -> pf -> mf
-
 val entail : mf list -> mf -> bool
 (* TODO: change this later *)
 
