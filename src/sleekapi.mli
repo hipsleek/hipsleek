@@ -47,7 +47,7 @@ val lte_pure_f : pe -> pe -> pf
 val eq_pure_f  : pe -> pe -> pf
 
 val not_f      : pf -> pf
-val and_f.     : pf -> pf -> pf
+val and_f      : pf -> pf -> pf
 val or_f       : pf -> pf -> pf
 val implies_f  : pf -> pf -> pf
 val iff_f      : pf -> pf -> pf

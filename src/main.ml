@@ -1246,8 +1246,8 @@ let test_api () =
   let () = print_string "\n TESTING API" in
 
   (* true |- true *)
-  let true_f = Sleekapi.bool_pure_f true in
-  let empty_heap_f = Sleekapi.empty_heap_f () in
+  let true_f = Sleekapi.true_f in
+  let empty_heap_f = Sleekapi.empty_heap_f in
   let ante_f = Sleekapi.ante_f empty_heap_f true_f in
   let conseq_f = Sleekapi.conseq_f empty_heap_f true_f in
   let () = print_string "\n Entail 1: \n" in
