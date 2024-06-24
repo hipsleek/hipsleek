@@ -55,6 +55,8 @@ val iff_f      : pf -> pf -> pf
 (* Heap formulae *)
 val empty_heap_f : hf
 
+val points_to_int_f : string -> int -> hf
+
 (* val sep_conj_f : hf -> hf -> hf *)
 (* val points_to_f : unit *)
 (* TODO: figure out the type of this function *)

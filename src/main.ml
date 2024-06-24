@@ -1243,6 +1243,10 @@ let old_main () =
     end
 
 let test_api () =
+  let () =
+    let slk_prelude_path = (Gen.get_path Sys.executable_name)^"sleekapi_prelude.slk" in
+    Sleek.parse_file Nativefront.list_parse slk_prelude_path in
+
   let () = print_string "\n TESTING API" in
 
   (* true |- true *)
@@ -1274,7 +1278,16 @@ let test_api () =
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
-            
+
+  (* x |-> 1 |- x |-> 1 *)
+  let ante_f = Sleekapi.ante_f (Sleekapi.points_to_int_f "x" 1)
+      (Sleekapi.true_f) in
+  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_int_f "x" 1)
+      (Sleekapi.true_f) in
+  let () = print_string "\n Entail 3: \n" in
+  let () = print_string (Sleekapi.ante_printer ante_f) in
+  let () = print_string (Sleekapi.conseq_printer conseq_f) in
+  let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
   let () = print_string "\n API TEST COMPLETE" in
   ()
 

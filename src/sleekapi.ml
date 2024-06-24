@@ -32,6 +32,8 @@ let cprog : C.prog_decl ref = ref {
     C.prog_barrier_decls = []
 }
 
+(* Prelude of api *)
+
 (* Used as placeholder for pos since no file is parsed *)
 let no_pos : VG.loc =
   let no_pos1 = { Lexing.pos_fname = "";
@@ -75,6 +77,10 @@ let iff_f lhs rhs = and_f (implies_f lhs rhs) (implies_f rhs lhs)
 
 (* Building heap formula *)
 let empty_heap_f = IF.HEmp
+
+let points_to_int_f ident int = IF.mkHeapNode_x (ident, VG.Unprimed) "int_ptr" []
+    0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None]
+    None no_pos
 
 (* Functions to build meta_formulae *)
 
