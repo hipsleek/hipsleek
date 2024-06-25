@@ -11,9 +11,6 @@ type typ =
   | Int
   | Named of string
 
-  (* | Pair of typ * typ *)
-  (* | List of typ *)
-
 (* Relevant files:
   - ipure_D.ml (formula)
   - iformula.ml (struc_formula)
@@ -67,21 +64,23 @@ val iff_f      : pf -> pf -> pf
 (* val false_heap_f : hf *)
 val empty_heap_f : hf
 
-val points_to_int_f : string -> int -> hf
-(** [points_to_int_f s i] returns a heap formula denoting that a variable
-    with the name [s] is pointing to the integer [i] *)
+val points_to_int_f : string -> bool -> int -> hf
+(** [points_to_int_f s b i] returns a heap formula denoting that a variable
+    with the name [s] is pointing to the integer [i].
+    b denotes whether the variable is primed 
+*)
+
+val points_to_f : string -> bool -> string -> pe list -> hf
+(** [points_to_f s1 b s2 l] returns a heap formula denoting that a variable
+    with the name [s1] is pointing to a 
+    b denotes whether the variable is primed
+*)
 
 val data_decl : string -> ((typ * string) list) -> unit
 
 (* val sep_conj_f : hf -> hf -> hf *)
 
-(* val points_to_f : string -> string -> hf *)
-
-val heap_node_f : string -> bool -> string -> pe list -> hf
-
 val ante_f : hf -> pf -> mf list
-(** why is the returned value a list here? *)
-
 val conseq_f : hf -> pf -> mf
 val entail : mf list -> mf -> bool
 

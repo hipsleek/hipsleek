@@ -95,9 +95,12 @@ let iff_f lhs rhs = and_f (implies_f lhs rhs) (implies_f rhs lhs)
 (* Building heap formula *)
 let empty_heap_f = IF.HEmp
 
-let points_to_int_f ident int = IF.mkHeapNode_x (ident, VG.Unprimed) "int_ptr" []
-    0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None]
-    None no_pos
+let points_to_int_f var primed int =
+  let p = (match primed with
+      | true -> VG.Primed
+      | false -> VG.Unprimed) in
+  IF.mkHeapNode_x (var, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false
+    false None [(int_pure_exp int)] [None] None no_pos
 
 let data_decl ident data_fields =
   let df = List.map (function (Void, ident) -> (((Void, ident) : Globals.typed_ident), no_pos, false, [])
@@ -116,22 +119,20 @@ let data_decl ident data_fields =
     Iast.data_is_template = false;
     Iast.data_methods = [];
   } in
-  (* let _ = Iast.annotate_field_pure_ext SE.iprog in (\* Can be improved to not re-annotatepreviously annotated data decls *\) *)
-  (* let c_data_decl = Astsimp.trans_data_x SE.iprog (List.hd SE.iprog.Iast.prog_data_decls) in *)
-  (* let () = !SE.cprog.Cast.prog_data_decls <- c_data_decl :: !SE.cprog.Cast.prog_data_decls in *)
-  let () = SE.convert_data_and_pred_to_cast_x () in
-  print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog))
-                       
-(* let points_to_f ident data_decl_name =  IF.mkHeapNode_x (ident, VG.Unprimed) "node" [] *)
-(*     0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] *)
-(*     None no_pos *)
+  let _ = Iast.annotate_field_pure_ext SE.iprog in (* Can be improved to not re-annotatepreviously annotated data decls *)
+  let c_data_decl = Astsimp.trans_data_x SE.iprog (List.hd SE.iprog.Iast.prog_data_decls) in
+  let () = !SE.cprog.Cast.prog_data_decls <- c_data_decl :: !SE.cprog.Cast.prog_data_decls in
+  let () = Cf_ext.add_data_tags_to_obj !SE.cprog.Cast.prog_data_decls in (* To mark recursive data declarations *)
+  (* print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog)) *)
+  ()
 
-let heap_node_f var (prime: bool) ident (exps : IP.exp list) = 
-  let p = (match prime with 
+let points_to_f var primed ident (exps : IP.exp list) = 
+  let p = (match primed with
       | true -> VG.Primed
       | false -> VG.Unprimed) in
+  let ho_args = List.map (fun _ -> None) exps in
   IF.mkHeapNode_x (var, p) ident [] 0 false Globals.SPLIT0 IP.NoAnn false false false
-    None exps [None] None no_pos
+    None exps ho_args None no_pos
   
 (* Functions to build meta_formulae *)
 
@@ -168,7 +169,7 @@ let conseq_f heap_f pure_f =
 
 (* Antecedent and consequent are IF.formula and IF.struc_formula respectively *)
 let entail ante conseq : bool =
-  SE.process_entail_check ante conseq (Some true)
+  SE.process_entail_check ante conseq (Some false)
 
 let ante_printer xs =
   let rec helper i xs =
