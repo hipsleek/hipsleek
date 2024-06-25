@@ -1243,10 +1243,9 @@ let old_main () =
     end
 
 let test_api () =
-  let () =
-    let slk_prelude_path = (Gen.get_path Sys.executable_name)^"sleekapi_prelude.slk" in
-    Sleek.parse_file Nativefront.list_parse slk_prelude_path in
+  let () = Sleekapi.init () in
 
+  let () = print_string ("\n STRING OF PROG : " ^ (Cprinter.string_of_program !Sleekengine.cprog)) in
   let () = print_string "\n TESTING API" in
 
   (* true |- true *)
@@ -1288,6 +1287,22 @@ let test_api () =
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
+
+  (* x::node<0,null> |- x::node<0,null> & x != null *)
+  let () = Sleekapi.data_decl "node" [(Sleekapi.Int, "val"); (Sleekapi.Named("node"), "next")] in
+  let emp1_f = Sleekapi.heap_node_f "x" false "node" [(Sleekapi.int_pure_exp 0); (Sleekapi.null_pure_exp)] in
+  let emp2_f = Sleekapi.heap_node_f "x" false "node" [(Sleekapi.int_pure_exp 0); (Sleekapi.null_pure_exp)] in
+
+  let ante_f = Sleekapi.ante_f emp1_f Sleekapi.true_f in
+  let conseq_f = Sleekapi.conseq_f emp2_f
+      (Sleekapi.not_f (Sleekapi.eq_pure_f
+                         (Sleekapi.var_pure_exp "x" false)
+                         Sleekapi.null_pure_exp)) in
+  let () = print_string "\n Entail 4: \n" in
+  let () = print_string (Sleekapi.ante_printer ante_f) in
+  let () = print_string (Sleekapi.conseq_printer conseq_f) in
+  let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
+
   let () = print_string "\n API TEST COMPLETE" in
   ()
 

@@ -9,6 +9,14 @@ type pe = IP.exp
 type pf = IP.formula
 type hf = IF.h_formula
 type mf = SC.meta_formula
+type dd = Iast.data_decl
+
+type typ =
+  | Void
+  | Bool
+  | Float
+  | Int
+  | Named of string
 
 (* 
    dummy cprog so that solver have access to view and data decls.
@@ -33,6 +41,15 @@ let cprog : C.prog_decl ref = ref {
 }
 
 (* Prelude of api *)
+let init () = 
+  let () = print_string "Initializing sleek api" in
+  (* Prelude file contains some data declarations like int_ptr to support the api
+     Declarations in this prelude file will be parsed and stored in a global
+     variable, iprog, in sleekengine.ml
+  *)
+  let slk_prelude_path = (Gen.get_path Sys.executable_name)^"sleekapi_prelude.slk" in
+  let () = Sleek.parse_file Nativefront.list_parse slk_prelude_path in
+  ()
 
 (* Used as placeholder for pos since no file is parsed *)
 let no_pos : VG.loc =
@@ -82,6 +99,40 @@ let points_to_int_f ident int = IF.mkHeapNode_x (ident, VG.Unprimed) "int_ptr" [
     0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None]
     None no_pos
 
+let data_decl ident data_fields =
+  let df = List.map (function (Void, ident) -> (((Void, ident) : Globals.typed_ident), no_pos, false, [])
+                            | (Bool, ident) -> ((Bool, ident), no_pos, false, [])
+                            | (Float, ident) -> ((Float, ident), no_pos, false, [])
+                            | (Int, ident) -> ((Int, ident), no_pos, false, [])
+                            | (Named(name), ident) -> ((Named(name), ident), no_pos, false, [])) data_fields in
+  (* let () = !Sleekengine.cprog.C.prog_data_decls <- cdata_decl :: !Sleekengine.cprog.C.prog_data_decls in *)
+  let () = SE.process_data_def {
+    Iast.data_name = ident;
+    Iast.data_fields = df;
+    Iast.data_parent_name = "Object";
+    Iast.data_invs = [];
+    Iast.data_pos = no_pos;
+    Iast.data_pure_inv = None;
+    Iast.data_is_template = false;
+    Iast.data_methods = [];
+  } in
+  (* let _ = Iast.annotate_field_pure_ext SE.iprog in (\* Can be improved to not re-annotatepreviously annotated data decls *\) *)
+  (* let c_data_decl = Astsimp.trans_data_x SE.iprog (List.hd SE.iprog.Iast.prog_data_decls) in *)
+  (* let () = !SE.cprog.Cast.prog_data_decls <- c_data_decl :: !SE.cprog.Cast.prog_data_decls in *)
+  let () = SE.convert_data_and_pred_to_cast_x () in
+  print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog))
+                       
+(* let points_to_f ident data_decl_name =  IF.mkHeapNode_x (ident, VG.Unprimed) "node" [] *)
+(*     0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] *)
+(*     None no_pos *)
+
+let heap_node_f var (prime: bool) ident (exps : IP.exp list) = 
+  let p = (match prime with 
+      | true -> VG.Primed
+      | false -> VG.Unprimed) in
+  IF.mkHeapNode_x (var, p) ident [] 0 false Globals.SPLIT0 IP.NoAnn false false false
+    None exps [None] None no_pos
+  
 (* Functions to build meta_formulae *)
 
 let ante_f heap_f pure_f  =

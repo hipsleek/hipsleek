@@ -1,7 +1,18 @@
 type pe                                 (* pure expressions *)
 type pf                                 (* pure formulae *)
+type dd                                 (* data declarations *)
 type hf                                 (* heap formulae *)
 type mf                                 (* meta formulae *)
+
+type typ =
+  | Void
+  | Bool
+  | Float
+  | Int
+  | Named of string
+
+  (* | Pair of typ * typ *)
+  (* | List of typ *)
 
 (* Relevant files:
   - ipure_D.ml (formula)
@@ -13,7 +24,6 @@ type mf                                 (* meta formulae *)
 (* meta formulae are formulae contains both heap formulae and pure formulae *)
 
 (* Pure formulae *)
-
 val null_pure_exp : pe
 (** [null_pure_exp] is an expresion that represents a [null]
     value at program level *)
@@ -41,7 +51,7 @@ val false_f : pf
 (** [false_f] is a false pure formula *)
 
 val gt_pure_f  : pe -> pe -> pf
-val eq_pure_f  : pe -> pe -> pf
+val gte_pure_f : pe -> pe -> pf
 val lt_pure_f  : pe -> pe -> pf
 val lte_pure_f : pe -> pe -> pf
 val eq_pure_f  : pe -> pe -> pf
@@ -53,20 +63,29 @@ val implies_f  : pf -> pf -> pf
 val iff_f      : pf -> pf -> pf
 
 (* Heap formulae *)
+(* val true_heap_f : hf *)
+(* val false_heap_f : hf *)
 val empty_heap_f : hf
 
 val points_to_int_f : string -> int -> hf
+(** [points_to_int_f s i] returns a heap formula denoting that a variable
+    with the name [s] is pointing to the integer [i] *)
+
+val data_decl : string -> ((typ * string) list) -> unit
 
 (* val sep_conj_f : hf -> hf -> hf *)
-(* val points_to_f : unit *)
-(* TODO: figure out the type of this function *)
+
+(* val points_to_f : string -> string -> hf *)
+
+val heap_node_f : string -> bool -> string -> pe list -> hf
 
 val ante_f : hf -> pf -> mf list
 (** why is the returned value a list here? *)
 
 val conseq_f : hf -> pf -> mf
 val entail : mf list -> mf -> bool
-(* TODO: change this later *)
 
 val ante_printer : mf list -> string
 val conseq_printer : mf -> string
+
+val init : unit -> unit
