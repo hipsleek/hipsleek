@@ -59,12 +59,26 @@ let no_pos : VG.loc =
                   Lexing.pos_cnum = 0 } in
   {VG.start_pos = no_pos1; VG.mid_pos = no_pos1; VG.end_pos = no_pos1;}
 
+(* Check whether is a variable primed by variable name *)
+let check_prime var = 
+  let len = String.length var in
+    let last = String.get var (len - 1) in
+    match last with 
+      | '\'' -> VG.Primed
+      | _ -> VG.Unprimed
+
+let truncate_var var primed = 
+  match primed with 
+    | VG.Primed -> String.sub var 0 ((String.length var) - 1)
+    | VG.Unprimed -> var
+
 (* Building pure expressions *)
 let null_pure_exp = IP.Null no_pos
-let var_pure_exp (ident : string) (primed : bool) = 
-  match primed with
-  | true ->  IP.Var ((ident, VG.Primed), no_pos) 
-  | false -> IP.Var ((ident, VG.Unprimed), no_pos)
+let var_pure_exp (ident : string) = 
+  let p = check_prime ident in
+  let t_ident = truncate_var ident p in
+  IP.Var ((t_ident, p), no_pos)
+
 let int_pure_exp (int : int) = IP.IConst (int, no_pos)
 let float_pure_exp (float : float) = IP.FConst (float, no_pos)
 
@@ -95,11 +109,10 @@ let iff_f lhs rhs = and_f (implies_f lhs rhs) (implies_f rhs lhs)
 (* Building heap formula *)
 let empty_heap_f = IF.HEmp
 
-let points_to_int_f var primed int =
-  let p = (match primed with
-      | true -> VG.Primed
-      | false -> VG.Unprimed) in
-  IF.mkHeapNode_x (var, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false
+let points_to_int_f var int =
+  let p = check_prime var in
+  let t_var = truncate_var var p in
+  IF.mkHeapNode_x (t_var, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false
     false None [(int_pure_exp int)] [None] None no_pos
 
 let data_decl ident data_fields =
@@ -126,13 +139,20 @@ let data_decl ident data_fields =
   (* print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog)) *)
   ()
 
-let points_to_f var primed ident (exps : IP.exp list) = 
+(* let points_to_f var primed ident (exps : IP.exp list) = 
   let p = (match primed with
       | true -> VG.Primed
       | false -> VG.Unprimed) in
   let ho_args = List.map (fun _ -> None) exps in
   IF.mkHeapNode_x (var, p) ident [] 0 false Globals.SPLIT0 IP.NoAnn false false false
-    None exps ho_args None no_pos
+    None exps ho_args None no_pos *)
+
+let points_to_f var ident exps = 
+  let primed = check_prime var in
+  let t_var = truncate_var var primed in
+  let ho_args = List.map (fun _ -> None) exps in
+  IF.mkHeapNode_x (t_var, primed) ident [] 0 false Globals.SPLIT0 IP.NoAnn false false false
+      None exps ho_args None no_pos
   
 (* Functions to build meta_formulae *)
 

@@ -20,15 +20,18 @@ type typ =
 
 (* meta formulae are formulae contains both heap formulae and pure formulae *)
 
+val check_prime : string -> VarGen.primed
+
+val truncate_var : string -> VarGen.primed -> string
+
 (* Pure formulae *)
 val null_pure_exp : pe
 (** [null_pure_exp] is an expresion that represents a [null]
     value at program level *)
 
-val var_pure_exp : string -> bool -> pe
-(** [var_pure_exp s b] returns a variable with the name [s]. [b] is a boolean
-    indicating whether this variable is a prime variable, i.e. the variable is
-    the most recent (updated) value *)
+val var_pure_exp : string -> pe
+(** [var_pure_exp s b] returns a variable with the name [s]. 
+    Whether is the variable primed is determined by whether is there a ' char at the end of the variable name *)
 
 val int_pure_exp : int -> pe
 (** [int_pure_exp i] returns a expression with the value of the integer [i] *)
@@ -64,16 +67,16 @@ val iff_f      : pf -> pf -> pf
 (* val false_heap_f : hf *)
 val empty_heap_f : hf
 
-val points_to_int_f : string -> bool -> int -> hf
-(** [points_to_int_f s b i] returns a heap formula denoting that a variable
+val points_to_int_f : string -> int -> hf
+(** [points_to_int_f s i] returns a heap formula denoting that a variable
     with the name [s] is pointing to the integer [i].
-    b denotes whether the variable is primed 
+    Whether is the variable primed is determined by whether is there a ' char at the end of the variable name
 *)
 
-val points_to_f : string -> bool -> string -> pe list -> hf
-(** [points_to_f s1 b s2 l] returns a heap formula denoting that a variable
+val points_to_f : string -> string -> pe list -> hf
+(** [points_to_f s1 s2 l] returns a heap formula denoting that a variable
     with the name [s1] is pointing to a 
-    b denotes whether the variable is primed
+    Whether is the variable primed is determined by whether is there a ' char at the end of the variable name
 *)
 
 val data_decl : string -> ((typ * string) list) -> unit
