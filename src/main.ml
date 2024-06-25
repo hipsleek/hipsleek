@@ -1257,7 +1257,7 @@ let test_api () =
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
 
-  (* x > 0 /\ y = x + 1 |- y > 1 *)
+  (* x > 0 /\ x' = x + 1 |- x' > 1 *)
   let ante_f = Sleekapi.ante_f empty_heap_f
       (Sleekapi.and_f
          (Sleekapi.gt_pure_f 
@@ -1270,7 +1270,7 @@ let test_api () =
                (Sleekapi.int_pure_exp 1)))) in
   let conseq_f = Sleekapi.conseq_f empty_heap_f
       (Sleekapi.gt_pure_f
-         (Sleekapi.var_pure_exp "x")
+         (Sleekapi.var_pure_exp "x'")
          (Sleekapi.int_pure_exp 1)) in
   let () = print_string "\n Entail 2: \n" in
   let () = print_string (Sleekapi.ante_printer ante_f) in
