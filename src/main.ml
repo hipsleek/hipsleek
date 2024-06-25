@@ -1301,6 +1301,17 @@ let test_api () =
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
 
+  (* x |-> 1 * y |-> 2 |- x -> 1 *) (* maybe need to find a better test case to test the star *)
+  let h1 = Sleekapi.points_to_int_f "x" 1 in
+  let h2 = Sleekapi.points_to_int_f "y" 2 in 
+  let astar = Sleekapi.sep_conj_f h1 h2 in
+  let ante_f = Sleekapi.ante_f astar Sleekapi.true_f in
+  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_int_f "x" 1) Sleekapi.true_f in
+  let () = print_string "\n Entail 5: \n" in
+  let () = print_string (Sleekapi.ante_printer ante_f) in
+  let () = print_string (Sleekapi.conseq_printer conseq_f) in
+  let () = print_string ("\n ENTAIL RESULT : " ^ (string_of_bool (Sleekapi.entail ante_f conseq_f))) in
+
   let () = print_string "\n API TEST COMPLETE" in
   ()
 

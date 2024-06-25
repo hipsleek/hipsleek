@@ -67,6 +67,12 @@ val iff_f      : pf -> pf -> pf
 (* val false_heap_f : hf *)
 val empty_heap_f : hf
 
+val false_heap_f : hf
+
+val true_heap_f : hf
+
+val sep_conj_f : hf -> hf -> hf
+
 val points_to_int_f : string -> int -> hf
 (** [points_to_int_f s i] returns a heap formula denoting that a variable
     with the name [s] is pointing to the integer [i].

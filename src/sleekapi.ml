@@ -60,13 +60,16 @@ let no_pos : VG.loc =
   {VG.start_pos = no_pos1; VG.mid_pos = no_pos1; VG.end_pos = no_pos1;}
 
 (* Check whether is a variable primed by variable name *)
-let check_prime var = 
+(* Might need error handling if var has len 0*)
+let check_prime var =
   let len = String.length var in
     let last = String.get var (len - 1) in
     match last with 
       | '\'' -> VG.Primed
       | _ -> VG.Unprimed
 
+(* Returns the truncated variable if variable is primed*)
+(* Might also need error handling if var has len 0*)
 let truncate_var var primed = 
   match primed with 
     | VG.Primed -> String.sub var 0 ((String.length var) - 1)
@@ -108,6 +111,12 @@ let iff_f lhs rhs = and_f (implies_f lhs rhs) (implies_f rhs lhs)
 
 (* Building heap formula *)
 let empty_heap_f = IF.HEmp
+
+let false_heap_f = IF.HFalse
+
+let true_heap_f = IF.HTrue
+
+let sep_conj_f h1 h2 = IF.mkStar h1 h2 no_pos
 
 let points_to_int_f var int =
   let p = check_prime var in
