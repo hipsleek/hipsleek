@@ -38,6 +38,7 @@
 (* Type check and elaborate ABS to CIL *)
 
 (* The references to ISO means ANSI/ISO 9899-1999 *)
+open Hipsleek_common
 module A = Cabs
 module C = Cabshelper
 module V = Cabsvisit

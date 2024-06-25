@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
 (* let source_files = ref ([] : string list) *)

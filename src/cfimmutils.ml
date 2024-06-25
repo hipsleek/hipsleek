@@ -1,5 +1,5 @@
 #include "xdebug.cppo"
-
+open Hipsleek_common
 (* extension of cformula, focused on imm related operations  *)
 
 open Globals

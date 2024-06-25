@@ -1,4 +1,6 @@
 #include "xdebug.cppo"
+open Hipsleek_common
+
 (* let debug = ref false *)
 let trace f s = if !Debug.debug_print then (prerr_string (Printf.sprintf "\n%d: %s: %s" (Unix.getpid ()) f s); flush stderr) else ()
 let showinfo = true

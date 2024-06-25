@@ -1,3 +1,4 @@
+open Hipsleek_common
 open VarGen
 open Camlp4.PreCast
 open Cformula

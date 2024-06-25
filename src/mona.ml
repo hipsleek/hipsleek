@@ -2,7 +2,7 @@
 (*
   15-06-2006
 *)
-
+open Hipsleek_common
 open Globals
 open VarGen
 open Gen

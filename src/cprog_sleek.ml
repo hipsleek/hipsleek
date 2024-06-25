@@ -1,6 +1,6 @@
 #include "xdebug.cppo"
 (** pretty printing for formula and cast *)
-
+open Hipsleek_common
 open Format
 open Globals
 open VarGen

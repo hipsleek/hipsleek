@@ -1,5 +1,5 @@
 #include "xdebug.cppo"
-
+open Hipsleek_common
 open Cast
 open Globals
 open VarGen

@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 (* cview util
    this module contains procedures

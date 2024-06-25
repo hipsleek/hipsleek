@@ -3,7 +3,6 @@
   (name hipsleek_common)
   (public_name hipsleek.common)
   ;(libraries extlib fileutils batteries ocamlgraph camlp4 camlp4.lib xml-light)
-  (wrapped false)
   (libraries fileutils ocamlgraph camlp4.lib batteries)
   (preprocessor_deps ../xdebug.cppo)
   (preprocess (per_module

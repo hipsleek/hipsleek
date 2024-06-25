@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 (*
   Predicate compiler: compiles predicates to executable code.

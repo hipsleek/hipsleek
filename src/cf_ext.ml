@@ -1,5 +1,6 @@
  
 #include "xdebug.cppo"
+open Hipsleek_common
 (*
   Created 21-Feb-2006
 

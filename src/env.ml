@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 (*
   Created 19-Feb-2006

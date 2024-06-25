@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 (*this file contains all unitilise for shape analysis.
   it is used mainly by infer.infer_collect_hp and sa.infer_hp

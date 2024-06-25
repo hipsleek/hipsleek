@@ -1,4 +1,6 @@
 #include "xdebug.cppo"
+open Hipsleek_common
+open Hipsleek
 open VarGen
 (* test - added to immutability branch *)
 (******************************************)
@@ -1262,6 +1264,3 @@ let () =
         end
     done;
     hip_epilogue ()
-
-
-

@@ -41,6 +41,7 @@
 ** 2.0  George Necula 12/12/00: Many extensions
 *)
 {
+open Hipsleek_common
 open Cparser
 open Pretty
 exception Eof

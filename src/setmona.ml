@@ -1,7 +1,7 @@
 #include "xdebug.cppo"
 (*
 *)
-
+open Hipsleek_common
 open Globals
 open VarGen
 open GlobProver

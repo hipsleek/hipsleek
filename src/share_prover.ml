@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 let incomplete_extra_decomp = ref false
 
 

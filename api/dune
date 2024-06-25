@@ -1,0 +1,10 @@
+(library
+ (name sleekapi)
+ (libraries hipsleek)
+ (inline_tests)
+ (preprocess (pps ppx_expect)))
+
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))
