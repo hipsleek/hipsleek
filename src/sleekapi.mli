@@ -60,6 +60,19 @@ val implies_f  : pf -> pf -> pf
 val iff_f      : pf -> pf -> pf
 
 (* Heap formulae *)
+val data_decl : string -> ((typ * string) list) -> unit
+(** [data_decl s l] is used to declare a data structure named [s].
+    [l] is a list of pairs of the type and name of each field of the data
+    structure.
+    Returns true if declaration was successful, false otherwise.
+ *)
+
+val predicate_decl : string -> unit
+(** [predicate_decl s] is used to declare a predicate.
+    [s] is a string defining the predicate in sleek syntax.
+    Returns true if declaration was successful, false otherwise.
+*)
+
 (* val true_heap_f : hf *)
 (* val false_heap_f : hf *)
 val empty_heap_f : hf
@@ -67,16 +80,15 @@ val empty_heap_f : hf
 val points_to_int_f : string -> bool -> int -> hf
 (** [points_to_int_f s b i] returns a heap formula denoting that a variable
     with the name [s] is pointing to the integer [i].
-    b denotes whether the variable is primed 
+    [b] denotes whether the variable is primed.
 *)
 
 val points_to_f : string -> bool -> string -> pe list -> hf
 (** [points_to_f s1 b s2 l] returns a heap formula denoting that a variable
-    with the name [s1] is pointing to a 
-    b denotes whether the variable is primed
+    with the name [s1] is pointing to a [s2] heap node. [l] is the list of
+    data fields of the heap node.
+    [b] denotes whether the variable is primed.
 *)
-
-val data_decl : string -> ((typ * string) list) -> unit
 
 (* val sep_conj_f : hf -> hf -> hf *)
 
