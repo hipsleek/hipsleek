@@ -1256,30 +1256,30 @@ let test_api () =
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let _ = Sleekapi.entail ante_f conseq_f in
 
-  (* x > 0 /\ y = x + 1 |- y > 1 *)
-  let ante_f = Sleekapi.ante_f empty_heap_f
-      (Sleekapi.and_f
-         (Sleekapi.gt_pure_f 
-            (Sleekapi.var_pure_exp "x" false)
-            (Sleekapi.int_pure_exp 0))
-         (Sleekapi.eq_pure_f
-            (Sleekapi.var_pure_exp "y" false)
-            (Sleekapi.add_pure_exp
-               (Sleekapi.var_pure_exp "x" false)
-               (Sleekapi.int_pure_exp 1)))) in
-  let conseq_f = Sleekapi.conseq_f empty_heap_f
-      (Sleekapi.gt_pure_f
-         (Sleekapi.var_pure_exp "y" false)
-         (Sleekapi.int_pure_exp 1)) in
+  (* x |-> 1 |- x |-> 1 *)
+  let ante_f = Sleekapi.ante_f (Sleekapi.points_to_int_f "x" 1)
+      (Sleekapi.true_f) in
+  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_int_f "x" 1)
+      (Sleekapi.true_f) in
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let _ = Sleekapi.entail ante_f conseq_f in
 
-  (* x |-> 1 |- x |-> 1 *)
-  let ante_f = Sleekapi.ante_f (Sleekapi.points_to_int_f "x" false 1)
-      (Sleekapi.true_f) in
-  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_int_f "x" false 1)
-      (Sleekapi.true_f) in
+  (* x > 0 /\ x' = x + 1 |- x' > 1 *)
+  let ante_f = Sleekapi.ante_f empty_heap_f
+      (Sleekapi.and_f
+         (Sleekapi.gt_pure_f 
+            (Sleekapi.var_pure_exp "x")
+            (Sleekapi.int_pure_exp 0))
+         (Sleekapi.eq_pure_f
+            (Sleekapi.var_pure_exp "x'")
+            (Sleekapi.add_pure_exp
+               (Sleekapi.var_pure_exp "x")
+               (Sleekapi.int_pure_exp 1)))) in
+  let conseq_f = Sleekapi.conseq_f empty_heap_f
+      (Sleekapi.gt_pure_f
+         (Sleekapi.var_pure_exp "x'")
+         (Sleekapi.int_pure_exp 1)) in
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let _ = Sleekapi.entail ante_f conseq_f in
@@ -1287,10 +1287,10 @@ let test_api () =
   (* x::node<0,null> |- x != null *)
   let () = Sleekapi.data_decl "node" [(Sleekapi.Int, "val"); (Sleekapi.Named("node"), "next")] in
   let ante_f = Sleekapi.ante_f 
-      (Sleekapi.points_to_f "x" false "node" [(Sleekapi.int_pure_exp 0); (Sleekapi.null_pure_exp)]) Sleekapi.true_f in
+      (Sleekapi.points_to_f "x" "node" [(Sleekapi.int_pure_exp 0); (Sleekapi.null_pure_exp)]) Sleekapi.true_f in
   let conseq_f = Sleekapi.conseq_f Sleekapi.empty_heap_f
       (Sleekapi.not_f (Sleekapi.eq_pure_f
-                         (Sleekapi.var_pure_exp "x" false)
+                         (Sleekapi.var_pure_exp "x")
                          Sleekapi.null_pure_exp)) in
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
@@ -1303,10 +1303,10 @@ let test_api () =
   let () = Sleekapi.predicate_decl ll in
   let ante_f = Sleekapi.ante_f Sleekapi.empty_heap_f
       (Sleekapi.eq_pure_f
-         (Sleekapi.var_pure_exp "x" false)
+         (Sleekapi.var_pure_exp "x")
          Sleekapi.null_pure_exp) in
   let conseq_f = Sleekapi.conseq_f
-      (Sleekapi.points_to_f "x" false "ll" [(Sleekapi.int_pure_exp 0)])
+      (Sleekapi.points_to_f "x" "ll" [(Sleekapi.int_pure_exp 0)])
       Sleekapi.true_f in
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
@@ -1314,14 +1314,24 @@ let test_api () =
 
   (* x::ll<n> |- x::ll<n+1> *)
   let ante_f = Sleekapi.ante_f
-      (Sleekapi.points_to_f "x" false "ll" [(Sleekapi.var_pure_exp "n" false)])
+      (Sleekapi.points_to_f "x" "ll" [(Sleekapi.var_pure_exp "n")])
       Sleekapi.true_f in
   let conseq_f = Sleekapi.conseq_f
-      (Sleekapi.points_to_f "x" false "ll" [(Sleekapi.add_pure_exp
-                                               (Sleekapi.var_pure_exp "n" false)
+      (Sleekapi.points_to_f "x" "ll" [(Sleekapi.add_pure_exp
+                                               (Sleekapi.var_pure_exp "n")
                                                (Sleekapi.int_pure_exp 1)
                                             )])
       Sleekapi.true_f in
+  let () = print_string (Sleekapi.ante_printer ante_f) in
+  let () = print_string (Sleekapi.conseq_printer conseq_f) in
+  let _ = Sleekapi.entail ante_f conseq_f in
+
+  (* x |-> 1 * y |-> 2 |- x -> 1 *) (* maybe need to find a better test case to test the star *)
+  let h1 = Sleekapi.points_to_int_f "x" 1 in
+  let h2 = Sleekapi.points_to_int_f "y" 2 in 
+  let astar = Sleekapi.sep_conj_f h1 h2 in
+  let ante_f = Sleekapi.ante_f astar Sleekapi.true_f in
+  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_int_f "x" 1) Sleekapi.true_f in
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let _ = Sleekapi.entail ante_f conseq_f in

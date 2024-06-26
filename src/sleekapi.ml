@@ -61,13 +61,31 @@ let no_pos : VG.loc =
                   Lexing.pos_cnum = 0 } in
   {VG.start_pos = no_pos1; VG.mid_pos = no_pos1; VG.end_pos = no_pos1;}
 
+(* Check whether is a variable primed by variable name *)
+(* Might need error handling if var has len 0*)
+let check_prime var_name =
+  let len = String.length var_name in
+    let last = String.get var_name (len - 1) in
+    match last with 
+    | '\'' -> VG.Primed
+    | _ -> VG.Unprimed
+
+(* Returns the truncated variable if variable is primed*)
+(* Might also need error handling if var has len 0*)
+let truncate_var var_name primed = 
+  match primed with 
+  | VG.Primed -> String.sub var_name 0 ((String.length var_name) - 1)
+  | VG.Unprimed -> var_name
+
 (* Building pure expressions *)
 let null_pure_exp = IP.Null no_pos
-let var_pure_exp (ident : string) (primed : bool) = 
-  match primed with
-  | true ->  IP.Var ((ident, VG.Primed), no_pos) 
-  | false -> IP.Var ((ident, VG.Unprimed), no_pos)
-let int_pure_exp   int   = IP.IConst (int, no_pos)
+
+let var_pure_exp (ident : string) = 
+  let p = check_prime ident in
+  let t_ident = truncate_var ident p in
+  IP.Var ((t_ident, p), no_pos)
+
+let int_pure_exp int = IP.IConst (int, no_pos)
 let float_pure_exp float = IP.FConst (float, no_pos)
 
 let add_pure_exp lhs rhs = IP.Add (lhs, rhs, no_pos)
@@ -96,6 +114,15 @@ let iff_f     lhs rhs = and_f (implies_f lhs rhs) (implies_f rhs lhs)
 
 (* Building heap formula *)
 let empty_heap_f = IF.HEmp
+let false_heap_f = IF.HFalse
+let true_heap_f  = IF.HTrue
+
+let sep_conj_f h1 h2 = IF.mkStar h1 h2 no_pos
+
+let points_to_int_f var_name int =
+  let p = check_prime var_name in
+  let t_var_name = truncate_var var_name p in
+  IF.mkHeapNode_x (t_var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] None no_pos
 
 let data_decl data_name data_fields =
   let df = List.map (function (Void, ident) -> (((Void, ident) : Globals.typed_ident), no_pos, false, [])
@@ -130,20 +157,12 @@ let predicate_decl sleek_str =
     SE.convert_data_and_pred_to_cast_x ()
   | _ -> ()
 
-let points_to_int_f var_name primed int =
-  let p = match primed with
-      | true -> VG.Primed
-      | false -> VG.Unprimed in
-  IF.mkHeapNode_x (var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false
-    false None [(int_pure_exp int)] [None] None no_pos
 
-let points_to_f var_name primed node_name (exps : IP.exp list) = 
-  let p = match primed with
-      | true -> VG.Primed
-      | false -> VG.Unprimed in
+let points_to_f var_name ident exps = 
+  let primed = check_prime var_name in
+  let t_var_name = truncate_var var_name primed in
   let imm_param = List.map (fun _ -> None) exps in
-  IF.mkHeapNode_x (var_name, p) node_name [] 0 false Globals.SPLIT0 IP.NoAnn false false false
-    None exps imm_param None no_pos
+  IF.mkHeapNode_x (t_var_name, primed) ident [] 0 false Globals.SPLIT0 IP.NoAnn false false false None exps imm_param None no_pos
   
 (* Functions to build meta_formulae *)
 
