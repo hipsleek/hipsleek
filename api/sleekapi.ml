@@ -274,20 +274,22 @@ let new_context iante iconseq =
   let ctx = CF.add_path_id ctx (None, 0) 0 in
   let ctx = CF.set_flow_in_context_override
       { CF.formula_flow_interval = !Exc.ETABLE_NFLOW.norm_flow_int; CF.formula_flow_link = None} ctx in
-  (* (ctx, cconseq) *)
+  (ctx, cconseq)
 (* The following is done in sleek_entail *)
-  let init_esc = [((0,""),[])] in
-  let lfe = [CF.mk_failesc_context ctx [] init_esc] in
-  let () = print_string ("\n lfe : " ^ (Cprinter.string_of_list_failesc_context lfe)) in
-  (lfe, cconseq)
+  (* let init_esc = [((0,""),[])] in *)
+  (* let lfe = [CF.mk_failesc_context ctx [] init_esc] in *)
+  (* let () = print_string ("\n lfe : " ^ (Cprinter.string_of_list_failesc_context lfe)) in *)
+  (* (lfe, cconseq) *)
 
 (* let entail iante iconseq = *)
 (*   let ante_ctx, conseq = new_context iante iconseq in *)
 (*   let rs, pf = Solver.heap_entail_struc_list_failesc_context_init 12 !SE.cprog false true ante_ctx conseq None None None no_pos None in *)
-(*   (\* let rs, prf = Sleekcore.sleek_entail !SE.cprog ante_ctx conseq no_pos in *\) *)
+  (* let rs, prf = Sleekcore.sleek_entail !SE.cprog ante_ctx conseq no_pos in *)
 (*   let () = print_string ("\n Residue 1 : " ^ (Cprinter.string_of_list_failesc_context rs)) in *)
 (*   (\* entail [iante] iconseq *\) *)
-(*   CF.isSuccessListFailescCtx_new rs *)
+  (* let res = CF.isSuccessListFailescCtx rs in *)
+  (* let () = print_string ("\n" ^ (string_of_bool res)) in *)
+  (* res *)
   
 (* Testing API *)
 let%expect_test "Entailment checking" =

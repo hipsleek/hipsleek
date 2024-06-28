@@ -1,5 +1,6 @@
 module Sleekengine = Sleekengine
 module Sleekmain = Sleekmain
+module Sleekcore = Sleekcore
 module Scriptarguments = Scriptarguments
 module Cilparser = Cilparser
 module Intsparser = Intsparser
