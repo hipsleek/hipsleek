@@ -1,7 +1,7 @@
 (library
  (name sleekapi)
  (libraries hipsleek)
- (inline_tests)
+ (inline_tests (deps ./sleekapi_prelude.slk))
  (preprocess (pps ppx_expect)))
 
 (env

@@ -1,6 +1,6 @@
 (executables
  (names hip sleek)
- (libraries hipsleek)
+ (libraries hipsleek sleekapi)
  (preprocessor_deps xdebug.cppo)
  (modules hip sleek)
  (preprocess (action (run cppo -I . -D TRACE %{input-file}))))
