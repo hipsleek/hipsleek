@@ -61,6 +61,12 @@ let no_pos : VG.loc =
                   Lexing.pos_cnum = 0 } in
   {VG.start_pos = no_pos1; VG.mid_pos = no_pos1; VG.end_pos = no_pos1;}
 
+let check_anon var_name f = 
+  match var_name with 
+    | "_" -> ("Anon" ^ Globals.fresh_trailer ())
+    | "" -> raise (Invalid_argument (f ^ ": name is empty")); ""
+    | _ -> var_name
+
 (* Check whether is a variable primed by variable name *)
 (* Might need error handling if var has len 0*)
 let check_prime var_name =
@@ -81,6 +87,7 @@ let truncate_var var_name primed =
 let null_pure_exp = IP.Null no_pos
 
 let var_pure_exp (ident : string) = 
+  let ident = check_anon ident "var_pure_exp" in
   let p = check_prime ident in
   let t_ident = truncate_var ident p in
   IP.Var ((t_ident, p), no_pos)
@@ -120,6 +127,7 @@ let true_heap_f  = IF.HTrue
 let sep_conj_f h1 h2 = IF.mkStar h1 h2 no_pos
 
 let points_to_int_f var_name int =
+  let var_name = check_anon var_name "points_to_int_f" in
   let p = check_prime var_name in
   let t_var_name = truncate_var var_name p in
   IF.mkHeapNode_x (t_var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] None no_pos
@@ -159,6 +167,7 @@ let predicate_decl sleek_str =
 
 
 let points_to_f var_name ident exps = 
+  let var_name = check_anon var_name "points_to_f" in
   let primed = check_prime var_name in
   let t_var_name = truncate_var var_name primed in
   let imm_param = List.map (fun _ -> None) exps in
@@ -199,7 +208,10 @@ let conseq_f heap_f pure_f =
 
 (* Antecedent and consequent are IF.formula and IF.struc_formula respectively *)
 let entail ante conseq : bool =
-  SE.process_entail_check ante conseq (Some false)
+  let res = SE.process_entail_check ante conseq (None) in
+  let () = SE.print_residue !Cformula.residues in
+  (* let cmd = NF.parse_slk "print residue." in *)
+  res
 
 let ante_printer xs =
   let rec helper i xs =

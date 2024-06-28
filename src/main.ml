@@ -1326,12 +1326,26 @@ let test_api () =
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let _ = Sleekapi.entail ante_f conseq_f in
 
-  (* x |-> 1 * y |-> 2 |- x -> 1 *) (* maybe need to find a better test case to test the star *)
-  let h1 = Sleekapi.points_to_int_f "x" 1 in
-  let h2 = Sleekapi.points_to_int_f "y" 2 in 
+  (* x::node<_, r1> * r1::node<_, null> |- x::ll<c> *) 
+  let sortl = "pred sortl<n, mi> == self = null & n = 0
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+	inv n >= 0." in
+  let () = Sleekapi.predicate_decl sortl in
+  let h1 = Sleekapi.points_to_f "x" "node" [(Sleekapi.var_pure_exp "_"); Sleekapi.var_pure_exp "r1"] in
+  let h2 = Sleekapi.points_to_f "r1" "node" [(Sleekapi.var_pure_exp "_"); (Sleekapi.null_pure_exp)] in 
   let astar = Sleekapi.sep_conj_f h1 h2 in
   let ante_f = Sleekapi.ante_f astar Sleekapi.true_f in
-  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_int_f "x" 1) Sleekapi.true_f in
+  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_f "x" "ll" [(Sleekapi.var_pure_exp "c")])
+  Sleekapi.true_f in
+  let () = print_string (Sleekapi.ante_printer ante_f) in
+  let () = print_string (Sleekapi.conseq_printer conseq_f) in
+  let _ = Sleekapi.entail ante_f conseq_f in
+
+  (* x::sortl<a, b> |- x::ll<a>. *) (*false, but should be true after implementation of lemmma*)
+  let ante_f = Sleekapi.ante_f (Sleekapi.points_to_f "x" "sortl" [(Sleekapi.var_pure_exp "a") ; (Sleekapi.var_pure_exp "b")])
+  Sleekapi.true_f in 
+  let conseq_f = Sleekapi.conseq_f (Sleekapi.points_to_f "x" "ll" [(Sleekapi.var_pure_exp "a")])
+  (Sleekapi.true_f) in
   let () = print_string (Sleekapi.ante_printer ante_f) in
   let () = print_string (Sleekapi.conseq_printer conseq_f) in
   let _ = Sleekapi.entail ante_f conseq_f in

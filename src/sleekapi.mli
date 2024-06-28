@@ -20,10 +20,6 @@ type typ =
 
 (* meta formulae are formulae contains both heap formulae and pure formulae *)
 
-val check_prime : string -> VarGen.primed
-
-val truncate_var : string -> VarGen.primed -> string
-
 (* Pure formulae *)
 val null_pure_exp : pe
 (** [null_pure_exp] is an expresion that represents a [null]
