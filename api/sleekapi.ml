@@ -44,6 +44,12 @@ let no_pos : VG.loc =
                   Lexing.pos_cnum = 0 } in
   {VG.start_pos = no_pos1; VG.mid_pos = no_pos1; VG.end_pos = no_pos1;}
 
+let check_anon var_name f = 
+  match var_name with 
+    | "_" -> ("Anon" ^ Globals.fresh_trailer ())
+    | "" -> raise (Invalid_argument (f ^ ": name is empty")); ""
+    | _ -> var_name
+
 (* Check whether is a variable primed by variable name *)
 (* Might need error handling if var has len 0*)
 let check_prime var_name =
@@ -64,6 +70,7 @@ let truncate_var var_name primed =
 let null_pure_exp = IP.Null no_pos
 
 let var_pure_exp (ident : string) = 
+  let ident = check_anon ident "var_pure_exp" in
   let p = check_prime ident in
   let t_ident = truncate_var ident p in
   IP.Var ((t_ident, p), no_pos)
@@ -103,6 +110,7 @@ let true_heap_f  = IF.HTrue
 let sep_conj_f h1 h2 = IF.mkStar h1 h2 no_pos
 
 let points_to_int_f var_name int =
+  let var_name = check_anon var_name "points_to_int_f" in
   let p = check_prime var_name in
   let t_var_name = truncate_var var_name p in
   IF.mkHeapNode_x (t_var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] None no_pos
@@ -153,7 +161,8 @@ let lemma_decl sleek_str =
 let spec_decl func_name func_spec =
   Parser.parse_spec (func_name ^ " " ^ func_spec)
 
-let points_to_f var_name ident exps = 
+let points_to_f var_name ident exps =
+  let var_name = check_anon var_name "points_to_f" in 
   let primed = check_prime var_name in
   let t_var_name = truncate_var var_name primed in
   let imm_param = List.map (fun _ -> None) exps in
@@ -455,6 +464,17 @@ inv n >= 0." in
     spec_printer struc_form
   in
 
+  let entail_9 () =
+    (* x:: node(_, r1) * r1:: node(_, null) |-> x:: ll<c> *)
+    let h1 = points_to_f "x" "node" [(var_pure_exp "_"); var_pure_exp "r1"] in
+    let h2 = points_to_f "r1" "node" [(var_pure_exp "_"); (null_pure_exp)] in 
+    let astar = sep_conj_f h1 h2 in
+    let ante_f = ante_f astar true_f in
+    let conseq_f = conseq_f (points_to_f "x" "ll" [(var_pure_exp "c")]) true_f in
+    let _ = entail ante_f conseq_f in
+    ()
+  in
+
   entail_1 ();
   entail_2 ();
   entail_3 ();
@@ -464,4 +484,5 @@ inv n >= 0." in
   entail_7 ();
   entail_8 ();
   spec_decl ();
+  entail_9 ();
   [%expect]
