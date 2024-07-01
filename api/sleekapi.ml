@@ -16,6 +16,8 @@ type pf = IP.formula
 type hf = IF.h_formula
 type mf = SC.meta_formula
 type dd = I.data_decl
+type lfe = CF.list_failesc_context
+type sf = (string * IF.struc_formula) list
 
 type typ =
   | Void
@@ -148,6 +150,9 @@ let lemma_decl sleek_str =
     else ()
   | _ -> ()                               (* Possible error handling here *)
 
+let spec_decl func_name func_spec =
+  Parser.parse_spec (func_name ^ " " ^ func_spec)
+
 let points_to_f var_name ident exps = 
   let primed = check_prime var_name in
   let t_var_name = truncate_var var_name primed in
@@ -165,7 +170,7 @@ let ante_f heap_f pure_f  =
     IF.formula_base_and = [];
     IF.formula_base_pos = no_pos
   } in
-  [SC.MetaForm(IF.Base(formula_base))]
+  SC.MetaForm(IF.Base(formula_base))
 
 let conseq_f heap_f pure_f =
   let formula_base = {
@@ -201,7 +206,7 @@ let ante_printer xs =
     | [] -> ""
     | x::xs' -> "Ante 1 : " ^ (SC.string_of_meta_formula x) ^ "\n" ^ (helper (i+1) xs')
   in
-  helper 1 xs
+  helper 1 [xs]
 
 let conseq_printer x =
   "Conseq : " ^ (SC.string_of_meta_formula x)
@@ -268,12 +273,34 @@ let mf_to_cform iante iconseq =
    Building the context closely follows sleek_entail_check_x and mkEmp_list_failesc_context
  *)
 let new_context iante iconseq =
+  let isvl = [] in
+  let itype = [] in
+  let proof_traces = [] in
   let cante, cconseq = mf_to_cform iante iconseq in
+
+  let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let es = {es with CF.es_proof_traces = proof_traces} in
+  let lem = Lem_store.all_lemma # get_left_coercion in
+  let cante = Solver.normalize_formula_w_coers 11 !SE.cprog es cante lem in
+
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx cante no_pos in
-  let ctx = CF.add_path_id ctx (None, 0) 0 in
-  let ctx = CF.set_flow_in_context_override
-      { CF.formula_flow_interval = !Exc.ETABLE_NFLOW.norm_flow_int; CF.formula_flow_link = None} ctx in
+  let ctx = Solver.elim_exists_ctx ctx in
+  let ctx = CF.add_proof_traces_ctx ctx proof_traces in
+
+  (* let ctx = CF.add_path_id ctx (None, 0) 0 in *)
+  (* let ctx = CF.set_flow_in_context_override *)
+      (* { CF.formula_flow_interval = !Exc.ETABLE_NFLOW.norm_flow_int; CF.formula_flow_link = None} ctx in *)
+
+  let orig_vars = CF.fv cante @ CF.struc_fv cconseq in
+  let (vrel, vtempl, v_hp_rel, iv) = List.fold_left (fun (vr, vt, vh, iv) v ->
+      let typ = Cpure.type_of_spec_var v in
+      if Globals.is_RelT typ then (vr@[v], vt, vh, iv)
+      else if Cpure.is_hprel_typ v then (vr, vt, vh@[v], iv)
+      else if Globals.is_FuncT typ then (vr, vt@[v], vh, iv)
+      else (vr, vt, vh, iv@[v])) ([], [], [], []) isvl in
+  let ctx = Infer.init_vars ctx iv vrel vtempl v_hp_rel orig_vars in
+  let ctx = Infer.init_infer_type ctx itype in
   (ctx, cconseq)
 (* The following is done in sleek_entail *)
   (* let init_esc = [((0,""),[])] in *)
@@ -281,16 +308,16 @@ let new_context iante iconseq =
   (* let () = print_string ("\n lfe : " ^ (Cprinter.string_of_list_failesc_context lfe)) in *)
   (* (lfe, cconseq) *)
 
-(* let entail iante iconseq = *)
-(*   let ante_ctx, conseq = new_context iante iconseq in *)
-(*   let rs, pf = Solver.heap_entail_struc_list_failesc_context_init 12 !SE.cprog false true ante_ctx conseq None None None no_pos None in *)
-  (* let rs, prf = Sleekcore.sleek_entail !SE.cprog ante_ctx conseq no_pos in *)
+let entail iante iconseq =
+  let ante_ctx, conseq = new_context iante iconseq in
+  (* let rs, pf = Solver.heap_entail_struc_list_failesc_context_init 12 !SE.cprog false true ante_ctx conseq None None None no_pos None in *)
+  let rs, prf = Sleekcore.sleek_entail !SE.cprog ante_ctx conseq no_pos in
 (*   let () = print_string ("\n Residue 1 : " ^ (Cprinter.string_of_list_failesc_context rs)) in *)
 (*   (\* entail [iante] iconseq *\) *)
-  (* let res = CF.isSuccessListFailescCtx rs in *)
-  (* let () = print_string ("\n" ^ (string_of_bool res)) in *)
-  (* res *)
-  
+  let res = CF.isSuccessListFailescCtx_new rs in
+  let () = print_string ("\n" ^ (string_of_bool res)) in
+  res
+
 (* Testing API *)
 let%expect_test "Entailment checking" =
   
@@ -411,6 +438,22 @@ inv n >= 0." in
     let _ = entail ante_f conseq_f in
     ()
   in
+  
+  let spec_decl () =
+    let spec_printer xs =
+      let rec helper n xs =
+        match xs with
+        | [] -> ()
+        | x::xs' ->
+          let () = print_string ("\n Formula " ^ (string_of_int n) ^ ": " ^ (Iprinter.string_of_struc_formula (snd x))) in
+          let () = print_string ("\n String : " ^ (fst x)) in
+ helper (n + 1) xs'
+      in
+      helper 1 xs
+    in
+    let struc_form = spec_decl "foo" "requires true ensures true;" in
+    spec_printer struc_form
+  in
 
   entail_1 ();
   entail_2 ();
@@ -420,4 +463,5 @@ inv n >= 0." in
   entail_6 ();
   entail_7 ();
   entail_8 ();
+  spec_decl ();
   [%expect]

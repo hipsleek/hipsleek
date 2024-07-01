@@ -3,7 +3,8 @@ type pf                                 (* pure formulae *)
 type dd                                 (* data declarations *)
 type hf                                 (* heap formulae *)
 type mf                                 (* meta formulae *)
-(* type lfe *)                                (* list of failesc_context *)
+type lfe                                (* list of failesc_context *)
+type sf                                 (* struc formulae *)
 
 type typ =
   | Void
@@ -15,7 +16,7 @@ type typ =
 (* Relevant files:
   - ipure_D.ml (formula)
   - iformula.ml (struc_formula)
-n  - sleekcommons.ml (meta_formula)
+  - sleekcommons.ml (meta_formula)
   - sleekengine.ml (process_entail_check)
 *)
 
@@ -69,13 +70,21 @@ val data_decl : string -> ((typ * string) list) -> unit
 
 val predicate_decl : string -> unit
 (** [predicate_decl s] is used to declare a predicate.
-    [s] is a string defining the predicate in sleek syntax.
+    [s] is a string defining the predicate in Sleek syntax.
     Returns true if declaration was successful, false otherwise.
 *)
 
 val lemma_decl : string -> unit
 (** [lemma_decl s] is used to declare a lemma.
-    [s] is a string defining the lemma in sleek syntax.
+    [s] is a string defining the lemma in Sleek syntax.
+*)
+
+val spec_decl : string -> string -> sf
+(** [spec_decl s1 s2] is used to construct a formula from the specification
+    [s2] of function [s1].
+    [s1] is the function's name.
+    [s2] is the specification of the function in Hip syntax.
+    e.g. "requires true ensures true;"
 *)
 
 val empty_heap_f : hf
@@ -97,11 +106,11 @@ val points_to_f : string -> string -> pe list -> hf
     The variable is considered primed if there is a ' at the end of [s]
 *)
 
-val ante_f : hf -> pf -> mf list
+val ante_f : hf -> pf -> mf
 val conseq_f : hf -> pf -> mf
-val entail : mf list -> mf -> bool
+val entail : mf -> mf -> bool
 
-val ante_printer : mf list -> string
+val ante_printer : mf -> string
 val conseq_printer : mf -> string
 
 val init : unit -> unit
