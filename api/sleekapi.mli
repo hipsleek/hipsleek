@@ -5,6 +5,7 @@ type hf                                 (* heap formulae *)
 type mf                                 (* meta formulae *)
 type lfe                                (* list of failesc_context *)
 type sf                                 (* struc formulae *)
+type param
 
 type typ =
   | Void
@@ -79,7 +80,7 @@ val lemma_decl : string -> unit
     [s] is a string defining the lemma in Sleek syntax.
 *)
 
-val spec_decl : string -> string -> sf
+val spec_decl : string -> string -> param list -> sf 
 (** [spec_decl s1 s2] is used to construct a formula from the specification
     [s2] of function [s1].
     [s1] is the function's name.
@@ -114,17 +115,22 @@ val ante_printer : mf -> string
 val conseq_printer : mf -> string
 
 val init : unit -> unit
+(** [init ()] initializes the api. This include processing the prelude file
+    of the api which contains some primitive function and data declarations.
+*)
 
-(* val init_ctx : mf -> lfe *)
+val init_ctx : sf -> param list -> lfe
 (** [init_ctx f] returns a new context wrapping the formula [f] *)
 
 (* This might be too high level *)
-(* val check_pre_post : lfe -> mf -> mf -> lfe option *)
-(** [check_pre_post lfe pre post] checks whether the prestate [lfe] entails 
-    the formula [pre].
+(* val check_pre_post : lfe -> sf -> lfe option 
+   - Normalize specs? (check check_pre_post_orig)
+*)
+(** [check_pre_post ctx specs] checks whether the current context [ctx] entails 
+    the pre-condition in [specs].
     If it does, then it will return Some poststate which is the composition
-    of the residual heap state from proving that [lfe] entails [pre] and 
-    the formula [post].
+    of the residual heap state from proving that [ctx] entails the pre-condition
+    and in [specs] and the post condition in [specs].
     Otherwise, it will return None.
 *)
 

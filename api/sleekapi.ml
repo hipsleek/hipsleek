@@ -17,7 +17,8 @@ type hf = IF.h_formula
 type mf = SC.meta_formula
 type dd = I.data_decl
 type lfe = CF.list_failesc_context
-type sf = (string * IF.struc_formula) list
+type sf = CF.struc_formula
+type param = I.param
 
 type typ =
   | Void
@@ -150,8 +151,38 @@ let lemma_decl sleek_str =
     else ()
   | _ -> ()                               (* Possible error handling here *)
 
-let spec_decl func_name func_spec =
-  Parser.parse_spec (func_name ^ " " ^ func_spec)
+(* Transform I_struc_formula to C_struc_formula
+   Follows trans_proc_x
+*)
+let trans_I_to_C istruc_form (args: I.param list)  =
+  (* Normalize struc formula
+     Follows case_normalize_proc_x
+  *)
+  let gl_proc_args = args in
+  let p = ((Globals.eres_name, VG.Unprimed)::(Globals.res_name, VG.Unprimed)::
+           (List.map (fun c1-> (c1.I.param_name, VG.Primed))
+              (List.filter (fun c-> c.I.param_mod == Iast.RefMod) gl_proc_args))) in
+  let h = (List.map (fun c1 -> (c1.Iast.param_name, VG.Unprimed)) gl_proc_args) in
+  let strad_s =
+    let pr,pst = IF.struc_split_fv istruc_form false in
+    Gen.BList.intersect_eq (=) pr pst in
+  let istruc_form, _ = Astsimp.case_normalize_struc_formula 5 SE.iprog h p istruc_form false false false strad_s in
+
+  let n_tl = [] in                      (* Probably shouldn't be empty *)
+  let free_vars = List.map (fun p -> p.I.param_name) args in
+  let (n_tl, c_struc_form) = Astsimp.trans_I2C_struc_formula 2 SE.iprog false true free_vars istruc_form n_tl true true in
+  let cf = CF.add_inf_cmd_struc true c_struc_form in
+  let cf = Astsimp.set_pre_flow_x cf in
+  let cf =
+    if not !Globals.dis_term_chk then
+      CF.norm_struc_with_lexvar true false None cf
+    else cf
+  in
+  cf
+
+let spec_decl func_name func_spec args =
+  match Parser.parse_spec (func_name ^ " " ^ func_spec) with
+  | x::xs -> trans_I_to_C (snd x) args
 
 let points_to_f var_name ident exps = 
   let primed = check_prime var_name in
@@ -318,6 +349,76 @@ let entail iante iconseq =
   let () = print_string ("\n" ^ (string_of_bool res)) in
   res
 
+let init_ctx cstruc_form (args: I.param list) =
+  (* Build an initial context
+     Follows check_proc
+  *)
+  let param_to_typed_ident p = (p.I.param_type, p.I.param_name) in
+  let ftypes, fnames = List.split (List.map param_to_typed_ident args) in
+  let fsvars = List.map2 (fun t -> fun v -> Cpure.SpecVar (t, v, Unprimed)) ftypes fnames in
+  let pf = (CF.no_change fsvars no_pos) in (*init(V) := v'=v*)
+  let nox = CF.formula_of_pure_N pf no_pos in
+  let init_form = nox in
+  let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let init_form =
+    if (Perm.allow_perm ()) then
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) init_form
+    else
+      init_form
+  in
+  let init_ctx = CF.build_context init_ctx1 init_form no_pos in
+  (* Termination: Add the set of logical variables into the initial context *)
+  (* let init_ctx = *)
+  (*   if !Globals.dis_term_chk then init_ctx *)
+  (*   else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in *)
+
+  (* Tranform context to include pre-condition in cstruc_form 
+     Follows check_specs_infer_a
+  *)
+  let rec helper ctx cstruc_form =
+    match cstruc_form with
+    | CF.EBase b ->
+      let vs = b.CF.formula_struc_explicit_inst @ b.CF.formula_struc_implicit_inst in
+      let () = Global_var.stk_vars # push_list vs in
+
+      (* ext_base should be the precondition *)
+      let ctx,ext_base = (ctx,b.CF.formula_struc_base) in
+
+      let nctx =
+        if !Globals.max_renaming
+        then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
+        else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
+
+      let res =
+        match b.CF.formula_struc_continuation with
+        | None -> nctx
+        | Some l -> helper nctx l
+      in
+      res
+    | CF.EAssume {
+        CF.formula_assume_vars = var_ref;
+        CF.formula_assume_simpl = post_cond;
+        CF.formula_assume_lbl = post_label;
+        CF.formula_assume_ensures_type = etype0; (* duplicate??? *)
+        CF.formula_assume_struc = post_struc
+      } ->
+      (* Follows check_specs_infer_a EAssume *)
+      let ctx1 = CF.add_path_id ctx (None,0) 0 in
+      let () = Typechecker.flow_store := [] in
+      let ctx1 = CF.set_flow_in_context_override
+          { CF.formula_flow_interval = !Exc.ETABLE_NFLOW.norm_flow_int; CF.formula_flow_link = None} ctx1 in
+      let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) (-1) in
+      ctx1
+    | _ -> ctx
+  in
+
+  let ctx = helper init_ctx cstruc_form in
+  (* What is label  *)
+  (* need to add initial esc_stack *)
+  let init_esc = [((0,""),[])] in
+  let lfe = [CF.mk_failesc_context ctx [] init_esc] in
+  lfe
+
 (* Testing API *)
 let%expect_test "Entailment checking" =
   
@@ -439,20 +540,29 @@ inv n >= 0." in
     ()
   in
   
-  let spec_decl () =
-    let spec_printer xs =
-      let rec helper n xs =
-        match xs with
-        | [] -> ()
-        | x::xs' ->
-          let () = print_string ("\n Formula " ^ (string_of_int n) ^ ": " ^ (Iprinter.string_of_struc_formula (snd x))) in
-          let () = print_string ("\n String : " ^ (fst x)) in
- helper (n + 1) xs'
-      in
-      helper 1 xs
-    in
-    let struc_form = spec_decl "foo" "requires true ensures true;" in
-    spec_printer struc_form
+  let spec_decl_1 () =
+
+    (* let spec_printer xs = *)
+ (*      let rec helper n xs = *)
+ (*        match xs with *)
+ (*        | [] -> () *)
+ (*        | x::xs' -> *)
+ (*          let c_struc_form = trans_I_to_C (snd x) in *)
+ (*          let () = print_string ("\n Formula " ^ (string_of_int n) ^ ": " ^ (Cprinter.string_of_struc_formula c_struc_form)) in *)
+ (*          let () = print_string ("\n Function name : " ^ (fst x)) in *)
+ (* helper (n + 1) xs' *)
+ (*      in *)
+ (*      helper 1 xs *)
+ (*    in *)
+    let cstruc_form = spec_decl "foo" "requires true ensures true;" [] in
+    let lfe = init_ctx cstruc_form [] in
+    print_string (Cprinter.string_of_list_failesc_context lfe)
+  in
+
+  let spec_decl_2 () =
+    let cstruc_form = spec_decl "foo" "requires x::ll<n> & n > 0 ensures x::ll<1> * res::ll<n-1>;" [] in
+    let lfe = init_ctx cstruc_form [] in
+    print_string (Cprinter.string_of_list_failesc_context lfe)
   in
 
   entail_1 ();
@@ -463,5 +573,6 @@ inv n >= 0." in
   entail_6 ();
   entail_7 ();
   entail_8 ();
-  spec_decl ();
+  spec_decl_1 ();
+  spec_decl_2 ();
   [%expect]
