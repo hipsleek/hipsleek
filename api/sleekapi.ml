@@ -1,5 +1,6 @@
 open Hipsleek
 open Hipsleek_common
+open Exc.GTable
 
 module C = Cast
 module I = Iast
@@ -35,6 +36,31 @@ let init () =
      variable, iprog, in sleekengine.ml
   *)
   let () = Sleekmain.parse_file Nativefront.list_parse "./sleekapi_prelude.slk" in
+  (*Referenced from sleekmain.ml main()*)
+  let iprog = { I.prog_include_decls =[];
+                I.prog_data_decls = [SE.iobj_def;SE.ithrd_def];
+                I.prog_global_var_decls = [];
+                I.prog_logical_var_decls = [];
+                I.prog_enum_decls = [];
+                I.prog_view_decls = [];
+                I.prog_func_decls = [];
+                I.prog_rel_decls = [];
+                I.prog_rel_ids = [];
+                I.prog_templ_decls = [];
+                I.prog_ut_decls = [];
+                I.prog_ui_decls = [];
+                I.prog_hp_decls = [];
+                I.prog_hp_ids = [];
+                I.prog_axiom_decls = [];
+                I.prog_proc_decls = [];
+                I.prog_coercion_decls = [];
+                I.prog_hopred_decls = [];
+                I.prog_barrier_decls = [];
+                I.prog_test_comps = [];
+              } in
+  let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+  let () = Iast.build_exc_hierarchy true iprog in
+  let () = exlist # compute_hierarchy  in  
   ()
 
 (* Used as placeholder for pos since no file is parsed *)
@@ -139,6 +165,16 @@ let data_decl data_name data_fields =
   let () = Cf_ext.add_data_tags_to_obj !SE.cprog.Cast.prog_data_decls in (* To mark recursive data declarations *)
   (* print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog)) *)
   ()
+
+let data_decl_str sleek_str = 
+  let sleek_cmd = NF.parse_slk sleek_str in
+  match sleek_cmd with
+  | SC.DataDef data_def ->
+    (* Stores predicate definition into SE.iprog *)
+    let () = SE.process_data_def data_def in
+    SE.convert_data_and_pred_to_cast_x () (* Can be improved to not re-convert previously converted data and predidcates *)
+  | _ -> ()                               (* Possible error handling here *)
+
 
 let predicate_decl sleek_str =
   let sleek_cmd = NF.parse_slk sleek_str in
@@ -328,9 +364,9 @@ let new_context iante iconseq =
   let ctx = Solver.elim_exists_ctx ctx in
   let ctx = CF.add_proof_traces_ctx ctx proof_traces in
 
-  (* let ctx = CF.add_path_id ctx (None, 0) 0 in *)
-  (* let ctx = CF.set_flow_in_context_override *)
-      (* { CF.formula_flow_interval = !Exc.ETABLE_NFLOW.norm_flow_int; CF.formula_flow_link = None} ctx in *)
+  let ctx = CF.add_path_id ctx (None, 0) 0 in
+  let ctx = CF.set_flow_in_context_override
+      { CF.formula_flow_interval = !Exc.ETABLE_NFLOW.norm_flow_int; CF.formula_flow_link = None} ctx in
 
   let orig_vars = CF.fv cante @ CF.struc_fv cconseq in
   let (vrel, vtempl, v_hp_rel, iv) = List.fold_left (fun (vr, vt, vh, iv) v ->
