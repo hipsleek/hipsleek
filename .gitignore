@@ -48,3 +48,7 @@ cil/bin/CilConfig.pm$
 /mona.failure
 mona-1.4/
 omega_modified/*/obj/*
+mona_predicates.mona
+fixcalc_src
+omega_stub
+*.omega

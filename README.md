@@ -1,7 +1,7 @@
 
 # Installation Guide for HIP/SLEEK
 
-You will need opam and a recent OCaml compiler (tested on 4.12.1).
+You will need opam and OCaml 4.14.1.
 
 ```sh
 # Install opam dependencies
@@ -19,7 +19,7 @@ rake debug:hip debug:sleek
 ```
 
 Try verifying some small programs.
-You will need [Z3](https://github.com/Z3Prover/z3/wiki#platforms) and [Omega](#omega) on the PATH.
+You will need Z3 (from opam, pip, or a system package manager) and Omega ([below](#omega)) on the PATH.
 
 ```sh
 ./hip examples/working/hip/ll.ss
@@ -39,16 +39,23 @@ cd examples/working
 
 # External Provers
 
-Executables for custom provers will be installed in their respective directories and should be made available on the PATH, either by appending those directories or moving them some global location like `/usr/local/bin`.
+Other external provers HIP/SLEEK uses can be built from source.
+They will be installed in their respective directories and should be made available on the PATH.
+
+Here is an example .envrc file which makes all the provers available, after following the steps below to build each one:
+
+```envrc
+eval "$(opam env --switch=4.14.1 --set-switch)"
+PATH_add omega_modified/omega_calc/obj
+PATH_add mona-1.4/bin
+PATH_add fixcalc_src
+```
 
 ## Omega
 
 ```sh
-cd omega_modified
-make oc
+(cd omega_modified; make oc)
 ```
-
-The omega executable is now at `omega_calc/obj/oc`.
 
 ## Mona
 
@@ -58,9 +65,8 @@ cd mona-1.4
 ./configure --prefix=$(pwd)
 make install
 cp mona_predicates.mona ..
+cd -
 ```
-
-The mona executable is now in `bin`.
 
 Try some tests:
 
@@ -69,10 +75,21 @@ Try some tests:
 ./sleek -tp mona examples/working/sleek/sleek2.slk
 ```
 
-# Installation with [hipsleek/dependencies](https://github.com/hipsleek/dependencies)
+## Fixcalc
 
-This process should work on an Ubuntu-like system.
+You will GHC 9.4.8.
 
-1. Clone this repository with `git clone --recursive https://github.com/hipsleek/hipsleek`
-1. Follow the instructions in the `dependencies` directory
-1. Follow the compilation instructions above
+```sh
+cabal install --lib regex-compat old-time
+cabal install happy
+```
+
+Build Omega first (see [above](#omega)).
+
+```sh
+git clone https://github.com/hipsleek/omega_stub.git
+(cd omega_stub; make)
+
+git clone https://github.com/hipsleek/fixcalc.git fixcalc_src
+(cd fixcalc_src; make fixcalc)
+```
