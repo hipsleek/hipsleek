@@ -1,5 +1,7 @@
 
-# Installation Guide for HIP/SLEEK
+# HIP/SLEEK
+
+## Build
 
 You will need opam and OCaml 4.14.1.
 
@@ -77,14 +79,14 @@ Try some tests:
 
 ## Fixcalc
 
-You will GHC 9.4.8.
+You will need GHC 9.4.8.
 
 ```sh
 cabal install --lib regex-compat old-time
 cabal install happy
 ```
 
-Build Omega first (see [above](#omega)).
+Build [Omega](#omega) first. Then, in the hipsleek project directory,
 
 ```sh
 git clone https://github.com/hipsleek/omega_stub.git
