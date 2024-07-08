@@ -2,8 +2,7 @@
   (name hipsleek_cil)
   (public_name hipsleek.cil)
   (libraries hipsleek_common)
-  (wrapped false)
-  )
+)
 ;(libraries cil_src_ext cil_src_frontc cil_src cil_ocamlutil)
 
 ;(dirs src)

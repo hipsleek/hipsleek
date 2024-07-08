@@ -4,7 +4,7 @@ open VarGen
 open Globals
 open Exc.GTable
 open Gen.Basic
-open Cil
+open Hipsleek_cil
 
 module IF = Iformula
 
