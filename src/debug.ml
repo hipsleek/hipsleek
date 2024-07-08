@@ -1,7 +1,7 @@
 (* open Globals *)
 open Gen.Basic
 open VarGen
-
+let ( let@ ) f x = f x
 let webprint = ref true
 let debug_on = ref false
 let devel_debug_on = ref false
@@ -501,6 +501,7 @@ struct
     let len = 100 in
     let prefix = "%%%" in
     let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
+    (* TRISTAN : returns a stack_pr *)
     let summarized_stack stk =
       let new_stk = new Gen.stack_pr "debug-calls" pr_cnt (==) in
       match (List.rev stk#get_stk) with
@@ -510,7 +511,7 @@ struct
         let now = ref hd in
         List.iter (fun y ->
             if y = !now then incr ctr
-            else 
+            else
               let () = new_stk#push (!now, !ctr) in
               let () = ctr := 1 in
               now := y) tl;
@@ -553,7 +554,8 @@ struct
             stk_trace # push (lastline^"\n");
             (summarized_stack stk_trace) # dump_no_ln
           end;
-        print_endline "\nDEBUGGED CALLS";
+        (* TRISTAN : added extra newline for formatting *)
+        print_endline "\n\nDEBUGGED CALLS";
         print_endline   "==============";
         print_endline (string_of_int (List.length cnt));
         print_endline (pr cnt);
@@ -619,6 +621,10 @@ struct
       method push_call s (call_site:string) =
           stk_calls # push s;
       method print_call s call_site =
+        (* TRISTAN : to prefix each call trace print with '*' for org mode *)
+        (* TRISTAN : this function pushes the call traces on to stk_trace
+           then eventually print the stk_trace during hip_epilogue *)
+        (* let spaces n = String.init n (fun _ -> '*') in *)
         let spaces n = String.init n (fun _ -> ' ') in
         let is_match s = Str.string_match !debug_pattern s 0 in
         let matched_call s =
@@ -689,6 +695,11 @@ struct
         in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
     ()
 
+    
+  (* TRISTAN : pr_o is printer for output of function f, 
+              which is the function we are instrumenting.
+              s is the title of the function f
+              args is the list of inputs to f to be printed that is already in string form *)
   let ho_aux ?(call_site="") ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
     (* let call_site, _ = VarGen.last_posn # get_rm in *)
     (* let call_site, call_name = VarGen.last_posn # get in *)
@@ -699,7 +710,7 @@ struct
     (*   else ""                                            *)
     (* in                                                   *)
     let call_site = 
-      if call_site="" then VarGen.last_posn # get_rm s 
+      if call_site="" then VarGen.last_posn # get_rm s
       else call_site in
     let pre_str = "(=="^call_site^"==)" in
     (* if s=="" thenmatch s with  *)
@@ -732,6 +743,7 @@ struct
     let (test,pr_o) = match g with
       | None -> (test,pr_o)
       | Some g -> 
+        print_string ("CHANGE TEST : " ^ s);
         let res = ref (None:(string option)) in
         let new_test z =
           (try
@@ -749,6 +761,7 @@ struct
                          ("\n NOW :"^(pr_o x)))) in
         (new_test, new_pr_o) in
     let s,h = push_call_gen s df in
+    (* TRISTAN : s is now s@n and h is s@n_1@n_2... *)
     let lc = (Gen.StackTrace.ctr # get_last_call) in
     let () = debug_calls # add_id lc in
     let h = pre_str^"\n"^h in
@@ -757,30 +770,73 @@ struct
     (if loop_d || !VarGen.trace_loop 
      then print_string ("\n"^h^" ENTRY :"^arg^"\n"));
     flush stdout;
-    let r = (try
-               pop_aft_apply_with_exc s f e
-             with ex -> 
-               (
-                 (* if not df then *) 
-                 let flag = check_args args in
-                 if flag then
-                   begin
-                     let () = print_string ("\n"^h^"\n") in
-                     (pr_args args; pr_lazy_res lz);
-                     let () = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
-                     flush stdout;
-                     raise ex 
-                   end
-                 else raise ex
-               )) in
+    let string_of_args args =
+      let rec helper (i:int) args = 
+        match args with
+        | [] -> ""
+        | a::args -> ("inp"^(string_of_int i)^" :"^a^"\n") ^ (helper (i+1) args)
+      in
+      helper 1 args
+    in
+    (* let@ _ =
+      Debugorg.span (fun r ->
+          Debugorg.debug ~at:1
+            ~title: s "%s==>\n%s"
+            (string_of_args args)
+            (Debugorg.string_of_result (fun r -> "result") r))
+    in *)
+    Debugorg.on_entry (fun () -> 
+      Debugorg.debug ~at:1 ~title: s "%s ==> \n..." (string_of_args args));
+    let r: 'z = (try
+              (* TRISTAN : where function f is called *)
+              (* let res =
+                let@ _ =
+                  Debugorg.span (fun r ->
+                      Debugorg.debug ~at:1
+                        ~title: s "%s==>\n%s"
+                        (string_of_args args)
+                        (Debugorg.string_of_result (fun r -> "result") r))
+                in
+                pop_aft_apply_with_exc s f e
+              in
+              res *)
+              pop_aft_apply_with_exc s f e
+            with ex -> 
+              (
+                (* if not df then *) 
+                let flag = check_args args in
+                if flag then
+                  begin
+                    Debugorg.on_exit (fun () -> 
+                      Debugorg.debug ~at:1 ~title: s "%s ==> \n%s" (string_of_args args) (Printexc.to_string ex));
+                    let () = print_string ("\n"^h^"\n") in
+                    (pr_args args; pr_lazy_res lz);
+                    let () = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+                    flush stdout;
+                    raise ex 
+                  end
+                else raise ex
+              )) in
+    let res_str = pr_o r in
+    Debugorg.on_exit (fun () ->
+      Debugorg.debug ~at:1 ~title: s "%s ==> \n%s" (string_of_args args) res_str);
+    (* TRISTAN : this does not work for some reason
+    Debugorg.on_exit (fun () ->
+        Debugorg.debug ~at:1 ~title: s "%s ==> \n%s" (string_of_args args) (pr_o r)); *)
+    (* TRISTAN : certain functions like check_proc and trans_proc use Debug.no_x_opt to debug. 
+       These functions have additional conditions for printing their logs. 
+       "test" function is used to test these conditions *)
     (if not(test r) then r else
        (* if not df then *)
-       let res_str = pr_o r in
+       (* let res_str = pr_o r in *)
        let flag = check_args (res_str::args) in
        if not(flag) then r
        else
          begin
+          (* Debugorg.on_exit (fun () ->
+            Debugorg.debug ~at:1 ~title: s "%s ==> \n%s" (string_of_args args) res_str); *)
            let () = print_string ("\n"^h^"\n") in
+           (* TRISTAN : printing arguments *)
            (pr_args args; pr_lazy_res lz);
            let () = print_string (s^" EXIT:"^(res_str)^"\n") in
            flush stdout;
@@ -980,22 +1036,25 @@ struct
     let at_call_site =
       let x_call_site = VarGen.last_posn # get s in
       if x_call_site = "" then ""
+      (* TRISTAN : build caller hierachy *)
       else " @" ^ x_call_site
     in
     let () = if !dump_callers_flag (* z_debug_flag *) then debug_calls # push_call s at_call_site in
     let () = if !dump_calls then debug_calls # print_call s at_call_site in
-    let fn = if !z_debug_flag then
+    let fn = 
+      if !z_debug_flag then
         match (in_debug s) with
         | DO_Normal -> f_gen (f_norm false false)
         | DO_Trace -> f_gen (f_norm true false) 
         | DO_Loop -> f_gen (f_norm false true)
         | DO_Both -> f_gen (f_norm true true)
         | DO_None -> 
-          (* let _ = print_endline ("splitter(none):"^s) in  *)
+          (* let _ = print_endline ("\nsplitter(none):"^s) in *)
           f_none
       else         
-        (* let _ = print_endline ("splitter(none):"^s) in  *)
-        f_none in 
+        (* let _ = print_endline ("\nsplitter(none):"^s) in *)
+        f_none in
+    (* TRISTAN : pop function call from stk_calls in debug_calls after *)
     if !dump_calls then wrap_pop_call fn
     else fn
 
@@ -1005,6 +1064,21 @@ struct
     let code_none = ho_aux_no s f in
     splitter s code_none code_gen go_1 
 
+  (* TRISTAN : s is the name of function f
+     p1 and p2 are printers for the two input of function f
+     p0 is printer for the output of function f
+     returns a function : 'b -> 'c which is f partially applied
+     *)
+  (* let ho_2_opt_aux df (flags:bool list) (loop_d:bool) (test:'z -> bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string)  (f:'a -> 'b -> 'z) 
+      (e1:'a) (e2:'b) : 'z =
+    let a1 = pr1 e1 in
+    let a2 = pr2 e2 in
+    let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2))] in
+    let f  = f e1 in
+    let g  = match g with None -> None | Some g -> Some (g e1) in
+    ho_aux df lz loop_d test g s [a1;a2] pr_o f e2
+
+  let go_2 t_flag l_flag s = ho_2_opt_aux t_flag [] l_flag (fun _ -> true) None s *)
   let no_2 s p1 p2 p0 f e1 =
     let code_gen fn = fn s p1 p2 p0 f e1 in
     let code_none = ho_aux_no s (f e1) in
