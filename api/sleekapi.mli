@@ -7,12 +7,7 @@ type lfe                                (* list of failesc_context *)
 type sf                                 (* struc formulae *)
 type param
 
-type typ =
-  | Void
-  | Bool
-  | Float
-  | Int
-  | Named of string
+type typ
 
 (* Relevant files:
   - ipure_D.ml (formula)
@@ -62,7 +57,7 @@ val implies_f  : pf -> pf -> pf
 val iff_f      : pf -> pf -> pf
 
 (* Heap formulae *)
-val data_decl : string -> ((typ * string) list) -> unit
+(* val data_decl : string -> ((typ * string) list) -> unit *)
 (** [data_decl s l] is used to declare a data structure named [s].
     [l] is a list of pairs of the type and name of each field of the data
     structure.
@@ -120,21 +115,59 @@ val init : unit -> unit
 *)
 
 val init_ctx : sf -> param list -> lfe
-(** [init_ctx f] returns a new context wrapping the formula [f] *)
+(** [init_ctx specs] returns a pair of context wrapping the pre-condition in
+    [specs] and the post-condition in [specs].
+ *)
 
-(* This might be too high level *)
-(* val check_pre_post : lfe -> sf -> lfe option 
-   - Normalize specs? (check check_pre_post_orig)
-*)
+(* - Normalize specs? (check check_pre_post_orig) *)
+val check_pre_post : lfe -> sf -> bool -> param list -> string list -> lfe option
 (** [check_pre_post ctx specs] checks whether the current context [ctx] entails 
     the pre-condition in [specs].
     If it does, then it will return Some poststate which is the composition
     of the residual heap state from proving that [ctx] entails the pre-condition
-    and in [specs] and the post condition in [specs].
+    in [specs] and the post condition in [specs].
     Otherwise, it will return None.
 *)
 
-(* val compose_f_with_ctx : lfe -> mf -> lfe *)
-(** [compose_f_with_ctx ctx f]
- *)
+val check_entail_post : lfe -> sf -> param list -> bool
+(** [check_entail_post ctx specs] checks whether the current context [ctx] entails
+    the post-condition in [specs].
+    If it does, then it will return Some poststate which is the residual heap state
+    from proving that [ctx] entails the post-condition in [specs].
+    Otherwise, it will return None.
+*)
 
+val disj_of_ctx : lfe -> lfe -> lfe
+(** [disj_of_ctx ctx1 ctx2] returns a context which is the disjunction of two
+    contexts, [ctx1] and [ctx2].
+*)
+
+val add_cond_to_ctx : lfe -> string -> bool -> lfe
+(** [add_cond_to_ctx ctx ident b] returns a context which is the result of adding
+    the condition that the variable with the name [ident] has value [b] to the
+    context [ctx].
+*)
+
+val upd_result_with_var : lfe -> typ -> string -> lfe
+(** [upd_result_with_var ctx t ident] returns a context which is the result of
+    updating context [ctx] with the condition that the variable with the name "res"
+    is equal to the variable with the name [ident] and the type [t].
+*)
+
+val upd_result_with_int : lfe -> int -> lfe
+(** [upd_result_with_int ctx i] returns a context which is the result of updating
+    context [ctx] with the condition that the variable with the name "res" is equal
+    to the integer [i].
+*)
+
+val upd_result_with_bool : lfe -> bool -> lfe
+(** [upd_result_with_bool ctx b] returns a context which is the result of updating
+    context [ctx] with the condition that the variable with the name "res" is equal
+    to the boolean [b].
+*)
+
+val add_assign_to_ctx : lfe -> typ -> string -> lfe
+(** [add_assign_to_ctx ctx t ident] returns a context which is the result of assigning
+    the value of "res" to the variable with the name [ident] and the type [t] in the
+    context [ctx].
+*)

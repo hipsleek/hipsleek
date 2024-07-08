@@ -21,12 +21,12 @@ type lfe = CF.list_failesc_context
 type sf = CF.struc_formula
 type param = I.param
 
-type typ =
-  | Void
-  | Bool
-  | Float
-  | Int
-  | Named of string
+type typ = Globals.typ
+  (* | Void *)
+  (* | Bool *)
+  (* | Float *)
+  (* | Int *)
+  (* | Named of string *)
 
 (* Prelude of api *)
 let init () = 
@@ -59,7 +59,7 @@ let init () =
                 I.prog_test_comps = [];
               } in
   let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-  let () = Iast.build_exc_hierarchy true iprog in
+  let () = I.build_exc_hierarchy true iprog in
   let () = exlist # compute_hierarchy  in  
   ()
 
@@ -74,7 +74,7 @@ let no_pos : VG.loc =
 let check_anon var_name f = 
   match var_name with 
     | "_" -> ("Anon" ^ Globals.fresh_trailer ())
-    | "" -> raise (Invalid_argument (f ^ ": name is empty")); ""
+    | "" -> raise (Invalid_argument (f ^ ": name is empty"))
     | _ -> var_name
 
 (* Check whether is a variable primed by variable name *)
@@ -142,35 +142,35 @@ let points_to_int_f var_name int =
   let t_var_name = truncate_var var_name p in
   IF.mkHeapNode_x (t_var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] None no_pos
 
-let data_decl data_name data_fields =
-  let df = List.map (function (Void, ident) -> (((Void, ident) : Globals.typed_ident), no_pos, false, [])
-                            | (Bool, ident) -> ((Bool, ident), no_pos, false, [])
-                            | (Float, ident) -> ((Float, ident), no_pos, false, [])
-                            | (Int, ident) -> ((Int, ident), no_pos, false, [])
-                            | (Named(name), ident) -> ((Named(name), ident), no_pos, false, [])) data_fields in
-  (* Stores data definition into SE.iprog *)
-  let () = SE.process_data_def {
-    I.data_name = data_name;
-    I.data_fields = df;
-    I.data_parent_name = "Object";
-    I.data_invs = [];
-    I.data_pos = no_pos;
-    I.data_pure_inv = None;
-    I.data_is_template = false;
-    I.data_methods = [];
-  } in
-  let () = I.annotate_field_pure_ext SE.iprog in (* Can be improved to not re-annotatepreviously annotated data decls in SE.iprog *)
-  let c_data_decl = Astsimp.trans_data_x SE.iprog (List.hd SE.iprog.I.prog_data_decls) in
-  let () = !SE.cprog.Cast.prog_data_decls <- c_data_decl :: !SE.cprog.Cast.prog_data_decls in
-  let () = Cf_ext.add_data_tags_to_obj !SE.cprog.Cast.prog_data_decls in (* To mark recursive data declarations *)
-  (* print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog)) *)
-  ()
+(* let data_decl data_name data_fields = *)
+(*   let df = List.map (function (Void, ident) -> (((Void, ident) : Globals.typed_ident), no_pos, false, []) *)
+(*                             | (Bool, ident) -> ((Bool, ident), no_pos, false, []) *)
+(*                             | (Float, ident) -> ((Float, ident), no_pos, false, []) *)
+(*                             | (Int, ident) -> ((Int, ident), no_pos, false, []) *)
+(*                             | (Named(name), ident) -> ((Named(name), ident), no_pos, false, [])) data_fields in *)
+(*   (\* Stores data definition into SE.iprog *\) *)
+(*   let () = SE.process_data_def { *)
+(*     I.data_name = data_name; *)
+(*     I.data_fields = df; *)
+(*     I.data_parent_name = "Object"; *)
+(*     I.data_invs = []; *)
+(*     I.data_pos = no_pos; *)
+(*     I.data_pure_inv = None; *)
+(*     I.data_is_template = false; *)
+(*     I.data_methods = []; *)
+(*   } in *)
+(*   let () = I.annotate_field_pure_ext SE.iprog in (\* Can be improved to not re-annotatepreviously annotated data decls in SE.iprog *\) *)
+(*   let c_data_decl = Astsimp.trans_data_x SE.iprog (List.hd SE.iprog.I.prog_data_decls) in *)
+(*   let () = !SE.cprog.Cast.prog_data_decls <- c_data_decl :: !SE.cprog.Cast.prog_data_decls in *)
+(*   let () = Cf_ext.add_data_tags_to_obj !SE.cprog.Cast.prog_data_decls in (\* To mark recursive data declarations *\) *)
+(*   (\* print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog)) *\) *)
+(*   () *)
 
 let data_decl_str sleek_str = 
   let sleek_cmd = NF.parse_slk sleek_str in
   match sleek_cmd with
   | SC.DataDef data_def ->
-    (* Stores predicate definition into SE.iprog *)
+    (* Stores data definition into SE.iprog *)
     let () = SE.process_data_def data_def in
     SE.convert_data_and_pred_to_cast_x () (* Can be improved to not re-convert previously converted data and predidcates *)
   | _ -> ()                               (* Possible error handling here *)
@@ -202,11 +202,16 @@ let trans_I_to_C istruc_form (args: I.param list)  =
   (* Normalize struc formula
      Follows case_normalize_proc_x
   *)
-  let gl_proc_args = args in
+  let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) SE.iprog.I.prog_global_var_decls in
+  let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
+  let gl_proc_args = gl_v @ args in
+  let gl_proc_args = gl_proc_args @ (match None with | None -> [] | Some ha -> [ha]) in
+
+  let h = (List.map (fun c1 -> (c1.Iast.param_name, VG.Unprimed)) gl_proc_args) in 
   let p = ((Globals.eres_name, VG.Unprimed)::(Globals.res_name, VG.Unprimed)::
            (List.map (fun c1-> (c1.I.param_name, VG.Primed))
               (List.filter (fun c-> c.I.param_mod == Iast.RefMod) gl_proc_args))) in
-  let h = (List.map (fun c1 -> (c1.Iast.param_name, VG.Unprimed)) gl_proc_args) in
+
   let strad_s =
     let pr,pst = IF.struc_split_fv istruc_form false in
     Gen.BList.intersect_eq (=) pr pst in
@@ -404,20 +409,20 @@ let init_ctx cstruc_form (args: I.param list) =
   let pf = (CF.no_change fsvars no_pos) in (*init(V) := v'=v*)
   let nox = CF.formula_of_pure_N pf no_pos in
   let init_form = nox in
-  let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let init_form =
     if (Perm.allow_perm ()) then
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) init_form
     else
       init_form
   in
-  let init_ctx = CF.build_context init_ctx1 init_form no_pos in
+  let init_ctx = CF.build_context init_ctx init_form no_pos in
   (* Termination: Add the set of logical variables into the initial context *)
   (* let init_ctx = *)
   (*   if !Globals.dis_term_chk then init_ctx *)
   (*   else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in *)
 
-  (* Tranform context to include pre-condition in cstruc_form 
+  (* Tranform context to include the pre-condition in cstruc_form 
      Follows check_specs_infer_a
   *)
   let rec helper ctx cstruc_form =
@@ -463,6 +468,247 @@ let init_ctx cstruc_form (args: I.param list) =
   let init_esc = [((0,""),[])] in
   let lfe = [CF.mk_failesc_context ctx [] init_esc] in
   lfe
+
+let check_pre_post lfe specs is_rec args call_args =
+  let param_to_typed_ident p = (p.I.param_type, p.I.param_name) in
+  let args = List.map param_to_typed_ident args in
+  let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) lfe in
+
+  let farg_types, farg_names = List.split args in
+  let farg_spec_vars = List.map2 (fun n t -> Cpure.SpecVar (t, n, VG.Unprimed)) farg_names farg_types in
+  let actual_spec_vars = List.map2 (fun n t -> Cpure.SpecVar (t, n, VG.Unprimed)) call_args farg_types in
+
+  let check_pre_post_orig specs ctx =
+    let org_spec = if !Globals.change_flow then CF.change_spec_flow specs else specs in
+    let lbl_ctx = Typechecker.store_label # get in
+    let org_spec2 =
+      if is_rec && !Globals.auto_number then match org_spec with
+        | CF.EList b ->
+          let l = CF.Label_Spec.filter_label_rec lbl_ctx b in
+          CF.EList l
+        | _ -> org_spec
+      else org_spec in
+    let stripped_spec = org_spec2 in
+    let pre_free_vars = Gen.BList.difference_eq Cpure.eq_spec_var
+        (Gen.BList.difference_eq Cpure.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
+           (CF.struc_post_fv stripped_spec(*org_spec*))) (farg_spec_vars@ (!SE.cprog.C.prog_logical_vars)) in
+
+    let pre_free_vars = List.filter (fun v -> let t = Cpure.type_of_spec_var v in not(Globals.is_RelT t) && t != HpT) pre_free_vars in
+
+    let ls_var = [(Cpure.mkLsVar VG.Unprimed)] in
+    let lsmu_var = [(Cpure.mkLsmuVar VG.Unprimed)] in
+    let waitlevel_var = [(Cpure.mkWaitlevelVar VG.Unprimed)] in
+    let pre_free_vars = List.filter (fun v -> Cpure.name_of_spec_var v <> Globals.ls_name && Cpure.name_of_spec_var v <> Globals.lsmu_name && Cpure.name_of_spec_var v <> Globals.waitlevel_name) pre_free_vars in
+    let pre_free_vars_fresh = Cpure.fresh_spec_vars pre_free_vars in
+    let renamed_spec =
+      if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))
+      else (CF.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context ctx))
+    in
+    let st1 = List.combine pre_free_vars pre_free_vars_fresh in
+    let fr_vars = farg_spec_vars @ (List.map Cpure.to_primed farg_spec_vars) in
+    let to_vars = actual_spec_vars @ (List.map Cpure.to_primed actual_spec_vars) in
+
+    let renamed_spec = CF.subst_struc st1 renamed_spec in
+    let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+
+    let renamed_spec =
+      match None, None (* proc.proc_ho_arg, ha *) with
+      | Some hv, Some ha ->
+        let ht, hn = hv in
+        let hsv = Cpure.SpecVar (ht, hn, Unprimed) in
+        CF.subst_hvar_struc renamed_spec [(hsv, ha)]
+      | _ -> renamed_spec
+    in
+
+    let st2 = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) actual_spec_vars in
+    let st_ls = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) ls_var in
+    let st_lsmu = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) lsmu_var in
+    let st_waitlevel = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) waitlevel_var in
+    let st3= st2@st_ls@st_lsmu@st_waitlevel in
+    let pre2 = CF.subst_struc_pre st3 renamed_spec in
+    let new_spec = (Cprinter.string_of_struc_formula pre2) in
+    (* Termination: Store unreachable state *)
+    let _ =
+      if is_rec then (* Only check termination of a recursive call *)
+        if not (CF.isNonFalseListFailescCtx ctx) then
+          let todo_unk = Term.add_unreachable_res ctx no_pos in ()
+        else ()
+      else ()
+    in
+
+    let rs, _ = Solver.heap_entail_struc_list_failesc_context_init 6 !SE.cprog false true lfe pre2 None None None no_pos None in
+    rs
+  in
+  
+  let res = if (CF.isFailListFailescCtx_new ctx) then
+      let () = print_string "Program state is unreachable." in
+      ctx
+    else
+      check_pre_post_orig specs ctx
+  in
+  if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
+    Some res
+  else None
+
+(* Follows check_specs_infer and check_post
+   Assuming that lfe is returned from check_exp
+*)
+(* Residue here is a list of partial_context.
+   To return this residue, we might have to introduce a new type. But residue from check_entail_post should not be very useful.
+*)
+let check_entail_post lfe specs args =
+  let param_to_typed_ident p = (p.I.param_type, p.I.param_name) in
+  let args = List.map param_to_typed_ident args in
+
+  let rec get_post_from_specs specs =
+    match specs with
+    | CF.EBase b ->
+      let res =
+        match b.CF.formula_struc_continuation with
+        | None -> raise (Invalid_argument ("No post condition found in specs"))
+        | Some l -> get_post_from_specs l
+      in
+      res
+    | CF.EAssume b -> b
+    | _ -> raise (Invalid_argument ("This form of specification is not yet supported"))
+  in
+  let post_struc_form = get_post_from_specs specs in
+  let post_cond = post_struc_form.CF.formula_assume_simpl in
+  let post_struc = post_struc_form.CF.formula_assume_struc in
+  (* Follows check_specs_infer *)
+  let idf x = x in
+  let lfe = CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) lfe in
+  let res_ctx = CF.list_failesc_to_partial lfe in
+  let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
+  if (CF.isFailListPartialCtx_new res_ctx) then false (* Failure state*)
+  else 
+    let (impl_vs,post_cond,post_struc) =
+      if Typechecker.pre_ctr # get > 0 then
+        let (impl_vs,new_post) =
+          if !Globals.old_post_conv_impl then CF.lax_impl_of_post post_cond
+          else ([],post_cond) in
+        let new_post_struc, impl_struc =
+          if !Globals.old_post_conv_impl then CF.lax_impl_of_struc_post post_struc
+          else (post_struc,[]) in
+        if (Gen.BList.list_setequal_eq Cpure.eq_spec_var_ident impl_struc impl_vs) then
+          (* print_string_quiet "check 1 ok\n"; *)
+          (impl_vs,new_post,new_post_struc)
+        else (*temp fixing*)
+          let sst = try List.combine impl_struc impl_vs
+            with _ -> []
+          in
+          let new_post_struc = CF.subst_struc sst new_post_struc in
+          (impl_vs,new_post,new_post_struc)
+      else ([],post_cond,post_struc) in
+    Global_var.stk_evars # push_list impl_vs;
+    let pres, posts = CF.get_pre_post_vars_simp [] specs in
+    let pre_vars = Cpure.remove_dups_svl (pres @ (List.map
+                                                 (fun (t,id) -> Cpure.SpecVar (t,id,Unprimed)) args)) in
+    let impl_vs, expl_vs = List.partition (fun v -> Cpure.mem_svl v (pre_vars@posts)) impl_vs in
+    let res_ctx = Infer.add_impl_expl_vars_list_partial_context impl_vs expl_vs res_ctx in
+    (* let () = if !Globals.dis_term_chk then () else *)
+    (*     let log_vars = prog.Cast.prog_logical_vars in *)
+    (*     let cl = List.filter (fun f -> *)
+    (*         Gen.BList.overlap_eq Cpure.eq_spec_var (Cpure.fv f) log_vars) lp in *)
+    (*     let () = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in () *)
+    (* in *)
+    let elim_unsat e =
+      let already_unsat_flag = e.CF.es_unsat_flag in
+      if already_unsat_flag then e
+      else
+        let (b,_,e) = Solver.elim_unsat_estate !SE.cprog e in
+        e
+    in
+    let res_ctx = CF.map_list_partial_context res_ctx elim_unsat in
+    (* Follows check_post *)
+    let fn_state = CF.fresh_view_list_partial_context res_ctx in
+    let f1 = CF.formula_is_eq_flow post_cond !error_flow_int in
+    (* let rs, prf = *)
+    (*   if not(Globals.global_efa_exc ()) && f1 then *)
+    (*     begin *)
+    (*       let flat_post = (CF.formula_subst_flow post_cond (CF.mkNormalFlow())) in *)
+    (*       let (\*struc_post*\)_ = (CF.struc_formula_subst_flow post_struc (CF.mkNormalFlow())) in *)
+    (*       (\*possibly change to flat post here as well??*\) *)
+    (*       let (ans,prf) = Solver.heap_entail_list_partial_context_init !SE.cprog false fn_state flat_post None None None no_pos (Some post_struc_form.CF.formula_assume_lbl) in *)
+    (*       let ans1 = if !mem_leak_detect then *)
+    (*           Soutil.detect_mem_leak prog proc ans *)
+    (*         else ans *)
+    (*       in *)
+    (*       (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf) *)
+    (*     end *)
+    (*   else *)
+    let rs, _ = Solver.heap_entail_struc_list_partial_context_init !SE.cprog false false fn_state post_struc None None None no_pos (Some post_struc_form.CF.formula_assume_lbl) in
+    let is_succ = CF.isSuccessListPartialCtx_new rs in
+    let is_reachable_succ = if not f1 then
+        is_succ
+      else
+        (*if error post, check reachable *)
+        is_succ && (CF.exist_reachable_states rs)
+    in
+    if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
+      true
+    else
+      false
+
+(* Follows check_exp Cond case *)
+let disj_of_ctx ctx1 ctx2 =
+  CF.list_failesc_context_or (Cprinter.string_of_esc_stack) ctx1 ctx2
+
+(* Follows check_exp Cond case *)
+let add_cond_to_ctx ctx ident b =
+  let pure_cond = (Cpure.BForm ((Cpure.mkBVar ident VG.Primed no_pos, None), None)) in
+  let cond = 
+    if b then
+      Mcpure.mix_of_pure pure_cond
+    else
+      Mcpure.mix_of_pure (Cpure.mkNot pure_cond None no_pos) in
+  let ctx = Solver.combine_list_failesc_context_and_unsat_now !SE.cprog ctx cond in
+  CF.add_path_id_ctx_failesc_list ctx (None, -1) (if b then 1 else 2)
+
+(* Follows check_exp Var case *)
+let upd_result_with_var ctx t ident =
+  let tmp = CF.formula_of_mix_formula (Mcpure.mix_of_pure (Cpure.mkEqVar (Cpure.mkRes t) (Cpure.SpecVar (t, ident, Primed)) no_pos)) no_pos in
+  CF.normalize_max_renaming_list_failesc_context tmp no_pos true ctx
+
+(* Follows check_exp IConst case *)
+let upd_result_with_int ctx i =
+  let c_e = Cpure.IConst (i, no_pos) in
+  let res_v = Cpure.Var (Cpure.mkRes C.int_type, no_pos) in
+  let c = Cpure.mkEqExp res_v c_e no_pos in
+  let c =
+    if !Globals.infer_lvar_slicing then
+      Cpure.set_il_formula c (Some (false, Globals.fresh_int(), [res_v]))
+    else c
+  in
+  let f = CF.formula_of_mix_formula (Mcpure.mix_of_pure c) no_pos in
+  CF.normalize_max_renaming_list_failesc_context f no_pos true ctx
+
+(* Follows check_exp BConst case *)
+let upd_result_with_bool ctx b =
+  let res_v = Cpure.mkRes C.bool_type in
+  let tmp = Cpure.BForm ((Cpure.BVar (res_v, no_pos), None), None) in
+  let tmp =
+    if b then tmp
+    else
+      Cpure.Not (tmp, None, no_pos) in
+  let f = CF.formula_of_pure_N tmp no_pos in
+  CF.normalize_max_renaming_list_failesc_context f no_pos true ctx
+
+(* Follows check_exp Assign case *)
+let add_assign_to_ctx ctx t ident =
+  let idf x = x in
+  let fct c1 =
+    let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
+        let vsv = Cpure.SpecVar (t, ident, Primed) in (* rhs must be non-void *)
+        let tmp_vsv = Cpure.fresh_spec_var vsv in
+        let compose_es = CF.subst [(vsv, tmp_vsv); ((Cpure.mkRes t), vsv)] c1.CF.es_formula in
+        let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
+        compose_ctx
+      else (CF.Ctx c1) in
+    res
+  in
+  let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
+  res
 
 (* Testing API *)
 let%expect_test "Entailment checking" =
@@ -513,7 +759,8 @@ let%expect_test "Entailment checking" =
 
   let entail_4 () =
     (* x::node<0,null> |- x != null *)
-    let () = data_decl "node" [(Int, "val"); (Named("node"), "next")] in
+    (* let () = data_decl "node" [(Int, "val"); (Named("node"), "next")] in *)
+    let () = data_decl_str "data node { int val ; node next }." in
     let ante_f = ante_f 
         (points_to_f "x" "node" [(int_pure_exp 0); (null_pure_exp)]) true_f in
     let conseq_f = conseq_f empty_heap_f
@@ -584,31 +831,6 @@ inv n >= 0." in
     let _ = entail ante_f conseq_f in
     ()
   in
-  
-  let spec_decl_1 () =
-
-    (* let spec_printer xs = *)
- (*      let rec helper n xs = *)
- (*        match xs with *)
- (*        | [] -> () *)
- (*        | x::xs' -> *)
- (*          let c_struc_form = trans_I_to_C (snd x) in *)
- (*          let () = print_string ("\n Formula " ^ (string_of_int n) ^ ": " ^ (Cprinter.string_of_struc_formula c_struc_form)) in *)
- (*          let () = print_string ("\n Function name : " ^ (fst x)) in *)
- (* helper (n + 1) xs' *)
- (*      in *)
- (*      helper 1 xs *)
- (*    in *)
-    let cstruc_form = spec_decl "foo" "requires true ensures true;" [] in
-    let lfe = init_ctx cstruc_form [] in
-    print_string (Cprinter.string_of_list_failesc_context lfe)
-  in
-
-  let spec_decl_2 () =
-    let cstruc_form = spec_decl "foo" "requires x::ll<n> & n > 0 ensures x::ll<1> * res::ll<n-1>;" [] in
-    let lfe = init_ctx cstruc_form [] in
-    print_string (Cprinter.string_of_list_failesc_context lfe)
-  in
 
   let entail_9 () =
     (* x:: node(_, r1) * r1:: node(_, null) |-> x:: ll<c> *)
@@ -621,6 +843,92 @@ inv n >= 0." in
     ()
   in
 
+  let spec_decl_1 () =
+    let cstruc_form = spec_decl "foo" "requires true ensures true;" [] in
+    let lfe = init_ctx cstruc_form [] in
+    print_string (Cprinter.string_of_list_failesc_context lfe)
+  in
+
+  let spec_decl_2 () =
+    let cstruc_form = spec_decl "foo" "requires x::ll<n> & n > 0 ensures x::ll<1> * res::ll<n-1>;" [] in
+    let lfe = init_ctx cstruc_form [] in
+    print_string (Cprinter.string_of_list_failesc_context lfe)
+  in
+  
+  let spec_decl_3 () =
+    let cstruc_form = spec_decl "foo" "requires x::ll<m> ensures x::ll<m>;" [] in
+    let lfe = init_ctx cstruc_form [] in
+    print_string (Cprinter.string_of_list_failesc_context lfe);
+    print_string (string_of_bool (check_entail_post lfe cstruc_form []));
+  in
+
+  let spec_decl_4 () = 
+    let cstruc_form = spec_decl "foo" "requires true
+    ensures 
+        case {
+            i > 0 -> [] i' = i + 1;
+            i <= 0 -> [] i' = i;
+        };" [{I.param_type = Int; I.param_name = "i"; I.param_mod = I.RefMod; 
+              I.param_loc = no_pos}] in
+    let lfe = init_ctx cstruc_form [{I.param_type = Int; I.param_name = "i"; I.param_mod = I.RefMod; 
+              I.param_loc = no_pos}] in
+    print_string (Cprinter.string_of_struc_formula cstruc_form);
+    print_string (Cprinter.string_of_list_failesc_context lfe)
+  in
+
+  let verify_1 () =
+    (* requires true
+       ensures res = 0;
+
+       int foo() {
+           return 0;
+       }
+    *)
+    let cstruc_form = spec_decl "foo" "requires true ensures res = 0;" [] in
+    let lfe = init_ctx cstruc_form [] in
+    let lfe = upd_result_with_int lfe 0 in
+
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form [])))
+  in
+    
+  let verify_2 () =
+    (* requires true
+       ensures res = 1;
+
+       {(boolean v_bool_5_2020;
+       (v_bool_5_2020 = true;
+       if (v_bool_5_2020) [LABEL! 144,0: (int v_int_6_2018;
+       (v_int_6_2018 = 1;
+       ret# v_int_6_2018))]
+       else [LABEL! 144,1: (int v_int_8_2019;
+       (v_int_8_2019 = 2;
+       ret# v_int_8_2019))]
+       ))}
+    *)
+    let cstruc_form = spec_decl "foo" "requires true ensures res = 1;" [] in
+    let lfe = init_ctx cstruc_form [] in
+    (* VarDecl : do nothing *)
+    (* Assignment : check rhs exp  *)
+    let lfe = upd_result_with_bool lfe true in
+    (* Assignment : update res *)
+    let lfe = add_assign_to_ctx lfe Bool "v_bool_5_2020" in
+
+    (* Cond : then branch *)
+    let then_lfe = add_cond_to_ctx lfe "v_bool_5_2020" true in
+    let then_lfe = upd_result_with_int then_lfe 1 in
+    let then_lfe = add_assign_to_ctx then_lfe Int "v_int_6_2018" in
+    let then_lfe = upd_result_with_var then_lfe Int "v_int_6_2018" in
+    (* Cond : else branch *)
+    let else_lfe = add_cond_to_ctx lfe "v_bool_5_2020" false in
+    let else_lfe = upd_result_with_int else_lfe 2 in
+    let else_lfe = add_assign_to_ctx else_lfe Int "v_int_8_2019" in
+    let else_lfe = upd_result_with_var else_lfe Int "v_int_8_2019" in
+
+    let lfe = disj_of_ctx then_lfe else_lfe in
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form [])))
+  in
+
+  print_string "\nEntailment";
   entail_1 ();
   entail_2 ();
   entail_3 ();
@@ -630,6 +938,8 @@ inv n >= 0." in
   entail_7 ();
   entail_8 ();
   entail_9 ();
-  spec_decl_1 ();
-  spec_decl_2 ();
+  print_string "\nVerification";
+  verify_1 ();
+  verify_2 ();
+  spec_decl_4 ();
   [%expect]
