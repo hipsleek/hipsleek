@@ -176,6 +176,25 @@ let points_to_int_f var_name int =
   let t_var_name = truncate_var var_name p in
   IF.mkHeapNode_x (t_var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] None no_pos
 
+(*Parses string of data def, pred def or lemma def*)
+let top_level_decl sleek_str =  
+  let sleek_cmd = NF.parse_slk sleek_str in
+  match sleek_cmd with
+  | SC.DataDef data_def ->
+    (* Stores predicate definition into SE.iprog *)
+    let () = SE.process_data_def data_def in
+    SE.convert_data_and_pred_to_cast_x () 
+  | SC.PredDef pred_def ->
+    (* Stores predicate definition into SE.iprog *)
+    let () = SE.process_pred_def_4_iast pred_def in
+    SE.convert_data_and_pred_to_cast_x ()
+  | SC.LemmaDef lemma_def ->
+    if I.is_lemma_decl_ahead lemma_def then
+      let () = SE.process_list_lemma lemma_def in
+      ()
+    else ()
+  | _ -> ()    
+
 let data_decl data_name data_fields =
   let df = List.map (fun (t, s) -> (((typ_to_globals_typ t), s), no_pos, false, [])) data_fields in
 
@@ -247,7 +266,6 @@ let trans_I_to_C istruc_form (args: I.param list)  =
     let pr,pst = IF.struc_split_fv istruc_form false in
     Gen.BList.intersect_eq (=) pr pst in
   let istruc_form, _ = Astsimp.case_normalize_struc_formula 5 SE.iprog h p istruc_form false false false strad_s in
-
   let n_tl = [] in                      (* Probably shouldn't be empty *)
   let free_vars = List.map (fun p -> p.I.param_name) args in
   let (n_tl, c_struc_form) = Astsimp.trans_I2C_struc_formula 2 SE.iprog false true free_vars istruc_form n_tl true true in
@@ -450,10 +468,10 @@ let init_ctx cstruc_form args =
       init_form
   in
   let init_ctx = CF.build_context init_ctx init_form no_pos in
-  (* Termination: Add the set of logical variables into the initial context *)
-  (* let init_ctx = *)
-  (*   if !Globals.dis_term_chk then init_ctx *)
-  (*   else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in *)
+  (* Termination: Add the set of logical variables into the initial context  *)
+  let init_ctx =
+    if !Globals.dis_term_chk then init_ctx
+    else Infer.restore_infer_vars_ctx [] [] init_ctx in
 
   (* Tranform context to include the pre-condition in cstruc_form 
      Follows check_specs_infer_a
@@ -495,6 +513,7 @@ let init_ctx cstruc_form args =
     | _ -> ctx
   in
 
+  let (cstruc_form, _, _) = Imminfer.infer_imm_ann_proc cstruc_form in
   let ctx = helper init_ctx cstruc_form in
   (* What is label  *)
   (* need to add initial esc_stack *)

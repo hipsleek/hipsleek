@@ -26,3 +26,5 @@ module Infer = Infer
 module Cvutil = Cvutil
 module Typeinfer = Typeinfer
 module Cfutil = Cfutil
+module Imminfer = Imminfer
+module Term = Term
