@@ -64,6 +64,19 @@ val iff_f      : pf -> pf -> pf
     Returns true if declaration was successful, false otherwise.
  *)
 
+val top_level_decl : string -> unit
+(** [top_level_decl s] is used to declare a data, predicate or lemma.
+    [s] is a string defining the data, predicate or lemma in Sleek syntax.
+    Returns true if declaration was successful, false otherwise.
+*)
+
+val data_decl_str : string -> unit
+(** [data_decl_str s] is used to declare a data.
+    [s] is a string defining the data.
+    Returns true if declaration was successful, false otherwise.
+*)
+
+
 val predicate_decl : string -> unit
 (** [predicate_decl s] is used to declare a predicate.
     [s] is a string defining the predicate in Sleek syntax.
