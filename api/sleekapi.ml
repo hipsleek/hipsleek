@@ -19,14 +19,24 @@ type mf = SC.meta_formula
 type dd = I.data_decl
 type lfe = CF.list_failesc_context
 type sf = CF.struc_formula
-type param = I.param
 
-type typ = Globals.typ
-  (* | Void *)
-  (* | Bool *)
-  (* | Float *)
-  (* | Int *)
-  (* | Named of string *)
+type typ =
+  | Void
+  | Bool
+  | Float
+  | Int
+  | Named of string
+
+type param_modifier = 
+  | NoMod
+  | RefMod
+  | CopyMod
+
+type param = {
+  param_type : typ;
+  param_name : string;
+  param_mod : param_modifier;
+}
 
 (* Prelude of api *)
 let init () = 
@@ -70,6 +80,30 @@ let no_pos : VG.loc =
                   Lexing.pos_bol = 0; 
                   Lexing.pos_cnum = 0 } in
   {VG.start_pos = no_pos1; VG.mid_pos = no_pos1; VG.end_pos = no_pos1;}
+
+let param_to_typed_ident (p : I.param) = (p.I.param_type, p.I.param_name)
+
+let typ_to_globals_typ (t: typ) : Globals.typ =
+  match t with
+  | Void -> Void
+  | Bool -> Bool
+  | Float -> Float
+  | Int -> Int
+  | Named(s) -> Named(s)
+
+let param_mod_to_iast_param_mod (pm : param_modifier) : I.param_modifier =
+  match pm with
+  | NoMod -> NoMod
+  | RefMod -> RefMod
+  | CopyMod -> CopyMod
+
+let param_to_iast_param (p: param) : I.param =
+  {
+    param_type = typ_to_globals_typ p.param_type;
+    param_name = p.param_name;
+    param_mod = param_mod_to_iast_param_mod p.param_mod;
+    param_loc = no_pos
+  }
 
 let check_anon var_name f = 
   match var_name with 
@@ -142,31 +176,28 @@ let points_to_int_f var_name int =
   let t_var_name = truncate_var var_name p in
   IF.mkHeapNode_x (t_var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] None no_pos
 
-(* let data_decl data_name data_fields = *)
-(*   let df = List.map (function (Void, ident) -> (((Void, ident) : Globals.typed_ident), no_pos, false, []) *)
-(*                             | (Bool, ident) -> ((Bool, ident), no_pos, false, []) *)
-(*                             | (Float, ident) -> ((Float, ident), no_pos, false, []) *)
-(*                             | (Int, ident) -> ((Int, ident), no_pos, false, []) *)
-(*                             | (Named(name), ident) -> ((Named(name), ident), no_pos, false, [])) data_fields in *)
-(*   (\* Stores data definition into SE.iprog *\) *)
-(*   let () = SE.process_data_def { *)
-(*     I.data_name = data_name; *)
-(*     I.data_fields = df; *)
-(*     I.data_parent_name = "Object"; *)
-(*     I.data_invs = []; *)
-(*     I.data_pos = no_pos; *)
-(*     I.data_pure_inv = None; *)
-(*     I.data_is_template = false; *)
-(*     I.data_methods = []; *)
-(*   } in *)
-(*   let () = I.annotate_field_pure_ext SE.iprog in (\* Can be improved to not re-annotatepreviously annotated data decls in SE.iprog *\) *)
-(*   let c_data_decl = Astsimp.trans_data_x SE.iprog (List.hd SE.iprog.I.prog_data_decls) in *)
-(*   let () = !SE.cprog.Cast.prog_data_decls <- c_data_decl :: !SE.cprog.Cast.prog_data_decls in *)
-(*   let () = Cf_ext.add_data_tags_to_obj !SE.cprog.Cast.prog_data_decls in (\* To mark recursive data declarations *\) *)
-(*   (\* print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog)) *\) *)
-(*   () *)
+let data_decl data_name data_fields =
+  let df = List.map (fun (t, s) -> (((typ_to_globals_typ t), s), no_pos, false, [])) data_fields in
 
-let data_decl_str sleek_str = 
+  (* Stores data definition into SE.iprog *)
+  let () = SE.process_data_def {
+    I.data_name = data_name;
+    I.data_fields = df;
+    I.data_parent_name = "Object";
+    I.data_invs = [];
+    I.data_pos = no_pos;
+    I.data_pure_inv = None;
+    I.data_is_template = false;
+    I.data_methods = [];
+  } in
+  let () = I.annotate_field_pure_ext SE.iprog in (* Can be improved to not re-annotatepreviously annotated data decls in SE.iprog *)
+  let c_data_decl = Astsimp.trans_data_x SE.iprog (List.hd SE.iprog.I.prog_data_decls) in
+  let () = !SE.cprog.Cast.prog_data_decls <- c_data_decl :: !SE.cprog.Cast.prog_data_decls in
+  let () = Cf_ext.add_data_tags_to_obj !SE.cprog.Cast.prog_data_decls in (* To mark recursive data declarations *)
+  (* print_string ("\n Cprog after data_decl : " ^ (Cprinter.string_of_program !SE.cprog)) *)
+  ()
+
+let data_decl_str sleek_str =
   let sleek_cmd = NF.parse_slk sleek_str in
   match sleek_cmd with
   | SC.DataDef data_def ->
@@ -231,7 +262,8 @@ let trans_I_to_C istruc_form (args: I.param list)  =
 
 let spec_decl func_name func_spec args =
   match Parser.parse_spec (func_name ^ " " ^ func_spec) with
-  | x::xs -> trans_I_to_C (snd x) args
+  | x::_ -> trans_I_to_C (snd x) (List.map param_to_iast_param args)
+  | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
 
 let points_to_f var_name ident exps =
   let var_name = check_anon var_name "points_to_f" in 
@@ -399,11 +431,12 @@ let entail iante iconseq =
   let () = print_string ("\n" ^ (string_of_bool res)) in
   res
 
-let init_ctx cstruc_form (args: I.param list) =
+let init_ctx cstruc_form args =
   (* Build an initial context
      Follows check_proc
   *)
-  let param_to_typed_ident p = (p.I.param_type, p.I.param_name) in
+  let args = List.map param_to_iast_param args in
+    
   let ftypes, fnames = List.split (List.map param_to_typed_ident args) in
   let fsvars = List.map2 (fun t -> fun v -> Cpure.SpecVar (t, v, Unprimed)) ftypes fnames in
   let pf = (CF.no_change fsvars no_pos) in (*init(V) := v'=v*)
@@ -449,7 +482,7 @@ let init_ctx cstruc_form (args: I.param list) =
         CF.formula_assume_vars = var_ref;
         CF.formula_assume_simpl = post_cond;
         CF.formula_assume_lbl = post_label;
-        CF.formula_assume_ensures_type = etype0; (* duplicate??? *)
+        CF.formula_assume_ensures_type = etype0;
         CF.formula_assume_struc = post_struc
       } ->
       (* Follows check_specs_infer_a EAssume *)
@@ -470,8 +503,8 @@ let init_ctx cstruc_form (args: I.param list) =
   lfe
 
 let check_pre_post lfe specs is_rec args call_args =
-  let param_to_typed_ident p = (p.I.param_type, p.I.param_name) in
-  let args = List.map param_to_typed_ident args in
+  let args = List.map (fun x -> param_to_typed_ident (param_to_iast_param x)) args in
+
   let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) lfe in
 
   let farg_types, farg_names = List.split args in
@@ -557,8 +590,7 @@ let check_pre_post lfe specs is_rec args call_args =
    To return this residue, we might have to introduce a new type. But residue from check_entail_post should not be very useful.
 *)
 let check_entail_post lfe specs args =
-  let param_to_typed_ident p = (p.I.param_type, p.I.param_name) in
-  let args = List.map param_to_typed_ident args in
+  let args = List.map (fun x -> param_to_typed_ident (param_to_iast_param x)) args in
 
   let rec get_post_from_specs specs =
     match specs with
@@ -667,6 +699,7 @@ let add_cond_to_ctx ctx ident b =
 
 (* Follows check_exp Var case *)
 let upd_result_with_var ctx t ident =
+  let t = typ_to_globals_typ t in
   let tmp = CF.formula_of_mix_formula (Mcpure.mix_of_pure (Cpure.mkEqVar (Cpure.mkRes t) (Cpure.SpecVar (t, ident, Primed)) no_pos)) no_pos in
   CF.normalize_max_renaming_list_failesc_context tmp no_pos true ctx
 
@@ -696,6 +729,7 @@ let upd_result_with_bool ctx b =
 
 (* Follows check_exp Assign case *)
 let add_assign_to_ctx ctx t ident =
+  let t = typ_to_globals_typ t in
   let idf x = x in
   let fct c1 =
     let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
@@ -868,10 +902,8 @@ inv n >= 0." in
         case {
             i > 0 -> [] i' = i + 1;
             i <= 0 -> [] i' = i;
-        };" [{I.param_type = Int; I.param_name = "i"; I.param_mod = I.RefMod; 
-              I.param_loc = no_pos}] in
-    let lfe = init_ctx cstruc_form [{I.param_type = Int; I.param_name = "i"; I.param_mod = I.RefMod; 
-              I.param_loc = no_pos}] in
+        };" [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
+    let lfe = init_ctx cstruc_form [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
     print_string (Cprinter.string_of_struc_formula cstruc_form);
     print_string (Cprinter.string_of_list_failesc_context lfe)
   in
@@ -928,6 +960,43 @@ inv n >= 0." in
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form [])))
   in
 
+  let verify_3 () =
+    let add_param_list = [{param_type = Int; param_name = "a"; param_mod = RefMod;};
+                          {param_type = Int; param_name = "b"; param_mod = RefMod;}] in
+    let add_specs = spec_decl "add__" "requires true ensures res = a + b;"
+        add_param_list in
+    
+    (* requires true
+       ensures res=i + 1;
+
+       {(int v_int_22_2043;
+       (v_int_22_2043 = {((int v_int_22_2042;
+       v_int_22_2042 = 1);
+       add___$int~int(i,v_int_22_2042))};
+       ret# v_int_22_2043))}    
+    *)
+    let cstruc_form = spec_decl "foo" "requires true ensures res=i + 1;"
+        [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
+    let lfe = init_ctx cstruc_form 
+        [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
+    (* VarDecl : do nothing *)
+    (* Assignment : check rhs exp *)
+    (*   VarDecl : do nothing *)
+    (*   Assignment : check rhs exp *)
+    let lfe = upd_result_with_int lfe 1 in
+    (*   Assignment : assign *)
+    let lfe = add_assign_to_ctx lfe Int "v_int_22_2042" in
+    (*   Call : check pre cond *)
+    let lfe = check_pre_post lfe add_specs false add_param_list ["i"; "v_int_22_2042"] in
+    (* Assignment : assign *)
+    let lfe = add_assign_to_ctx (Gen.unsome lfe) Int "v_int_22_2043" in
+    (* ret : update res *)
+    let lfe = upd_result_with_var lfe Int "v_int_22_2043" in
+
+    (* print_string ("\n" ^ (Cprinter.string_of_list_failesc_context lfe)); *)
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form
+                                            [{param_type = Int; param_name = "i"; param_mod = RefMod;}])))  in
+
   print_string "\nEntailment";
   entail_1 ();
   entail_2 ();
@@ -941,5 +1010,6 @@ inv n >= 0." in
   print_string "\nVerification";
   verify_1 ();
   verify_2 ();
-  spec_decl_4 ();
+  verify_3 ();
   [%expect]
+

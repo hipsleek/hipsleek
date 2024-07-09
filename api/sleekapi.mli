@@ -5,9 +5,24 @@ type hf                                 (* heap formulae *)
 type mf                                 (* meta formulae *)
 type lfe                                (* list of failesc_context *)
 type sf                                 (* struc formulae *)
-type param
 
-type typ
+type typ =
+  | Void
+  | Bool
+  | Float
+  | Int
+  | Named of string
+
+type param_modifier = 
+  | NoMod
+  | RefMod
+  | CopyMod
+
+type param = {
+  param_type : typ;
+  param_name : string;
+  param_mod : param_modifier;
+}
 
 (* Relevant files:
   - ipure_D.ml (formula)
@@ -57,7 +72,7 @@ val implies_f  : pf -> pf -> pf
 val iff_f      : pf -> pf -> pf
 
 (* Heap formulae *)
-(* val data_decl : string -> ((typ * string) list) -> unit *)
+val data_decl : string -> ((typ * string) list) -> unit
 (** [data_decl s l] is used to declare a data structure named [s].
     [l] is a list of pairs of the type and name of each field of the data
     structure.
