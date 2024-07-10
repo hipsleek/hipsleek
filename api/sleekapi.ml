@@ -269,11 +269,11 @@ let trans_I_to_C istruc_form (args: I.param list)  =
   let n_tl = [] in                      (* Probably shouldn't be empty *)
   let free_vars = List.map (fun p -> p.I.param_name) args in
   let (n_tl, c_struc_form) = Astsimp.trans_I2C_struc_formula 2 SE.iprog false true free_vars istruc_form n_tl true true in
-  let cf = CF.add_inf_cmd_struc true c_struc_form in
+  let cf = CF.add_inf_cmd_struc false c_struc_form in
   let cf = Astsimp.set_pre_flow_x cf in
   let cf =
     if not !Globals.dis_term_chk then
-      CF.norm_struc_with_lexvar true false None cf
+      CF.norm_struc_with_lexvar false false None cf
     else cf
   in
   cf
