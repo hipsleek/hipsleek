@@ -72,8 +72,8 @@ val implies_f  : pf -> pf -> pf
 val iff_f      : pf -> pf -> pf
 
 (* Heap formulae *)
-val data_decl : string -> ((typ * string) list) -> unit
-(** [data_decl s l] is used to declare a data structure named [s].
+val data_decl_cons : string -> ((typ * string) list) -> unit
+(** [data_decl_cons s l] is used to declare a data structure named [s].
     [l] is a list of pairs of the type and name of each field of the data
     structure.
     Returns true if declaration was successful, false otherwise.
@@ -85,12 +85,11 @@ val top_level_decl : string -> unit
     Returns true if declaration was successful, false otherwise.
 *)
 
-val data_decl_str : string -> unit
+val data_decl : string -> unit
 (** [data_decl_str s] is used to declare a data.
-    [s] is a string defining the data.
+    [s] is a string defining the data in Sleek syntax.
     Returns true if declaration was successful, false otherwise.
 *)
-
 
 val predicate_decl : string -> unit
 (** [predicate_decl s] is used to declare a predicate.
@@ -198,4 +197,12 @@ val add_assign_to_ctx : lfe -> typ -> string -> lfe
 (** [add_assign_to_ctx ctx t ident] returns a context which is the result of assigning
     the value of "res" to the variable with the name [ident] and the type [t] in the
     context [ctx].
+*)
+
+val bind_data_to_names : lfe -> typ -> string -> (typ * string) list -> bool -> lfe
+(** [bind_data_to_names ctx t ident lvars read_only] binds the fields of the data node
+    [t] which is the value of the variable with the name [ident] to the list of names
+    [lvars].
+    [read_only] indicates whether the fields of the data node will be read from or
+    or written to
 *)

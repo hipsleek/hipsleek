@@ -28,3 +28,5 @@ module Typeinfer = Typeinfer
 module Cfutil = Cfutil
 module Imminfer = Imminfer
 module Term = Term
+module Norm = Norm
+module Immutable = Immutable
