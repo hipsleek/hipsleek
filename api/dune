@@ -2,7 +2,7 @@
  (name hipsleek_api)
  (public_name hipsleek.api)
  (libraries hipsleek)
- (inline_tests (deps ./sleekapi_prelude.slk))
+ (inline_tests (deps ./sleekapi_prelude.slk ./prelude.ss))
  (preprocess (pps ppx_expect)))
 
 (env
