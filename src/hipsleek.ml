@@ -30,3 +30,4 @@ module Imminfer = Imminfer
 module Term = Term
 module Norm = Norm
 module Immutable = Immutable
+module Vperm = Vperm

@@ -742,10 +742,12 @@ let add_cond_to_ctx ctx ident b =
   CF.add_path_id_ctx_failesc_list ctx (None, -1) (if b then 1 else 2)
 
 (* Follows check_exp Var case *)
-let upd_result_with_var ctx t ident =
-  let t = typ_to_globals_typ t in
+let upd_result_with_var_aux ctx t ident =
   let tmp = CF.formula_of_mix_formula (Mcpure.mix_of_pure (Cpure.mkEqVar (Cpure.mkRes t) (Cpure.SpecVar (t, ident, Primed)) no_pos)) no_pos in
   CF.normalize_max_renaming_list_failesc_context tmp no_pos true ctx
+
+let upd_result_with_var ctx t ident =
+  upd_result_with_var_aux ctx (typ_to_globals_typ t) ident
 
 (* Follows check_exp IConst case *)
 let upd_result_with_int ctx i =
@@ -772,8 +774,7 @@ let upd_result_with_bool ctx b =
   CF.normalize_max_renaming_list_failesc_context f no_pos true ctx
 
 (* Follows check_exp Assign case *)
-let add_assign_to_ctx ctx t ident =
-  let t = typ_to_globals_typ t in
+let add_assign_to_ctx_aux ctx t ident =
   let idf x = x in
   let fct c1 =
     let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
@@ -788,137 +789,239 @@ let add_assign_to_ctx ctx t ident =
   let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
   res
 
-let bind_data_to_names ctx t ident lvars read_only =
-  let idf x = x in
+let add_assign_to_ctx ctx t ident =
+  add_assign_to_ctx_aux ctx (typ_to_globals_typ t) ident
+
+(* function to generate fresh names for data fields. field_accessed is the one field being accessed. *)
+let rec gen_names (pos: VG.loc) (field_accessed : string) (fields : (Globals.typ * string) list) :
+  (((Globals.typ * string) option) * (string list)) =
+  (match fields with
+   | [] -> (None, [])
+   | f :: rest ->
+     let fn1 = Globals.fresh_trailer () in
+     let line = if pos.start_pos.Lexing.pos_lnum > 0 then
+         string_of_int pos.start_pos.Lexing.pos_lnum
+       else "0" in
+     let fresh_fn = (snd f) ^ "_" ^ line ^ fn1 in
+     let (tmp, new_rest) = gen_names pos field_accessed rest in
+     if (snd f) = field_accessed then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
+     else (tmp, (fresh_fn :: new_rest)))
+
+let data_field_read_or_update ctx t ident field_name rhs =
   let t = typ_to_globals_typ t in
-  let lvars = List.map (fun (t, i) -> (typ_to_globals_typ t, i)) lvars in
-
-  let lsv = List.map (fun (t,i) -> Cpure.SpecVar(t,i,Unprimed)) lvars in
-  let field_types, vs = List.split lvars in
-  let v_prim = Cpure.SpecVar (t, ident, Primed) in
-  let vs_prim = List.map2 (fun v -> fun t -> Cpure.SpecVar (t, v, Primed)) vs field_types in
-  let p = Cpure.fresh_spec_var v_prim in
-  let link_pv = CF.formula_of_pure_N
-      (Cpure.mkAnd (Cpure.mkEqVar v_prim p no_pos) (Cpure.BForm ((Cpure.mkNeq (Cpure.Var (p, no_pos)) (Cpure.Null no_pos) no_pos, None), None)) no_pos) no_pos in
-
-  let tmp_ctx =
-    if !Globals.large_bind then
-      CF.normalize_max_renaming_list_failesc_context link_pv no_pos false ctx
-    else ctx in
-
-  let () = CF.must_consistent_list_failesc_context "bind 1" ctx  in
-
-  let unfolded = tmp_ctx in
-  let unfolded =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) unfolded in
-
-  let () = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
-
-  let unfolded =
-    let idf = (fun c -> c) in
-    CF.transform_list_failesc_context (idf,idf,
-                                       (fun es -> CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula !SE.cprog es.CF.es_formula Solver.unfold_for_abs_merge no_pos;})) unfolded
+  let read_only =
+    match rhs with
+    | None -> true
+    | Some _ -> false
   in
-  let c = Globals.string_of_typ t in
-  let fresh_perm_exp,perm_vars =
-    (match !Globals.perm with
-     | Bperm ->
-       let c_name = Cpure.fresh_old_name "cbperm" in
-       let t_name = Cpure.fresh_old_name "tbperm" in
-       let a_name = Cpure.fresh_old_name "abperm" in
-       let c_var = Cpure.SpecVar (Globals.Int,c_name, VG.Unprimed) in
-       let t_var = Cpure.SpecVar (Globals.Int,t_name, VG.Unprimed) in
-       let a_var = Cpure.SpecVar (Globals.Int,a_name, VG.Unprimed) in
-       Cpure.Bptriple ((c_var,t_var,a_var), no_pos), [c_var;t_var;a_var]
-     | _ ->
-       let fresh_perm_name = Cpure.fresh_old_name "f" in
-       let perm_t = Perm.cperm_typ () in
-       let perm_var = Cpure.SpecVar (perm_t,fresh_perm_name, VG.Unprimed) in (*LDK TO CHECK*)
-       Cpure.Var (perm_var,no_pos),[perm_var])
+  (* Follows flatten_to_bind *)
+  let data_def =
+    match t with
+    | Named data_name ->
+      I.look_up_data_def 2 no_pos SE.iprog.I.prog_data_decls data_name
+    | _ -> raise (Invalid_argument ("type " ^ (Globals.string_of_typ t) ^ " is not a struct data type"))
   in
-
-  let bind_ptr = if !Globals.large_bind then p else v_prim in
-  let vdatanode = CF.DataNode ({
-      CF.h_formula_data_node = bind_ptr;
-      CF.h_formula_data_name = c;
-      CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
-      CF.h_formula_data_split = SPLIT0; (*TO CHECK: assume false*)
-      CF.h_formula_data_imm = if read_only then Cpure.ConstAnn(Lend) else Cpure.ConstAnn(Mutable);
-      CF.h_formula_data_param_imm = [];
-      CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_perm_exp else None; (*LDK: belong to HIP, deal later ???*)
-      CF.h_formula_data_origins = []; (*deal later ???*)
-      CF.h_formula_data_original = true; (*deal later ???*)
-      CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
-      CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
-      CF.h_formula_data_label = None;
-      CF.h_formula_data_remaining_branches = None;
-      CF.h_formula_data_pruning_conditions = [];
-      CF.h_formula_data_pos = no_pos}) in
-  let vheap = CF.formula_of_heap vdatanode no_pos in
-  let vheap =
-    if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
-
-  let vheap =
-    if (Perm.allow_perm ()) then
-      (*there exists fresh_perm_exp statisfy ... *)
-      if (read_only)
-      then
-        let read_f = Perm.mkPermInv () fresh_perm_exp in
-        CF.mkBase vdatanode (Mcpure.memoise_add_pure_N (Mcpure.mkMTrue no_pos) read_f) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos
-      else
-        let write_f = Perm.mkPermWrite () fresh_perm_exp in
-        CF.mkBase vdatanode (Mcpure.memoise_add_pure_N (Mcpure.mkMTrue no_pos) write_f) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos
-    else
-      vheap
+  let data_fields = I.look_up_all_fields SE.iprog data_def in
+  let imm_node = 
+    match rhs with
+    | None -> Cpure.ConstAnn(Lend)
+    | Some _ -> Cpure.ConstAnn(Mutable)
   in
-
-  let vheap = Immutable.normalize_field_ann_formula vheap in
-  let vheap = Cvutil.prune_preds !SE.cprog false vheap in
-
-  let struc_vheap = CF.EBase {
-      CF.formula_struc_explicit_inst = [];
-      CF.formula_struc_implicit_inst = (if (Perm.allow_perm ()) then perm_vars else [])@vs_prim;  (*need to instantiate f*)
-      CF.formula_struc_exists = [] ;
-      CF.formula_struc_base = vheap;
-      CF.formula_struc_is_requires = false;
-      CF.formula_struc_continuation = None;
-      CF.formula_struc_pos = no_pos} in
-
-  if (Gen.is_empty unfolded) then
-    unfolded
+  let ann_list = Immutable.compute_ann_list data_fields [field_name] imm_node in
+  let (fresh_name, fresh_field_names) = gen_names no_pos field_name (List.map I.get_field_typed_id data_fields) in
+  if not (Option.is_some fresh_name) then
+    raise (Invalid_argument ("field  " ^  (field_name ^ " is not accessible")))
   else
-    let () = Globals.consume_all := true in
-    (* let () = print_string ("\nBefore : " ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
-    (* let () = print_string ("\nStruc_vheap : " ^ (Cprinter.string_of_struc_formula struc_vheap)) in *)
-    let rs_prim, _ = Solver.heap_entail_struc_list_failesc_context_init 5 !SE.cprog false true unfolded struc_vheap None None None no_pos None in
-    (* let () = print_string ("\nAfter : " ^ (Cprinter.string_of_list_failesc_context rs_prim)) in *)
-    let () = Globals.consume_all := false in
-    let () = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
+    let (field_accessed_type, field_accessed_name) = Option.get fresh_name in
+    (* let () = print_string ("\n access : " ^ (Globals.string_of_typ field_accessed_type) ^ ", " ^ field_accessed_name) in *)
+    (* Start bind, follows check_exp *)
+    let idf x = x in
+    let pid = Globals.fresh_strict_branch_point_id "" in
+    let field_types = List.map (fun f -> I.get_field_typ f) data_fields in
+    let lvars = List.combine field_types fresh_field_names in
+    (* let () = print_string ("\n lvars : " ^ (Globals.pr_list (fun (t, n) -> (Globals.string_of_typ t) ^ ", " ^ n) lvars)) in *)
 
-    let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
-    let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
+    let ctx = CF.transform_list_failesc_context (idf, (fun c -> CF.push_esc_level c pid), (fun x -> CF.Ctx x)) ctx in
+    
+    let ctx = 
+      if !Globals.ann_vp then
+        let vperm_fields = CvpermUtils.vperm_sets_of_anns [(
+            Globals.VP_Full,
+            List.map (fun (t, i) -> Cpure.SpecVar (t, i, VG.Unprimed)) lvars)]
+        in
+        Vperm.add_vperm_sets_list_failesc_ctx vperm_fields ctx
+      else ctx
+    in
+    
+    let lsv = List.map (fun (t, i) -> Cpure.SpecVar (t, i, VG.Unprimed)) lvars in
+    let field_types, vs = List.split lvars in
+    let v_prim = Cpure.SpecVar (t, ident, VG.Primed) in
+    let vs_prim = List.map2 (fun v -> fun t -> Cpure.SpecVar (t, v, Primed)) vs field_types in
+    let p = Cpure.fresh_spec_var v_prim in
+    let link_pv = CF.formula_of_pure_N
+        (Cpure.mkAnd (Cpure.mkEqVar v_prim p no_pos) (Cpure.BForm ((Cpure.mkNeq (Cpure.Var (p, no_pos)) (Cpure.Null no_pos) no_pos, None), None)) no_pos) no_pos in
 
-    if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
-      begin
-        if Globals.is_en_efa_exc () && (Globals.global_efa_exc ()) then
+    let tmp_ctx =
+      if !Globals.large_bind then
+        CF.normalize_max_renaming_list_failesc_context link_pv no_pos false ctx
+      else ctx in
 
-          let to_print = ("bind 3: node " ^ (Cprinter.string_of_formula vheap (*vdatanode*)) ^
-                          " cannot be derived from context") in
-          CF.transform_list_failesc_context (idf,idf,
-                                             (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
-            rs
+    let () = CF.must_consistent_list_failesc_context "bind 1" ctx  in
+
+    let unfolded = tmp_ctx in
+    let unfolded =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) unfolded in
+
+    let () = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
+
+    let unfolded =
+      CF.transform_list_failesc_context (idf,idf,
+                                         (fun es -> CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula !SE.cprog es.CF.es_formula Solver.unfold_for_abs_merge no_pos;})) unfolded
+    in
+    let c = Globals.string_of_typ t in
+    let fresh_perm_exp,perm_vars =
+      (match !Globals.perm with
+       | Bperm ->
+         let c_name = Cpure.fresh_old_name "cbperm" in
+         let t_name = Cpure.fresh_old_name "tbperm" in
+         let a_name = Cpure.fresh_old_name "abperm" in
+         let c_var = Cpure.SpecVar (Globals.Int,c_name, VG.Unprimed) in
+         let t_var = Cpure.SpecVar (Globals.Int,t_name, VG.Unprimed) in
+         let a_var = Cpure.SpecVar (Globals.Int,a_name, VG.Unprimed) in
+         Cpure.Bptriple ((c_var,t_var,a_var), no_pos), [c_var;t_var;a_var]
+       | _ ->
+         let fresh_perm_name = Cpure.fresh_old_name "f" in
+         let perm_t = Perm.cperm_typ () in
+         let perm_var = Cpure.SpecVar (perm_t,fresh_perm_name, VG.Unprimed) in
+         Cpure.Var (perm_var,no_pos),[perm_var])
+    in
+
+    let bind_ptr = if !Globals.large_bind then p else v_prim in
+    let vdatanode = CF.DataNode ({
+        CF.h_formula_data_node = bind_ptr;
+        CF.h_formula_data_name = c;
+        CF.h_formula_data_derv = false;
+        CF.h_formula_data_split = SPLIT0;
+        CF.h_formula_data_imm = imm_node;
+        CF.h_formula_data_param_imm = ann_list;
+        CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_perm_exp else None;
+        CF.h_formula_data_origins = [];
+        CF.h_formula_data_original = true;
+        CF.h_formula_data_arguments = vs_prim;
+        CF.h_formula_data_holes = [];
+        CF.h_formula_data_label = None;
+        CF.h_formula_data_remaining_branches = None;
+        CF.h_formula_data_pruning_conditions = [];
+        CF.h_formula_data_pos = no_pos}) in
+    let vheap = CF.formula_of_heap vdatanode no_pos in
+    let vheap =
+      if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
+
+    let vheap =
+      if (Perm.allow_perm ()) then
+        if (read_only)
+        then
+          let read_f = Perm.mkPermInv () fresh_perm_exp in
+          CF.mkBase vdatanode (Mcpure.memoise_add_pure_N (Mcpure.mkMTrue no_pos) read_f) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos
         else
-          let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^
-                   ("bind: node " ^ (Cprinter.string_of_formula vheap (* vdatanode *)) ^
-                    " cannot be derived from context\n") ^
-                   ("(Cause of Bind Failure)") ^
-                   (Cprinter.string_of_failure_list_failesc_context rs ) in
-          raise (Error.Ppf ({
-              Error.error_loc = no_pos;
-              Error.error_text = (s (* ^ "\n" ^ (pr hprel_assumptions) *))
-            }, (*Failure_Must*) 1, 0))
-      end
+          let write_f = Perm.mkPermWrite () fresh_perm_exp in
+          CF.mkBase vdatanode (Mcpure.memoise_add_pure_N (Mcpure.mkMTrue no_pos) write_f) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos
+      else
+        vheap
+    in
+
+    let vheap = Immutable.normalize_field_ann_formula vheap in
+    let vheap = Cvutil.prune_preds !SE.cprog false vheap in
+
+    let struc_vheap = CF.EBase {
+        CF.formula_struc_explicit_inst = [];
+        CF.formula_struc_implicit_inst = (if (Perm.allow_perm ()) then perm_vars else [])@vs_prim;
+        CF.formula_struc_exists = [] ;
+        CF.formula_struc_base = vheap;
+        CF.formula_struc_is_requires = false;
+        CF.formula_struc_continuation = None;
+        CF.formula_struc_pos = no_pos} in
+
+    if (Gen.is_empty unfolded) then
+      unfolded
     else
-      rs
+      let () = Globals.consume_all := true in
+      (* let () = print_string ("\n BEFORE : " ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
+      (* let () = print_string ("\n RHS : " ^ (Cprinter.string_of_struc_formula struc_vheap)) in *)
+      let rs_prim, _ = Solver.heap_entail_struc_list_failesc_context_init 5 !SE.cprog false true unfolded struc_vheap None None None no_pos (Some pid) in
+      let () = Globals.consume_all := false in
+      let () = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
+
+      (* let () = print_string ("\n AFTER : " ^ (Cprinter.string_of_list_failesc_context rs_prim)) in *)
+      let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
+      let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
+
+      if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs)) then
+        begin
+          if Globals.is_en_efa_exc () && (Globals.global_efa_exc ()) then
+
+            let to_print = ("bind 3: node " ^ (Cprinter.string_of_formula vheap (*vdatanode*)) ^
+                            " cannot be derived from context") in
+            CF.transform_list_failesc_context (idf,idf,
+                                               (fun es -> CF.Ctx{es with CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print}))
+              rs
+          else
+            let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^
+                     ("bind: node " ^ (Cprinter.string_of_formula vheap (* vdatanode *)) ^
+                      " cannot be derived from context\n") ^
+                     ("(Cause of Bind Failure)") ^
+                     (Cprinter.string_of_failure_list_failesc_context rs ) in
+            raise (Error.Ppf ({
+                Error.error_loc = no_pos;
+                Error.error_text = (s (* ^ "\n" ^ (pr hprel_assumptions) *))
+              }, (*Failure_Must*) 1, 0))
+        end
+      else
+        begin
+          Global_var.stk_vars # push_list lsv;
+          let res =
+            match rhs with
+            | None -> 
+              (* Verify read *)
+              upd_result_with_var_aux rs field_accessed_type field_accessed_name
+            | Some v ->
+              (* Verify write *)
+              let rs = upd_result_with_var_aux rs field_accessed_type v in
+              add_assign_to_ctx_aux rs field_accessed_type field_accessed_name
+          in
+          Global_var.stk_vars # pop_list lsv;
+          let () = CF.must_consistent_list_failesc_context "bind 5" res in
+          let res = 
+            if not(Cpure.isLend imm_node) && not(Cpure.isAccs imm_node) then
+              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap no_pos true res
+            else res
+          in
+          let () = CF.must_consistent_list_failesc_context "bind 6" res in
+          let bind_field = CF.mk_bind_fields_struc vs_prim in
+          let res =
+            CF.transform_list_failesc_context (idf,idf,
+                                               (fun es ->
+                                                  let es_f = if Globals.infer_const_obj # is_ana_ni then
+                                                      CF.mkAnd_pure es.CF.es_formula (Mcpure.mix_of_pure bind_field) no_pos
+                                                    else es.CF.es_formula in
+                                                  CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula !SE.cprog es_f Solver.unfold_for_abs_merge no_pos;}))
+              res
+          in
+          let res = Solver.prune_ctx_failesc_list !SE.cprog res in
+          let res = CF.push_exists_list_failesc_context vs_prim res in
+          let () = CF.must_consistent_list_failesc_context "bind 7" res in
+          let res = if !Globals.elim_exists_ff then
+              Solver.elim_exists_failesc_ctx_list res 
+            else res 
+          in
+          let () = CF.must_consistent_list_failesc_context "bind 8" res in
+          CF.pop_esc_level_list res pid
+        end
+
+let data_field_read ctx t ident field_name =
+  data_field_read_or_update ctx t ident field_name None
+
+let data_field_update ctx t ident field_name rhs =
+  data_field_read_or_update ctx t ident field_name (Some rhs)
 
 (* Testing API *)
 let%expect_test "Entailment checking" =
@@ -931,8 +1034,6 @@ let%expect_test "Entailment checking" =
     let empty_heap_f = empty_heap_f in
     let ante_f = ante_f empty_heap_f true_f in
     let conseq_f = conseq_f empty_heap_f true_f in
-    (* let () = print_string (ante_printer ante_f) in *)
-    (* let () = print_string (conseq_printer conseq_f) in *)
     let _ = entail ante_f conseq_f in
     ()
   in
@@ -1225,8 +1326,9 @@ inv n >= 0." in
     let else_lfe = add_cond_to_ctx lfe "v_bool_46_2101" false in
     let else_lfe = upd_result_with_int else_lfe 1 in
     let else_lfe = add_assign_to_ctx else_lfe Int "v_int_49_2099" in
-    let else_lfe = bind_data_to_names else_lfe (Named("node")) "x" [(Int, "val_49_2093"); (Named("node"), "next_49_2094")] true in
-    let else_lfe = upd_result_with_var else_lfe (Named("node")) "next_49_2094" in
+    let else_lfe = data_field_read else_lfe (Named("node")) "x" "next" in
+    (* let else_lfe = bind_data_to_names else_lfe (Named("node")) "x" [(Int, "val_49_2093"); (Named("node"), "next_49_2094")] true in *)
+    (* let else_lfe = upd_result_with_var else_lfe (Named("node")) "next_49_2094" in *)
     let else_lfe = add_assign_to_ctx else_lfe (Named("node")) "v_node_49_2096" in
     let else_lfe = check_pre_post else_lfe cstruc_form true count_param_list ["v_node_49_2096"] in
     let else_lfe = add_assign_to_ctx (Gen.unsome else_lfe) Int "v_int_49_2098" in
@@ -1235,7 +1337,6 @@ inv n >= 0." in
     let else_lfe = upd_result_with_var else_lfe Int "v_int_49_2100" in
 
     let lfe = disj_of_ctx then_lfe else_lfe in
-    (* let () = print_string ("\n" ^ (Cprinter.string_of_list_failesc_context lfe)) in *)
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form count_param_list)))
   in
 
@@ -1261,28 +1362,31 @@ inv n >= 0." in
   ensures x::ll<n1+n2>;" param_list in
     let lfe = init_ctx cstruc_form param_list in
 
-    let lfe = bind_data_to_names lfe (Named("node")) "x" [(Int, "val_36_2087"); (Named("node"), "next_36_2088")] true in
-    let lfe = upd_result_with_var lfe (Named("node")) "next_36_2088" in
+    let lfe = data_field_read lfe (Named("node")) "x" "next" in
+    (* let lfe = bind_data_to_names lfe (Named("node")) "x" [(Int, "val_36_2087"); (Named("node"), "next_36_2088")] true in *)
+    (* let lfe = upd_result_with_var lfe (Named("node")) "next_36_2088" in *)
     let lfe = add_assign_to_ctx lfe (Named("node")) "v_node_36_2091" in
     let lfe = check_pre_post lfe is_null_specs false is_null_param_list ["v_node_36_2091"] in
     let lfe = add_assign_to_ctx (Gen.unsome lfe) Bool "v_bool_36_2099" in
 
     let then_lfe = add_cond_to_ctx lfe "v_bool_36_2099" true in
-    let then_lfe = bind_data_to_names then_lfe (Named("node")) "x" [(Int, "val_37_2092"); (Named("node"), "next_37_2093")] false in
-    let then_lfe = upd_result_with_var then_lfe (Named("node")) "y" in
-    let then_lfe = add_assign_to_ctx then_lfe (Named("node")) "next_37_2093" in
-
+    let then_lfe = data_field_update then_lfe (Named("node")) "x" "next" "y" in
+    (* let then_lfe = bind_data_to_names then_lfe (Named("node")) "x" [(Int, "val_37_2092"); (Named("node"), "next_37_2093")] false in *)
+    (* let then_lfe = upd_result_with_var then_lfe (Named("node")) "y" in *)
+    (* let then_lfe = add_assign_to_ctx then_lfe (Named("node")) "next_37_2093" in *)
+    (* let then_lfe = add_vheap_to_ctx then_lfe (Named("node")) "x" [(Int, "val_37_2092"); (Named("node"), "next_37_2093")] false in *)
+    
     let else_lfe = add_cond_to_ctx lfe "v_bool_36_2099" false in
-    let else_lfe = bind_data_to_names else_lfe (Named("node")) "x" [(Int, "val_39_2094"); (Named("node"), "next_39_2095")] true in
-    let else_lfe = upd_result_with_var else_lfe (Named("node")) "next_39_2095" in
+    let else_lfe = data_field_read else_lfe (Named("node")) "x" "next" in
+    (* let else_lfe = bind_data_to_names else_lfe (Named("node")) "x" [(Int, "val_39_2094"); (Named("node"), "next_39_2095")] true in *)
+    (* let else_lfe = upd_result_with_var else_lfe (Named("node")) "next_39_2095" in *)
     let else_lfe = add_assign_to_ctx else_lfe (Named("node")) "v_node_39_2098" in
     let else_lfe = check_pre_post else_lfe cstruc_form true param_list ["v_node_39_2098"; "y"] in
     let else_lfe = Gen.unsome else_lfe in
 
     let lfe = disj_of_ctx then_lfe else_lfe in
-    let () = print_string ("\n MARKER : " ^ (Cprinter.string_of_list_failesc_context lfe)) in
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form param_list)))
-  in    
+  in
 
   print_string "\nEntailment";
   entail_1 ();
@@ -1299,5 +1403,6 @@ inv n >= 0." in
   verify_2 ();
   verify_3 ();
   verify_4 ();
+  verify_5 ();
   [%expect]
 

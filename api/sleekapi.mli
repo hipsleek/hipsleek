@@ -40,7 +40,8 @@ val null_pure_exp : pe
 
 val var_pure_exp : string -> pe
 (** [var_pure_exp s b] returns a variable with the name [s]. 
-    Whether is the variable primed is determined by whether is there a ' char at the end of the variable name *)
+    Whether is the variable primed is determined by whether is there a ' char at
+    the end of the variable name *)
 
 val int_pure_exp : int -> pe
 (** [int_pure_exp i] returns a expression with the value of the integer [i] *)
@@ -171,38 +172,41 @@ val disj_of_ctx : lfe -> lfe -> lfe
 
 val add_cond_to_ctx : lfe -> string -> bool -> lfe
 (** [add_cond_to_ctx ctx ident b] returns a context which is the result of adding
-    the condition that the variable with the name [ident] has value [b] to the
-    context [ctx].
+    the condition that the variable [ident] has value [b] to the context [ctx].
 *)
 
 val upd_result_with_var : lfe -> typ -> string -> lfe
 (** [upd_result_with_var ctx t ident] returns a context which is the result of
-    updating context [ctx] with the condition that the variable with the name "res"
-    is equal to the variable with the name [ident] and the type [t].
+    updating context [ctx] with the condition that the variable "res" is equal to
+    the variable [ident] of type [t].
 *)
 
 val upd_result_with_int : lfe -> int -> lfe
 (** [upd_result_with_int ctx i] returns a context which is the result of updating
-    context [ctx] with the condition that the variable with the name "res" is equal
-    to the integer [i].
+    context [ctx] with the condition that the variable "res" is equal to the integer
+    [i].
 *)
 
 val upd_result_with_bool : lfe -> bool -> lfe
 (** [upd_result_with_bool ctx b] returns a context which is the result of updating
-    context [ctx] with the condition that the variable with the name "res" is equal
-    to the boolean [b].
+    context [ctx] with the condition that the variable "res" is equal to the boolean
+    [b].
 *)
 
 val add_assign_to_ctx : lfe -> typ -> string -> lfe
 (** [add_assign_to_ctx ctx t ident] returns a context which is the result of assigning
-    the value of "res" to the variable with the name [ident] and the type [t] in the
-    context [ctx].
+    the value of "res" to the variable [ident] and the type [t] in the context [ctx].
 *)
 
-val bind_data_to_names : lfe -> typ -> string -> (typ * string) list -> bool -> lfe
-(** [bind_data_to_names ctx t ident lvars read_only] binds the fields of the data node
-    [t] which is the value of the variable with the name [ident] to the list of names
-    [lvars].
-    [read_only] indicates whether the fields of the data node will be read from or
-    or written to
+val data_field_read : lfe -> typ -> string -> string -> lfe
+(** [data_field_read ctx t ident f] returns a context which is the result of updating
+    context [ctx] with the condition that the variable "res" is equal to the field [f]
+    of the variable [ident] of type [t].
 *)
+
+val data_field_update : lfe -> typ -> string -> string -> string -> lfe
+(** [data_field_update ctx t ident f rhs] returns a context which is the result of
+    assigning the value of the variable [rhs] to the field [f] of the variable [ident]
+    of type [t] in the context [ctx].
+*)
+
