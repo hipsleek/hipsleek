@@ -1,6 +1,7 @@
 open Hipsleek
 open Hipsleek_common
 open Exc.GTable
+open HipUtil
 
 module C = Cast
 module I = Iast
@@ -45,10 +46,17 @@ let init () =
      Declarations in this prelude file will be parsed and stored in a global
      variable, iprog, in sleekengine.ml
   *)
-  let () = Sleekmain.parse_file Nativefront.list_parse "./sleekapi_prelude.slk" in
+  let () = Sleekmain.parse_file Nativefront.list_parse "sleekapi_prelude.slk" in
+  let file_name = "./prelude.ss" in
+  proc_files # push file_name;
+  let org_in_chnl = open_in file_name in
+  (* let () = print_stream(Stream.of_channel org_in_chnl) in  *)
+  (* let () = print_string(file_name) in *)
+  let (_, iprog) = Parser.parse_hip_with_option file_name (Stream.of_channel org_in_chnl) in
+  close_in org_in_chnl;
   (*Referenced from sleekmain.ml main()*)
-  let iprog = { I.prog_include_decls =[];
-                I.prog_data_decls = [SE.iobj_def;SE.ithrd_def];
+  (* let iprog = { I.prog_include_decls =[];
+                I.prog_data_decls = [];
                 I.prog_global_var_decls = [];
                 I.prog_logical_var_decls = [];
                 I.prog_enum_decls = [];
@@ -67,11 +75,18 @@ let init () =
                 I.prog_hopred_decls = [];
                 I.prog_barrier_decls = [];
                 I.prog_test_comps = [];
-              } in
-  let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-  let () = I.build_exc_hierarchy true iprog in
-  let () = exlist # compute_hierarchy  in  
-  ()
+              } in *)
+  let iprog = Iast.label_procs_prog iprog true in
+  let () = Iast.annotate_field_pure_ext iprog in
+  let (cp, _) = Astsimp.trans_prog iprog in
+  (* let () = print_string(Exc.ETABLE_NFLOW.string_of_flow !Exc.ETABLE_NFLOW.norm_flow_int) in *)
+  let () = SE.cprog := cp in ()
+  (* let () = I.inbuilt_build_exc_hierarchy () in *)
+  (* let () = I.build_exc_hierarchy true iprog in *)
+  (* let () = exlist # compute_hierarchy in () *)
+  (* let () = print_string (Iprinter.string_of_program iprog) in *)
+  (* let () = SE.iprog.I.prog_data_decls <- iprog.I.prog_data_decls in *)
+  (* let () = print_string (Cprinter.string_of_program cp) in () *)
 
 (* Used as placeholder for pos since no file is parsed *)
 let no_pos : VG.loc =
@@ -176,13 +191,71 @@ let points_to_int_f var_name int =
   let t_var_name = truncate_var var_name p in
   IF.mkHeapNode_x (t_var_name, p) "int_ptr" []  0 false Globals.SPLIT0 IP.NoAnn false false false None [(int_pure_exp int)] [None] None no_pos
 
+let gen_primitives ddef = 
+  let eq_str =
+    "bool eq___(" ^
+    (ddef.I.data_name ^
+     (" a, " ^
+      (ddef.I.data_name ^
+       " b) case { a=b -> requires true ensures res ; a!=b -> requires true ensures !res;}\n"))) in
+  let neq_str =
+    "bool neq___(" ^
+    (ddef.I.data_name ^
+     (" a, " ^
+      (ddef.I.data_name ^
+       " b)case { a=b -> requires true ensures !res ; a!=b -> requires true ensures res;}\n"))) in
+  let is_null_str =
+    "bool is_null___(" ^
+    (ddef.I.data_name ^
+     (" a" ^
+      ") case { a=null -> requires true ensures res ; a!=null -> requires true ensures !res;}\n")) in
+  let is_not_null_str =
+    "bool is_not_null___(" ^
+    (ddef.I.data_name ^
+     (" a" ^
+      ") case { a=null -> requires true ensures !res ; a!=null -> requires true ensures res;}\n"))
+  in
+  let all_prims = eq_str ^ neq_str ^ is_null_str ^ is_not_null_str in
+
+  let prog =
+    (try
+      Parser.parse_hip_string "primitives" all_prims
+    with  _ ->
+      Error.report_error {Error.error_loc = no_pos;
+                         Error.error_text = ("Parsing error in gen_primitives")}
+    )
+  in Astsimp.set_mingled_name prog;
+  prog.I.prog_proc_decls
+
+let process_data_def ddef =
+  if Astsimp.check_data_pred_name SE.iprog ddef.I.data_name then
+    (* let tmp = iprog.I.prog_data_decls in *)
+    let _ = SE.iprog.I.prog_data_decls <- ddef ::  SE.iprog.I.prog_data_decls in
+    let prims = gen_primitives ddef in
+    (* let () = print_string ("\nprims: " ^ Iprinter.string_of_proc_decl_list prims) in *)
+    (* let prims = List.map (function prim -> (prim.I.proc_mingled_name <- prim.I.proc_name; prim)) prims in *)
+    let c_procs = List.map(function prim -> Astsimp.trans_proc SE.iprog prim) prims in
+    (* let () = print_string("\nc_procs" ^ Cprinter.string_of_proc_decl_list c_procs) in  *)
+    let _ = List.map (function c_proc -> Cast.replace_proc !SE.cprog c_proc) c_procs in
+    let _ = if (!Globals.perm = Globals.Dperm || !Globals.perm = Globals.Bperm) then () else
+        let _ = Iast.build_exc_hierarchy true SE.iprog in
+        (* let _ = exlist # compute_hierarchy  in *)
+        let _ = SE.iprog.I.prog_data_decls <- SE.iprog.I.prog_data_decls@[SE.iexc_def] in
+        ()
+    in ()
+  else begin
+    (* dummy_exception() ; *)
+    (* print_string (ddef.I.data_name ^ " is already defined.\n") *)
+    Gen.report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
+  end
+
 (*Parses string of data def, pred def or lemma def*)
 let top_level_decl sleek_str =  
   let sleek_cmd = NF.parse_slk sleek_str in
   match sleek_cmd with
   | SC.DataDef data_def ->
     (* Stores predicate definition into SE.iprog *)
-    let () = SE.process_data_def data_def in
+    let () = process_data_def data_def in
     SE.convert_data_and_pred_to_cast_x () 
   | SC.PredDef pred_def ->
     (* Stores predicate definition into SE.iprog *)
@@ -199,7 +272,7 @@ let data_decl_cons data_name data_fields =
   let df = List.map (fun (t, s) -> (((typ_to_globals_typ t), s), no_pos, false, [])) data_fields in
 
   (* Stores data definition into SE.iprog *)
-  let () = SE.process_data_def {
+  let () = process_data_def {
     I.data_name = data_name;
     I.data_fields = df;
     I.data_parent_name = "Object";
@@ -219,10 +292,10 @@ let data_decl_cons data_name data_fields =
 let data_decl sleek_str =
   let sleek_cmd = NF.parse_slk sleek_str in
   match sleek_cmd with
-  | SC.DataDef data_def ->
+  | SC.DataDef data_def -> 
     (* Stores data definition into SE.iprog *)
-    let () = SE.process_data_def data_def in
-    SE.convert_data_and_pred_to_cast_x () (* Can be improved to not re-convert previously converted data and predidcates *)
+    let () = process_data_def data_def in
+    SE.convert_data_and_pred_to_cast_x (); (* Can be improved to not re-convert previously converted data and predidcates *)
   | _ -> ()                               (* Possible error handling here *)
 
 
@@ -521,6 +594,97 @@ let init_ctx cstruc_form args =
   let lfe = [CF.mk_failesc_context ctx [] init_esc] in
   lfe
 
+(* let to_spec_str str =
+  match str with 
+    | "add_int" -> "add___$int~int"
+    | "minus_int" -> "minus___$int~int"
+    | "mult_int" -> "mult___$int~int"
+    | _ ->  raise (Invalid_argument ("Spec string conversion not implemented yet")) *)
+
+let check_pre_post_str lfe spec_str is_rec call_args = 
+  (* let () = print_string ("cprog: " ^ Cprinter.string_of_program !SE.cprog) in *)
+  (* let spec_str = to_spec_str (str) in *)
+  let proc = Cast.look_up_proc_def no_pos !SE.cprog.new_proc_decls spec_str in 
+  (* let () = print_string ("proc: " ^ (Cprinter.string_of_proc_decl 1 proc)) in *)
+  let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) lfe in
+  let farg_types, farg_names = List.split proc.proc_args in
+  let farg_spec_vars = List.map2 (fun n t -> Cpure.SpecVar (t, n, Unprimed)) farg_names farg_types in
+  let actual_spec_vars = List.map2 (fun n t -> Cpure.SpecVar (t, n, Unprimed)) call_args farg_types in
+
+  let check_pre_post_orig specs ctx =
+    (* let () = print_string("\nspec: " ^ (Cprinter.string_of_struc_formula specs)) in *)
+    let org_spec = if !Globals.change_flow then CF.change_spec_flow specs else specs in
+    (* let () = print_string("\nspec: " ^ (Cprinter.string_of_struc_formula org_spec)) in *)
+    let lbl_ctx = Typechecker.store_label # get in
+    let org_spec2 =
+      if is_rec && !Globals.auto_number then match org_spec with
+        | CF.EList b ->
+          let l = CF.Label_Spec.filter_label_rec lbl_ctx b in
+          CF.EList l
+        | _ -> org_spec
+      else org_spec in
+    let stripped_spec = org_spec2 in
+    let pre_free_vars = Gen.BList.difference_eq Cpure.eq_spec_var
+        (Gen.BList.difference_eq Cpure.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
+           (CF.struc_post_fv stripped_spec(*org_spec*))) (farg_spec_vars@ (!SE.cprog.C.prog_logical_vars)) in
+
+    let pre_free_vars = List.filter (fun v -> let t = Cpure.type_of_spec_var v in not(Globals.is_RelT t) && t != HpT) pre_free_vars in
+
+    let ls_var = [(Cpure.mkLsVar VG.Unprimed)] in
+    let lsmu_var = [(Cpure.mkLsmuVar VG.Unprimed)] in
+    let waitlevel_var = [(Cpure.mkWaitlevelVar VG.Unprimed)] in
+    let pre_free_vars = List.filter (fun v -> Cpure.name_of_spec_var v <> Globals.ls_name && Cpure.name_of_spec_var v <> Globals.lsmu_name && Cpure.name_of_spec_var v <> Globals.waitlevel_name) pre_free_vars in
+    let pre_free_vars_fresh = Cpure.fresh_spec_vars pre_free_vars in
+    let renamed_spec =
+      if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))
+      else (CF.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context ctx))
+    in
+    let st1 = List.combine pre_free_vars pre_free_vars_fresh in
+    let fr_vars = farg_spec_vars @ (List.map Cpure.to_primed farg_spec_vars) in
+    let to_vars = actual_spec_vars @ (List.map Cpure.to_primed actual_spec_vars) in
+
+    let renamed_spec = CF.subst_struc st1 renamed_spec in
+    let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+
+    let renamed_spec =
+      match None, None (* proc.proc_ho_arg, ha *) with
+      | Some hv, Some ha ->
+        let ht, hn = hv in
+        let hsv = Cpure.SpecVar (ht, hn, Unprimed) in
+        CF.subst_hvar_struc renamed_spec [(hsv, ha)]
+      | _ -> renamed_spec
+    in
+
+    let st2 = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) actual_spec_vars in
+    let st_ls = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) ls_var in
+    let st_lsmu = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) lsmu_var in
+    let st_waitlevel = List.map (fun v -> (Cpure.to_unprimed v, Cpure.to_primed v)) waitlevel_var in
+    let st3= st2@st_ls@st_lsmu@st_waitlevel in
+    let pre2 = CF.subst_struc_pre st3 renamed_spec in
+    let new_spec = (Cprinter.string_of_struc_formula pre2) in
+    (* Termination: Store unreachable state *)
+    let _ =
+      if is_rec then (* Only check termination of a recursive call *)
+        if not (CF.isNonFalseListFailescCtx ctx) then
+          let todo_unk = Term.add_unreachable_res ctx no_pos in ()
+        else ()
+      else ()
+    in
+
+    let rs, _ = Solver.heap_entail_struc_list_failesc_context_init 6 !SE.cprog false true lfe pre2 None None None no_pos None in
+    rs
+  in
+  
+  let res = if (CF.isFailListFailescCtx_new ctx) then
+      let () = print_string "Program state is unreachable." in
+      ctx
+    else
+      check_pre_post_orig proc.proc_stk_of_static_specs#top ctx
+  in
+  if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
+    Some res
+  else None
+
 let check_pre_post lfe specs is_rec args call_args =
   let args = List.map (fun x -> param_to_typed_ident (param_to_iast_param x)) args in
 
@@ -531,6 +695,7 @@ let check_pre_post lfe specs is_rec args call_args =
   let actual_spec_vars = List.map2 (fun n t -> Cpure.SpecVar (t, n, VG.Unprimed)) call_args farg_types in
 
   let check_pre_post_orig specs ctx =
+    (* let () = print_string("\nspec: " ^ (Cprinter.string_of_struc_formula specs)) in *)
     let org_spec = if !Globals.change_flow then CF.change_spec_flow specs else specs in
     let lbl_ctx = Typechecker.store_label # get in
     let org_spec2 =
@@ -1028,6 +1193,8 @@ let%expect_test "Entailment checking" =
   
   let () = init () in
 
+  (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
+
   let entail_1 () =
     (* true |- true *)
     let true_f = true_f in
@@ -1072,6 +1239,7 @@ let%expect_test "Entailment checking" =
     (* x::node<0,null> |- x != null *)
     (* let () = data_decl_cons "node" [(Int, "val"); (Named("node"), "next")] in *)
     let () = data_decl "data node { int val ; node next }." in
+    (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
     let ante_f = ante_f 
         (points_to_f "x" "node" [(int_pure_exp 0); (null_pure_exp)]) true_f in
     let conseq_f = conseq_f empty_heap_f
@@ -1264,7 +1432,8 @@ inv n >= 0." in
        add___$int~int(i,v_int_22_2042))};
        ret# v_int_22_2043))}    
     *)
-    let cstruc_form = spec_decl "foo" "requires true ensures res=i + 1;"
+    (* let () = print_string ("iprog: " ^ Iprinter.string_of_program SE.iprog) in *)
+    let cstruc_form = spec_decl "foo" "requires true ensures res=i+1;"
         [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
     let lfe = init_ctx cstruc_form 
         [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
@@ -1276,7 +1445,8 @@ inv n >= 0." in
     (*   Assignment : assign *)
     let lfe = add_assign_to_ctx lfe Int "v_int_22_2042" in
     (*   Call : check pre cond *)
-    let lfe = check_pre_post lfe add_specs false add_param_list ["i"; "v_int_22_2042"] in
+    (* let lfe = check_pre_post lfe add_specs false add_param_list ["i"; "v_int_22_2042"] in *)
+    let lfe = check_pre_post_str lfe "add___$int~int" false ["i"; "v_int_22_2042"] in
     (* Assignment : assign *)
     let lfe = add_assign_to_ctx (Gen.unsome lfe) Int "v_int_22_2043" in
     (* ret : update res *)
