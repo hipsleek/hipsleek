@@ -1558,6 +1558,47 @@ inv n >= 0." in
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form param_list)))
   in
 
+  let verify_6 () =
+    (* int foo (node i) 
+    requires i != null
+    ensures res = 1;
+    {
+        if (i!=null) {
+            return 1;
+        }
+        return 0;
+    } *)
+    (* {((boolean v_bool_10_2042;
+    (v_bool_10_2042 = {is_not_null___$node(i)};
+    if (v_bool_10_2042) [LABEL! 145,0: {(int v_int_11_2041;
+    (v_int_11_2041 = 1;
+    ret# v_int_11_2041))}]
+    else [LABEL! 145,1: ]
+    ));
+    (int v_int_13_2043;
+    (v_int_13_2043 = 0;
+    ret# v_int_13_2043)))} *)
+    let cstruc_form = spec_decl "foo" "requires i != null ensures res = 1;"
+        [{param_type = Named ("node"); param_name = "i"; param_mod = RefMod;}] in
+    let lfe = init_ctx cstruc_form 
+        [{param_type = Named ("node"); param_name = "i"; param_mod = RefMod;}] in
+    let lfe = check_pre_post_str lfe "is_not_null___$node" false ["i"] in
+    let lfe = add_assign_to_ctx (Gen.unsome lfe) Bool "v_bool_10_2042" in
+
+    (* Cond : then branch *)
+    let then_lfe = add_cond_to_ctx lfe "v_bool_10_2042" true in
+    let then_lfe = upd_result_with_int then_lfe 1 in
+    let then_lfe = add_assign_to_ctx then_lfe Int "v_int_6_2018" in
+    let then_lfe = upd_result_with_var then_lfe Int "v_int_6_2018" in
+    (* Cond : else branch *)
+    let else_lfe = add_cond_to_ctx lfe "v_bool_10_2042" false in
+    let else_lfe = upd_result_with_int else_lfe 0 in
+    let else_lfe = add_assign_to_ctx else_lfe Int "v_int_8_2019" in
+    let else_lfe = upd_result_with_var else_lfe Int "v_int_8_2019" in
+
+    let lfe = disj_of_ctx then_lfe else_lfe in
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form []))) in
+
   print_string "\nEntailment";
   entail_1 ();
   entail_2 ();
@@ -1574,5 +1615,6 @@ inv n >= 0." in
   verify_3 ();
   verify_4 ();
   verify_5 ();
+  verify_6 ();
   [%expect]
 
