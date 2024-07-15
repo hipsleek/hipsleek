@@ -210,3 +210,8 @@ val data_field_update : lfe -> typ -> string -> string -> string -> lfe
     of type [t] in the context [ctx].
 *)
 
+module Printer :
+  sig
+    val string_of_sf : sf -> string
+    val string_of_lfe : lfe -> string
+  end

@@ -1197,6 +1197,12 @@ let data_field_read ctx t ident field_name =
 let data_field_update ctx t ident field_name rhs =
   data_field_read_or_update ctx t ident field_name (Some rhs)
 
+
+module Printer = struct 
+  let string_of_sf sf = Cprinter.string_of_struc_formula sf
+  let string_of_lfe lfe = Cprinter.string_of_list_failesc_context lfe
+end
+
 (* Testing API *)
 let%expect_test "Entailment checking" =
   
@@ -1454,7 +1460,7 @@ inv n >= 0." in
     let lfe = upd_result_with_int lfe 1 in
     (*   Assignment : assign *)
     let lfe = add_assign_to_ctx lfe Int "v$" in
-    let () = print_string(Sleekapi_printer.string_of_lfe lfe) in
+    let () = print_string(Printer.string_of_lfe lfe) in
     (*   Call : check pre cond *)
     let lfe = check_pre_post lfe add_spec false add_param_list ["i"; "v$"] in
     (* let lfe = check_pre_post_str lfe "add_$int~int" false ["i"; "v_int_22_2042"] in *)
