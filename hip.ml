@@ -600,8 +600,8 @@ let process_source_full source =
       let parameter_valid = "  Parameter valid : formula -> Prop.\n" in
       let ptto_list = List.map (fun dd ->
           if(List.length dd.C.data_fields > 0 
-             && not(ExtString.String.starts_with dd.C.data_name "int_ptr")
-             && not(ExtString.String.starts_with dd.C.data_name "barrier")) then
+             && not(String.starts_with "int_ptr" dd.C.data_name)
+             && not(String.starts_with "barrier" dd.C.data_name)) then
             let param_name = "  Parameter "^dd.C.data_name^" : Type.\n" in
             let param_null = "  Parameter null_"^dd.C.data_name^" : "
                              ^dd.C.data_name^".\n" in 
@@ -650,10 +650,10 @@ let process_source_full source =
            "  Parameter neq : Z -> Z -> formula.\n"
          else "") in
       let relation_list = List.map (fun rd ->
-          if (ExtString.String.starts_with rd.C.rel_name "dom") ||
-             (ExtString.String.starts_with rd.C.rel_name "update_array_") ||
-             (ExtString.String.starts_with rd.C.rel_name "induce") ||
-             (ExtString.String.starts_with rd.C.rel_name "amodr")
+          if (String.starts_with "dom" rd.C.rel_name) ||
+             (String.starts_with "update_array_" rd.C.rel_name) ||
+             (String.starts_with "induce" rd.C.rel_name) ||
+             (String.starts_with "amodr" rd.C.rel_name)
           then ""
           else
             let rel_params_arrow = String.concat " -> " (List.map (fun sv ->
@@ -704,8 +704,7 @@ let process_source_full source =
              ^" "^(convert_cp_formula axd.C.axiom_conclusion)^").\n")
         ) (List.filter (fun a -> 
           if List.length (CP.fv a.C.axiom_hypothesis) > 0 then 
-            if ExtString.String.starts_with (CP.name_of_spec_var
-                                               (List.hd (CP.fv a.C.axiom_hypothesis))) "dom"
+            if String.starts_with "dom" (CP.name_of_spec_var (List.hd (CP.fv a.C.axiom_hypothesis)))
             then false
             else true
           else true)
