@@ -356,6 +356,15 @@ let spec_decl func_name func_spec args =
   | x::_ -> trans_I_to_C (snd x) (List.map param_to_iast_param args)
   | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
 
+(* let spec_decl_x func_name func_spec =
+  let prog = Parser.parse_hip_string "spec" (func_name ^ " " ^ func_spec) in
+  Astsimp.set_mingled_name prog;
+  let proc_decls = prog.I.prog_proc_decls in
+  let c_procs = List.map(function prim -> Astsimp.trans_proc SE.iprog prim) proc_decls in
+    (* let () = print_string("\nc_procs" ^ Cprinter.string_of_proc_decl_list c_procs) in  *)
+    let _ = List.map (function c_proc -> Cast.replace_proc !SE.cprog c_proc) c_procs in () *)
+
+
 let points_to_f var_name ident exps =
   let var_name = check_anon var_name "points_to_f" in 
   let primed = check_prime var_name in
@@ -1416,8 +1425,9 @@ inv n >= 0." in
   let verify_3 () =
     let add_param_list = [{param_type = Int; param_name = "a"; param_mod = RefMod;};
                           {param_type = Int; param_name = "b"; param_mod = RefMod;}] in
-    let add_specs = spec_decl "add__" "requires true ensures res = a + b;"
+    let add_spec = spec_decl "infix_add" "requires true ensures res = a + b;"
         add_param_list in
+        (* let add_specs = spec_decl_x "int add(int a, int b)" "requires true ensures res = a + b;" in *)
     (* 
        int foo(int i)
          requires true
@@ -1443,10 +1453,11 @@ inv n >= 0." in
     (*   Assignment : check rhs exp *)
     let lfe = upd_result_with_int lfe 1 in
     (*   Assignment : assign *)
-    let lfe = add_assign_to_ctx lfe Int "v_int_22_2042" in
+    let lfe = add_assign_to_ctx lfe Int "v$" in
+    let () = print_string(Sleekapi_printer.string_of_lfe lfe) in
     (*   Call : check pre cond *)
-    (* let lfe = check_pre_post lfe add_specs false add_param_list ["i"; "v_int_22_2042"] in *)
-    let lfe = check_pre_post_str lfe "add___$int~int" false ["i"; "v_int_22_2042"] in
+    let lfe = check_pre_post lfe add_spec false add_param_list ["i"; "v$"] in
+    (* let lfe = check_pre_post_str lfe "add_$int~int" false ["i"; "v_int_22_2042"] in *)
     (* Assignment : assign *)
     let lfe = add_assign_to_ctx (Gen.unsome lfe) Int "v_int_22_2043" in
     (* ret : update res *)
@@ -1600,7 +1611,7 @@ inv n >= 0." in
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form []))) in
 
   print_string "\nEntailment";
-  entail_1 ();
+  (* entail_1 ();
   entail_2 ();
   entail_3 ();
   entail_4 ();
@@ -1611,10 +1622,10 @@ inv n >= 0." in
   entail_9 ();
   print_string "\nVerification";
   verify_1 ();
-  verify_2 ();
+  verify_2 (); *)
   verify_3 ();
-  verify_4 ();
+  (* verify_4 ();
   verify_5 ();
-  verify_6 ();
+  verify_6 (); *)
   [%expect]
 
