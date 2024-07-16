@@ -39,14 +39,19 @@ type param = {
   param_mod : param_modifier;
 }
 
-let parse_files file_name = 
+let parse_file file_name =
   proc_files # push file_name;
   let org_in_chnl = open_in file_name in
   let (_, iprog) = Parser.parse_hip_with_option file_name (Stream.of_channel org_in_chnl) in
   close_in org_in_chnl;
   let iprog = Iast.label_procs_prog iprog true in
   let () = Iast.annotate_field_pure_ext iprog in
-  let _ = SE.iprog.I.prog_data_decls <- SE.iprog.I.prog_data_decls@ iprog.I.prog_data_decls in
+  let _ = SE.iprog.I.prog_data_decls <- SE.iprog.I.prog_data_decls@ iprog.I.prog_data_decls in 
+  iprog
+
+let parse_files file_names = 
+  let iprogs = List.map (fun x -> parse_file x) file_names in
+  let iprog = I.append_iprims_list_head iprogs in
   let (cp, _) = Astsimp.trans_prog iprog in
   let () = SE.cprog := cp in ()
 
@@ -57,11 +62,11 @@ let init_without_parsing () =
   
 
 (* Prelude of api *)
-let init file_name = 
+let init file_names = 
   let () = print_string "Initializing sleek api" in
-  let () = match file_name with
+  let () = match file_names with
     | None -> init_without_parsing ()
-    | Some file -> parse_files file
+    | Some files -> parse_files files
 in ()
 
 (* Used as placeholder for pos since no file is parsed *)
@@ -331,14 +336,6 @@ let spec_decl func_name func_spec args =
   match Parser.parse_spec (func_name ^ " " ^ func_spec) with
   | x::_ -> trans_I_to_C (snd x) (List.map param_to_iast_param args)
   | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
-
-(* let spec_decl_x func_name func_spec =
-  let prog = Parser.parse_hip_string "spec" (func_name ^ " " ^ func_spec) in
-  Astsimp.set_mingled_name prog;
-  let proc_decls = prog.I.prog_proc_decls in
-  let c_procs = List.map(function prim -> Astsimp.trans_proc SE.iprog prim) proc_decls in
-    (* let () = print_string("\nc_procs" ^ Cprinter.string_of_proc_decl_list c_procs) in  *)
-    let _ = List.map (function c_proc -> Cast.replace_proc !SE.cprog c_proc) c_procs in () *)
 
 
 let points_to_f var_name ident exps =
@@ -1181,8 +1178,10 @@ end
 
 (* Testing API *)
 let%expect_test "Entailment checking" =
+
+  (* let () = print_string (string_of_bool(Sys.file_exists "./test.ss")) in *)
   
-  let _ = init (Some "./prelude.ss") in
+  let _ = init (Some ["prelude.ss"; "./test.ss"]) in
 
   (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
 
@@ -1229,7 +1228,7 @@ let%expect_test "Entailment checking" =
   let entail_4 () =
     (* x::node<0,null> |- x != null *)
     (* let () = data_decl_cons "node" [(Int, "val"); (Named("node"), "next")] in *)
-    let () = data_decl "data node { int val ; node next }." in
+    (* let () = data_decl "data node { int val ; node next }." in *)
     (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
     let ante_f = ante_f 
         (points_to_f "x" "node" [(int_pure_exp 0); (null_pure_exp)]) true_f in
