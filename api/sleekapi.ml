@@ -39,54 +39,35 @@ type param = {
   param_mod : param_modifier;
 }
 
-(* Prelude of api *)
-let init () = 
-  let () = print_string "Initializing sleek api" in
-  (* Prelude file contains some data declarations like int_ptr to support the api
-     Declarations in this prelude file will be parsed and stored in a global
-     variable, iprog, in sleekengine.ml
-  *)
-  let () = Sleekmain.parse_file Nativefront.list_parse "sleekapi_prelude.slk" in
-  let file_name = "./prelude.ss" in
+let parse_file file_name =
   proc_files # push file_name;
   let org_in_chnl = open_in file_name in
-  (* let () = print_stream(Stream.of_channel org_in_chnl) in  *)
-  (* let () = print_string(file_name) in *)
   let (_, iprog) = Parser.parse_hip_with_option file_name (Stream.of_channel org_in_chnl) in
   close_in org_in_chnl;
-  (*Referenced from sleekmain.ml main()*)
-  (* let iprog = { I.prog_include_decls =[];
-                I.prog_data_decls = [];
-                I.prog_global_var_decls = [];
-                I.prog_logical_var_decls = [];
-                I.prog_enum_decls = [];
-                I.prog_view_decls = [];
-                I.prog_func_decls = [];
-                I.prog_rel_decls = [];
-                I.prog_rel_ids = [];
-                I.prog_templ_decls = [];
-                I.prog_ut_decls = [];
-                I.prog_ui_decls = [];
-                I.prog_hp_decls = [];
-                I.prog_hp_ids = [];
-                I.prog_axiom_decls = [];
-                I.prog_proc_decls = [];
-                I.prog_coercion_decls = [];
-                I.prog_hopred_decls = [];
-                I.prog_barrier_decls = [];
-                I.prog_test_comps = [];
-              } in *)
   let iprog = Iast.label_procs_prog iprog true in
   let () = Iast.annotate_field_pure_ext iprog in
+  let _ = SE.iprog.I.prog_data_decls <- SE.iprog.I.prog_data_decls@ iprog.I.prog_data_decls in 
+  iprog
+
+let parse_files file_names = 
+  let iprogs = List.map (fun x -> parse_file x) file_names in
+  let iprog = I.append_iprims_list_head iprogs in
   let (cp, _) = Astsimp.trans_prog iprog in
-  (* let () = print_string(Exc.ETABLE_NFLOW.string_of_flow !Exc.ETABLE_NFLOW.norm_flow_int) in *)
   let () = SE.cprog := cp in ()
-  (* let () = I.inbuilt_build_exc_hierarchy () in *)
-  (* let () = I.build_exc_hierarchy true iprog in *)
-  (* let () = exlist # compute_hierarchy in () *)
-  (* let () = print_string (Iprinter.string_of_program iprog) in *)
-  (* let () = SE.iprog.I.prog_data_decls <- iprog.I.prog_data_decls in *)
-  (* let () = print_string (Cprinter.string_of_program cp) in () *)
+
+let init_without_parsing () = 
+  let () = I.inbuilt_build_exc_hierarchy () in
+  let () = I.build_exc_hierarchy true SE.iprog in
+  let () = exlist # compute_hierarchy in ()
+  
+
+(* Prelude of api *)
+let init file_names = 
+  let () = print_string "Initializing sleek api" in
+  let () = match file_names with
+    | None -> init_without_parsing ()
+    | Some files -> parse_files files
+in ()
 
 (* Used as placeholder for pos since no file is parsed *)
 let no_pos : VG.loc =
@@ -355,6 +336,7 @@ let spec_decl func_name func_spec params =
   | x::_ -> trans_I_to_C (snd x) (List.map param_to_iast_param params)
   | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
 
+<<<<<<< HEAD
 (* let spec_decl_x func_name func_spec =
   let prog = Parser.parse_hip_string "spec" (func_name ^ " " ^ func_spec) in
   Astsimp.set_mingled_name prog;
@@ -362,6 +344,8 @@ let spec_decl func_name func_spec params =
   let c_procs = List.map(function prim -> Astsimp.trans_proc SE.iprog prim) proc_decls in
     (* let () = print_string("\nc_procs" ^ Cprinter.string_of_proc_decl_list c_procs) in  *)
     let _ = List.map (function c_proc -> Cast.replace_proc !SE.cprog c_proc) c_procs in () *)
+=======
+>>>>>>> 2fbe75bb6fb8a0410cec73082301a4522201fbd9
 
 let points_to_f var_name ident exps =
   let var_name = check_anon var_name "points_to_f" in 
@@ -1121,6 +1105,7 @@ let data_field_read ctx t ident field_name =
 let data_field_update ctx t ident field_name rhs =
   data_field_read_or_update ctx t ident field_name (Some rhs)
 
+<<<<<<< HEAD
 let add_heap_node ctx t lvars =
   let t = typ_to_globals_typ t in
   let data_def =
@@ -1201,11 +1186,20 @@ let add_heap_node ctx t lvars =
   in
   let heap_form = Cvutil.prune_preds !SE.cprog false heap_form in
   CF.normalize_max_renaming_list_failesc_context heap_form no_pos true ctx
+=======
+
+module Printer = struct 
+  let string_of_sf sf = Cprinter.string_of_struc_formula sf
+  let string_of_lfe lfe = Cprinter.string_of_list_failesc_context lfe
+end
+>>>>>>> 2fbe75bb6fb8a0410cec73082301a4522201fbd9
 
 (* Testing API *)
 let%expect_test "Entailment checking" =
+
+  (* let () = print_string (string_of_bool(Sys.file_exists "./test.ss")) in *)
   
-  let () = init () in
+  let _ = init (Some ["prelude.ss"; "./test.ss"]) in
 
   (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
 
@@ -1252,7 +1246,7 @@ let%expect_test "Entailment checking" =
   let entail_4 () =
     (* x::node<0,null> |- x != null *)
     (* let () = data_decl_cons "node" [(Int, "val"); (Named("node"), "next")] in *)
-    let () = data_decl "data node { int val ; node next }." in
+    (* let () = data_decl "data node { int val ; node next }." in *)
     (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
     let ante_f = ante_f 
         (points_to_f "x" "node" [(int_pure_exp 0); (null_pure_exp)]) true_f in
@@ -1430,8 +1424,9 @@ inv n >= 0." in
   let verify_3 () =
     let add_param_list = [{param_type = Int; param_name = "a"; param_mod = RefMod;};
                           {param_type = Int; param_name = "b"; param_mod = RefMod;}] in
-    let add_specs = spec_decl "add__" "requires true ensures res = a + b;"
+    let add_spec = spec_decl "infix_add" "requires true ensures res = a + b;"
         add_param_list in
+        (* let add_specs = spec_decl_x "int add(int a, int b)" "requires true ensures res = a + b;" in *)
     (* 
        int incr(int i)
          requires true
@@ -1456,7 +1451,8 @@ inv n >= 0." in
     (*   Assignment : check rhs exp *)
     let lfe = upd_result_with_int lfe 1 in
     (*   Assignment : assign *)
-    let lfe = add_assign_to_ctx lfe Int "v_int_22_2042" in
+    let lfe = add_assign_to_ctx lfe Int "v$" in
+    let () = print_string(Printer.string_of_lfe lfe) in
     (*   Call : check pre cond *)
     (* let lfe = check_pre_post lfe add_specs false add_param_list ["i"; "v_int_22_2042"] in *)
     let lfe = check_pre_post_str lfe "add___$int~int" ["i"; "v_int_22_2042"] in

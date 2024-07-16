@@ -16,7 +16,6 @@
  (synopsis "Separation logic verifier")
  (description "The HIP/SLEEK separation logic verifier")
  (depends
-  (extlib (>= 1.7.9))
   (fileutils (>= 0.6.4))
   (batteries (>= 3.8.0))
   (ocamlgraph (>= 2.1.0))

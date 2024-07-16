@@ -137,7 +137,7 @@ val entail : mf -> mf -> bool
 val ante_printer : mf -> string
 val conseq_printer : mf -> string
 
-val init : unit -> unit
+val init : string list option -> unit
 (** [init ()] initializes the api. This include processing the prelude file
     of the api which contains some primitive function and data declarations.
 *)
@@ -229,3 +229,10 @@ val add_heap_node : lfe -> typ -> string list -> lfe
     [lvars] and returns a context which is the result of adding the new heap node
     to the context [ctx].
 *)
+
+module Printer :
+  sig
+    val string_of_sf : sf -> string
+    val string_of_lfe : lfe -> string
+  end
+
