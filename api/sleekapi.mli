@@ -103,7 +103,7 @@ val lemma_decl : string -> unit
     [s] is a string defining the lemma in Sleek syntax.
 *)
 
-val spec_decl : string -> string -> param list -> sf 
+val spec_decl : string -> string -> param list -> sf
 (** [spec_decl s1 s2] is used to construct a formula from the specification
     [s2] of function [s1].
     [s1] is the function's name.
@@ -149,19 +149,28 @@ val init_ctx : sf -> param list -> lfe
 
 (* - Normalize specs? (check check_pre_post_orig) *)
 val check_pre_post : lfe -> sf -> bool -> param list -> string list -> lfe option
-(** [check_pre_post ctx specs] checks whether the current context [ctx] entails 
-    the pre-condition in [specs].
-    If it does, then it will return Some poststate which is the composition
-    of the residual heap state from proving that [ctx] entails the pre-condition
-    in [specs] and the post condition in [specs].
+(** [check_pre_post ctx specs is_rec params args] checks whether the context [ctx]
+    entails the pre-condition in the specification [specs].
+    If it does, then it will return Some poststate which is the composition of the
+    residual heap state from the entailment checking and the post condition in the
+    specification [specs].
+    Otherwise, it will return None.
+*)
+
+val check_pre_post_str : lfe -> string -> string list -> lfe option
+(** [check_pre_post_str ctx f args] checks whether the context [ctx] entails the
+    pre-condition in the specification of the function [f].
+    If it does, then it will return Some poststate which is the composition of the
+    residual heap state from the entailment checking and the post condition in the
+    specification of the function [f].
     Otherwise, it will return None.
 *)
 
 val check_entail_post : lfe -> sf -> param list -> bool
-(** [check_entail_post ctx specs] checks whether the current context [ctx] entails
-    the post-condition in [specs].
+(** [check_entail_post ctx specs params] checks whether the current context [ctx] 
+    entails the post-condition in the specification [specs].
     If it does, then it will return Some poststate which is the residual heap state
-    from proving that [ctx] entails the post-condition in [specs].
+    from proving that [ctx] entails the post-condition in the specification [specs].
     Otherwise, it will return None.
 *)
 
@@ -193,6 +202,11 @@ val upd_result_with_bool : lfe -> bool -> lfe
     [b].
 *)
 
+val upd_result_with_null : lfe -> lfe
+(** [upd_result_with_null ctx] returns a context which is the result of updating
+    context [ctx] with the condition that the variables "res" is equal to "null".
+*)
+
 val add_assign_to_ctx : lfe -> typ -> string -> lfe
 (** [add_assign_to_ctx ctx t ident] returns a context which is the result of assigning
     the value of "res" to the variable [ident] and the type [t] in the context [ctx].
@@ -210,3 +224,8 @@ val data_field_update : lfe -> typ -> string -> string -> string -> lfe
     of type [t] in the context [ctx].
 *)
 
+val add_heap_node : lfe -> typ -> string list -> lfe
+(** [add_heap_node ctx t lvars] constructs a new heap node of type [t] with fields
+    [lvars] and returns a context which is the result of adding the new heap node
+    to the context [ctx].
+*)
