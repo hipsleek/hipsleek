@@ -39,54 +39,30 @@ type param = {
   param_mod : param_modifier;
 }
 
-(* Prelude of api *)
-let init () = 
-  let () = print_string "Initializing sleek api" in
-  (* Prelude file contains some data declarations like int_ptr to support the api
-     Declarations in this prelude file will be parsed and stored in a global
-     variable, iprog, in sleekengine.ml
-  *)
-  let () = Sleekmain.parse_file Nativefront.list_parse "sleekapi_prelude.slk" in
-  let file_name = "./prelude.ss" in
+let parse_files file_name = 
   proc_files # push file_name;
   let org_in_chnl = open_in file_name in
-  (* let () = print_stream(Stream.of_channel org_in_chnl) in  *)
-  (* let () = print_string(file_name) in *)
   let (_, iprog) = Parser.parse_hip_with_option file_name (Stream.of_channel org_in_chnl) in
   close_in org_in_chnl;
-  (*Referenced from sleekmain.ml main()*)
-  (* let iprog = { I.prog_include_decls =[];
-                I.prog_data_decls = [];
-                I.prog_global_var_decls = [];
-                I.prog_logical_var_decls = [];
-                I.prog_enum_decls = [];
-                I.prog_view_decls = [];
-                I.prog_func_decls = [];
-                I.prog_rel_decls = [];
-                I.prog_rel_ids = [];
-                I.prog_templ_decls = [];
-                I.prog_ut_decls = [];
-                I.prog_ui_decls = [];
-                I.prog_hp_decls = [];
-                I.prog_hp_ids = [];
-                I.prog_axiom_decls = [];
-                I.prog_proc_decls = [];
-                I.prog_coercion_decls = [];
-                I.prog_hopred_decls = [];
-                I.prog_barrier_decls = [];
-                I.prog_test_comps = [];
-              } in *)
   let iprog = Iast.label_procs_prog iprog true in
   let () = Iast.annotate_field_pure_ext iprog in
+  let _ = SE.iprog.I.prog_data_decls <- SE.iprog.I.prog_data_decls@ iprog.I.prog_data_decls in
   let (cp, _) = Astsimp.trans_prog iprog in
-  (* let () = print_string(Exc.ETABLE_NFLOW.string_of_flow !Exc.ETABLE_NFLOW.norm_flow_int) in *)
   let () = SE.cprog := cp in ()
-  (* let () = I.inbuilt_build_exc_hierarchy () in *)
-  (* let () = I.build_exc_hierarchy true iprog in *)
-  (* let () = exlist # compute_hierarchy in () *)
-  (* let () = print_string (Iprinter.string_of_program iprog) in *)
-  (* let () = SE.iprog.I.prog_data_decls <- iprog.I.prog_data_decls in *)
-  (* let () = print_string (Cprinter.string_of_program cp) in () *)
+
+let init_without_parsing () = 
+  let () = I.inbuilt_build_exc_hierarchy () in
+  let () = I.build_exc_hierarchy true SE.iprog in
+  let () = exlist # compute_hierarchy in ()
+  
+
+(* Prelude of api *)
+let init file_name = 
+  let () = print_string "Initializing sleek api" in
+  let () = match file_name with
+    | None -> init_without_parsing ()
+    | Some file -> parse_files file
+in ()
 
 (* Used as placeholder for pos since no file is parsed *)
 let no_pos : VG.loc =
@@ -1206,7 +1182,7 @@ end
 (* Testing API *)
 let%expect_test "Entailment checking" =
   
-  let () = init () in
+  let _ = init (Some "./prelude.ss") in
 
   (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
 
@@ -1617,7 +1593,7 @@ inv n >= 0." in
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form []))) in
 
   print_string "\nEntailment";
-  (* entail_1 ();
+  entail_1 ();
   entail_2 ();
   entail_3 ();
   entail_4 ();
@@ -1628,10 +1604,10 @@ inv n >= 0." in
   entail_9 ();
   print_string "\nVerification";
   verify_1 ();
-  verify_2 (); *)
+  verify_2 ();
   verify_3 ();
-  (* verify_4 ();
+  verify_4 ();
   verify_5 ();
-  verify_6 (); *)
+  verify_6 ();
   [%expect]
 
