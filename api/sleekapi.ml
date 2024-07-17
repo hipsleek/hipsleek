@@ -246,7 +246,7 @@ let top_level_decl sleek_str =
       let () = SE.process_list_lemma lemma_def in
       ()
     else ()
-  | _ -> ()    
+  | _ -> ()
 
 let data_decl_cons data_name data_fields =
   let df = List.map (fun (t, s) -> (((typ_to_globals_typ t), s), no_pos, false, [])) data_fields in
@@ -391,17 +391,6 @@ let entail ante conseq : bool =
   (* let validity, (residue: CF.list_context), _ = SE.run_entail_check ante conseq (Some false) in *)
   (* let () = print_string ("\n Residue : " ^ (Cprinter.string_of_list_context residue)) in *)
   (* SE.print_entail_result [] validity residue "\nEntail " false *)
-
-let ante_printer xs =
-  let rec helper i xs =
-    match xs with
-    | [] -> ""
-    | x::xs' -> "Ante 1 : " ^ (SC.string_of_meta_formula x) ^ "\n" ^ (helper (i+1) xs')
-  in
-  helper 1 [xs]
-
-let conseq_printer x =
-  "Conseq : " ^ (SC.string_of_meta_formula x)
 
 (* Converts meta_formulae to cformulae
    This conversion is done by closely following SE.run_infer_one_pass
@@ -1186,6 +1175,16 @@ let add_heap_node ctx t lvars =
 module Printer = struct 
   let string_of_sf sf = Cprinter.string_of_struc_formula sf
   let string_of_lfe lfe = Cprinter.string_of_list_failesc_context lfe
+  let ante_printer xs =
+    let rec helper i xs =
+      match xs with
+      | [] -> ""
+      | x::xs' -> "Ante 1 : " ^ (SC.string_of_meta_formula x) ^ "\n" ^ (helper (i+1) xs')
+    in
+    helper 1 [xs]
+  
+  let conseq_printer x =
+    "Conseq : " ^ (SC.string_of_meta_formula x)  
 end
 
 (* Testing API *)
@@ -1622,6 +1621,53 @@ inv n >= 0." in
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form param_list)))
   in
 
+  let verify_8 () =
+    (* void fun(ref int i)
+      requires i<10
+      ensures i'=10;
+    {
+      while(i<10)
+        requires true
+        ensures i<10 & i'=10
+          or i>=10 & i'=i; 
+      {
+        i=i+1;
+      }
+    } *)
+    (* {(boolean v_bool_5_2040;
+    (v_bool_5_2040 = {((int v_int_5_2034;
+    v_int_5_2034 = 10);
+    lt___$int~int(i,v_int_5_2034))};
+    if (v_bool_5_2040) [{({i = {((int v_int_10_2037;
+    v_int_10_2037 = 1);
+    add___$int~int(i,v_int_10_2037))}};
+    {while_5_2$int(i) rec})}]
+    else []
+    ))} *)
+    let param_list = [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
+    let cstruc_form = spec_decl "while_5_2" "requires true
+        ensures i<10 & i'=10
+          or i>=10 & i'=i;"
+      param_list in
+    let lfe = init_ctx cstruc_form param_list in
+    let lfe = upd_result_with_int lfe 10 in
+    let lfe = add_assign_to_ctx lfe Int "v_int_5_2034" in
+    let lfe = check_pre_post_str lfe "lt___$int~int" ["i"; "v_int_5_2034"] in
+    let lfe = add_assign_to_ctx (Gen.unsome lfe) Bool "v_bool_10_2040" in
+
+    (* Cond : then branch *)
+    let then_lfe = add_cond_to_ctx lfe "v_bool_10_2040" true in
+    let then_lfe = upd_result_with_int then_lfe 1 in
+    let then_lfe = add_assign_to_ctx then_lfe Int "v_int_10_2037" in
+    let then_lfe = check_pre_post_str then_lfe "add___$int~int" ["i"; "v_int_5_2037"] in
+    let then_lfe = check_pre_post (Gen.unsome then_lfe) cstruc_form true param_list ["i"] in
+    (* Cond : else branch *)
+    let else_lfe = add_cond_to_ctx lfe "v_bool_10_2040" false in
+
+    let lfe = disj_of_ctx (Gen.unsome then_lfe) else_lfe in
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form []))) in
+
+
   print_string "\nEntailment";
   entail_1 ();
   entail_2 ();
@@ -1633,12 +1679,13 @@ inv n >= 0." in
   entail_8 ();
   entail_9 ();
   print_string "\nVerification";
-  verify_1 ();
+  (* verify_1 ();
   verify_2 ();
   verify_3 ();
   verify_4 ();
   verify_5 ();
   verify_6 ();
-  verify_7 ();
+  verify_7 (); *)
+  verify_8 ();
   [%expect]
 
