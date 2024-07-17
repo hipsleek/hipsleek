@@ -336,7 +336,6 @@ let spec_decl func_name func_spec params =
   | x::_ -> trans_I_to_C (snd x) (List.map param_to_iast_param params)
   | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
 
-<<<<<<< HEAD
 (* let spec_decl_x func_name func_spec =
   let prog = Parser.parse_hip_string "spec" (func_name ^ " " ^ func_spec) in
   Astsimp.set_mingled_name prog;
@@ -344,8 +343,6 @@ let spec_decl func_name func_spec params =
   let c_procs = List.map(function prim -> Astsimp.trans_proc SE.iprog prim) proc_decls in
     (* let () = print_string("\nc_procs" ^ Cprinter.string_of_proc_decl_list c_procs) in  *)
     let _ = List.map (function c_proc -> Cast.replace_proc !SE.cprog c_proc) c_procs in () *)
-=======
->>>>>>> 2fbe75bb6fb8a0410cec73082301a4522201fbd9
 
 let points_to_f var_name ident exps =
   let var_name = check_anon var_name "points_to_f" in 
@@ -1105,7 +1102,6 @@ let data_field_read ctx t ident field_name =
 let data_field_update ctx t ident field_name rhs =
   data_field_read_or_update ctx t ident field_name (Some rhs)
 
-<<<<<<< HEAD
 let add_heap_node ctx t lvars =
   let t = typ_to_globals_typ t in
   let data_def =
@@ -1186,13 +1182,11 @@ let add_heap_node ctx t lvars =
   in
   let heap_form = Cvutil.prune_preds !SE.cprog false heap_form in
   CF.normalize_max_renaming_list_failesc_context heap_form no_pos true ctx
-=======
 
 module Printer = struct 
   let string_of_sf sf = Cprinter.string_of_struc_formula sf
   let string_of_lfe lfe = Cprinter.string_of_list_failesc_context lfe
 end
->>>>>>> 2fbe75bb6fb8a0410cec73082301a4522201fbd9
 
 (* Testing API *)
 let%expect_test "Entailment checking" =
@@ -1451,8 +1445,7 @@ inv n >= 0." in
     (*   Assignment : check rhs exp *)
     let lfe = upd_result_with_int lfe 1 in
     (*   Assignment : assign *)
-    let lfe = add_assign_to_ctx lfe Int "v$" in
-    let () = print_string(Printer.string_of_lfe lfe) in
+    let lfe = add_assign_to_ctx lfe Int "v_int_22_2042" in
     (*   Call : check pre cond *)
     (* let lfe = check_pre_post lfe add_specs false add_param_list ["i"; "v_int_22_2042"] in *)
     let lfe = check_pre_post_str lfe "add___$int~int" ["i"; "v_int_22_2042"] in
@@ -1472,7 +1465,7 @@ inv n >= 0." in
 
     let is_null_param_list = [{param_type = Named "node"; param_name = "a"; param_mod = CopyMod;}] in
     let is_null_specs = spec_decl "is_null__" "case { a=null -> requires true ensures res ; a!=null -> requires true ensures !res;}" is_null_param_list in
-
+    (* let () = print_string ("\n is_null specs : " ^ (Cprinter.string_of_struc_formula is_null_specs)) in *)
     let count_param_list = [{param_type = Named "node"; param_name = "x"; param_mod = CopyMod;}] in
     let cstruc_form = spec_decl "count" "  requires x::ll<n> ensures x::ll<n> & res=n;" count_param_list in
     let lfe = init_ctx cstruc_form count_param_list in
