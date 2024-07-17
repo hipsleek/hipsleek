@@ -65,8 +65,8 @@ let init_without_parsing () =
 let init file_names = 
   let () = print_string "Initializing sleek api" in
   let () = match file_names with
-    | None -> init_without_parsing ()
-    | Some files -> parse_files files
+    | [] -> init_without_parsing ()
+    | _ -> parse_files file_names
 in ()
 
 (* Used as placeholder for pos since no file is parsed *)
@@ -1193,7 +1193,7 @@ let%expect_test "Entailment checking" =
 
   (* let () = print_string (string_of_bool(Sys.file_exists "./test.ss")) in *)
   
-  let _ = init (Some ["prelude.ss"; "./test.ss"]) in
+  let _ = init (["prelude.ss"; "./test.ss"]) in
 
   (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
 

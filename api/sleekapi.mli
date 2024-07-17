@@ -137,7 +137,7 @@ val entail : mf -> mf -> bool
 val ante_printer : mf -> string
 val conseq_printer : mf -> string
 
-val init : string list option -> unit
+val init : string list -> unit
 (** [init ()] initializes the api. This include processing the prelude file
     of the api which contains some primitive function and data declarations.
 *)
