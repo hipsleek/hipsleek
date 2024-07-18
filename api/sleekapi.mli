@@ -224,7 +224,7 @@ val data_field_update : lfe -> typ -> string -> string -> string -> lfe
     of type [t] in the context [ctx].
 *)
 
-val add_heap_node : lfe -> typ -> string list -> lfe
+val add_heap_node_to_ctx : lfe -> typ -> string list -> lfe
 (** [add_heap_node ctx t lvars] constructs a new heap node of type [t] with fields
     [lvars] and returns a context which is the result of adding the new heap node
     to the context [ctx].
