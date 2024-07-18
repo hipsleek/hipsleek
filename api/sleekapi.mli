@@ -14,8 +14,8 @@ type typ =
   | Named of string
 
 type param_modifier = 
-  | NoMod (*Pass by value*)
-  | RefMod (*Pass by ref (names)*)
+  | NoMod (* Pass by value *)
+  | RefMod (* Pass by ref (names) *)
   | CopyMod (* copy entire structure *)
 
 type param = {
