@@ -14,9 +14,9 @@ type typ =
   | Named of string
 
 type param_modifier = 
-  | NoMod
-  | RefMod
-  | CopyMod
+  | NoMod (*Pass by value*)
+  | RefMod (*Pass by ref (names)*)
+  | CopyMod (* copy entire structure *)
 
 type param = {
   param_type : typ;
@@ -134,10 +134,7 @@ val ante_f : hf -> pf -> mf
 val conseq_f : hf -> pf -> mf
 val entail : mf -> mf -> bool
 
-val ante_printer : mf -> string
-val conseq_printer : mf -> string
-
-val init : string list option -> unit
+val init : string list -> unit
 (** [init ()] initializes the api. This include processing the prelude file
     of the api which contains some primitive function and data declarations.
 *)
@@ -234,5 +231,7 @@ module Printer :
   sig
     val string_of_sf : sf -> string
     val string_of_lfe : lfe -> string
+    val ante_printer : mf -> string
+    val conseq_printer : mf -> string
   end
 
