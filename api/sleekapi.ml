@@ -553,14 +553,14 @@ let init_ctx cstruc_form params =
   (* Tranform context to include the pre-condition in cstruc_form 
      Follows check_specs_infer_a
   *)
-  let rec helper ctx cstruc_form =
+  let rec f ctx cstruc_form =
     match cstruc_form with
     | CF.ECase b ->
       let res = List.concat_map (fun (pure_formula, struc_formula) ->
           let nctx = CF.transform_context 
               (Solver.combine_es_and !SE.cprog (Mcpure.mix_of_pure pure_formula) true)
               ctx in
-          helper nctx struc_formula) b.CF.formula_case_branches
+          f nctx struc_formula) b.CF.formula_case_branches
       in
       res
     | CF.EBase b ->
@@ -580,7 +580,7 @@ let init_ctx cstruc_form params =
       let res =
         match b.CF.formula_struc_continuation with
         | None -> [nctx]
-        | Some l -> helper nctx l
+        | Some l -> f nctx l
       in
       res
     | CF.EAssume b ->
@@ -596,13 +596,11 @@ let init_ctx cstruc_form params =
   in
 
   let (cstruc_form, _, _) = Imminfer.infer_imm_ann_proc cstruc_form in
-  let ctx = helper init_ctx cstruc_form in
+  let ctx = f init_ctx cstruc_form in
   (* What is label  *)
   (* need to add initial esc_stack *)
   let init_esc = [((0,""),[])] in
   List.map (fun ctx -> [CF.mk_failesc_context ctx [] init_esc]) ctx 
-  (* let lfe = [CF.mk_failesc_context ctx [] init_esc] in *)
-  (* lfe *)
 
 (* let to_spec_str str =
   match str with 
@@ -862,16 +860,21 @@ let check_entail_post_aux lfe specs params =
       false
 
 let check_entail_post ctx specs params =
-  match specs with
-  | CF.ECase b ->
-    List.for_all (fun x -> x)
-      (List.map2 (fun lfe (_, specs) -> check_entail_post_aux lfe specs params) ctx
-      b.CF.formula_case_branches)
-  | CF.EBase b ->
-    List.for_all (fun x -> x)
-      (List.map (fun lfe -> check_entail_post_aux lfe specs params) ctx)
-  | _ ->
-    raise (Invalid_argument "This form of specification is not yet supported")
+  (* To flatten specs into a list of CF.EBase formula.
+     Each CF.EBase formula contains a pair of pre and post condition.
+  *)
+  let rec f specs =
+    match specs with
+    | CF.ECase b ->
+      List.concat_map (fun (_, specs) -> f specs) b.CF.formula_case_branches
+    | CF.EBase b ->
+      [specs]
+    | _ ->
+      raise (Invalid_argument "This form of specification is not yet supported")
+  in
+  List.for_all (fun x -> x)
+    (List.map2 (fun lfe specs -> check_entail_post_aux lfe specs params)
+       ctx (f specs))
 
 (* Follows check_exp Cond case *)
 let disj_of_ctx_aux ctx1 ctx2 =
@@ -1888,6 +1891,60 @@ inv n >= 0." in
     print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form [])))
   in
 
+  let verify_10 () =
+    let param_list = [{param_type = Int; param_name = "m"; param_mod = NoMod;};
+                      {param_type = Int; param_name = "n"; param_mod = NoMod;}] in
+    let cstruc_form = spec_decl "gcd"
+        "case {
+               m=n -> requires MayLoop ensures res=m;
+               m!=n ->
+                       case {
+                             m <= 0 -> requires MayLoop ensures false;
+                             m > 0 -> 
+                                      case {
+                                            n <= 0 -> requires MayLoop ensures false;
+                                            n > 0 -> requires MayLoop ensures res>0;
+                                           }
+                            }
+              }" param_list in
+    let lfe = init_ctx cstruc_form param_list in
+    let lfe = Gen.unsome (check_pre_post_str lfe "eq___$int~int" ["m"; "n"]) in
+    let lfe = add_assign_to_ctx lfe Bool "v_bool_20_2055" in
+    
+    let then_lfe = add_cond_to_ctx lfe "v_bool_20_2055" true in
+    let then_lfe = upd_result_with_var then_lfe Int "m" in
+    
+    let else_lfe = add_cond_to_ctx lfe "v_bool_20_2055" false in
+    let else_lfe = Gen.unsome (check_pre_post_str else_lfe "gt___$int~int"
+                                 ["m"; "n"]) in
+    let else_lfe = add_assign_to_ctx else_lfe Bool "v_bool_21_2054" in
+    
+
+    let then_lfe2 = add_cond_to_ctx else_lfe "v_bool_21_2054" true in
+    let then_lfe2 = Gen.unsome (check_pre_post_str then_lfe2 "minus___$int~int"
+                                  ["m"; "n"]) in
+    let then_lfe2 = add_assign_to_ctx then_lfe2 Int "v_int_21_2046" in
+    let then_lfe2 = Gen.unsome (check_pre_post then_lfe2 cstruc_form true param_list
+                                  ["v_int_21_2046"; "n"]) in
+    let then_lfe2 = add_assign_to_ctx then_lfe2 Int "v_int_21_2047" in
+    let then_lfe2 = upd_result_with_var then_lfe2 Int "v_int_21_2047" in
+    
+    let else_lfe2 = add_cond_to_ctx else_lfe "v_bool_21_2054" false in
+    let else_lfe2 = Gen.unsome (check_pre_post_str else_lfe2 "minus___$int~int"
+                                  ["n"; "m"]) in
+    let else_lfe2 = add_assign_to_ctx else_lfe2 Int "v_int_22_2052" in
+    let else_lfe2 = Gen.unsome (check_pre_post else_lfe2 cstruc_form true param_list
+                                  ["m"; "v_int_22_2052"]) in
+    let else_lfe2 = add_assign_to_ctx else_lfe2 Int "v_int_22_2053" in
+    let else_lfe2 = upd_result_with_var else_lfe2 Int "v_int_22_2053" in
+
+    let else_lfe = disj_of_ctx then_lfe2 else_lfe2 in
+    let lfe = disj_of_ctx then_lfe else_lfe in
+
+    print_string ("\n" ^ (string_of_bool (check_entail_post 
+                                            lfe cstruc_form param_list)))
+  in
+
   print_string "\nEntailment";
   entail_1 ();
   entail_2 ();
@@ -1908,5 +1965,6 @@ inv n >= 0." in
   verify_7 ();
   verify_8 ();
   verify_9 ();
+  verify_10 ();
   [%expect]
 

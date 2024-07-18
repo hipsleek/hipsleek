@@ -101,6 +101,7 @@ val predicate_decl : string -> unit
 val lemma_decl : string -> unit
 (** [lemma_decl s] is used to declare a lemma.
     [s] is a string defining the lemma in Sleek syntax.
+    Note that lemmas declared are not proven by default.
 *)
 
 val spec_decl : string -> string -> param list -> sf
@@ -222,9 +223,9 @@ val data_field_update : lfe -> typ -> string -> string -> string -> lfe
 *)
 
 val add_heap_node_to_ctx : lfe -> typ -> string list -> lfe
-(** [add_heap_node ctx t lvars] constructs a new heap node of type [t] with fields
-    [lvars] and returns a context which is the result of adding the new heap node
-    to the context [ctx].
+(** [add_heap_node_to_ctx ctx t lvars] constructs a new heap node of type [t] with
+    fields [lvars] and returns a context which is the result of adding the new heap
+    node to the context [ctx].
 *)
 
 module Printer :
