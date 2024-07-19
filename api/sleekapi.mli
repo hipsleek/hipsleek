@@ -101,15 +101,16 @@ val predicate_decl : string -> unit
 val lemma_decl : string -> unit
 (** [lemma_decl s] is used to declare a lemma.
     [s] is a string defining the lemma in Sleek syntax.
-    Note that lemmas declared are not proven by default.
+    NOTE: lemmas declared are not proven.
 *)
 
-val spec_decl : string -> string -> param list -> sf
-(** [spec_decl s1 s2] is used to construct a formula from the specification
+val spec_decl : string -> string -> param list -> typ -> sf
+(** [spec_decl s1 s2 t] is used to construct a formula from the specification
     [s2] of function [s1].
     [s1] is the function's name.
     [s2] is the specification of the function in Hip syntax.
     e.g. "requires true ensures true;"
+    [t] is the return type of the function.
 *)
 
 val empty_heap_f : hf
