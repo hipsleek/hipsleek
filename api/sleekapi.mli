@@ -11,6 +11,7 @@ type typ =
   | Bool
   | Float
   | Int
+  | Null
   | Named of string
 
 type param_modifier = 
@@ -104,13 +105,15 @@ val lemma_decl : string -> unit
     NOTE: lemmas declared are not proven.
 *)
 
-val spec_decl : string -> string -> param list -> typ -> sf
-(** [spec_decl s1 s2 t] is used to construct a formula from the specification
-    [s2] of function [s1].
+val spec_decl : string -> string -> param list -> typ -> bool -> sf
+(** [spec_decl s1 s2 params t is_rec] is used to construct a formula from the 
+    specification [s2] of function [s1].
     [s1] is the function's name.
     [s2] is the specification of the function in Hip syntax.
     e.g. "requires true ensures true;"
+    [params] is the list of parameters of the function.
     [t] is the return type of the function.
+    [is_rec] denotes whether the function is recursive.
 *)
 
 val empty_heap_f : hf
@@ -137,19 +140,20 @@ val conseq_f : hf -> pf -> mf
 val entail : mf -> mf -> bool
 
 val init : string list -> unit
-(** [init ()] initializes the api. This include processing the prelude file
-    of the api which contains some primitive function and data declarations.
+(** [init files_names] initializes the api. This includes parsing the ss files in
+    [files_names].
+    Data, predicate, lemma declarations and function definitions inside of these
+    ss files will be processed and they can be referred to by name afterwards.
+    (e.g. in check_pre_post_str)
 *)
 
-val init_ctx : sf -> param list -> lfe
-(** [init_ctx specs] returns a pair of context wrapping the pre-condition in
-    [specs] and the post-condition in [specs].
+val init_ctx : sf -> lfe
+(** [init_ctx specs] returns a context wrapping the pre-condition in [specs].
  *)
 
-(* - Normalize specs? (check check_pre_post_orig) *)
-val check_pre_post : lfe -> sf -> bool -> param list -> string list -> lfe option
-(** [check_pre_post ctx specs is_rec params args] checks whether the context [ctx]
-    entails the pre-condition in the specification [specs].
+val check_pre_post : lfe -> sf -> string list -> lfe option
+(** [check_pre_post ctx specs args] checks whether the context [ctx] entails the
+    pre-condition in the specification [specs].
     If it does, then it will return Some poststate which is the composition of the
     residual heap state from the entailment checking and the post condition in the
     specification [specs].
@@ -165,9 +169,9 @@ val check_pre_post_str : lfe -> string -> string list -> lfe option
     Otherwise, it will return None.
 *)
 
-val check_entail_post : lfe -> sf -> param list -> bool
-(** [check_entail_post ctx specs params] checks whether the current context [ctx] 
-    entails the post-condition in the specification [specs].
+val check_entail_post : lfe -> sf -> bool
+(** [check_entail_post ctx specs] checks whether the current context [ctx] entails
+    the post-condition in the specification [specs].
     If it does, then it will return Some poststate which is the residual heap state
     from proving that [ctx] entails the post-condition in the specification [specs].
     Otherwise, it will return None.

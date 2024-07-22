@@ -19,13 +19,14 @@ type hf = IF.h_formula
 type mf = SC.meta_formula
 type dd = I.data_decl
 type lfe = CF.list_failesc_context list
-type sf = CF.struc_formula
+type sf = C.proc_decl
 
 type typ =
   | Void
   | Bool
   | Float
   | Int
+  | Null
   | Named of string
 
 type param_modifier = 
@@ -61,7 +62,6 @@ let init_without_parsing () =
   let () = I.inbuilt_build_exc_hierarchy () in
   let () = I.build_exc_hierarchy true SE.iprog in
   let () = exlist # compute_hierarchy in ()
-  
 
 (* Prelude of api *)
 let init file_names = 
@@ -69,7 +69,7 @@ let init file_names =
   let () = match file_names with
     | [] -> init_without_parsing ()
     | _ -> parse_files file_names
-in ()
+  in ()
 
 (* Used as placeholder for pos since no file is parsed *)
 let no_pos : VG.loc =
@@ -87,7 +87,8 @@ let typ_to_globals_typ (t: typ) : Globals.typ =
   | Bool -> Bool
   | Float -> Float
   | Int -> Int
-  | Named(s) -> Named(s)
+  | Null -> Named ""
+  | Named s -> Named s
 
 let param_mod_to_iast_param_mod (pm : param_modifier) : I.param_modifier =
   match pm with
@@ -105,18 +106,18 @@ let param_to_iast_param (p: param) : I.param =
 
 let check_anon var_name f = 
   match var_name with 
-    | "_" -> ("Anon" ^ Globals.fresh_trailer ())
-    | "" -> raise (Invalid_argument (f ^ ": name is empty"))
-    | _ -> var_name
+  | "_" -> ("Anon" ^ Globals.fresh_trailer ())
+  | "" -> raise (Invalid_argument (f ^ ": name is empty"))
+  | _ -> var_name
 
 (* Check whether is a variable primed by variable name *)
 (* Might need error handling if var has len 0*)
 let check_prime var_name =
   let len = String.length var_name in
-    let last = String.get var_name (len - 1) in
-    match last with 
-    | '\'' -> VG.Primed
-    | _ -> VG.Unprimed
+  let last = String.get var_name (len - 1) in
+  match last with
+  | '\'' -> VG.Primed
+  | _ -> VG.Unprimed
 
 (* Returns the truncated variable if variable is primed*)
 (* Might also need error handling if var has len 0*)
@@ -217,7 +218,6 @@ let gen_primitives ddef =
 
 let process_data_def ddef =
   if Astsimp.check_data_pred_name SE.iprog ddef.I.data_name then
-    (* let tmp = iprog.I.prog_data_decls in *)
     let _ = SE.iprog.I.prog_data_decls <- ddef ::  SE.iprog.I.prog_data_decls in
     let prims = gen_primitives ddef in
     (* let prims = List.map (function prim -> 
@@ -238,14 +238,14 @@ let process_data_def ddef =
     Gen.report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
   end
 
-(*Parses string of data def, pred def or lemma def*)
+(* Parses string of data def, pred def or lemma def *)
 let top_level_decl sleek_str =  
   let sleek_cmd = NF.parse_slk sleek_str in
   match sleek_cmd with
   | SC.DataDef data_def ->
     (* Stores predicate definition into SE.iprog *)
     let () = process_data_def data_def in
-    SE.convert_data_and_pred_to_cast_x () 
+    SE.convert_data_and_pred_to_cast_x ()
   | SC.PredDef pred_def ->
     (* Stores predicate definition into SE.iprog *)
     let () = SE.process_pred_def_4_iast pred_def in
@@ -258,8 +258,8 @@ let top_level_decl sleek_str =
   | _ -> ()
 
 let data_decl_cons data_name data_fields =
-  let df = List.map (fun (t, s) -> (((typ_to_globals_typ t), s), no_pos,
-                                    false, [])) data_fields in
+  let df = List.map
+      (fun (t, s) -> (((typ_to_globals_typ t), s), no_pos, false, [])) data_fields in
 
   (* Stores data definition into SE.iprog *)
   let () = process_data_def {
@@ -324,7 +324,7 @@ let trans_I_to_C istruc_form (args: I.param list) (return_type: Globals.typ) =
       {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod;
        I.param_loc = no_pos})
       (List.concat gl_v_l) in
-  let proc_ho_args = None in    (* Not sure, None for now *)
+  let proc_ho_args = None in    (* No support for ho_args for now *)
   let gl_proc_args = gl_v @ args in
   let gl_proc_args = gl_proc_args @
                      (match proc_ho_args with | None -> [] | Some ha -> [ha]) in
@@ -382,7 +382,7 @@ let trans_I_to_C istruc_form (args: I.param list) (return_type: Globals.typ) =
         {Typeinfer.sv_info_kind = Globals.UNK; Typeinfer.id = Globals.fresh_int ()}
         n_tl in
 
-    let prog_logical_var_decls = [] in (* Not sure, empty list for now *)
+    let prog_logical_var_decls = [] in (* No support for logical variables for now *)
     let add_logical tl (Cpure.SpecVar (t, i, _)) = Typeinfer.type_list_add i
         { Typeinfer.sv_info_kind = t; Typeinfer.id = Globals.fresh_int ()} tl in
     let log_vars = List.concat
@@ -408,8 +408,37 @@ let trans_I_to_C istruc_form (args: I.param list) (return_type: Globals.typ) =
 
 let spec_decl func_name func_spec params return_type =
   match Parser.parse_spec (func_name ^ " " ^ func_spec) with
-  | x::_ -> trans_I_to_C (snd x) (List.map param_to_iast_param params)
-              (typ_to_globals_typ return_type)
+  | x::_ ->
+    trans_I_to_C (snd x) (List.map param_to_iast_param params)
+      (typ_to_globals_typ return_type)
+  | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
+
+(* Makes a dummy procedure from some specification *)
+let mkCProc proc_name static_spec params return_type =
+  let file_name = "" in
+  let flags = [] in
+  let mingled_name = proc_name in
+  let data_decl = None in
+  let constructor = false in
+  let exceptions = [] in
+  let ho_param = None in
+  let dynamic_specs = IF.mkEFalseF () in
+  let proc_body = None in
+  let iproc = I.mkProc file_name proc_name flags mingled_name data_decl constructor
+      exceptions params return_type ho_param static_spec dynamic_specs no_pos proc_body
+  in
+  (* Normalize proc *)
+  let iproc = Astsimp.case_normalize_proc SE.iprog iproc in
+  (* Transform proc from I.proc_decl to C.proc_decl *)
+  let cproc = Astsimp.trans_proc SE.iprog iproc in
+  cproc
+
+let spec_decl name spec params return_type is_rec =
+  match Parser.parse_spec (name ^ " " ^ spec) with
+  | x::_ ->
+    let cproc = mkCProc name (snd x) (List.map param_to_iast_param params)
+        (typ_to_globals_typ return_type) in
+    { cproc with C.proc_is_recursive = is_rec }
   | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
 
 (* let spec_decl_x func_name func_spec =
@@ -583,9 +612,7 @@ let init_ctx cstruc_form params =
   (* Build an initial context
      Follows check_proc
   *)
-  let params = List.map param_to_iast_param params in
-    
-  let ftypes, fnames = List.split (List.map param_to_typed_ident params) in
+  let ftypes, fnames = List.split params in
   let fsvars = List.map2 (fun t -> fun v -> Cpure.SpecVar (t, v, Unprimed))
       ftypes fnames in
   let pf = (CF.no_change fsvars no_pos) in (*init(V) := v'=v*)
@@ -656,7 +683,10 @@ let init_ctx cstruc_form params =
   (* What is label  *)
   (* need to add initial esc_stack *)
   let init_esc = [((0,""),[])] in
-  List.map (fun ctx -> [CF.mk_failesc_context ctx [] init_esc]) ctx 
+  List.map (fun ctx -> [CF.mk_failesc_context ctx [] init_esc]) ctx
+
+let init_ctx cproc =
+  init_ctx (cproc.C.proc_stk_of_static_specs # top) cproc.C.proc_args
 
 (* let to_spec_str str =
   match str with 
@@ -774,18 +804,20 @@ let check_pre_post_aux lfe specs is_rec params args =
     let () = print_string ("\nProving precondition in method failed:" ^ s) in
     None
 
-let check_pre_post ctx specs is_rec params args =
-  let params = List.map (fun x -> param_to_typed_ident (param_to_iast_param x))
-      params in
-  let res = List.filter_map (fun lfe -> check_pre_post_aux lfe specs
-                                is_rec params args) ctx in
+let check_pre_post ctx cproc args =
+  let is_rec = cproc.C.proc_is_recursive in
+  let params = cproc.C.proc_args in
+  let specs = cproc.C.proc_stk_of_static_specs # top in
+  let res = List.filter_map 
+      (fun lfe -> check_pre_post_aux lfe specs is_rec params args) ctx in
+  (* If one of the [check_pre_post_aux] returns None, then [check_pre_post] fails *)
   if List.length res = List.length ctx then Some res else None
 
 let check_pre_post_str ctx func_name args =
   let proc = Cast.look_up_proc_def no_pos !SE.cprog.new_proc_decls func_name in
-  let res = List.filter_map (fun lfe -> check_pre_post_aux lfe 
-                                proc.proc_stk_of_static_specs#top 
-                                proc.proc_is_recursive proc.proc_args args) ctx in
+  let res = List.filter_map 
+      (fun lfe -> check_pre_post_aux lfe proc.proc_stk_of_static_specs#top 
+          proc.proc_is_recursive proc.proc_args args) ctx in
   if List.length res = List.length ctx then Some res else None
 
 (* Follows check_specs_infer and check_post
@@ -796,9 +828,6 @@ let check_pre_post_str ctx func_name args =
    But residue from check_entail_post should not be very useful.
 *)
 let check_entail_post_aux lfe specs params =
-  let params = List.map (fun x -> param_to_typed_ident (param_to_iast_param x))
-      params in
-
   let rec get_post_from_specs specs =
     match specs with
     | CF.EBase b ->
@@ -915,10 +944,12 @@ let check_entail_post_aux lfe specs params =
       let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in
       false
 
-let check_entail_post ctx specs params =
+let check_entail_post ctx cproc =
   (* To flatten specs into a list of CF.EBase formula.
      Each CF.EBase formula contains a pair of pre and post condition.
   *)
+  let params = cproc.C.proc_args in
+  let specs = cproc.C.proc_stk_of_static_specs # top in
   let rec flatten_specs specs =
     match specs with
     | CF.ECase b ->
@@ -1376,16 +1407,17 @@ let add_heap_node_to_ctx ctx t lvars =
   List.map (fun ctx -> add_heap_node_to_ctx_aux ctx t lvars) ctx
 
 module Printer = struct 
-  let string_of_sf sf = Cprinter.string_of_struc_formula sf
+  let string_of_sf sf = Cprinter.string_of_struc_formula
+      (sf.C.proc_stk_of_static_specs # top)
   let string_of_lfe lfe = Globals.pr_list Cprinter.string_of_list_failesc_context lfe
   let ante_printer xs =
-    let rec helper i xs =
+    let rec ante_printer_aux i xs =
       match xs with
       | [] -> ""
       | x::xs' -> "Ante 1 : " ^ (SC.string_of_meta_formula x) ^ "\n" ^
-                  (helper (i+1) xs')
+                  (ante_printer_aux (i+1) xs')
     in
-    helper 1 [xs]
+    ante_printer_aux 1 [xs]
   
   let conseq_printer x =
     "Conseq : " ^ (SC.string_of_meta_formula x)  
@@ -1396,7 +1428,7 @@ let%expect_test "Entailment checking" =
 
   (* let () = print_string (string_of_bool(Sys.file_exists "./test.ss")) in *)
   
-  let _ = init (["prelude.ss"; "./test.ss"]) in
+  let _ = init ["prelude.ss"; "./test.ss"] in
 
   (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
 
@@ -1528,65 +1560,28 @@ inv n >= 0." in
   in
 
   let spec_decl_1 () =
-    let cstruc_form = spec_decl "foo" "requires true ensures true;" [] Void in
-    let lfe = init_ctx cstruc_form [] in
-    print_string (Globals.pr_list Cprinter.string_of_list_failesc_context lfe)
-  in
-
-  let spec_decl_2 () =
-    let cstruc_form = spec_decl "foo"
-        "requires x::ll<n> & n > 0 ensures x::ll<1> * res::ll<n-1>;" [] 
-        (Named "node") in
-    let lfe = init_ctx cstruc_form [] in
-    print_string (Globals.pr_list Cprinter.string_of_list_failesc_context lfe)
-  in
-  
-  let spec_decl_3 () =
-    let cstruc_form = spec_decl "foo" "requires x::ll<m> ensures x::ll<m>;" [] 
-        (Named "node") in
-    let lfe = init_ctx cstruc_form [] in
-    print_string (Globals.pr_list Cprinter.string_of_list_failesc_context lfe);
-    print_string (string_of_bool (check_entail_post lfe cstruc_form []));
-  in
-
-  let spec_decl_4 () =
     let param_list = [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
     let cstruc_form = spec_decl "foo" "requires true
     ensures
         case {
             i > 0 -> [] i' = i + 1;
             i <= 0 -> [] i' = i;
-        };" param_list Void in
-    let lfe = init_ctx cstruc_form param_list in
-    print_string (Cprinter.string_of_struc_formula cstruc_form);
+        };" param_list Void false in
+    let lfe = init_ctx cstruc_form in
+    print_string (Printer.string_of_sf cstruc_form);
     print_string (Globals.pr_list Cprinter.string_of_list_failesc_context lfe)
   in
 
-  let spec_decl_5 () =
+  let spec_decl_2 () =
     let param_list = 
       [{param_type = Named "node"; param_name = "x"; param_mod = NoMod;}] in
     let cstruc_form = spec_decl "tl" "infer[x] requires true ensures true;"
-        param_list (Named "node") in
-    let lfe = init_ctx cstruc_form param_list in
+        param_list (Named "node") false in
+    let lfe = init_ctx cstruc_form in
     print_string (Globals.pr_list Cprinter.string_of_list_failesc_context lfe)
   in
 
   let verify_1 () =
-    (* requires true
-       ensures res = 0;
-
-       int foo() {
-           return 0;
-       }
-    *)
-    let cstruc_form = spec_decl "foo" "requires true ensures res = 0;" [] Int in
-    let lfe = init_ctx cstruc_form [] in
-    let lfe = upd_result_with_int lfe 0 in
-
-    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form [])))
-  in
-    
-  let verify_2 () =
     (*
        int foo()
        requires true
@@ -1608,8 +1603,8 @@ inv n >= 0." in
        ret# v_int_8_2019))]
        ))}
     *)
-    let cstruc_form = spec_decl "foo" "requires true ensures res = 1;" [] Int in
-    let lfe = init_ctx cstruc_form [] in
+    let cstruc_form = spec_decl "foo" "requires true ensures res = 1;" [] Int false in
+    let lfe = init_ctx cstruc_form in
     (* VarDecl : do nothing *)
     (* Assignment : check rhs exp  *)
     let lfe = upd_result_with_bool lfe true in
@@ -1628,14 +1623,14 @@ inv n >= 0." in
     let else_lfe = upd_result_with_var else_lfe Int "v_int_8_2019" in
 
     let lfe = disj_of_ctx then_lfe else_lfe in
-    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form [])))
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form)))
   in
 
-  let verify_3 () =
+  let verify_2 () =
     let add_param_list = [{param_type = Int; param_name = "a"; param_mod = RefMod;};
                           {param_type = Int; param_name = "b"; param_mod = RefMod;}] in
     let add_spec = spec_decl "infix_add" "requires true ensures res = a + b;"
-        add_param_list Int in
+        add_param_list Int false in
     (* let add_specs = spec_decl_x "int add(int a, int b)"
        "requires true ensures res = a + b;" in *)
     (*
@@ -1653,9 +1648,8 @@ inv n >= 0." in
        ret# v_int_22_2043))}
     *)
     let cstruc_form = spec_decl "incr" "requires true ensures res=i+1;"
-        [{param_type = Int; param_name = "i"; param_mod = RefMod;}] Int in
-    let lfe = init_ctx cstruc_form
-        [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
+        [{param_type = Int; param_name = "i"; param_mod = RefMod;}] Int false in
+    let lfe = init_ctx cstruc_form in
     (* VarDecl : do nothing *)
     (* Assignment : check rhs exp *)
     (*   VarDecl : do nothing *)
@@ -1670,28 +1664,25 @@ inv n >= 0." in
     let lfe = add_assign_to_ctx (Gen.unsome lfe) Int "v_int_22_2043" in
     (* ret : update res *)
     let lfe = upd_result_with_var lfe Int "v_int_22_2043" in
-    print_string ("\n" ^ (string_of_bool
-                            (check_entail_post lfe cstruc_form
-                               [{param_type = Int; param_name = "i";
-                                 param_mod = RefMod;}]))) in
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form))) in
 
-  let verify_4 () =
+  let verify_3 () =
     let add_param_list = [{param_type = Int; param_name = "a"; param_mod = RefMod;};
                           {param_type = Int; param_name = "b"; param_mod = RefMod;}] in
     let add_specs = spec_decl "add__" "requires true ensures res = a + b;"
-        add_param_list Int in
+        add_param_list Int false in
 
     let is_null_param_list =
       [{param_type = Named "node"; param_name = "a"; param_mod = CopyMod;}] in
     let is_null_specs = spec_decl "is_null__"
         "case { a=null -> requires true ensures res ;
                 a!=null -> requires true ensures !res;}"
-        is_null_param_list Bool in
+        is_null_param_list Bool false in
     let count_param_list =
       [{param_type = Named "node"; param_name = "x"; param_mod = CopyMod;}] in
-    let cstruc_form = spec_decl "count" "  requires x::ll<n> ensures x::ll<n> & res=n;"
-        count_param_list Int in
-    let lfe = init_ctx cstruc_form count_param_list in
+    let cstruc_form = spec_decl "count" "requires x::ll<n> ensures x::ll<n> & res=n;"
+        count_param_list Int true in
+    let lfe = init_ctx cstruc_form in
     (*
      {(boolean v_bool_46_2101;
      (v_bool_46_2101 = {is_null___$node(x)};
@@ -1710,7 +1701,7 @@ inv n >= 0." in
      ret# v_int_49_2100))]
      ))}
  *)
-    let lfe = check_pre_post lfe is_null_specs false is_null_param_list ["x"] in
+    let lfe = check_pre_post lfe is_null_specs ["x"] in
     let lfe = add_assign_to_ctx (Gen.unsome lfe) Bool "v_bool_46_2101" in
     
     let then_lfe = add_cond_to_ctx lfe "v_bool_46_2101" true in
@@ -1726,26 +1717,24 @@ inv n >= 0." in
        [(Int, "val_49_2093"); (Named("node"), "next_49_2094")] true in *)
     (* let else_lfe = upd_result_with_var else_lfe (Named("node")) "next_49_2094" in *)
     let else_lfe = add_assign_to_ctx else_lfe (Named "node") "v_node_49_2096" in
-    let else_lfe = check_pre_post else_lfe cstruc_form true count_param_list
-        ["v_node_49_2096"] in
+    let else_lfe = check_pre_post else_lfe cstruc_form ["v_node_49_2096"] in
     let else_lfe = add_assign_to_ctx (Gen.unsome else_lfe) Int "v_int_49_2098" in
-    let else_lfe = check_pre_post else_lfe add_specs false add_param_list
+    let else_lfe = check_pre_post else_lfe add_specs
         ["v_int_49_2099"; "v_int_49_2098"] in
     let else_lfe = add_assign_to_ctx (Gen.unsome else_lfe) Int "v_int_49_2100" in
     let else_lfe = upd_result_with_var else_lfe Int "v_int_49_2100" in
 
     let lfe = disj_of_ctx then_lfe else_lfe in
-    print_string ("\n" ^ (string_of_bool (check_entail_post
-                                            lfe cstruc_form count_param_list)))
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form)))
   in
 
-  let verify_5 () =
+  let verify_4 () =
     let is_null_param_list =
       [{param_type = Named "node"; param_name = "a"; param_mod = CopyMod;}] in
     let is_null_specs = spec_decl "is_null__"
         "case { a=null -> requires true ensures res ;
                 a!=null -> requires true ensures !res;}"
-        is_null_param_list Bool in
+        is_null_param_list Bool false in
     (*
       {(boolean v_bool_36_2099;
         (v_bool_36_2099 = {((node v_node_36_2091;
@@ -1764,16 +1753,15 @@ inv n >= 0." in
       [{param_type = Named "node"; param_name = "x"; param_mod = RefMod;};
        {param_type = Named "node"; param_name = "y"; param_mod = RefMod;}] in
     let cstruc_form = spec_decl "append" "requires x::ll<n1> * y::ll<n2> & x!=null
-  ensures x::ll<n1+n2>;" param_list Void in
-    let lfe = init_ctx cstruc_form param_list in
+  ensures x::ll<n1+n2>;" param_list Void true in
+    let lfe = init_ctx cstruc_form in
 
     let lfe = data_field_read lfe (Named "node") "x" "next" in
     (* let lfe = bind_data_to_names lfe (Named("node")) "x" [(Int, "val_36_2087");
        (Named("node"), "next_36_2088")] true in *)
     (* let lfe = upd_result_with_var lfe (Named("node")) "next_36_2088" in *)
     let lfe = add_assign_to_ctx lfe (Named "node") "v_node_36_2091" in
-    let lfe = check_pre_post lfe is_null_specs false is_null_param_list
-        ["v_node_36_2091"] in
+    let lfe = check_pre_post lfe is_null_specs ["v_node_36_2091"] in
     let lfe = add_assign_to_ctx (Gen.unsome lfe) Bool "v_bool_36_2099" in
 
     let then_lfe = add_cond_to_ctx lfe "v_bool_36_2099" true in
@@ -1791,16 +1779,14 @@ inv n >= 0." in
        (Named("node"), "next_39_2095")] true in *)
     (* let else_lfe = upd_result_with_var else_lfe (Named("node")) "next_39_2095" in *)
     let else_lfe = add_assign_to_ctx else_lfe (Named "node") "v_node_39_2098" in
-    let else_lfe = check_pre_post else_lfe cstruc_form true param_list
-        ["v_node_39_2098"; "y"] in
+    let else_lfe = check_pre_post else_lfe cstruc_form ["v_node_39_2098"; "y"] in
     let else_lfe = Gen.unsome else_lfe in
 
     let lfe = disj_of_ctx then_lfe else_lfe in
-    print_string ("\n" ^ (string_of_bool (check_entail_post
-                                            lfe cstruc_form param_list)))
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form)))
   in
 
-  let verify_6 () =
+  let verify_5 () =
     (* int foo (node i)
     requires i != null
     ensures res = 1;
@@ -1821,9 +1807,9 @@ inv n >= 0." in
     (v_int_13_2043 = 0;
     ret# v_int_13_2043)))} *)
     let cstruc_form = spec_decl "foo" "requires i != null ensures res = 1;"
-        [{param_type = Named "node"; param_name = "i"; param_mod = RefMod;}] Int in
-    let lfe = init_ctx cstruc_form
-        [{param_type = Named "node"; param_name = "i"; param_mod = RefMod;}] in
+        [{param_type = Named "node"; param_name = "i"; param_mod = RefMod;}] Int 
+        false in
+    let lfe = init_ctx cstruc_form in
     let lfe = check_pre_post_str lfe "is_not_null___$node" ["i"] in
     let lfe = add_assign_to_ctx (Gen.unsome lfe) Bool "v_bool_10_2042" in
 
@@ -1839,9 +1825,9 @@ inv n >= 0." in
     let else_lfe = upd_result_with_var else_lfe Int "v_int_8_2019" in
 
     let lfe = disj_of_ctx then_lfe else_lfe in
-    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form []))) in
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form))) in
 
-  let verify_7 () =
+  let verify_6 () =
     (*
      {(node v_node_10_2062;
      (v_node_10_2062 = {((null_type v_null_type_10_2061;
@@ -1851,28 +1837,27 @@ inv n >= 0." in
     *)
     let param_list = [{param_type = Int; param_name = "val"; param_mod = RefMod;}] in
     let cstruc_form = spec_decl "init_node" "requires true ensures res::node<val,_>;"
-        param_list (Named "node") in
-    let lfe = init_ctx cstruc_form param_list in
+        param_list (Named "node") false in
+    let lfe = init_ctx cstruc_form in
 
     let lfe = upd_result_with_null lfe in
-    let lfe = add_assign_to_ctx lfe (Named "") "v_null_type_10_2061" in
+    let lfe = add_assign_to_ctx lfe Null "v_null_type_10_2061" in
     let lfe = add_heap_node_to_ctx lfe (Named "node") ["val"; "v_null_type_10_2061"] in
     let lfe = add_assign_to_ctx lfe (Named "node") "v_node_10_2061" in
     let lfe = upd_result_with_var lfe (Named "node") "v_node_10_2061" in
-    print_string ("\n" ^ (string_of_bool (check_entail_post
-                                            lfe cstruc_form param_list)))
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form)))
   in
 
-  let verify_8 () =
-    let gt_param_list = [{param_type = Int; param_name = "a"; param_mod = RefMod;};
-                         {param_type = Int; param_name = "b"; param_mod = RefMod;}] in
+  let verify_7 () =
+    let gt_param_list = [{param_type = Int; param_name = "a"; param_mod = NoMod;};
+                         {param_type = Int; param_name = "b"; param_mod = NoMod;}] in
     let gt_specs = spec_decl "gt___int" "case { a >  b -> ensures  res;
                                                 a <= b -> ensures !res;};"
-        gt_param_list Bool in
-    let add_param_list = [{param_type = Int; param_name = "a"; param_mod = RefMod;};
-                          {param_type = Int; param_name = "b"; param_mod = RefMod;}] in
+        gt_param_list Bool false in
+    let add_param_list = [{param_type = Int; param_name = "a"; param_mod = NoMod;};
+                          {param_type = Int; param_name = "b"; param_mod = NoMod;}] in
     let add_specs = spec_decl "add__" "requires true ensures res = a + b;"
-        add_param_list Int in
+        add_param_list Int false in
     (*
      {(boolean v_bool_46_2099;
      (v_bool_46_2099 = {((int v_int_46_2096;
@@ -1887,29 +1872,27 @@ inv n >= 0." in
     let param_list = [{param_type = Int; param_name = "i"; param_mod = RefMod;}] in
     let cstruc_form = spec_decl "foo" "case {
           i > 0 -> requires true ensures i' = i + 1;
-          i <= 0 -> requires true ensures i' = i;};" param_list Void in
-    let lfe = init_ctx cstruc_form param_list in
+          i <= 0 -> requires true ensures i' = i;};" param_list Void false in
+    let lfe = init_ctx cstruc_form in
     let lfe = upd_result_with_int lfe 0 in
     let lfe = add_assign_to_ctx lfe Int "v_int_46_2096" in
-    let lfe = Gen.unsome (check_pre_post lfe gt_specs false gt_param_list
-                            ["i"; "v_int_46_2096"]) in
+    let lfe = Gen.unsome (check_pre_post lfe gt_specs ["i"; "v_int_46_2096"]) in
     let lfe = add_assign_to_ctx lfe Bool "v_bool_46_2099" in
     
     let then_lfe = add_cond_to_ctx lfe "v_bool_46_2099" true in
     let then_lfe = upd_result_with_int then_lfe 1 in
     let then_lfe = add_assign_to_ctx then_lfe Int "v_int_47_2098" in
-    let then_lfe = Gen.unsome (check_pre_post then_lfe add_specs false add_param_list
-        ["i"; "v_int_47_2098"]) in
+    let then_lfe = Gen.unsome (check_pre_post then_lfe add_specs 
+                                 ["i"; "v_int_47_2098"]) in
     let then_lfe = add_assign_to_ctx then_lfe Int "i" in
 
     let else_lfe = add_cond_to_ctx lfe "v_bool_46_2099" false in
 
     let lfe = disj_of_ctx then_lfe else_lfe in
-    print_string ("\n" ^ (string_of_bool (check_entail_post
-                                            lfe cstruc_form param_list)));
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form)));
   in
   
-  let verify_9 () =
+  let verify_8 () =
     (* void fun(ref int i)
       requires i<10
       ensures i'=10;
@@ -1936,8 +1919,8 @@ inv n >= 0." in
     let cstruc_form = spec_decl "while_5_2" "requires true
         ensures i<10 & i'=10
           or i>=10 & i'=i;"
-      param_list Void in
-    let lfe = init_ctx cstruc_form param_list in
+      param_list Void true in
+    let lfe = init_ctx cstruc_form in
     let lfe = upd_result_with_int lfe 10 in
     let lfe = add_assign_to_ctx lfe Int "v_int_5_2034" in
     let lfe = check_pre_post_str lfe "lt___$int~int" ["i"; "v_int_5_2034"] in
@@ -1949,16 +1932,15 @@ inv n >= 0." in
     let then_lfe = add_assign_to_ctx then_lfe Int "v_int_10_2037" in
     let then_lfe = check_pre_post_str then_lfe "add___$int~int"
         ["i"; "v_int_5_2037"] in
-    let then_lfe = check_pre_post (Gen.unsome then_lfe) cstruc_form true param_list
-        ["i"] in
+    let then_lfe = check_pre_post (Gen.unsome then_lfe) cstruc_form ["i"] in
     (* Cond : else branch *)
     let else_lfe = add_cond_to_ctx lfe "v_bool_10_2040" false in
 
     let lfe = disj_of_ctx (Gen.unsome then_lfe) else_lfe in
-    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form [])))
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form)))
   in
 
-  let verify_10 () =
+  let verify_9 () =
     let param_list = [{param_type = Int; param_name = "m"; param_mod = NoMod;};
                       {param_type = Int; param_name = "n"; param_mod = NoMod;}] in
     let cstruc_form = spec_decl "gcd"
@@ -1973,8 +1955,8 @@ inv n >= 0." in
                                             n > 0 -> requires MayLoop ensures res>0;
                                            }
                             }
-              }" param_list Int in
-    let lfe = init_ctx cstruc_form param_list in
+              }" param_list Int true in
+    let lfe = init_ctx cstruc_form in
     let lfe = Gen.unsome (check_pre_post_str lfe "eq___$int~int" ["m"; "n"]) in
     let lfe = add_assign_to_ctx lfe Bool "v_bool_20_2055" in
     
@@ -1991,7 +1973,7 @@ inv n >= 0." in
     let then_lfe2 = Gen.unsome (check_pre_post_str then_lfe2 "minus___$int~int"
                                   ["m"; "n"]) in
     let then_lfe2 = add_assign_to_ctx then_lfe2 Int "v_int_21_2046" in
-    let then_lfe2 = Gen.unsome (check_pre_post then_lfe2 cstruc_form true param_list
+    let then_lfe2 = Gen.unsome (check_pre_post then_lfe2 cstruc_form
                                   ["v_int_21_2046"; "n"]) in
     let then_lfe2 = add_assign_to_ctx then_lfe2 Int "v_int_21_2047" in
     let then_lfe2 = upd_result_with_var then_lfe2 Int "v_int_21_2047" in
@@ -2000,7 +1982,7 @@ inv n >= 0." in
     let else_lfe2 = Gen.unsome (check_pre_post_str else_lfe2 "minus___$int~int"
                                   ["n"; "m"]) in
     let else_lfe2 = add_assign_to_ctx else_lfe2 Int "v_int_22_2052" in
-    let else_lfe2 = Gen.unsome (check_pre_post else_lfe2 cstruc_form true param_list
+    let else_lfe2 = Gen.unsome (check_pre_post else_lfe2 cstruc_form
                                   ["m"; "v_int_22_2052"]) in
     let else_lfe2 = add_assign_to_ctx else_lfe2 Int "v_int_22_2053" in
     let else_lfe2 = upd_result_with_var else_lfe2 Int "v_int_22_2053" in
@@ -2008,8 +1990,7 @@ inv n >= 0." in
     let else_lfe = disj_of_ctx then_lfe2 else_lfe2 in
     let lfe = disj_of_ctx then_lfe else_lfe in
 
-    print_string ("\n" ^ (string_of_bool (check_entail_post
-                                            lfe cstruc_form param_list)))
+    print_string ("\n" ^ (string_of_bool (check_entail_post lfe cstruc_form)))
   in
 
   print_string "\nEntailment";
@@ -2032,6 +2013,5 @@ inv n >= 0." in
   verify_7 ();
   verify_8 ();
   verify_9 ();
-  verify_10 ();
   [%expect]
 
