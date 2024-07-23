@@ -6,6 +6,14 @@ type mf                                 (* meta formulae *)
 type lfe                                (* list of failesc_context *)
 type sf                                 (* struc formulae *)
 
+type data
+type predicate
+type lemma
+type top_level_decl =
+  | Data of data
+  | Pred of predicate
+  | Lemma of lemma
+
 type typ =
   | Void
   | Bool
@@ -74,42 +82,41 @@ val implies_f  : pf -> pf -> pf
 val iff_f      : pf -> pf -> pf
 
 (* Heap formulae *)
+val parse_decl : string -> top_level_decl
+(** [parse_decl s] parses the string [s] which is a top level declaration
+    (e.g. data, predicate, lemma) written in Sleek syntax.
+*)
+
 val data_decl_cons : string -> ((typ * string) list) -> unit
 (** [data_decl_cons s l] is used to declare a data structure named [s].
     [l] is a list of pairs of the type and name of each field of the data
     structure.
-    Returns true if declaration was successful, false otherwise.
  *)
 
-val top_level_decl : string -> unit
-(** [top_level_decl s] is used to declare a data, predicate or lemma.
-    [s] is a string defining the data, predicate or lemma in Sleek syntax.
-    Returns true if declaration was successful, false otherwise.
+val data_decl : data -> unit
+(** [data_decl_str d] is used to declare the data [d]. The data can be referred to
+    using the [Named] constructor and the name of the data afterwards.
+    e.g (Named "node") : typ
 *)
 
-val data_decl : string -> unit
-(** [data_decl_str s] is used to declare a data.
-    [s] is a string defining the data in Sleek syntax.
-    Returns true if declaration was successful, false otherwise.
+val predicate_decl : predicate -> unit
+(** [predicate_decl p] is used to declare a predicate [p]. The predicate can be
+    referred to in specifications and lemmas using the name of the predicate
+    afterwards.
 *)
 
-val predicate_decl : string -> unit
-(** [predicate_decl s] is used to declare a predicate.
-    [s] is a string defining the predicate in Sleek syntax.
-    Returns true if declaration was successful, false otherwise.
-*)
-
-val lemma_decl : string -> unit
-(** [lemma_decl s] is used to declare a lemma.
-    [s] is a string defining the lemma in Sleek syntax.
-    NOTE: lemmas declared are not proven.
+val lemma_decl : lemma -> bool -> unit
+(** [lemma_decl l prove_lemma] is used to declare a lemma [l]. The lemma can be
+    used during entailment checking.
+    (e.g. [check_pre_post] and [check_entail])
+    [prove_lemma] denotes whether the lemma should be proven.
 *)
 
 val spec_decl : string -> string -> param list -> typ -> bool -> sf
-(** [spec_decl s1 s2 params t is_rec] is used to construct a formula from the 
-    specification [s2] of function [s1].
+(** [spec_decl s1 s2 params t is_rec] is used to construct a specification formula
+    from a function specification containing pre and post-conditions.
     [s1] is the function's name.
-    [s2] is the specification of the function in Hip syntax.
+    [s2] is the function specification in Hip syntax.
     e.g. "requires true ensures true;"
     [params] is the list of parameters of the function.
     [t] is the return type of the function.
@@ -158,6 +165,7 @@ val check_pre_post : lfe -> sf -> string list -> lfe option
     residual heap state from the entailment checking and the post condition in the
     specification [specs].
     Otherwise, it will return None.
+    [args] is the list of arguments to the function with the specification [specs].
 *)
 
 val check_pre_post_str : lfe -> string -> string list -> lfe option
@@ -167,6 +175,7 @@ val check_pre_post_str : lfe -> string -> string list -> lfe option
     residual heap state from the entailment checking and the post condition in the
     specification of the function [f].
     Otherwise, it will return None.
+    [args] is the list of arguments to the function [f].
 *)
 
 val check_entail_post : lfe -> sf -> bool

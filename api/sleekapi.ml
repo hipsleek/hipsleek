@@ -21,6 +21,14 @@ type dd = I.data_decl
 type lfe = CF.list_failesc_context list
 type sf = C.proc_decl
 
+type data = I.data_decl
+type predicate = I.view_decl
+type lemma = I.coercion_decl_list
+type top_level_decl =
+  | Data of data
+  | Pred of predicate
+  | Lemma of lemma
+
 type typ =
   | Void
   | Bool
@@ -78,8 +86,6 @@ let no_pos : VG.loc =
                   Lexing.pos_bol = 0; 
                   Lexing.pos_cnum = 0 } in
   {VG.start_pos = no_pos1; VG.mid_pos = no_pos1; VG.end_pos = no_pos1;}
-
-let param_to_typed_ident (p : I.param) = (p.I.param_type, p.I.param_name)
 
 let typ_to_globals_typ (t: typ) : Globals.typ =
   match t with
@@ -245,17 +251,28 @@ let top_level_decl sleek_str =
   | SC.DataDef data_def ->
     (* Stores predicate definition into SE.iprog *)
     let () = process_data_def data_def in
-    SE.convert_data_and_pred_to_cast_x ()
+    let () = SE.convert_data_and_pred_to_cast_x () in
+    true
   | SC.PredDef pred_def ->
     (* Stores predicate definition into SE.iprog *)
     let () = SE.process_pred_def_4_iast pred_def in
-    SE.convert_data_and_pred_to_cast_x ()
+    let () = SE.convert_data_and_pred_to_cast_x () in
+    true
   | SC.LemmaDef lemma_def ->
     if I.is_lemma_decl_ahead lemma_def then
       let () = SE.process_list_lemma lemma_def in
-      ()
-    else ()
-  | _ -> ()
+      true
+    else false
+  | _ ->
+    false
+
+let parse_decl sleek_str =
+  let sleek_cmd = NF.parse_slk sleek_str in
+  match sleek_cmd with
+  | SC.DataDef data_def -> Data data_def
+  | SC.PredDef pred_def -> Pred pred_def
+  | SC.LemmaDef lemma_def -> Lemma lemma_def
+  | _ -> raise (Invalid_argument "This kind of sleek declaration is not yet supported")
 
 let data_decl_cons data_name data_fields =
   let df = List.map
@@ -289,9 +306,16 @@ let data_decl sleek_str =
     (* Stores data definition into SE.iprog *)
     let () = process_data_def data_def in
     (* Can be improved to not re-convert previously converted data and predidcates *)
-    SE.convert_data_and_pred_to_cast_x (); 
-  | _ -> ()                               (* Possible error handling here *)
+    let () = SE.convert_data_and_pred_to_cast_x () in
+    true
+  | _ ->
+    false
 
+let data_decl data =
+  (* Stores data definition into SE.iprog *)
+  let () = process_data_def data in
+  (* Can be improved to not re-convert previously converted data and predidcates *)
+  SE.convert_data_and_pred_to_cast_x ()
 
 let predicate_decl sleek_str =
   let sleek_cmd = NF.parse_slk sleek_str in
@@ -300,18 +324,34 @@ let predicate_decl sleek_str =
     (* Stores predicate definition into SE.iprog *)
     let () = SE.process_pred_def_4_iast pred_def in
     (* Can be improved to not re-convert previously converted data and predidcates *)
-    SE.convert_data_and_pred_to_cast_x ()
-  | _ -> ()                               (* Possible error handling here *)
+    let () = SE.convert_data_and_pred_to_cast_x () in
+    true
+  | _ ->
+    false
 
-let lemma_decl sleek_str =
+let predicate_decl predicate =
+  (* Stores predicate definition into SE.iprog *)
+  let () = SE.process_pred_def_4_iast predicate in
+  (* Can be improved to not re-convert previously converted data and predidcates *)
+  SE.convert_data_and_pred_to_cast_x ()
+
+let lemma_decl sleek_str prove_lemma =
   let sleek_cmd = NF.parse_slk sleek_str in
   match sleek_cmd with
   | SC.LemmaDef lemma_def ->
+    let () = Globals.check_coercions := prove_lemma in
     if I.is_lemma_decl_ahead lemma_def then
       let () = SE.process_list_lemma lemma_def in
-      ()
-    else ()
-  | _ -> ()                               (* Possible error handling here *)
+      true
+    else false
+  | _ ->
+    false
+
+let lemma_decl lemma prove_lemma =
+  if I.is_lemma_decl_ahead lemma then
+    let () = Globals.check_coercions := prove_lemma in
+    SE.process_list_lemma lemma
+  else ()
          
 (* Normalize then transform specification from I.struc_formula to C.struc_formula *)
 let trans_I_to_C istruc_form (args: I.param list) (return_type: Globals.typ) =
@@ -411,7 +451,7 @@ let spec_decl func_name func_spec params return_type =
   | x::_ ->
     trans_I_to_C (snd x) (List.map param_to_iast_param params)
       (typ_to_globals_typ return_type)
-  | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
+  | _ -> raise (Invalid_argument "Syntax error with function specifications")
 
 (* Makes a dummy procedure from some specification *)
 let mkCProc proc_name static_spec params return_type =
@@ -439,7 +479,7 @@ let spec_decl name spec params return_type is_rec =
     let cproc = mkCProc name (snd x) (List.map param_to_iast_param params)
         (typ_to_globals_typ return_type) in
     { cproc with C.proc_is_recursive = is_rec }
-  | _ -> raise (Invalid_argument ("Syntax error with function specifications"))
+  | _ -> raise (Invalid_argument "Syntax error with function specifications")
 
 (* let spec_decl_x func_name func_spec =
   let prog = Parser.parse_hip_string "spec" (func_name ^ " " ^ func_spec) in
@@ -675,7 +715,7 @@ let init_ctx cstruc_form params =
       let ctx1 = CF.add_path_id ctx1 (Some b.CF.formula_assume_lbl, -1) (-1) in
       [ctx1]
     | _ ->
-      raise (Invalid_argument "This form of specification is not yet supported")
+      raise (Invalid_argument "This kind of specification is not yet supported")
   in
 
   let (cstruc_form, _, _) = Imminfer.infer_imm_ann_proc cstruc_form in
@@ -839,7 +879,7 @@ let check_entail_post_aux lfe specs params =
       res
     | CF.EAssume b -> b
     | _ -> 
-      raise (Invalid_argument "This form of specification is not yet supported")
+      raise (Invalid_argument "This kind of specification is not yet supported")
   in
   let post_struc_form = get_post_from_specs specs in
   let post_cond = post_struc_form.CF.formula_assume_simpl in
@@ -957,7 +997,7 @@ let check_entail_post ctx cproc =
     | CF.EBase b ->
       [specs]
     | _ ->
-      raise (Invalid_argument "This form of specification is not yet supported")
+      raise (Invalid_argument "This kind of specification is not yet supported")
   in
   List.for_all (fun x -> x)
     (List.map2 (fun lfe specs -> check_entail_post_aux lfe specs params)
@@ -1428,7 +1468,7 @@ let%expect_test "Entailment checking" =
 
   (* let () = print_string (string_of_bool(Sys.file_exists "./test.ss")) in *)
   
-  let _ = init ["prelude.ss"; "./test.ss"] in
+  let _ = init ["prelude.ss"; "test.ss"] in
 
   (* let () = print_string (Cprinter.string_of_program !SE.cprog) in *)
 
@@ -1492,7 +1532,11 @@ let%expect_test "Entailment checking" =
     let ll = "pred ll<n> == self = null & n = 0
 or self::node<next = r> * r::ll<n - 1>
 inv n >= 0." in
-    let () = predicate_decl ll in
+    let ll = parse_decl ll in
+    let () = match ll with
+      | Pred p -> predicate_decl p
+      | _ -> raise (Invalid_argument "NOT PRED")
+    in
     let ante_f = ante_f empty_heap_f
         (eq_pure_f
            (var_pure_exp "x")
@@ -1534,9 +1578,9 @@ inv n >= 0." in
     let sort = "pred sortl<n, mi> == self = null & n = 0
 or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
 inv n >= 0." in
-    let () = predicate_decl sort in
+    let _ = top_level_decl sort in
     let lemma = "lemma self::sortl<n, mi> -> self::ll<n>." in
-    let () = lemma_decl lemma in
+    let _ = top_level_decl lemma in
     let ante_f = ante_f
         (points_to_f "x" "sortl" [(var_pure_exp "a");
                                   (var_pure_exp "b")])
