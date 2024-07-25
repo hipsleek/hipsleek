@@ -151,6 +151,11 @@ module ForwardVerifier :
         (e.g. in check_pre_post_str)
     *)
 
+    (* Do note that some function names cause [spec_decl] to fail silently.
+       (e.g. function names with "$" symbol, like "add___$")
+       If [spec_decl] is not behaving as expected, do try printing the specification
+       formula returned from [spec_decl] using [string_of_sf] and manually inspect it.
+    *)
     val spec_decl : string -> string -> param list -> typ -> bool -> sf
     (** [spec_decl s1 s2 params t is_rec] is used to construct a specification formula
         from a function specification containing pre and post-conditions.
@@ -218,8 +223,8 @@ module ForwardVerifier :
 
     val upd_result_with_bool : lfe -> bool -> lfe
     (** [upd_result_with_bool ctx b] returns a context which is the result of updating
-        context [ctx] with the condition that the variable "res" is equal to the boolean
-        [b].
+        context [ctx] with the condition that the variable "res" is equal to the
+        boolean [b].
     *)
 
     val upd_result_with_null : lfe -> lfe
@@ -228,20 +233,21 @@ module ForwardVerifier :
     *)
 
     val add_assign_to_ctx : lfe -> typ -> string -> lfe
-    (** [add_assign_to_ctx ctx t ident] returns a context which is the result of assigning
-        the value of "res" to the variable [ident] and the type [t] in the context [ctx].
+    (** [add_assign_to_ctx ctx t ident] returns a context which is the result of
+        assigning the value of "res" to the variable [ident] and the type [t] in the
+        context [ctx].
     *)
 
     val data_field_read : lfe -> typ -> string -> string -> lfe
-    (** [data_field_read ctx t ident f] returns a context which is the result of updating
-        context [ctx] with the condition that the variable "res" is equal to the field [f]
-        of the variable [ident] of type [t].
+    (** [data_field_read ctx t ident f] returns a context which is the result of
+        updating context [ctx] with the condition that the variable "res" is equal to
+        the field [f] of the variable [ident] of type [t].
     *)
 
     val data_field_update : lfe -> typ -> string -> string -> string -> lfe
     (** [data_field_update ctx t ident f rhs] returns a context which is the result of
-        assigning the value of the variable [rhs] to the field [f] of the variable [ident]
-        of type [t] in the context [ctx].
+        assigning the value of the variable [rhs] to the field [f] of the variable
+        [ident] of type [t] in the context [ctx].
     *)
 
     val add_heap_node_to_ctx : lfe -> typ -> string list -> lfe
