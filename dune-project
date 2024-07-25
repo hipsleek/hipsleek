@@ -20,6 +20,7 @@
  (description "The HIP/SLEEK separation logic verifier")
  (sites (lib api_prelude))
  (depends
+  (dune-site (>= 3.16.0))
   (fileutils (>= 0.6.4))
   (batteries (>= 3.8.0))
   (ocamlgraph (>= 2.1.0))

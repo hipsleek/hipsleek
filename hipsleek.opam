@@ -9,6 +9,7 @@ homepage: "https://github.com/hipsleek/hipsleek"
 bug-reports: "https://github.com/hipsleek/hipsleek/issues"
 depends: [
   "dune" {>= "3.11"}
+  "dune-site" {>= "3.16.0"}
   "fileutils" {>= "0.6.4"}
   "batteries" {>= "3.8.0"}
   "ocamlgraph" {>= "2.1.0"}
