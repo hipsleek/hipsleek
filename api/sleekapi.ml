@@ -532,8 +532,19 @@ module ForwardVerifier = struct
                                               iprog.I.prog_coercion_decls in
     iprog
 
+  (* Taken from Hip.ml *)
+  let rec process_intermediate_prims prims_list =
+    match prims_list with
+    | [] -> []
+    | hd::tl ->
+      let iprims = Globalvars.trans_global_to_param hd in
+      let iprims = Iast.label_procs_prog iprims false in
+      iprims :: (process_intermediate_prims tl)
+
   let parse_files file_names =
     let iprogs = List.map (fun x -> parse_file x) file_names in
+    (* Sets the I.proc_is_main field of primitive procs to false *)
+    let iprogs = process_intermediate_prims iprogs in
     let iprog = I.append_iprims_list_head iprogs in
     let (cp, _) = Astsimp.trans_prog iprog in
     let () = SE.cprog := cp in ()
