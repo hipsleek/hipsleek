@@ -50,8 +50,6 @@ type param = {
   param_mod : param_modifier;
 }
 
-let prelude_filename = "api_prelude.ss"
-
 (* Used as placeholder for pos since no file is parsed *)
 let no_pos : VG.loc =
   let no_pos1 = { Lexing.pos_fname = "";
@@ -554,29 +552,12 @@ module ForwardVerifier = struct
     let () = I.build_exc_hierarchy true SE.iprog in
     exlist # compute_hierarchy
 
-  (* Taken from: https://dune.readthedocs.io/en/stable/sites.html *)
-  let lookup_file dirs filename =
-    List.find_map
-      (fun dir ->
-         let fn = Filename.concat dir filename in
-         if Sys.file_exists fn then Some fn else None)
-      dirs
-
   (* Prelude of api *)
   let init file_names =
     let () = print_string "Initializing sleek api" in
-    (* Add api prelude file into the list of file names.
-       This api prelude file (prelude.ss) should contain the definitions of the
-       primitives (e.g. add___).
-       The reason for doing this is because Astsimp.trans_prog calls 
-       Iast.prim_sanity_check which checks for the presence of all these primitives.
-    *)
-    let file_names =
-      match lookup_file Api_sites.Sites.api_prelude prelude_filename with
-      | None -> raise (FileNotFound ("prelude file to api is missing"))
-      | Some fn -> fn :: file_names
-    in
-    parse_files file_names
+    match file_names with
+    | [] -> init_without_parsing ()
+    | _ -> parse_files file_names
 
   (* Normalize then transform specification from I.struc_formula to C.struc_formula *)
   let trans_I_to_C istruc_form (args: I.param list) (return_type: Globals.typ) =
@@ -1525,7 +1506,7 @@ let%expect_test "Entailment checking" =
   let open EntailmentProver in
   let open ForwardVerifier in
 
-  let () = init [] in
+  let () = init ["api_prelude.ss"] in
 
   let entail_1 () =
     (* true |- true *)

@@ -1,7 +1,5 @@
 (lang dune 3.11)
 
-(using dune_site 0.1)
-
 (name hipsleek)
 (generate_opam_files true)
 
@@ -13,12 +11,10 @@
 (maintainers "hip.sleek@gmail.com")
 (license MIT)
 
-
 (package
  (name hipsleek)
  (synopsis "Separation logic verifier")
  (description "The HIP/SLEEK separation logic verifier")
- (sites (lib api_prelude))
  (depends
   (fileutils (>= 0.6.4))
   (batteries (>= 3.8.0))
