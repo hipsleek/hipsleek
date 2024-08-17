@@ -1,5 +1,6 @@
 (* This module schedules properties need to be inferred *)
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 open Gen
 open Globals

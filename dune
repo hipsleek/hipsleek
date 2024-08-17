@@ -1,0 +1,11 @@
+(executables
+ (names hip sleek)
+ (libraries hipsleek)
+ (preprocessor_deps xdebug.cppo)
+ (modules hip sleek)
+ (preprocess (action (run cppo -I . -D TRACE %{input-file}))))
+
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))

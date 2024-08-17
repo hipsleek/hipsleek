@@ -1,0 +1,20 @@
+(library
+  (name hipsleek_common)
+  (public_name hipsleek.common)
+  ;(libraries extlib fileutils batteries ocamlgraph camlp4 camlp4.lib xml-light)
+  (libraries fileutils ocamlgraph camlp4.lib batteries)
+  (preprocessor_deps ../xdebug.cppo)
+  (preprocess (per_module
+    ((action (run camlp4of %{input-file})) parser)
+    ((action (run cppo -I . -D TRACE %{input-file})) ssat trans_arr global_var omega GlobProver fileutil procutils timelog smtsolver z3m z3 cfout lem_store redlog cvc4 coq mathematica excore cast cprinter iprinter others immutils cvpermUtils cformula sleekcommons token ivpermUtils iformula slicing mcpure_D mcpure cpure tree_shares ipure_D wrapper label_only label ipure perm exc hipUtil error gen frac globals iast machdep))))
+
+(ocamllex
+ (modules lexer rllexer z3mlexer oclexer))
+
+(ocamlyacc
+ (modules rlparser z3mparser ocparser))
+
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))

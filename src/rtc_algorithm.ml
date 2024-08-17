@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 (* Ocamlgraph RTC program: Find Biconnected component, *)
 (* RTC algorithm generating extra constraints for Equality Logic*)
 (* Xuan Bach-24/04/2012*)
@@ -153,7 +154,7 @@ class graphFindBCC =
                     (*															else print_endline ("BACK EDGE "^ w ^ " "^v1)*)
               in true
             with Not_found -> false 	
-          ) neib
+          ) neib |> ignore
 
       in loopFindBCC graph v11 v22
 

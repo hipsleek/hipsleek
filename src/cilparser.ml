@@ -1,9 +1,10 @@
 #include "xdebug.cppo"
-
+open Hipsleek_common
 open VarGen
 open Globals
 open Exc.GTable
 open Gen.Basic
+open Hipsleek_cil
 
 module IF = Iformula
 
@@ -838,8 +839,8 @@ and create_string_proc (t1: Cil.typ) (t2: Cil.typ) =
   let coretyp2 = get_core_cil_typ t2 in
   let typ1 = translate_typ coretyp1 no_pos in
   let typ2 = translate_typ coretyp2 no_pos in
-  let typ1_name = string_of_typ typ1 in
-  let typ2_name = string_of_typ typ2 in
+  let typ1_name = Globals.string_of_typ typ1 in
+  let typ2_name = Globals.string_of_typ typ2 in
   let proc_name = (
     match coretyp1, coretyp2 with
       | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_)
@@ -915,8 +916,8 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
         let msg = "Invalid pointer arithmetic operator: " ^ (string_of_cil_binop op) in
         report_error no_pos msg
     ) in
-  let typ1_name = string_of_typ typ1 in
-  let typ2_name = string_of_typ typ2 in
+  let typ1_name = Globals.string_of_typ typ1 in
+  let typ2_name = Globals.string_of_typ typ2 in
   let proc_name = (
     match t1, t2 with
 (*      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_)*)
@@ -1340,7 +1341,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
 
 and translate_typ (t: Cil.typ) pos : Globals.typ =
   let pr_t = (add_str "cil type" string_of_cil_typ) in
-  let pr_res = (add_str "res" string_of_typ) in
+  let pr_res = (add_str "res" Globals.string_of_typ) in
   Debug.no_1 "translate_typ" pr_t pr_res
     (fun _ -> translate_typ_x t pos) t
 
@@ -1714,8 +1715,8 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
          let coretyp2 = get_core_cil_typ t2 in
          let typ1 = translate_typ coretyp1 no_pos in
          let typ2 = translate_typ coretyp2 no_pos in
-         let typ1_name = string_of_typ typ1 in
-         let typ2_name = string_of_typ typ2 in
+         let typ1_name = Globals.string_of_typ typ1 in
+         let typ2_name = Globals.string_of_typ typ2 in
          let pname = "__finalize_string" in
          let proc_decl =
          try
@@ -2072,7 +2073,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
       let new_heap_formula2 = List.fold_left
           (fun hf (((id1, pr1), (id2, pr2)), t) ->
-             IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
+             IF.mkStar hf (IF.mkHeapNode (id1, pr1) (Globals.string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
                              [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
           ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
       let npf = helper_pure_formula fb.IF.formula_base_pure in
@@ -2083,7 +2084,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
       let nhf = List.fold_left
           (fun hf (((id1, pr1), (id2, pr2)), t) ->
-             IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
+             IF.mkStar hf (IF.mkHeapNode (id1, pr1) (Globals.string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
                              [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
           ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
       IF.Base { fb with
@@ -2101,7 +2102,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
       let new_heap_formula2 = List.fold_left
           (fun hf (((id1, pr1), (id2, pr2)), t) ->
-             IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
+             IF.mkStar hf (IF.mkHeapNode (id1, pr1) (Globals.string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
                              [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
           ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
       let npf = helper_pure_formula fe.IF.formula_exists_pure in
@@ -2112,7 +2113,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
       let nhf = List.fold_left
           (fun hf (((id1, pr1), (id2, pr2)), t) ->
-             IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t)
+             IF.mkStar hf (IF.mkHeapNode (id1, Primed) (Globals.string_of_typ t)
                              [] (*TODO:HO*) 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
                              [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
           ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
@@ -2677,7 +2678,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let view_decls : Iast.view_decl list ref = ref [] in
   let func_decls : Iast.func_decl list ref = ref [] in
   let rel_decls : Iast.rel_decl list ref = ref [] in
-  let rel_ids : (typ * ident) list ref = ref [] in
+  let rel_ids : (Globals.typ * ident) list ref = ref [] in
   let templ_decls: Iast.templ_decl list ref = ref [] in
   let ut_decls: Iast.ut_decl list ref = ref [] in
   let ui_decls: Iast.ui_decl list ref = ref [] in

@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 (** Created 20-May-2009
     	Convert global variables into reference parameters

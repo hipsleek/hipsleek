@@ -35,7 +35,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *)
-
+open Hipsleek_common
 open Escape
 open Pretty
 open Cilint

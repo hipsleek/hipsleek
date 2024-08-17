@@ -1,0 +1,11 @@
+(library
+ (name hipsleek_api)
+ (public_name hipsleek.api)
+ (libraries hipsleek)
+ (inline_tests (deps api_prelude.ss))
+ (preprocess (pps ppx_expect)))
+
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))

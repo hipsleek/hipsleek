@@ -1,3 +1,4 @@
+open Hipsleek_common
 (*
  *
  * Copyright (c) 2001-2002, 

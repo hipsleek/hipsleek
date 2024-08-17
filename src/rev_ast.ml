@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 (*translates cformulas to iformulas, with some simplifications*)
 open Globals

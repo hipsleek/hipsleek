@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 open VarGen
 (* Translate an input program with pointer into an intermediate 
    input program without

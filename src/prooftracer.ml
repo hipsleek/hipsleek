@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 (*
   Proof tracing facilities:
 

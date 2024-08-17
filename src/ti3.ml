@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Hipsleek_common
 module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
