@@ -1,0 +1,83 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+  schedule:
+    # Prime the caches every Monday
+    - cron: 0 1 * * MON
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          # - macos-latest
+          - ubuntu-latest
+        ocaml-compiler:
+          - 4.14.1
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          opam-pin: false
+          opam-depext: false
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.4.8"
+          cabal-version: "3.10.3.0"
+
+      - name: Install dependencies
+        run: |
+          # https://github.com/coq-community/docker-coq-action/blob/master/timegroup.sh
+          startGroup() {
+            echo "::group::$1"
+          }
+          endGroup() {
+            echo "::endgroup::"
+          }
+
+          startGroup "opam dependencies"
+            opam install . --deps-only
+          endGroup
+          startGroup "omega"
+            (cd omega_modified && make oc)
+            echo $PWD/omega_modified/omega_calc/obj >> $GITHUB_PATH
+          endGroup
+          startGroup "mona"
+            tar -xvf mona-1.4-modif.tar.gz
+            cd mona-1.4
+            ./configure --prefix=$(pwd)
+            make install
+            cp mona_predicates.mona ..
+            cd -
+            echo $PWD/mona-1.4/bin >> $GITHUB_PATH
+          endGroup
+          startGroup "cabal dependencies"
+            cabal install --lib regex-compat old-time
+            cabal install happy
+          endGroup
+          startGroup "fixcalc"
+            git clone https://github.com/hipsleek/omega_stub.git
+            (cd omega_stub; make)
+            git clone https://github.com/hipsleek/fixcalc.git fixcalc_src
+            (cd fixcalc_src; make fixcalc)
+            echo $PWD/fixcalc_src >> $GITHUB_PATH
+          endGroup
+
+      - name: Run tests
+        run: |
+          eval $(opam env)
+          dune test

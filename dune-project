@@ -22,5 +22,7 @@
   (camlp4 (>= 4.14+1))
   (xml-light (>= 2.5))
   (ppx_expect (>= v0.15.1))
+  dune
+  (cppo :build)
 ))
 
