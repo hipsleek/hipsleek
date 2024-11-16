@@ -15,8 +15,8 @@ Try verifying some small programs.
 You will need Z3 (from opam, pip, or a system package manager) and Omega ([below](#omega)) on the PATH.
 
 ```sh
-./hip examples/working/hip/ll.ss
-./sleek examples/working/sleek/sleek2.slk
+dune exec ./hip.exe examples/working/hip/ll.ss
+dune exec ./sleek.exe examples/working/sleek/sleek2.slk
 ```
 
 ## Installing SLEEK as a library
