@@ -1,0 +1,34 @@
+//# cll-d.slk
+
+data node{
+
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+pred hd<n> == self = null & n = 0
+	or self::node<_, r> * r::cll<self, n-1>  
+	inv n >= 0.
+
+checkentail 
+  x1::node<_,r>& //extra stuff cause failure?
+  x'=null
+ |- x'::hd<0>.
+expect Valid.
+
+/*
+Entail 1: Fail.(cex)(must) cause:do_unmatched_rhs : x'::hd<flted_85>
+
+chinwn@loris-7:~/hg/sl_term$ hg bisect -b
+The first bad revision is:
+changeset:   12325:3a374f17c051
+branch:      smt2014
+user:        locle
+date:        Wed Jul 02 16:43:57 2014 +0800
+summary:     x
+*/

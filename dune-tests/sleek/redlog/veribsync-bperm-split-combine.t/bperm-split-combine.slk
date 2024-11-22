@@ -1,0 +1,29 @@
+data cell {int val}.
+
+lemma "combineCell" self::cell(c1,t,0)<v> * self::cell(c2,t,0)<v> -> self::cell(c1+c2,t,0)<v>.
+
+lemma "splitCell" self::cell(c,t,0)<v> & c=c1+c2 & 0<c1<t & 0<c2<t -> self::cell(c1,t,0)<v> * self::cell(c2,t,0)<v> & 0<c<=t.
+
+//(1)
+checkentail x1::cell(c,t,a)<v> |- x1::cell(c,t,a)<v>.
+print residue.//valid, 1 state: MATCH
+
+//(2)
+checkentail x1::cell(1,2,1)<v> |- x1::cell(1,2,1)<v>.
+print residue.//valid, 1 state: MATCH
+
+//(3)
+checkentail x1::cell(c1,t,0)<v> |- x1::cell(c2,t,0)<v>.
+print residue.//valid, 1 state: MATCH, inst c1=c2
+
+//(4)
+checkentail x::cell(2,5,0)<v1> * x::cell(3,5,0)<v1>  |- x::cell(1,5,0)<v2>.
+print residue. //valid, COMBINE, then SPLIT, 1 residue
+
+//(5)
+checkentail x::cell(2,5,0)<v1> * x::cell(3,5,0)<v1>  |- x::cell(4,5,0)<v2>.
+print residue. //valid, COMBINE, then SPLIT, 1 residue
+
+//(6)
+checkentail x::cell(2,5,0)<v1> * x::cell(3,5,0)<v1>  |- x::cell(1,5,0)<v1> * x::cell(4,5,0)<v1>.
+print residue. //valid, COMBINE, then SPLIT, 1 residue

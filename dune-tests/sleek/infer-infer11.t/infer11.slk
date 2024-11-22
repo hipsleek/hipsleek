@@ -1,0 +1,27 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// (5) Fail
+// TODO we should infer n!=0 
+//infer [n] n=0 |- y::ll<n>.
+//print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n!=0]
+<1>false & false &
+*/
+
+// (4) Wrong to infer "false"
+infer [n] true |- y::ll<n>.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ false]
+<1>false & false &
+*/

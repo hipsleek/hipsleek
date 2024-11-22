@@ -1,0 +1,66 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//1
+checkentail x=1 & flow __norm |-  x>4 & flow __norm.
+print residue.
+expect Fail_Must.
+
+
+//2
+checkentail x=1 & flow __norm |-  x>4 & flow __flow.
+print residue.
+expect Fail_Must.
+
+
+//3
+checkentail x=1 & flow __norm |- x>0 & flow __Exc.
+print residue.
+expect Fail_Must.
+
+
+//4
+checkentail x=1 & flow __norm |- x>4 & flow __Exc.
+print residue.
+expect Fail_Must.
+
+
+//5
+checkentail x=1 & flow __norm |- x>4 & flow __Exc
+                                 or x>4 & flow __norm.
+print residue.
+expect Fail_Must.
+
+
+//6
+checkentail x=1 & flow __flow |-  x>4 & flow __norm.
+print residue.
+expect Fail_May.
+
+//7
+checkentail x=1 & flow __norm |- x>4 & flow __Exc
+                                 or x>0 & flow __norm.
+print residue.
+expect Valid.
+
+//9
+checkentail x=1 & flow __norm |- x>4 & flow __Exc
+                                 or x>4 & flow __norm.
+print residue.
+expect Fail.
+
+//10
+checkentail x=1 & flow __norm |- x>0 & flow __Exc.
+print residue.
+expect Fail.
+
+//11
+infer [@err_must] x::node<_, null> |- x::ll<m> & m > 1.
+expect Fail.
+print residue.
+
+

@@ -1,0 +1,22 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+lemma_safe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+lemma_safe self::nlseg<p> <- 
+      (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+
+/*
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- (exists uu :self::nlseg<uu> * uu::nlseg<p> * p::node<_>@L).
+print residue.
+*/

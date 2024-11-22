@@ -1,0 +1,15 @@
+data node { int value; node next; }.
+
+pred lseg<n, p> ==
+  self = p & n = 0 or
+  self::node<v, q> * q::lseg<n-1, p> //& self!=p
+  inv n >= 0.
+
+lemma_unsafe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+2.
+// should fail
+
+checkentail_exact  self::node<_,r> & n=m+2 & m=0 & self=q
+  |- self::lseg<n,r>.
+
+// Should fail
+

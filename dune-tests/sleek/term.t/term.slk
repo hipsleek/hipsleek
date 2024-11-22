@@ -1,0 +1,54 @@
+// (1)
+checkentail m>n & m>=0 & Term[m] |- Term[n].
+print residue.
+expect Valid.
+
+// (2)
+checkentail m>n & Term[m] |- Term[n].
+print residue.
+expect Fail.
+
+// (3)
+checkentail m<=n & Term[m] |- Term[n].
+print residue.
+expect Fail.
+
+// (4)
+checkentail Term |- Loop.
+print residue.
+expect Fail.
+
+// (5)
+checkentail Term |- MayLoop.
+print residue.
+expect Fail.
+
+// (6)
+checkentail Loop |- Loop.
+print residue.
+expect Valid.
+
+// (7)
+checkentail Loop |- MayLoop.
+print residue.
+expect Valid.
+
+// (8)
+checkentail Loop |- Term.
+print residue.
+expect Valid.
+
+// (9)
+checkentail MayLoop |- MayLoop.
+print residue.
+expect Valid.
+
+// (10)
+checkentail MayLoop |- Loop.
+print residue.
+expect Valid.
+
+// (11)
+checkentail MayLoop |- Term.
+print residue.
+expect Valid.

@@ -1,0 +1,13 @@
+
+(rule
+  (alias runtest)
+  (action (echo "
+
+WARNING: redcsl not found, tests for ParaHIP and other related systems will not be run.
+
+"))
+  (enabled_if (not %{bin-available:redcsl})))
+
+(cram
+    (deps %{project_root}/hip.exe)
+    (applies_to :whole_subtree))

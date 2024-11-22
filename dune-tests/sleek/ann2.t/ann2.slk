@@ -1,0 +1,104 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (1) residue must not contain v
+infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
+print residue.
+
+// (2) explicit (residue to have w<:v)
+/*infer [] y::node<_,_>@w |- [v] y::node<a,b>@v.
+print residue.
+*/
+// (3) implicit (see residue to have w=v)
+infer [] y::node<_,_>@w |- y::node<a,b>@v.
+print residue.
+
+// (4)
+infer [] @L<:v & v<:@M |- false.
+
+// (5)
+infer [] @L<:v |- v=@L.
+
+// (6)
+infer [] v<:@M |- v=@M.
+
+// (7)
+infer [] true |- @M<:@I & @I<:@L.
+
+// (8) FAIL
+infer [] true |- @I<:@M.
+
+// (9) FAIL
+infer [] true |- @L<:@I.
+
+// (10) valid
+//infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v<:@M.
+
+// (11) Fail (due to incompleteness)
+infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+expect Valid.
+
+// (12)
+infer [] y::node<_,_>@v & v<:@M |- y::node<a,b>@M.
+
+// (13)
+infer [] y::node<_,_>@L |- y::node<a,b>@v & v<:@L.
+
+// (14)
+infer [] y::node<_,_>@v & v<:@L |- y::node<a,b>@L.
+
+// (15) valid
+//infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@I.
+
+// (16)
+infer [] y::node<_,_>@v & v<:@I |- y::node<a,b>@I.
+
+// (17)
+infer [] y::node<_,_>@v |- y::node<a,b>@L.
+
+// (18) FAIL
+infer [] y::node<_,_>@v |- y::node<a,b>@I.
+
+// (19)
+infer [] @L<:v & v<:@M |- false.
+
+// (20) FAIL
+infer [] y::node<_,_>@L |- [v] y::node<a,b>@v & v<:@M.
+
+// (21)
+infer [] y::node<_,_>@w |- y::node<a,b>@w .
+
+// (22) FAIL
+infer [] y::node<_,_>@w & w<:@I |- y::node<a,b>@M .
+
+// (23) FAIL
+infer [] y::node<_,_>@w & w<:@L |- y::node<a,b>@I .
+
+// (24) 
+infer [] y::node<_,_>@w & w<:@M |- y::node<a,b>@I .
+
+// (25) 
+infer [] y::node<_,_>@w & w<:@M |- y::node<a,b>@L .
+
+// (26) 
+infer [] y::node<_,_>@w & w<:@I |- y::node<a,b>@L .
+
+//infer [y] true |- y::node<a,b>@v & v<:L.
+//infer [y,w] y::node<_,_>@w |- y::node<a,b>@v & v<:L.
+//print residue.
+
+// (27) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
+
+
+// (28)
+//infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v=@I.
+
+
+// (29)
+//infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v<:@I.
+
+// (30) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.

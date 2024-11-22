@@ -1,0 +1,34 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+infer [] n=0 & x=y  |- y::ll<n>.
+print residue.
+expect Fail.
+
+infer [t] n=0 & x=y  |- y::ll<n>.
+print residue.
+expect Fail.
+/*
+Entail (2) : Fail.(no cex)(may) cause:Cannot infer: infer_collect_hp_rel 3b
+
+*/
+
+//(3)
+infer [q] q=null |- q::ll<n> & n>0.
+print residue.
+expect Valid.
+/*
+GOT:
+ inferred pure: [q!=0]
+
+ should be q!=null 
+*/
+
+

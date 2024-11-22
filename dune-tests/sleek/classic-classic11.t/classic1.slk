@@ -1,0 +1,49 @@
+data node {
+	int val;
+	node next;
+}.
+
+//(1)
+checkentail htrue |- emp.
+print residue.
+
+//(2)
+checkentail htrue |- htrue.
+print residue.
+/* --classic ?
+Entail 2: Valid. 
+ <1>htrue&{FLOW,(21,22)=__norm}[]
+*/
+
+//(3)
+checkentail emp |- emp.
+print residue.
+
+//(4)
+checkentail emp |- htrue.
+print residue.
+/* --classic
+Entail 4: Valid. 
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+//(5)
+checkentail x::node<_,_> |- emp.
+print residue.
+
+//(6)
+checkentail x::node<_,_> |- htrue.
+print residue.
+/* --classic
+Entail 6: Valid. 
+ <1>x::node<_,_>@M&{FLOW,(21,22)=__norm}[]
+*/
+
+//(7)
+checkentail htrue |- x::node<_,_>.
+print residue.
+
+//(8)
+checkentail emp |- x::node<_,_>.
+print residue.

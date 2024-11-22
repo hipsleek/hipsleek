@@ -1,0 +1,50 @@
+data cell{int f1}.
+
+//1
+checkentail x::cell<v>@A * x::cell<w>@A & x=y |- y!=null.
+print residue.
+expect Valid.
+
+//2
+checkentail x::cell<v>@A & x=y |- y!=null.
+print residue.
+expect Valid.
+
+/*
+Entail 2: Valid.
+
+Residue:
+ <1>emp&x=y & x!=null&{FLOW,(4,5)=__norm}[]
+
+or 
+
+ <1>x::cell<v>@A&x=y&{FLOW,(4,5)=__norm}[]
+*/
+
+//3
+checkentail x::cell<v>@A |- x!=null.
+print residue.
+expect Valid.
+
+//4
+checkentail x::cell<_> * y::cell<_>@A & x=y |- y!=null.
+print residue.
+expect Valid.
+
+
+//5
+checkentail x::cell<_>@A * y::cell<_>@A & x=y |- y!=null.
+print residue.
+expect Valid.
+
+/**
+
+Entail 5: Valid.
+
+Residue:
+ <1>y::cell<Anon_14>@A&x=y & Anon_13=Anon_14&{FLOW,(4,5)=__norm}[]
+
+or
+
+ <1>y!=null & x=y & Anon_13=Anon_14&{FLOW,(4,5)=__norm}[]
+*/
