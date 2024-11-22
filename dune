@@ -19,3 +19,8 @@
   (targets prelude.slk)
   (deps prelude_src/prelude.slk)
   (action (run %{bin:cp} %{deps} %{targets})))
+
+(rule
+  (alias hipsleek)
+  (deps ./hip.exe ./sleek.exe ./prelude.ss ./prelude.slk)
+  (action (echo "")))

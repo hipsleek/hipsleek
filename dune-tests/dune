@@ -1,3 +1,4 @@
+; Ensure these are available in the tests
 (cram
   (deps %{project_root}/prelude.ss %{project_root}/prelude.slk)
   (applies_to :whole_subtree))
