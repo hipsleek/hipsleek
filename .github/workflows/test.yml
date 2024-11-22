@@ -84,5 +84,5 @@ jobs:
           # making prelude available is still a problem
           # dune test
 
-          dune exec ./hip.exe examples/working/hip/ll.ss
-          dune exec ./sleek.exe examples/working/sleek/sleek2.slk
+          dune build @hipsleek
+          dune test
