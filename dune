@@ -9,3 +9,13 @@
  (dev
   (flags
    (:standard -warn-error -A))))
+
+(rule
+  (targets prelude.ss)
+  (deps prelude_src/prelude.ss)
+  (action (run %{bin:cp} %{deps} %{targets})))
+
+(rule
+  (targets prelude.slk)
+  (deps prelude_src/prelude.slk)
+  (action (run %{bin:cp} %{deps} %{targets})))

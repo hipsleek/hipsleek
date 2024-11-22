@@ -1,0 +1,14 @@
+
+!!!Full processing file "vp/prelude_thrd.ss"
+Parsing file "vp/prelude_thrd.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+!!!WARNING : uninterpreted free variables [Q] in specification.
+0 false contexts at: ()
+
+Total verification time: 0.372022 second(s)
+	Time spent in main process: 0.356022 second(s)
+	Time spent in child processes: 0.016 second(s)
+
