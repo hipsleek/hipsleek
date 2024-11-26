@@ -910,7 +910,7 @@ let process_source_list source_files =
   | file_name::_ ->
     let index = try String.rindex file_name '.' with _ -> 0 in
     let length = (String.length file_name) - index in
-    let ext = String.lowercase(String.sub file_name index length) in
+    let ext = String.lowercase_ascii (String.sub file_name index length) in
     if (ext = ".java") then
       let ss_file_name = file_name ^ ".ss" in
       let () = Pretty_ss.print_out_str_from_files_new source_files ss_file_name in
