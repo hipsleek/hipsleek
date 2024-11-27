@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../sleek.exe  --elp --dis-lem-gen --dis-eps odd-lseg.slk | ./sleek_postprocess.sh 
+  $ ../../../sleek.exe  --elp --dis-lem-gen --dis-eps odd-lseg.slk | ../../sleek_postprocess.sh 
   Entail 1: Fail
   Entail 2: Valid
   Entail 3: Valid

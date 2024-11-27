@@ -1,4 +1,18 @@
+(rule
+ (targets hip_postprocess.sh)
+ (deps test_assets/hip_postprocess.sh)
+ (action
+  (run %{bin:cp} %{deps} %{targets})))
+
+(rule
+ (targets sleek_postprocess.sh)
+ (deps test_assets/sleek_postprocess.sh)
+ (action
+  (run %{bin:cp} %{deps} %{targets})))
+
 ; Ensure these are available in the tests
+
 (cram
-  (deps %{project_root}/prelude.ss %{project_root}/prelude.slk)
-  (applies_to :whole_subtree))
+ (deps %{project_root}/prelude.ss %{project_root}/prelude.slk
+       hip_postprocess.sh sleek_postprocess.sh)
+ (applies_to :whole_subtree))

@@ -1,4 +1,4 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../sleek.exe  infer6.slk | ./sleek_postprocess.sh 
+  $ ../../../sleek.exe  infer6.slk | ../../sleek_postprocess.sh 
   Entail 1: Valid

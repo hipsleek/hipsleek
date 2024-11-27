@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../hip.exe  dll.ss | ./postprocess.sh insert delete delete1 test_del test_del2 test_fold append append1 f1 f2 
+  $ ../../../hip.exe  dll.ss | ../../hip_postprocess.sh insert delete delete1 test_del test_del2 test_fold append append1 f1 f2 
   Procedure append SUCCESS
   Procedure append1 SUCCESS
   Procedure delete SUCCESS

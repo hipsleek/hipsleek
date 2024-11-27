@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../hip.exe  trees.ss | ./postprocess.sh append count flatten insert remove_min delete 
+  $ ../../../hip.exe  trees.ss | ../../hip_postprocess.sh append count flatten insert remove_min delete 
   Procedure append SUCCESS
   Procedure count SUCCESS
   Procedure delete SUCCESS

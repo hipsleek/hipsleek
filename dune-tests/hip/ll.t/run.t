@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../hip.exe  ll.ss | ./postprocess.sh append ret_first get_next set_next set_null get_next_next insert delete create_list reverse 
+  $ ../../../hip.exe  ll.ss | ../../hip_postprocess.sh append ret_first get_next set_next set_null get_next_next insert delete create_list reverse 
   Procedure append SUCCESS
   Procedure create_list SUCCESS
   Procedure delete SUCCESS

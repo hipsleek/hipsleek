@@ -52,8 +52,8 @@ if($prover){
 	}
 }
 
-if (!$postprocessor) {
-  $postprocessor = "./postprocess.sh"
+if (!$../../hip_postprocess.shessor) {
+  $../../hip_postprocess.shessor = "../../hip_postprocess.sh"
 }
 
 else{

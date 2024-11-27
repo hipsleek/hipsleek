@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../hip.exe  rb.ss | ./postprocess.sh rotate_case_3 case_2 rotate_case_3r case_2r is_red is_black del_6 del_6r del_5 del_5r del_4 del_4r del_3 del_3r del_2 remove_min del insert 
+  $ ../../../hip.exe  rb.ss | ../../hip_postprocess.sh rotate_case_3 case_2 rotate_case_3r case_2r is_red is_black del_6 del_6r del_5 del_5r del_4 del_4r del_3 del_3r del_2 remove_min del insert 
   Procedure case_2 SUCCESS
   Procedure case_2r SUCCESS
   Procedure del SUCCESS

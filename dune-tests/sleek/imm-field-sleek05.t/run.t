@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../sleek.exe  --field-imm --etcsu1  sleek05.slk | ./sleek_postprocess.sh 
+  $ ../../../sleek.exe  --field-imm --etcsu1  sleek05.slk | ../../sleek_postprocess.sh 
   Entail 1: Valid
   Entail 2: Fail
   Entail 3: Fail

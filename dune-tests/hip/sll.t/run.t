@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../hip.exe  sll.ss | ./postprocess.sh insert insert2 delete get_tail insertion_sort id 
+  $ ../../../hip.exe  sll.ss | ../../hip_postprocess.sh insert insert2 delete get_tail insertion_sort id 
   Procedure delete SUCCESS
   Procedure get_tail SUCCESS
   Procedure id SUCCESS

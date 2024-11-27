@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../../sleek.exe --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith barrier-dynamic2.slk | ./sleek_postprocess.sh 
+  $ ../../../../sleek.exe --en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith barrier-dynamic2.slk | ../../sleek_postprocess.sh 
   Entail 1: Valid
   Entail 2: Fail
   Entail 3: Valid

@@ -1,6 +1,6 @@
 This test was automatically generated from the corresponding example in examples/working/.
 
-  $ ../../../sleek.exe --efa-exc sleek-err-exc-flow.slk | ./sleek_postprocess.sh 
+  $ ../../../sleek.exe --efa-exc sleek-err-exc-flow.slk | ../../sleek_postprocess.sh 
   Entail 1: Fail
   Entail 2: Fail
   Entail 3: Fail
