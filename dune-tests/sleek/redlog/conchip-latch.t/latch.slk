@@ -1,0 +1,52 @@
+//CountDownLatch
+data CDL{
+}.
+
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{(-)P}<x:cell>.
+
+pred_prim LatchOut{(+)P}<x:cell>.
+
+pred_prim CNT<n:int>.
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+
+lemma "normalize" self::LatchOut{%P}<y> * self::CNT<n> & n<0 -> %P.
+
+lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+checkentail c::CNT<2> |- c::CNT<2> * c::CNT<0>.
+print residue.
+
+checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
+print residue.
+
+checkentail c::CNT<a> * c::CNT<b> & a=-1 & b=-2 |- c::CNT<n> & n=-3.
+print residue.
+
+checkentail c::CNT<1> |- (exists n: c::CNT<n> & n>0).
+print residue.
+// 2 residues: 1 match only, 1 split
+// Potential overhead due to splitting (due to CNT<0>)
+// need a good way to control splitting
+
+//VALID
+checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<(-1)> |- z::cell<10>.
+print residue.
+
+//FAIL, since c::CMT<0> is resource-ambiguous
+checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<0> |- z::cell<10>.
+print residue.
+
+//VALID
+checkentail c::CNT<1> * c::CNT<(-1)> |- emp & flow __Fail.
+print residue.
+
+//FAIL
+checkentail c::CNT<1> * c::CNT<(-1)> |- true.
+print residue.

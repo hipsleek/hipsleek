@@ -1,0 +1,50 @@
+data node {
+	int f1;
+	int f2;
+	int f3;
+	node f4;
+	node f5;	
+}.
+
+data node2 {
+	int f1;
+}.
+
+/*
+checkentail x.f1::<1> * x.node.f5::<a> * x.f4::<b> |- x::node<r,#,#,u,v>.
+print residue.
+
+checkentail x.f1::<1> * x.f5::<a> * x.node.f4::<b> |- x::node<r,#,#,u,v>.
+print residue.
+
+
+checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
+print residue.
+
+checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- false.
+// OK to fail
+
+checkentail  x::node<m,n,o,#,#> * x::node<#,#,a,b,c> |- false.
+// OK
+*/
+
+//checkentail  x::node<m,n,#,#,#> |- x::node<m1,n1,a,b,c>.
+// need to check that LHS is bigger than RHS
+//print residue.
+
+//checkentail  x::node<m,n,#,a,b> * y::node<m,n,#,#,#> 
+//  |- x::node<m1,#,#,#,#> & a!=b & m=n.
+//print residue.
+
+checkentail x::node<a,b,c,d,e> |- x::node<a1,b1,c1,d1,e1> & a = b.
+/*
+checkentail  x::node<m,n,#,a,b> * y::node<m,n,#,#,#> 
+  |- x::node<m1,#,#,#,#> & a=b.
+print residue.
+*/
+
+checkentail  x::node<a1,a2,a3,a4,a5>
+  |- x::node<m1,m2,m3,m4,m5> .
+
+checkentail  x::node<a1,a2,#,#,#>
+  |- x::node<m1,m2,m3,m4,m5> .

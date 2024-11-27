@@ -23,13 +23,7 @@ let explode (s:string) : char list =
       expl (i - 1) (s.[i] :: l) in
   expl (String.length s - 1) [];;
 
-let implode (l:char list) : string =
-  let result = String.create (List.length l) in
-  let rec imp i = function
-    | [] -> result
-    | c :: l -> result.[i] <- c; imp (i + 1) l in
-  imp 0 l
-  |> Bytes.to_string;;
+let implode l = String.of_seq (List.to_seq l)
 
 module StrSV =
 struct

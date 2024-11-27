@@ -1,0 +1,37 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self::node<_,null> & n=1
+  or self::node<_, q> * q::ll<n-1>
+//  inv n>=0
+.
+
+/*
+# app-inv.slk --dis-baga-xpure
+
+  inv: n>=0
+  
+  why did below fail for --dis-baga-xpure
+*/
+
+//(1)
+checkentail x::ll<n> & n<=0 |- false.
+print residue.
+expect Valid.
+
+//(2)
+checkentail x::ll<n> |- n>0.
+print residue.
+expect Valid.
+
+//(3)
+checkentail x::ll<n> |- x!=null.
+print residue.
+expect Valid.
+
+//(4)
+checkentail x::ll<n> |- x=null.
+print residue.
+expect Fail.

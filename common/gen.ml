@@ -2082,39 +2082,7 @@ struct
     else
       trim_last s
 
-  let unescaped s =
-    let n = ref 0 in
-    for i = 0 to String.length s - 1 do
-      n := !n +
-           (match String.unsafe_get s i with
-              '\\' when String.unsafe_get s (i+1) != '\\' ->
-              (match String.unsafe_get s (i+1) with
-                 'n' -> 0
-               | 't' -> 0
-               | _ -> 1)
-            | _ -> 1)
-    done;
-    if !n = String.length s then s else begin
-      let s' = String.create !n in
-      n := 0;
-      let skip = ref 0 in
-      (try (for i = 0 to String.length s - 1 do
-              begin
-                if (i + !skip) = String.length s then raise Bail;
-                match String.unsafe_get s (i + !skip) with
-                | '\\' when String.unsafe_get s (i+ !skip+1) != '\\' ->
-                  (match String.unsafe_get s (i+ !skip+1) with
-                     'n' -> String.unsafe_set s' !n '\n'; incr skip
-                   | 'r' -> String.unsafe_set s' !n '\r'; incr skip
-                   | 't' -> String.unsafe_set s' !n '\t'; incr skip
-                   | '\\' -> String.unsafe_set s' !n '\\'; incr skip;
-                   | _ -> raise Bad_string)
-                | c -> String.unsafe_set s' !n c
-              end;
-              incr n
-            done) with Bail -> ());
-      Str.first_chars (Bytes.to_string s') (String.length s - !skip)
-    end
+  let unescaped = Scanf.unescaped
 
   let trim_str input =
     let start_idx = ref 0 in

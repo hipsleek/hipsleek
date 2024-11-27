@@ -1,0 +1,30 @@
+data cell{
+  int v;
+}.
+
+pred_prim THRD2{(+)Q@Split}<x:cell,y:cell>
+inv x!=null.
+
+pred_prim THRD3{(-)P,(+)Q}<t:thrd, x:cell>
+inv x!=null.
+
+pred_prim dead<>.
+
+lemma "sync" self::THRD2{%Q}<y1,y2> * self::dead<> -> %Q.
+
+checkentail t2::THRD3{t::THRD2{x::cell<10> & true}<x,y> & true,
+                       x::cell<10>}<t,x>
+     * t1::THRD2{x2::cell<10> & x2=x1}<x1,y1>
+  |- t2::THRD3{%P,%Q}<t1,x1> * %P.
+print residue.
+//expect: empty residue
+
+checkentail t2::THRD3{t::THRD2{x::cell<10> & true}<x,y> & true,
+                       x::cell<10>}<t,x>
+     * t1::THRD2{x2::cell<10> * y1::cell<20> & x2=x1}<x1,y1>
+  |- t2::THRD3{%P,%Q}<t1,x1> * %P.
+print residue.
+//expect: residue with t1::THRD2{y1::cell<...>}<...>
+
+checkentail t::THRD2{z1::cell<10> * z2::cell<20>}<z1,z2> * t::dead<> |- z1::cell<10>.
+print residue.

@@ -2892,7 +2892,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
   let nn = (sleek_proof_counter#inc_and_get) in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 & pnum!=nn then
+  if pnum>0 && pnum!=nn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
     let num_id = "\nEntail "^(string_of_int nn) in
@@ -3027,7 +3027,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let pn = sleek_proof_counter#inc_and_get in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 & pnum!=pn then
+  if pnum>0 && pnum!=pn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else
     let nn = "("^(string_of_int (pn))^") " in

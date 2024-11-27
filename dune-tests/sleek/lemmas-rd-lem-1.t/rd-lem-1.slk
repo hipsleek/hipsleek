@@ -1,0 +1,74 @@
+data node { int value; node next; }.
+
+pred lseg<n, p> ==
+  self = p & n = 0 or
+  self::node<v, q> * q::lseg<n-1, p> //& self!=p
+  inv n >= 0.
+
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+2.
+// should fail
+
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1.
+// should fail
+
+/*
+Why is this lemma proven when the base case fails?
+ (i) is it doing a left unfold?
+ (ii) did it has a base case failure?
+
+checkentail_exact  self::node<_,r> & n=m+2 & m=0 & self=q
+  |- self::lseg<n,r>.
+
+checkentail_exact  self::node<_,qq>*qq::lseg<m-1,q>*q::node<_,r> & n=m+2 
+  |- self::lseg<n,r>.
+print residue.
+
+checkentail_exact q::node<_,r>@M&n=2+m & m=0 & q=self
+ |-  self::lseg<n,r>@M . 
+print residue.
+*/
+
+
+/*
+# sh-rev3a.slk  (unsoundness in lemma)
+
+Why was false triggered by lemma proving?
+I guess it is not properly normalized.
+I am concerned that unnormalized form leads to unsoundness.
+
+id: 1; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail q::node<_,r>@M&n=2+m & m=0 & q=self&{FLOW,(21,22)=__norm}[]
+ |-  self::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]. 
+res:  1[
+   hfalse&false&{FLOW,(21,22)=__norm}[]
+   ]
+
+
+Below came from sleek proving where the RHS was normalized as:
+ |-  (exists n1,r1: self::lseg<n1,r1>@M & n1=n & r1=r). 
+
+However, it is a weirf that we have instead:
+ |-  (exists n,r: self::lseg<n,r>@M & ...)
+
+--------
+
+id: 20; caller: []; line: 25; classic: true; kind: Sleek_Entail(1); hec_num: 5; evars: [n_166,r_167]; infer_vars: []; c_heap: emp
+ checkentail q::node<_,r>@M&q=self & m=0 & n=m+2&{FLOW,(21,22)=__norm}[]
+ |-  (exists n,r: self::lseg<n,r>@M&{FLOW,(21,22)=__norm})[]. 
+res:  1[
+   emp&n=m+2 & m=0 & q=self & Anon_14=v_168 & q_169=r & exists(flted_5_176:flted_5_176=0) & exists(p_175:p_175=q_169) & exists(r_167:q_169=r_167) & exists(n_166:n_166=0+1)&{FLOW,(21,22)=__norm}[]
+   ]
+ 
+id: 28; caller: []; line: 25; classic: true; kind: Sleek_Entail(1); hec_num: 4; evars: [n_166,r_167]; infer_vars: []; c_heap: q::node<_,r>@M
+ checkentail emp&exists(n_166:n_166=0+1) & exists(r_167:q=r_167) & 
+exists(p_175:p_175=q) & exists(flted_5_176:flted_5_176=0) & q=r & Anon=v & 
+q1=self & m=0 & n=m+2&{FLOW,(21,22)=__norm}[]
+ |-  (exists n1,r1: emp&q=r1 & n1=0+1 & r=r1 & n=n1&{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  n=0+2 |-  n=1+0. LOCS:[24;5] (must-bug)
+                   fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+
+*/

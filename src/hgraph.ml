@@ -519,7 +519,7 @@ let transform ls_must_eq ini_maps=
 temp methods
 *)
 let list_to_arr_x ls_adjs =
-  let arr = Array.create !heap_size [] in
+  let arr = Array.make !heap_size [] in
   let rec helper ls arr=
     match ls with
     | [] -> arr
@@ -675,8 +675,8 @@ and build_scc_x arr_adj=
   let dfs (ls_scc,topo_order,done_vs,r) nexts=
     if not(List.mem r done_vs) && nexts <> [] then
       (* let () = Debug.info_pprint (" dfs: " ^ (string_of_int r)) no_pos in *)
-      let dfsnum = Array.create !heap_size (-1) in
-      let low = Array.create !heap_size (-1) in
+      let dfsnum = Array.make !heap_size (-1) in
+      let low = Array.make !heap_size (-1) in
       let _,_,_,_,_,sccs=visit dfsnum low arr_adj r 0 [] [r] in
       let sccs1 = Gen.BList.remove_dups_eq eq_list_int sccs in
       let sccs2 = Gen.BList.difference_eq eq_list_int sccs1 ls_scc in

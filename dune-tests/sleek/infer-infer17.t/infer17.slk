@@ -1,0 +1,19 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0
+        or self::node<_, q> * q::ll<n-1>
+  inv n >= 0.
+
+relation A(int x).
+
+infer [A] x::ll<nnn> & A(nnn) |- x::node<a1,a2>.
+print residue.
+/*
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [R]: ( R(nnn)) -->  nnn!=0]
+*/

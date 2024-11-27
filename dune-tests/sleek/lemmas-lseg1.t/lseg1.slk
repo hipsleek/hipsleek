@@ -1,0 +1,9 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p> == self=p
+  or self::node<_,q> * q::lseg<p>.
+
+lemma self::lseg<p> <->  self::lseg<p1>*p1::lseg<p>.

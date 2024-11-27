@@ -130,8 +130,8 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
     Debug.info_zprint (lazy ((" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n"))) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then
-    [(parse_file_full "./prelude.ss" true)]
+  if (Sys.file_exists "prelude.ss") then
+    [(parse_file_full "prelude.ss" true)]
   else List.map (fun x -> parse_file_full x true) new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
@@ -910,7 +910,7 @@ let process_source_list source_files =
   | file_name::_ ->
     let index = try String.rindex file_name '.' with _ -> 0 in
     let length = (String.length file_name) - index in
-    let ext = String.lowercase(String.sub file_name index length) in
+    let ext = String.lowercase_ascii (String.sub file_name index length) in
     if (ext = ".java") then
       let ss_file_name = file_name ^ ".ss" in
       let () = Pretty_ss.print_out_str_from_files_new source_files ss_file_name in

@@ -2,7 +2,7 @@
 open VarGen
 open Gen.Basic
 
-external set_close_on_exec : Unix.file_descr -> unit = "unix_set_close_on_exec";;
+let set_close_on_exec = Unix.set_close_on_exec
 
 let try_set_close_on_exec fd =
   try set_close_on_exec fd; true with Invalid_argument _ -> false

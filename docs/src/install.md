@@ -5,7 +5,7 @@ You will need opam and a recent OCaml compiler (tested on 4.14.1).
 
 ```sh
 opam install . --deps-only
-dune build ./hip.exe ./sleek.exe
+dune build @hipsleek
 
 # To use ocamldebug
 rake debug:hip debug:sleek

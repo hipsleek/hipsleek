@@ -1,0 +1,45 @@
+data cell{ int v; }.
+
+checkentail_exact x::cell<_> |- %P.
+print residue.
+expect Valid.
+
+checkentail x::cell<v> & v>0 |- %P.
+print residue.
+expect Valid.
+
+checkentail x::cell<_> * y::cell<_> |- %P.
+print residue.
+expect Valid.
+
+checkentail x::cell<_> |- %P * %Q.
+print residue.
+expect Fail.
+
+checkentail_exact x::cell<_> * y::cell<_> |- %P * %Q.
+print residue.
+expect Fail.
+
+checkentail_exact x::cell<_> * y::cell<_> |- %P * y::cell<_>.
+print residue.
+expect Valid.
+
+checkentail_exact %P * y::cell<_> |- x::cell<_> * y::cell<_>.
+print residue.
+expect Valid.
+
+checkentail_exact %P |- %P.
+print residue.
+expect Valid.
+
+checkentail_exact %P |- %Q.
+print residue.
+expect Valid.
+
+checkentail_exact %P * %R |- %Q.
+print residue.
+expect Valid.
+
+checkentail_exact %P * %Q |- %Q.
+print residue.
+expect Fail.

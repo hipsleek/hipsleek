@@ -3,9 +3,29 @@
  (libraries hipsleek)
  (preprocessor_deps xdebug.cppo)
  (modules hip sleek)
- (preprocess (action (run cppo -I . -D TRACE %{input-file}))))
+ (preprocess
+  (action
+   (run cppo -I . -D TRACE %{input-file}))))
 
 (env
  (dev
   (flags
    (:standard -warn-error -A))))
+
+(rule
+ (targets prelude.ss)
+ (deps prelude_src/prelude.ss)
+ (action
+  (run %{bin:cp} %{deps} %{targets})))
+
+(rule
+ (targets prelude.slk)
+ (deps prelude_src/prelude.slk)
+ (action
+  (run %{bin:cp} %{deps} %{targets})))
+
+(rule
+ (alias hipsleek)
+ (deps ./hip.exe ./sleek.exe ./prelude.ss ./prelude.slk)
+ (action
+  (echo "")))

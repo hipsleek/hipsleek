@@ -16,7 +16,6 @@ module Make (Token : SleekTokenS)
 
   (* Error report *)
   module Error = struct
-
     type t =
       | Illegal_character of char
       | Illegal_escape    of string
@@ -31,20 +30,19 @@ module Make (Token : SleekTokenS)
 
     open Format
 
-    let print ppf =
-      function
-      | Illegal_character c -> fprintf ppf "Illegal character (%s)" (Char.escaped c)
-      | Illegal_escape s -> fprintf ppf "Illegal backslash escape in string or character (%s)" s
-      | Unterminated_comment -> fprintf ppf "Comment not terminated"
-      | Unterminated_string -> fprintf ppf "String literal not terminated"
-      | Unterminated_java -> fprintf ppf "java code not terminated"
-      | Literal_overflow ty -> fprintf ppf "Integer literal exceeds the range of representable integers of type %s" ty
-      | Comment_start -> fprintf ppf "this is the start of a comment"
-      | Comment_not_end -> fprintf ppf "this is not the end of a comment"
 
-    let to_string x =
-      let b = Buffer.create 50 in
-      let () = bprintf b "%a" print x in Buffer.contents b
+    let to_string = function
+      | Illegal_character c -> Printf.sprintf "Illegal character (%s)" (Char.escaped c)
+      | Illegal_escape s -> Printf.sprintf "Illegal backslash escape in string or character (%s)" s
+      | Unterminated_comment -> Printf.sprintf "Comment not terminated"
+      | Unterminated_string -> Printf.sprintf "String literal not terminated"
+      | Unterminated_java -> Printf.sprintf "java code not terminated"
+      | Literal_overflow ty -> Printf.sprintf "Integer literal exceeds the range of representable integers of type %s" ty
+      | Comment_start -> Printf.sprintf "this is the start of a comment"
+      | Comment_not_end -> Printf.sprintf "this is not the end of a comment"
+
+    let print ppf err = fprintf ppf "%s" (to_string err)
+
   end;;
 
   let module M = Camlp4.ErrorHandler.Register(Error) in ()
@@ -625,7 +623,7 @@ and get_file_name = parse
         match Stream.peek s with
         | Some x ->
             Stream.junk s;
-            buff.[n] <- x;
+            Bytes.set buff n x;
             succ n
         | _ -> n
     in

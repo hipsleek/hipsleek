@@ -178,7 +178,7 @@ struct
       with Not_found ->check_const_incons t 
 
   let check_eq_incons ve_l = 
-    List.iter (fun (e1,e2,e3)-> if Ss.getVar e3 = None & SV.eq e1 e2 then raise_us "eq_incons" else ()) ve_l
+    List.iter (fun (e1,e2,e3)-> if Ss.getVar e3 = None && SV.eq e1 e2 then raise_us "eq_incons" else ()) ve_l
 
 
   let triv_subst vc vv t_vc t_ve (t_eq_l:eq list): var_eq list * (t_var*bool) list * eq list = 
@@ -670,7 +670,7 @@ struct
          | false, true, false, true -> ([(v1,not c);(v3,c)],[],[])
          | true, false, false, false -> ([],[ex_subst v2 v3],[])
          | false, true, false, false -> ([],[ex_subst v1 v3],[])) in
-    if consts=[] & subs=[] then (consts,subs,eqs)
+    if consts=[] && subs=[] then (consts,subs,eqs)
     else
       let consts = List.fold_left (fun c_l (f,t)-> List.map (fun (v,c)-> subst_ex (f,t) v, c) c_l) consts subs in
       let nc_l, eqs = fold_12_map (fun (f,t) eql-> fold_2_map (subst_ex_eq (f,t)) eql) ([],eqs) subs in

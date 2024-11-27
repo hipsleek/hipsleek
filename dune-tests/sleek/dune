@@ -1,0 +1,32 @@
+
+(rule
+  (alias runtest)
+  (action (echo "
+
+WARNING: redcsl not found, tests for ParaHIP and other related systems will not be run.
+
+"))
+  (enabled_if (not %{bin-available:redcsl}))) 
+(cram
+  (applies_to infer-app-inv infer-app-inv2)
+  (enabled_if %{bin-available:fixcalc}))
+
+(rule
+  (alias infer-app-inv)
+  (enabled_if (not %{bin-available:fixcalc}))
+  (action (echo "
+
+WARNING: fixcalc not found, skipping infer-app-inv
+
+"))) 
+
+(rule
+  (alias infer-app-inv2)
+  (enabled_if (not %{bin-available:fixcalc}))
+  (action (echo "
+
+WARNING: fixcalc not found, skipping infer-app-inv2
+
+"))) (cram
+    (deps %{project_root}/sleek.exe)
+    (applies_to :whole_subtree))

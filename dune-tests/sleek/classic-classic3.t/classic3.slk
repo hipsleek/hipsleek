@@ -1,0 +1,28 @@
+data node {
+	int val;
+	node next;
+}.
+
+checkentail_inexact htrue |- emp.
+print residue.
+
+checkentail_inexact htrue |- htrue.
+print residue.
+
+checkentail_inexact emp |- emp.
+print residue.
+
+checkentail_inexact emp |- htrue.
+print residue.
+
+checkentail_inexact x::node<_,_> |- emp.
+print residue.
+
+checkentail_inexact x::node<_,_> |- htrue.
+print residue.
+
+checkentail_inexact htrue |- x::node<_,_>.
+print residue.
+
+checkentail_inexact emp |- x::node<_,_>.
+print residue.
