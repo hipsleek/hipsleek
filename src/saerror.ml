@@ -70,7 +70,7 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
   (*   else stop body cpl1 (loop cpl1 args) args  *)
   (* in *)
   let check_node name =
-    ((String.compare name "is_null___$node") = 0) or ((String.compare name "is_not_null___$node") = 0)
+    ((String.compare name "is_null___$node") = 0) || ((String.compare name "is_not_null___$node") = 0)
   in
   let contains s1 s2 =
     let re = Str.regexp_string s2
@@ -91,7 +91,7 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
       let (_, cl) = List.hd cpl in
       let sc = List.hd cl in
       if (check_node sc.Cast.exp_scall_method_name) &&
-         (List.fold_left (fun b (t,id) -> b or List.mem id sc.Cast.exp_scall_arguments) false args) then
+         (List.fold_left (fun b (t,id) -> b || List.mem id sc.Cast.exp_scall_arguments) false args) then
         let (cpl1, args1) = part co.Cast.exp_cond_then_arm (List.map (fun (cps, cl) -> (List.map (fun cp -> (1::cp)) cps, cl)) cpl) args in
         let (cpl2, args2) = part co.Cast.exp_cond_else_arm (List.map (fun (cps, cl) -> (List.map (fun cp -> (2::cp)) cps, cl)) cpl) args in
         (cpl1@cpl2, args)
@@ -130,7 +130,7 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
   let a = List.map (fun (cps, _) -> let filted_hprel = 
                      List.filter (fun hprel -> 
                          let cp_hprel = string_of_cond_path hprel.Cformula.hprel_path in
-                         List.fold_left (fun b hprel1 -> b or (contains (string_of_cond_path hprel1) cp_hprel)) false cps
+                         List.fold_left (fun b hprel1 -> b || (contains (string_of_cond_path hprel1) cp_hprel)) false cps
                        ) constrs0 in
                      (List.hd cps, [], filted_hprel)) cpl in
   let () = print_endline_quiet "\n*************************************" in
@@ -218,7 +218,7 @@ let get_case struc_formula prog args hprel_defs =
           match f with
           | Cpure.BForm(bf, label) ->
             let vars = Cpure.fv f in
-            let is_contains = List.fold_left (fun res arg -> res or (Cpure.mem_svl1 arg vars)) false args in
+            let is_contains = List.fold_left (fun res arg -> res || (Cpure.mem_svl1 arg vars)) false args in
             is_contains
           | _ -> false
         ) hd)::(helper tl args)
@@ -238,9 +238,9 @@ let get_case struc_formula prog args hprel_defs =
   | Cpure.And (f1, f2, _) ->
     let sv1 = Cpure.fv f1 in
     let sv2 = Cpure.fv f2 in
-    if (List.fold_left (fun b arg -> b or (List.mem arg sv1)) false args)
+    if (List.fold_left (fun b arg -> b || (List.mem arg sv1)) false args)
     then
-      if (List.fold_left (fun b arg -> b or (List.mem arg sv2)) false args)
+      if (List.fold_left (fun b arg -> b || (List.mem arg sv2)) false args)
       then
         case2
       else

@@ -9,7 +9,7 @@ let%expect_test "Initialise api" =
     Initializing sleek api
     !!! **WARNING****src/astsimp.ml#9340:Post-condition has existentially quantified free vars, error position: api_prelude.ss_613:10_613:25:[(q,)]
     !!! **WARNING****src/astsimp.ml#9340:Post-condition has existentially quantified free vars, error position: api_prelude.ss_608:22_608:39:[(p,)]
-    Starting Omega.../Users/tristanlim/Desktop/RA/sleek/hipsleek/omega_modified/omega_calc/obj/oc
+    Starting Omega...
     Starting z3...
 
     !!!WARNING : uninterpreted free variables [l,h] in specification. |}]

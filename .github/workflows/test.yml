@@ -39,6 +39,10 @@ jobs:
           ghc-version: "9.4.8"
           cabal-version: "3.10.3.0"
 
+      - uses: cda-tum/setup-z3@v1
+        with:
+          version: 4.13.3
+
       - name: Install dependencies
         run: |
           # https://github.com/coq-community/docker-coq-action/blob/master/timegroup.sh
@@ -79,10 +83,6 @@ jobs:
 
       - name: Run tests
         run: |
+
           eval $(opam env)
-
-          # making prelude available is still a problem
-          # dune test
-
-          dune exec ./hip.exe examples/working/hip/ll.ss
-          dune exec ./sleek.exe examples/working/sleek/sleek2.slk
+          dune test

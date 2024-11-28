@@ -5,7 +5,7 @@ You will need opam and a recent OCaml compiler (tested on 4.14.1).
 
 ```sh
 opam install . --deps-only
-dune build ./hip.exe ./sleek.exe
+dune build @hipsleek
 
 # To use ocamldebug
 rake debug:hip debug:sleek
@@ -15,8 +15,8 @@ Try verifying some small programs.
 You will need Z3 (from opam, pip, or a system package manager) and Omega ([below](#omega)) on the PATH.
 
 ```sh
-dune exec ./hip.exe examples/working/hip/ll.ss
-dune exec ./sleek.exe examples/working/sleek/sleek2.slk
+dune exec ./hip.exe dune-tests/hip/ll.t/ll.ss
+dune exec ./sleek.exe dune-tests/sleek/sleek2.t/sleek2.ss
 ```
 
 ## Installing SLEEK as a library
@@ -29,17 +29,6 @@ opam install .
 
 ```sh
 dune test
-```
-
-Legacy tests:
-
-```sh
-# Tested on Perl 5.34
-cpanm File::NCopy Spreadsheet::WriteExcel Spreadsheet::ParseExcel
-
-cd examples/working
-./run-fast-tests.pl sleek # around 4 mins
-./run-fast-tests.pl hip # around 40 mins
 ```
 
 ## Installing external provers
@@ -76,8 +65,8 @@ cd -
 Try some tests:
 
 ```sh
-./hip -tp mona examples/working/hip/ll.ss
-./sleek -tp mona examples/working/sleek/sleek2.slk
+./hip -tp mona dune-tests/hip/ll.t/ll.ss
+./sleek -tp mona dune-tests/sleek/sleek2.t/sleek2.ss
 ```
 
 ### Fixcalc

@@ -4252,7 +4252,7 @@ and nondet_prefix = "nondet"
 and is_nondet_sv sv =
   let name = name_of_sv sv in
   if (String.length name >= 6) then
-    let prefix = String.lowercase (String.sub name 0 6) in
+    let prefix = String.lowercase_ascii (String.sub name 0 6) in
     eq_str prefix nondet_prefix
   else false
 
