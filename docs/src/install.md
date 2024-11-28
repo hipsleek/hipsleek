@@ -31,17 +31,6 @@ opam install .
 dune test
 ```
 
-Legacy tests:
-
-```sh
-# Tested on Perl 5.34
-cpanm File::NCopy Spreadsheet::WriteExcel Spreadsheet::ParseExcel
-
-cd examples/working
-./run-fast-tests.pl sleek # around 4 mins
-./run-fast-tests.pl hip # around 40 mins
-```
-
 ## Installing external provers
 
 Other external provers HIP/SLEEK uses can be built from source.

@@ -1,4 +1,0 @@
-flags:
-  -tp mona --eps : sleek9.slk, avl-orig-2.ss insert , avl-orig3.ss insert heaps.ss ripple
-  
-      

@@ -83,10 +83,6 @@ jobs:
 
       - name: Run tests
         run: |
+
           eval $(opam env)
-
-          # making prelude available is still a problem
-          # dune test
-
-          dune build @hipsleek
           dune test
