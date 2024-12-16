@@ -4,15 +4,14 @@ open Hipsleek_common
 (* Testing API *)
 let%expect_test "Initialise api" =
   (* To get primitive definitions like [int_ptr] *)
-  let () = ForwardVerifier.init ["api_prelude.ss"] in
+  let () = ForwardVerifier.init [] in
+  let lines = String.split_on_char '\n' in
+  let is_not_warning line = not (String.starts_with ~prefix:"!!!WARNING" line || String.starts_with ~prefix:"!!! **WARNING" line) in
+  [%expect.output] |> lines |> List.filter is_not_warning |> List.iter print_endline;
   [%expect{|
-    Initializing sleek api
-    !!! **WARNING****src/astsimp.ml#9340:Post-condition has existentially quantified free vars, error position: api_prelude.ss_613:10_613:25:[(q,)]
-    !!! **WARNING****src/astsimp.ml#9340:Post-condition has existentially quantified free vars, error position: api_prelude.ss_608:22_608:39:[(p,)]
     Starting Omega...
     Starting z3...
-
-    !!!WARNING : uninterpreted free variables [l,h] in specification. |}]
+    |}]
     
 let%expect_test "Entailment checking" =
   let open EntailmentProver in

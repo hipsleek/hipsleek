@@ -143,7 +143,7 @@ module EntailmentProver :
 
 module ForwardVerifier :
   sig
-    val init : string list -> unit
+    val init : ?with_default_prelude:bool -> string list -> unit
     (** [init files_names] initializes the api. This includes parsing the ss files in
         [files_names].
         Data, predicate, lemma declarations and function definitions inside of these

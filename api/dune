@@ -1,9 +1,13 @@
 (library
  (name hipsleek_api)
  (public_name hipsleek.api)
- (libraries hipsleek)
- (inline_tests (deps api_prelude.ss))
+ (libraries hipsleek dune-site)
+ (inline_tests)
  (preprocess (pps ppx_expect)))
+
+(generate_sites_module
+  (module hipsleek_sites)
+  (sites hipsleek))
 
 (env
  (dev

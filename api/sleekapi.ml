@@ -551,8 +551,13 @@ module ForwardVerifier = struct
     exlist # compute_hierarchy
 
   (* Prelude of api *)
-  let init file_names =
-    let () = print_string "Initializing sleek api" in
+  let init ?(with_default_prelude = true) file_names =
+    let file_names = 
+          if with_default_prelude
+          then let prelude_locations = Hipsleek_sites.Sites.preludes in
+               let default_preludes = List.map (fun dir -> Filename.concat dir (Filename.concat "api" "api_prelude.ss")) prelude_locations in
+               List.concat [default_preludes; file_names]
+          else file_names in
     match file_names with
     | [] -> init_without_parsing ()
     | _ -> parse_files file_names
