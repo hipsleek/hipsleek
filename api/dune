@@ -2,7 +2,7 @@
  (name hipsleek_api)
  (public_name hipsleek.api)
  (libraries hipsleek dune-site)
- (inline_tests)
+ (inline_tests (deps (package hipsleek)))
  (preprocess (pps ppx_expect)))
 
 (generate_sites_module
