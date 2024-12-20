@@ -137,6 +137,19 @@ module EntailmentProver :
     val conseq_f : hf -> pf -> mf
     val entail : mf -> mf -> bool
 
+    type success_info
+    type failure_info
+
+    type entail_result = private
+      | Success of success_info
+      | Failure of failure_info
+
+    val string_of_result : entail_result -> string
+
+    val inferred_frames : success_info -> Meta_formula.t list
+
+    val entail_with_frame : Meta_formula.t list -> Meta_formula.Consequent.t -> entail_result
+
     val ante_printer : mf -> string
     val conseq_printer : mf -> string
   end

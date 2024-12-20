@@ -494,6 +494,10 @@ module EntailmentProver = struct
     let () = print_string ("\n" ^ (string_of_bool res)) in
     res
 
+  let entail_with_frame ante conseq =
+    let valid, (residue: CF.list_context), _ = SE.run_entail_check ante conseq (Some false) in
+    failwith "entail_with_frame currently not implemented" (* TODO *)
+
   let ante_printer xs =
     let rec ante_printer_aux i xs =
       match xs with
