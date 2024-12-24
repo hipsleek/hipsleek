@@ -1,8 +1,6 @@
 open Hipsleek_common
 
-type t = Hipsleek_common.Ipure_D.formula
-let no_pos = Common_util.no_pos
-let to_expr = Pure_expression.to_sleek_expr
+(* TODO: Should we expose Ipure_D.AndList? *)
 
 type bin_predicate_kind =
   | GreaterThan
@@ -42,6 +40,12 @@ let rec to_sleek_formula =
     | Not f -> Ipure_D.Not (to_sleek_formula f, None, no_pos)
     | And (lhs, rhs) -> Ipure_D.And (to_sleek_formula lhs, to_sleek_formula rhs, no_pos)
     | Or (lhs, rhs) -> Ipure_D.Or (to_sleek_formula lhs, to_sleek_formula rhs, None, no_pos)
+
+let not_f f = Not f
+let and_f lhs rhs = And (lhs, rhs)
+let or_f lhs rhs = Or (lhs, rhs)
+let implies lhs rhs = Or (Not lhs, rhs)
+let iff lhs rhs = And (implies lhs rhs, implies rhs lhs)
 
 let rec of_sleek_formula = 
   let of_expr = Pure_expression.of_sleek_expr in

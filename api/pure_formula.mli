@@ -24,11 +24,14 @@ val lt  : Pure_expression.t -> Pure_expression.t -> t
 val lte : Pure_expression.t -> Pure_expression.t -> t
 val eq  : Pure_expression.t -> Pure_expression.t -> t
 
-val not      : t -> t
-val andf      : t -> t -> t
-val orf      : t -> t -> t
+val not_f      : t -> t
+val and_f      : t -> t -> t
+val or_f      : t -> t -> t
 val implies  : t -> t -> t
 val iff      : t -> t -> t
 
 val to_sleek_formula : t -> Hipsleek_common.Ipure_D.formula
+(** Convert a formula to its internal SLEEK representation. *)
+
 val of_sleek_formula : Hipsleek_common.Ipure_D.formula -> t
+(** Convert a SLEEK formula to the API representation. *)
