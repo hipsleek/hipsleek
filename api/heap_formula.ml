@@ -1,32 +1,31 @@
 open Hipsleek_common
 open Common_util
 
-type t = Iformula.h_formula
+type t =
+  | Empty
+  | PointsTo of Identifier.t * string * Pure_expression.t list
+  | SepConj of t * t
 
-(* Building heap formula *)
-let empty_heap_f = Iformula.HEmp
-let false_heap_f = Iformula.HFalse
-let true_heap_f  = Iformula.HTrue
+let emp = Empty
+let points_to ident view fields = PointsTo (ident, view, fields)
+let points_to_int ident n = points_to ident "int_ptr" [Pure_expression.intl n]
 
-let sep_conj_f h1 h2 = Iformula.mkStar h1 h2 no_pos
+let sep lhs rhs = SepConj (lhs, rhs)
 
-let points_to_int_f var_name i =
-  Iformula.mkHeapNode_x (Identifier.to_sleek_ident var_name) "int_ptr" [] 0 false Globals.SPLIT0
-    Ipure_D.NoAnn false false false None [Pure_expression.(to_sleek_expr (intl i))] [None] None no_pos
+let rec to_sleek_formula = function
+  | Empty -> Iformula.HEmp
+  | SepConj (lhs, rhs) -> Iformula.mkStar (to_sleek_formula lhs) (to_sleek_formula rhs) no_pos
+  | PointsTo (ident, view, fields) ->
+    let imm_param = List.map (fun _ -> None) fields in
+    Iformula.mkHeapNode_x (Identifier.to_sleek_ident ident) view [] 0 false
+      Globals.SPLIT0 Ipure_D.NoAnn false false false None (List.map Pure_expression.to_sleek_expr fields) imm_param None no_pos
 
-let points_to_f var_name ident exps =
-  let imm_param = List.map (fun _ -> None) exps in
-  Iformula.mkHeapNode_x (Identifier.to_sleek_ident var_name) ident [] 0 false
-    Globals.SPLIT0 Ipure_D.NoAnn false false false None (List.map Pure_expression.to_sleek_expr exps) imm_param None no_pos
+let rec of_sleek_formula = function
+  | Iformula.HEmp -> Empty
+  | Iformula.Star {h_formula_star_h1 = lhs; h_formula_star_h2 = rhs; _} -> sep (of_sleek_formula lhs) (of_sleek_formula rhs)
+  | Iformula.HeapNode {h_formula_heap_node = ident;
+    h_formula_heap_name = view;
+    h_formula_heap_arguments = fields; _} -> PointsTo (Identifier.of_sleek_ident ident, view, List.map Pure_expression.of_sleek_expr fields)
+  | _ -> failwith "Unsupported SLEEK heap formula found" (* TODO more descriptive error message *)
 
-let emp = empty_heap_f
-let true_h = true_heap_f
-let false_h = false_heap_f
 
-let sep = sep_conj_f
-
-let points_to_int = points_to_int_f
-let points_to = points_to_f
-
-let to_sleek_formula f = f
-let of_sleek_formula f = f

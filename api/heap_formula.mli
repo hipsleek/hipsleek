@@ -1,15 +1,18 @@
-type t
+type t = private
+  | Empty
+  | PointsTo of Identifier.t * string * Pure_expression.t list
+  | SepConj of t * t
 
 (* Heap formulae *)
 val emp : t
-val true_h : t
-val false_h : t
 
 val sep : t -> t -> t
 
 val points_to_int : Identifier.t -> int -> t
-(** [points_to_int_f s i] returns a heap formula denoting that a variable
-    with the name [s] is pointing to the integer [i].
+(** [points_to_int s i] returns a heap formula denoting that a variable
+    with the name [s] is pointing to the integer [i]. This is an alias for
+    [points_to s "int_ptr" (intl i)], where the [int_ptr] view is a data type
+    pointing to a single int.
   *)
 
 val points_to : Identifier.t -> string -> Pure_expression.t list -> t
