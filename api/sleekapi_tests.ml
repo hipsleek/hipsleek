@@ -27,19 +27,19 @@ let%expect_test "entailment checking with frames" =
   let x = Identifier.make "x" in
   let x_prime = Identifier.primed "x" in
 
-  check [(of_heap_and_pure emp true_f)] (Consequent.of_heap_and_pure emp true_f);
+  check [(Normal.of_heap_and_pure emp true_f)] (Structured.of_heap_and_pure emp true_f);
   [%expect{| |}];
 
-  check [(of_heap_and_pure emp (and_f (gt (var x) (intl 0)) (eq (var x_prime) (intl 1))))]
-    (Consequent.of_heap_and_pure emp (gt (var x_prime) (intl 1)));
+  check [(Normal.of_heap_and_pure emp (and_f (gt (var x) (intl 0)) (eq (var x_prime) (intl 1))))]
+    (Structured.of_heap_and_pure emp (gt (var x_prime) (intl 1)));
   [%expect{| |}];
 
-  check [(of_heap_and_pure (points_to_int x 1) true_f)] (Consequent.of_heap_and_pure (points_to_int x 1) true_f);
+  check [(Normal.of_heap_and_pure (points_to_int x 1) true_f)] (Structured.of_heap_and_pure (points_to_int x 1) true_f);
   [%expect{| |}];
 
   let () = data_decl_cons "node" [(Int, "val"); (Named("node"), "next")] in
-  check [(of_heap_and_pure (points_to x "node" [(intl 1); null]) true_f)]
-    (Consequent.of_heap_and_pure emp (not_f (eq (var x) null)));
+  check [(Normal.of_heap_and_pure (points_to x "node" [(intl 1); null]) true_f)]
+    (Structured.of_heap_and_pure emp (not_f (eq (var x) null)));
   [%expect{| |}];
 
   let () =
@@ -48,11 +48,11 @@ let%expect_test "entailment checking with frames" =
       | Pred p -> predicate_decl p
       | _ -> raise (Invalid_argument "NOT PRED") in
 
-  check [(of_heap_and_pure emp (eq (var x) null))] (Consequent.of_heap_and_pure (points_to x "ll" [(intl 0)]) true_f);
+  check [(Normal.of_heap_and_pure emp (eq (var x) null))] (Structured.of_heap_and_pure (points_to x "ll" [(intl 0)]) true_f);
   [%expect{| |}];
 
   let y = Identifier.make "y" in
-  check [(of_heap_and_pure (sep (points_to_int y 1) (points_to_int x 2)) true_f)] (Consequent.of_heap_and_pure (points_to_int x 2) true_f);
+  check [(Normal.of_heap_and_pure (sep (points_to_int y 1) (points_to_int x 2)) true_f)] (Structured.of_heap_and_pure (points_to_int x 2) true_f);
   [%expect{| |}];
 
   let () =
@@ -69,14 +69,14 @@ let%expect_test "entailment checking with frames" =
     let a = Identifier.make "a" in
     let b = Identifier.make "b" in
 
-    check [of_heap_and_pure (points_to x "sortl" [var a; var b]) true_f] (Consequent.of_heap_and_pure (points_to x "ll" [var a]) true_f);
+    check [Normal.of_heap_and_pure (points_to x "sortl" [var a; var b]) true_f] (Structured.of_heap_and_pure (points_to x "ll" [var a]) true_f);
     [%expect{| |}];
 
     let r1 = Identifier.make "r1" in
     let c = Identifier.make "c" in
     let anon = Identifier.anon in
-    check [of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to x "node" [var (anon ()); null])) true_f]
-      (Consequent.of_heap_and_pure (points_to x "ll" [var c]) true_f);
+    check [Normal.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to x "node" [var (anon ()); null])) true_f]
+      (Structured.of_heap_and_pure (points_to x "ll" [var c]) true_f);
     [%expect{| |}]
 
 let%expect_test "Entailment checking" =
