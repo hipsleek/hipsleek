@@ -62,3 +62,19 @@ let rec of_sleek_formula =
   | Ipure_D.BForm ((Ipure_D.Eq (lhs, rhs, _), _), _) -> BinPredicate (Equal, of_expr lhs, of_expr rhs)
   | Ipure_D.BForm (_, _) -> failwith "Converted SLEEK formula with unsupported boolean formula" (* TODO more error info *)
   | _ -> failwith "Converted SLEEK formula with unsupported connective" (* TODO more error info *)
+
+let rec of_sleek_cformula =
+  let of_expr = Pure_expression.of_sleek_cexpr in
+  function
+  | Cpure.Not (f, _, _) -> Not (of_sleek_cformula f)
+  | Cpure.And (lhs, rhs, _) -> And (of_sleek_cformula lhs, of_sleek_cformula rhs)
+  | Cpure.Or (lhs, rhs, _, _) -> Or (of_sleek_cformula lhs, of_sleek_cformula rhs)
+  | Cpure.BForm ((Cpure.BConst (true, _), _), _) -> Constant (true)
+  | Cpure.BForm ((Cpure.BConst (false, _), _), _) -> Constant (false)
+  | Cpure.BForm ((Cpure.Gt (lhs, rhs, _), _), _) -> BinPredicate (GreaterThan, of_expr lhs, of_expr rhs)
+  | Cpure.BForm ((Cpure.Gte (lhs, rhs, _), _), _) -> BinPredicate (GreaterThanEq, of_expr lhs, of_expr rhs)
+  | Cpure.BForm ((Cpure.Lt (lhs, rhs, _), _), _) -> BinPredicate (LessThan, of_expr lhs, of_expr rhs)
+  | Cpure.BForm ((Cpure.Lte (lhs, rhs, _), _), _) -> BinPredicate (LessThanEq, of_expr lhs, of_expr rhs)
+  | Cpure.BForm ((Cpure.Eq (lhs, rhs, _), _), _) -> BinPredicate (Equal, of_expr lhs, of_expr rhs)
+  | Cpure.BForm (_, _) -> failwith "Converted SLEEK formula with unsupported boolean formula" (* TODO more error info *)
+  | _ -> failwith "Converted SLEEK formula with unsupported connective" (* TODO more error info *)

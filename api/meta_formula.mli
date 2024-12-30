@@ -15,6 +15,7 @@ module Normal : sig
       the format may change at any time. *)
   val to_sleek_formula : t -> Iformula.formula
   val of_sleek_formula : Iformula.formula -> t
+  val of_sleek_cformula : Cformula.formula -> t
 end
 
 module Structured : sig

@@ -23,3 +23,4 @@ val div : t -> t -> t
 
 val to_sleek_expr : t -> Hipsleek_common.Ipure_D.exp
 val of_sleek_expr : Hipsleek_common.Ipure_D.exp -> t
+val of_sleek_cexpr : Hipsleek_common.Cpure.exp -> t

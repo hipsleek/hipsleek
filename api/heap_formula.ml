@@ -28,4 +28,14 @@ let rec of_sleek_formula = function
     h_formula_heap_arguments = fields; _} -> PointsTo (Identifier.of_sleek_ident ident, view, List.map Pure_expression.of_sleek_expr fields)
   | _ -> failwith "Unsupported SLEEK heap formula found" (* TODO more descriptive error message *)
 
-
+let rec of_sleek_cformula = function
+  | Cformula.HEmp -> Empty
+  | Cformula.Star {h_formula_star_h1 = lhs; h_formula_star_h2 = rhs; _} -> sep (of_sleek_cformula lhs) (of_sleek_cformula rhs)
+  (* This handling is mostly taken from Cprinter.pr_h_formula. *)
+  | Cformula.DataNode {h_formula_data_node; h_formula_data_name; h_formula_data_arguments; _} ->
+      let var_names = List.map (fun spec_var -> Pure_expression.var (Identifier.of_sleek_spec_var spec_var)) h_formula_data_arguments in
+      points_to (Identifier.of_sleek_spec_var h_formula_data_node)
+        h_formula_data_name
+        var_names
+  | Cformula.ViewNode _ -> failwith "TODO: Implement of_sleek_cformula on ViewNodes"
+  | _ -> failwith "Unsupported SLEEK heap formula found" (* TODO more descriptive error message *)

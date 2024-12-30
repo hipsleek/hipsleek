@@ -35,3 +35,5 @@ val to_sleek_formula : t -> Hipsleek_common.Ipure_D.formula
 
 val of_sleek_formula : Hipsleek_common.Ipure_D.formula -> t
 (** Convert a SLEEK formula to the API representation. *)
+
+val of_sleek_cformula : Hipsleek_common.Cpure.formula -> t

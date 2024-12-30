@@ -20,6 +20,11 @@ module Normal = struct
         of_heap_and_pure (Heap_formula.of_sleek_formula formula_base_heap) (Pure_formula.of_sleek_formula formula_base_pure)
     | _ -> failwith "Unsupported SLEEK Iformula" (* TODO more descriptive error *)
 
+  let of_sleek_cformula = function
+    | Cformula.Base({ formula_base_heap; formula_base_pure = OnePF pure_f; _ }) ->
+        of_heap_and_pure (Heap_formula.of_sleek_cformula formula_base_heap) (Pure_formula.of_sleek_cformula pure_f)
+    | _ -> failwith "Unsupported SLEEK Cformula" (* TODO more descriptive error *)
+
   let to_string formula = Sleekcommons.string_of_meta_formula (Sleekcommons.MetaForm (to_sleek_formula formula))
 
 end

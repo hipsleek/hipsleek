@@ -33,3 +33,10 @@ let of_sleek_ident (name, primed) =
   match primed with
   | Hipsleek_common.VarGen.Primed -> Primed name
   | Hipsleek_common.VarGen.Unprimed -> Normal name
+
+let of_sleek_spec_var spec_var =
+  let open Hipsleek_common in
+  match spec_var with
+  | Cpure.SpecVar (_, name, VarGen.Primed) -> Primed name
+  | Cpure.SpecVar (_, name, VarGen.Unprimed) when String.starts_with ~prefix:"Anon_" name -> Anonymous name
+  | Cpure.SpecVar (_, name, VarGen.Unprimed) -> Normal name

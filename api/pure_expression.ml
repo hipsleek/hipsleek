@@ -35,6 +35,17 @@ let rec of_sleek_expr = function
   | Ipure_D.Div(a, b, _) -> Div(of_sleek_expr a, of_sleek_expr b)
   | _ -> failwith "Not supported"
 
+let rec of_sleek_cexpr = function
+  | Cpure.Null(_) -> Null
+  | Cpure.Var(ident, _) -> Var (Identifier.of_sleek_spec_var ident)
+  | Cpure.IConst(i, _) -> Intl(i)
+  | Cpure.FConst(i, _) -> Floatl(i)
+  | Cpure.Add(a, b, _) -> Add(of_sleek_cexpr a, of_sleek_cexpr b)
+  | Cpure.Subtract(a, b, _) -> Sub(of_sleek_cexpr a, of_sleek_cexpr b)
+  | Cpure.Mult(a, b, _) -> Mul(of_sleek_cexpr a, of_sleek_cexpr b)
+  | Cpure.Div(a, b, _) -> Div(of_sleek_cexpr a, of_sleek_cexpr b)
+  | _ -> failwith "Not supported"
+
 let rec to_sleek_expr = function
   | Null -> Ipure_D.Null(no_pos)
   | Var(ident) -> Ipure_D.Var (Identifier.to_sleek_ident ident, no_pos)

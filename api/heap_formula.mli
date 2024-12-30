@@ -23,3 +23,4 @@ val points_to : Identifier.t -> string -> Pure_expression.t list -> t
 
 val to_sleek_formula : t -> Hipsleek_common.Iformula.h_formula
 val of_sleek_formula : Hipsleek_common.Iformula.h_formula -> t
+val of_sleek_cformula : Hipsleek_common.Cformula.h_formula -> t
