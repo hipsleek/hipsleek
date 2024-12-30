@@ -2,6 +2,7 @@ open Sleekapi
 open Hipsleek_common
 
 (* Testing API *)
+(* Put global initialization (e.g. declarations) before all others. *)
 let%expect_test "Initialise api" =
   (* To get primitive definitions like [int_ptr] *)
   let () = ForwardVerifier.init [] in
@@ -11,73 +12,80 @@ let%expect_test "Initialise api" =
   [%expect{|
     Starting Omega...
     Starting z3...
-    |}]
-    
-let%expect_test "entailment checking with frames" =
-  (* These tests correspond to the entailment checking tests, but they also check for the frame. *)
-  let check antes conseq =
-    let result = EntailmentProver.entail_with_frame antes conseq in
-    Printf.printf "%s\n" (EntailmentProver.string_of_result result) in
+    |}];
+  (* Initialize some definitions that our tests will use *)
+  let register_declaration decl =
+    match parse_decl decl with
+    | Pred p -> predicate_decl p;
+    | Lemma l -> lemma_decl l true;
+    | _ -> raise (Invalid_argument "Declaration is not valid")
+  in
 
-  let open Pure_formula in
-  let open Pure_expression in
-  let open Heap_formula in
-  let open Meta_formula in
+  data_decl_cons "node" [(Int, "val"); (Named("node"), "next")];
 
+  register_declaration  "pred ll<n> == self = null & n = 0 or self::node<next = r> * r::ll<n - 1> inv n >= 0.";
+  register_declaration "pred sortl<n, mi> == self = null & n = 0 or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k inv n >= 0.";
+  register_declaration "lemma self::sortl<n, mi> -> self::ll<n>.";
+;;
+
+(* These tests correspond to the entailment checking tests, but they also check for the frame. *)
+open Pure_formula
+open Pure_expression
+open Heap_formula
+open Meta_formula
+
+let check antes conseq =
+  let result = EntailmentProver.entail_with_frame antes conseq in
+  Printf.printf "%s\n" (EntailmentProver.string_of_result result)
+
+let%expect_test "entailment smoke test" =
+  check [(Normal.of_heap_and_pure emp true_f)] (Structured.of_heap_and_pure emp true_f);
+  [%expect{| |}]
+
+let%expect_test "pure integer entailment" =
   let x = Identifier.make "x" in
   let x_prime = Identifier.primed "x" in
-
-  check [(Normal.of_heap_and_pure emp true_f)] (Structured.of_heap_and_pure emp true_f);
-  [%expect{| |}];
-
   check [(Normal.of_heap_and_pure emp (and_f (gt (var x) (intl 0)) (eq (var x_prime) (intl 1))))]
     (Structured.of_heap_and_pure emp (gt (var x_prime) (intl 1)));
-  [%expect{| |}];
+  [%expect{| |}]
 
+let%expect_test "heap entailment reflexivity" =
+  let x = Identifier.make "x" in
   check [(Normal.of_heap_and_pure (points_to_int x 1) true_f)] (Structured.of_heap_and_pure (points_to_int x 1) true_f);
-  [%expect{| |}];
+  [%expect{| |}]
 
-  let () = data_decl_cons "node" [(Int, "val"); (Named("node"), "next")] in
+let%expect_test "data view entailment" =
+  let x = Identifier.make "x" in
   check [(Normal.of_heap_and_pure (points_to x "node" [(intl 1); null]) true_f)]
     (Structured.of_heap_and_pure emp (not_f (eq (var x) null)));
-  [%expect{| |}];
+  [%expect{| |}]
 
-  let () =
-    let ll = "pred ll<n> == self = null & n = 0 or self::node<next = r> * r::ll<n - 1> inv n >= 0." in
-    match parse_decl ll with
-      | Pred p -> predicate_decl p
-      | _ -> raise (Invalid_argument "NOT PRED") in
-
+let%expect_test "pred view entailment" =
+  let x = Identifier.make "x" in
   check [(Normal.of_heap_and_pure emp (eq (var x) null))] (Structured.of_heap_and_pure (points_to x "ll" [(intl 0)]) true_f);
-  [%expect{| |}];
+  [%expect{| |}]
 
+let%expect_test "frame rule" =
   let y = Identifier.make "y" in
+  let x = Identifier.make "x" in
   check [(Normal.of_heap_and_pure (sep (points_to_int y 1) (points_to_int x 2)) true_f)] (Structured.of_heap_and_pure (points_to_int x 2) true_f);
-  [%expect{| |}];
+  [%expect{| |}]
 
-  let () =
-    let sort = "pred sortl<n, mi> == self = null & n = 0 or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k inv n >= 0." in
-    match parse_decl sort with
-      | Pred p -> predicate_decl p
-      | _ -> ();
-    let lemma = "lemma self::sortl<n, mi> -> self::ll<n>." in
-    match parse_decl lemma with
-      | Lemma l -> lemma_decl l true
-      | _ -> ();
-    in
+let%expect_test "lemma entailment" =
+  let x = Identifier.make "x" in
+  let a = Identifier.make "a" in
+  let b = Identifier.make "b" in
+  check [Normal.of_heap_and_pure (points_to x "sortl" [var a; var b]) true_f] (Structured.of_heap_and_pure (points_to x "ll" [var a]) true_f);
+  [%expect{| |}]
 
-    let a = Identifier.make "a" in
-    let b = Identifier.make "b" in
-
-    check [Normal.of_heap_and_pure (points_to x "sortl" [var a; var b]) true_f] (Structured.of_heap_and_pure (points_to x "ll" [var a]) true_f);
-    [%expect{| |}];
-
-    let r1 = Identifier.make "r1" in
-    let c = Identifier.make "c" in
-    let anon = Identifier.anon in
-    check [Normal.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to x "node" [var (anon ()); null])) true_f]
-      (Structured.of_heap_and_pure (points_to x "ll" [var c]) true_f);
-    [%expect{| |}]
+let%expect_test "linked list chaining" =
+  let x = Identifier.make "x" in
+  let r1 = Identifier.make "r1" in
+  let c = Identifier.make "c" in
+  let anon = Identifier.anon in
+  check [Normal.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to x "node" [var (anon ()); null])) true_f]
+    (Structured.of_heap_and_pure (points_to x "ll" [var c]) true_f);
+  [%expect{| |}]
 
 let%expect_test "Entailment checking" =
   let open EntailmentProver in
@@ -123,7 +131,6 @@ let%expect_test "Entailment checking" =
 
   let entail_4 () =
     (* x::node<0,null> |- x != null *)
-    let () = data_decl_cons "node" [(Int, "val"); (Named("node"), "next")] in
     (* let () = data_decl "data node { int val ; node next }." in *)
     let ante_f = ante_f 
         (points_to_f "x" "node" [(int_pure_exp 0); (null_pure_exp)]) true_f in
@@ -137,13 +144,6 @@ let%expect_test "Entailment checking" =
     
   let entail_5 () =  
     (* x=null |- x::ll<0> *)
-    let ll = "pred ll<n> == self = null & n = 0
-or self::node<next = r> * r::ll<n - 1>
-inv n >= 0." in
-    let () = match parse_decl ll with
-      | Pred p -> predicate_decl p
-      | _ -> raise (Invalid_argument "NOT PRED")
-    in
     let ante_f = ante_f empty_heap_f
         (eq_pure_f
            (var_pure_exp "x")
@@ -182,21 +182,6 @@ inv n >= 0." in
   in
 
   let entail_8 () =
-    let sort = "pred sortl<n, mi> == self = null & n = 0
-or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
-inv n >= 0." in
-    let () =
-      match parse_decl sort with
-      | Pred p -> predicate_decl p
-      | _ -> ()
-    in
-    (* let _ = top_level_decl sort in *)
-    let lemma = "lemma self::sortl<n, mi> -> self::ll<n>." in
-    let () =
-      match parse_decl lemma with
-      | Lemma l -> lemma_decl l true
-      | _ -> ()
-    in
     (* let _ = top_level_decl lemma in *)
     let ante_f = ante_f
         (points_to_f "x" "sortl" [(var_pure_exp "a");
