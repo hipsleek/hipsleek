@@ -141,14 +141,14 @@ module EntailmentProver :
     type failure_info
 
     type entail_result = private
-      | Success of success_info
-      | Failure of failure_info
+      | EntailSuccess of success_info
+      | EntailFailure of failure_info
 
     val string_of_result : entail_result -> string
 
-    val inferred_frames : success_info -> Meta_formula.t list
+    val inferred_frames : success_info -> Meta_formula.Normal.t list
 
-    val entail_with_frame : Meta_formula.t list -> Meta_formula.Consequent.t -> entail_result
+    val entail_with_frame : Meta_formula.Normal.t list -> Meta_formula.Structured.t -> entail_result
 
     val ante_printer : mf -> string
     val conseq_printer : mf -> string
