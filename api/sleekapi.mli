@@ -146,9 +146,9 @@ module EntailmentProver :
 
     val string_of_result : entail_result -> string
 
-    val inferred_frames : success_info -> Meta_formula.Normal.t list
+    val inferred_frames : success_info -> Formula.Meta_formula.t list
 
-    val entail_with_frame : Meta_formula.Normal.t list -> Meta_formula.Structured.t -> entail_result
+    val entail_with_frame : Formula.Meta_formula.t list -> Formula.Structured.t -> entail_result
 
     val ante_printer : mf -> string
     val conseq_printer : mf -> string

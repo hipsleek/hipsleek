@@ -494,7 +494,7 @@ module EntailmentProver = struct
     let () = print_string ("\n" ^ (string_of_bool res)) in
     res
 
-  type success_info = Meta_formula.Normal.t list
+  type success_info = Formula.Meta_formula.t list
   type failure_info = unit
 
   type entail_result =
@@ -503,7 +503,7 @@ module EntailmentProver = struct
 
   let string_of_result = function
     | EntailSuccess (successes) ->
-        List.map Meta_formula.Normal.to_string successes
+        List.map Formula.Meta_formula.to_string successes
         |> String.concat ", "
         |> (fun formulas -> "[" ^ formulas ^ "]")
     | EntailFailure () -> "[Entailment check failed]"
@@ -511,14 +511,14 @@ module EntailmentProver = struct
   let inferred_frames result = result
 
   let entail_with_frame ante conseq =
-    let sleek_antes = List.map (fun ante -> Sleekcommons.MetaForm(Meta_formula.Normal.to_sleek_formula ante)) ante in
-    let sleek_conseq = Sleekcommons.MetaEForm(Meta_formula.Structured.to_sleek_formula conseq) in
+    let sleek_antes = List.map (fun ante -> Sleekcommons.MetaForm(Formula.Meta_formula.to_sleek_formula ante)) ante in
+    let sleek_conseq = Sleekcommons.MetaEForm(Formula.Structured.to_sleek_formula conseq) in
     let valid, (residue: CF.list_context), _ = Sleekengine.run_entail_check sleek_antes sleek_conseq (Some false) in
     if not valid
     then EntailFailure ()
     else
       let contexts_list = Cformula.list_formula_of_list_context residue in
-      EntailSuccess (List.map Meta_formula.Normal.of_sleek_cformula contexts_list)
+      EntailSuccess (List.map Formula.Meta_formula.of_sleek_cformula contexts_list)
 
   let ante_printer xs =
     let rec ante_printer_aux i xs =

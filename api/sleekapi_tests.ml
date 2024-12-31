@@ -24,6 +24,7 @@ end
 
 
 (* These tests correspond to the entailment checking tests, but they also check for the frame. *)
+open Formula
 open Pure_formula
 open Pure_expression
 open Heap_formula
@@ -34,43 +35,43 @@ let check antes conseq =
   Printf.printf "%s\n" (EntailmentProver.string_of_result result)
 
 let%expect_test "entailment smoke test" =
-  check [(Normal.of_heap_and_pure emp true_f)] (Structured.of_heap_and_pure emp true_f);
+  check [(Meta_formula.of_heap_and_pure emp true_f)] (Structured.of_heap_and_pure emp true_f);
   [%expect{| |}]
 
 let%expect_test "pure integer entailment" =
   let x = Identifier.make "x" in
   let x_prime = Identifier.primed "x" in
-  check [(Normal.of_heap_and_pure emp (and_f (gt (var x) (intl 0)) (eq (var x_prime) (intl 1))))]
+  check [(Meta_formula.of_heap_and_pure emp (and_f (gt (var x) (intl 0)) (eq (var x_prime) (intl 1))))]
     (Structured.of_heap_and_pure emp (gt (var x_prime) (intl 1)));
   [%expect{| |}]
 
 let%expect_test "heap entailment reflexivity" =
   let x = Identifier.make "x" in
-  check [(Normal.of_heap_and_pure (points_to_int x 1) true_f)] (Structured.of_heap_and_pure (points_to_int x 1) true_f);
+  check [(Meta_formula.of_heap_and_pure (points_to_int x 1) true_f)] (Structured.of_heap_and_pure (points_to_int x 1) true_f);
   [%expect{| |}]
 
 let%expect_test "data view entailment" =
   let x = Identifier.make "x" in
-  check [(Normal.of_heap_and_pure (points_to x "node" [(intl 1); null]) true_f)]
+  check [(Meta_formula.of_heap_and_pure (points_to x "node" [(intl 1); null]) true_f)]
     (Structured.of_heap_and_pure emp (not_f (eq (var x) null)));
   [%expect{| |}]
 
 let%expect_test "pred view entailment" =
   let x = Identifier.make "x" in
-  check [(Normal.of_heap_and_pure emp (eq (var x) null))] (Structured.of_heap_and_pure (points_to x "ll" [(intl 0)]) true_f);
+  check [(Meta_formula.of_heap_and_pure emp (eq (var x) null))] (Structured.of_heap_and_pure (points_to x "ll" [(intl 0)]) true_f);
   [%expect{| |}]
 
 let%expect_test "frame rule" =
   let y = Identifier.make "y" in
   let x = Identifier.make "x" in
-  check [(Normal.of_heap_and_pure (sep (points_to_int y 1) (points_to_int x 2)) true_f)] (Structured.of_heap_and_pure (points_to_int x 2) true_f);
+  check [(Meta_formula.of_heap_and_pure (sep (points_to_int y 1) (points_to_int x 2)) true_f)] (Structured.of_heap_and_pure (points_to_int x 2) true_f);
   [%expect{| |}]
 
 let%expect_test "lemma entailment" =
   let x = Identifier.make "x" in
   let a = Identifier.make "a" in
   let b = Identifier.make "b" in
-  check [Normal.of_heap_and_pure (points_to x "sortl" [var a; var b]) true_f] (Structured.of_heap_and_pure (points_to x "ll" [var a]) true_f);
+  check [Meta_formula.of_heap_and_pure (points_to x "sortl" [var a; var b]) true_f] (Structured.of_heap_and_pure (points_to x "ll" [var a]) true_f);
   [%expect{| |}]
 
 let%expect_test "linked list chaining" =
@@ -78,7 +79,7 @@ let%expect_test "linked list chaining" =
   let r1 = Identifier.make "r1" in
   let c = Identifier.make "c" in
   let anon = Identifier.anon in
-  check [Normal.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to x "node" [var (anon ()); null])) true_f]
+  check [Meta_formula.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to x "node" [var (anon ()); null])) true_f]
     (Structured.of_heap_and_pure (points_to x "ll" [var c]) true_f);
   [%expect{| |}]
 
