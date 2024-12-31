@@ -1,32 +1,27 @@
 open Sleekapi
 open Hipsleek_common
 
-(* Testing API *)
 (* Put global initialization (e.g. declarations) before all others. *)
-let%expect_test "Initialise api" =
-  (* To get primitive definitions like [int_ptr] *)
-  let () = ForwardVerifier.init [] in
-  let lines = String.split_on_char '\n' in
-  let is_not_warning line = not (String.starts_with ~prefix:"!!!WARNING" line || String.starts_with ~prefix:"!!! **WARNING" line) in
-  [%expect.output] |> lines |> List.filter is_not_warning |> List.iter print_endline;
-  [%expect{|
-    Starting Omega...
-    Starting z3...
-    |}];
-  (* Initialize some definitions that our tests will use *)
-  let register_declaration decl =
-    match parse_decl decl with
-    | Pred p -> predicate_decl p;
-    | Lemma l -> lemma_decl l true;
-    | _ -> raise (Invalid_argument "Declaration is not valid")
-  in
+module Expect_test_config = struct
+  include Expect_test_config
+  let () =
+    ForwardVerifier.init [];
+    (* Initialize some definitions that our tests will use *)
+    let register_declaration decl =
+      match parse_decl decl with
+      | Pred p -> predicate_decl p;
+      | Lemma l -> lemma_decl l true;
+      | _ -> raise (Invalid_argument "Declaration is not valid")
+    in
 
-  data_decl_cons "node" [(Int, "val"); (Named("node"), "next")];
+    data_decl_cons "node" [(Int, "val"); (Named("node"), "next")];
 
-  register_declaration  "pred ll<n> == self = null & n = 0 or self::node<next = r> * r::ll<n - 1> inv n >= 0.";
-  register_declaration "pred sortl<n, mi> == self = null & n = 0 or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k inv n >= 0.";
-  register_declaration "lemma self::sortl<n, mi> -> self::ll<n>.";
-;;
+    register_declaration  "pred ll<n> == self = null & n = 0 or self::node<next = r> * r::ll<n - 1> inv n >= 0.";
+    register_declaration "pred sortl<n, mi> == self = null & n = 0 or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k inv n >= 0.";
+    register_declaration "lemma self::sortl<n, mi> -> self::ll<n>.";
+
+end
+
 
 (* These tests correspond to the entailment checking tests, but they also check for the frame. *)
 open Pure_formula
