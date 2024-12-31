@@ -144,7 +144,7 @@ module EntailmentProver :
       | EntailSuccess of success_info
       | EntailFailure of failure_info
 
-    val string_of_result : entail_result -> string
+    val pp_entail_result : Format.formatter -> entail_result -> unit
 
     val inferred_frames : success_info -> Formula.Meta_formula.t list
 

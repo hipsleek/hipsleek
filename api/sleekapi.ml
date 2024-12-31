@@ -501,12 +501,11 @@ module EntailmentProver = struct
     | EntailSuccess of success_info
     | EntailFailure of failure_info
 
-  let string_of_result = function
-    | EntailSuccess (successes) ->
-        List.map Formula.Meta_formula.to_string successes
-        |> String.concat ", "
-        |> (fun formulas -> "[" ^ formulas ^ "]")
-    | EntailFailure () -> "[Entailment check failed]"
+  let pp_entail_result out result =
+    match result with
+      | EntailSuccess (successes) ->
+          Format.fprintf out "Success: %a" (Format.pp_print_list Formula.Meta_formula.pp) successes
+      | EntailFailure () -> Format.fprintf out "Failure"
 
   let inferred_frames result = result
 

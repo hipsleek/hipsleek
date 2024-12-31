@@ -32,7 +32,7 @@ open Meta_formula
 
 let check antes conseq =
   let result = EntailmentProver.entail_with_frame antes conseq in
-  Printf.printf "%s\n" (EntailmentProver.string_of_result result)
+  Format.printf "%a@." EntailmentProver.pp_entail_result result
 
 let%expect_test "entailment smoke test" =
   check [(Meta_formula.of_heap_and_pure emp true_f)] (Structured.of_heap_and_pure emp true_f);
@@ -79,7 +79,7 @@ let%expect_test "linked list chaining" =
   let r1 = Identifier.make "r1" in
   let c = Identifier.make "c" in
   let anon = Identifier.anon in
-  check [Meta_formula.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to x "node" [var (anon ()); null])) true_f]
+  check [Meta_formula.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to r1 "node" [var (anon ()); null])) true_f]
     (Structured.of_heap_and_pure (points_to x "ll" [var c]) true_f);
   [%expect{| |}]
 

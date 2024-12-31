@@ -36,9 +36,6 @@ module Identifier : sig
   val is_primed : t -> bool
   val is_anon : t -> bool
   val to_string : t -> string
-
-  val to_sleek_ident : t -> string * Hipsleek_common.VarGen.primed
-  val of_sleek_spec_var : Hipsleek_common.Cpure.spec_var -> t
 end
 
 
@@ -56,9 +53,6 @@ module Pure_expression : sig
   val div : pure_expr -> pure_expr -> pure_expr
 
   (* TODO add strings, booleans, lists? *)
-
-  val to_sleek_expr : t -> Hipsleek_common.Ipure_D.exp
-  val of_sleek_cexpr : Hipsleek_common.Cpure.exp -> t
 end
 
 module Pure_formula : sig
@@ -80,9 +74,6 @@ module Pure_formula : sig
   val or_f      : t -> t -> t
   val implies  : t -> t -> t
   val iff      : t -> t -> t
-
-val to_sleek_formula : t -> Hipsleek_common.Ipure_D.formula
-val of_sleek_cformula : Hipsleek_common.Cpure.formula -> t
 end
 
 module Heap_formula : sig
@@ -91,6 +82,7 @@ module Heap_formula : sig
   val emp : t
 
   val sep : t -> t -> t
+  (* TODO: Are htrue and hfalse necessary? *)
 
   val points_to_int : variable -> int -> t
   (** [points_to_int_f s i] returns a heap formula denoting that a variable
@@ -102,9 +94,6 @@ module Heap_formula : sig
       with the name [s1] is pointing to a [s2] heap node. [l] is the list of
       data fields of the heap node.
   *)
-
-  val to_sleek_formula : t -> Hipsleek_common.Iformula.h_formula
-  val of_sleek_cformula : Hipsleek_common.Cformula.h_formula -> t
 end
 
 open Hipsleek_common
@@ -120,12 +109,11 @@ module Meta_formula : sig
   type t = meta_formula
   (** Type to represent a metaformula. Currently, this contains a heap constraint and a pure logic constraint. *)
   val of_heap_and_pure : Heap_formula.t -> Pure_formula.t -> t
-  val to_string : t -> string
   (** Output a string representation of this base formula. This is provided as a debugging aid;
       the format may change at any time. *)
   val to_sleek_formula : t -> Iformula.formula
   val of_sleek_cformula : Cformula.formula -> t
-  val to_string : t -> string
+  val pp : Format.formatter -> t -> unit
 end
 
 module Structured : sig

@@ -29,6 +29,7 @@ type variable =
   | SepConj of heap_formula * heap_formula
   and meta_formula = {meta_heap : heap_formula; meta_pure : pure_formula}
   and structured_meta_formula = {structured_heap : heap_formula; structured_pure : pure_formula}
+  [@@deriving show]
 
 module Identifier = struct
   type t = variable
@@ -177,7 +178,11 @@ module Heap_formula = struct
         points_to (Identifier.of_sleek_spec_var h_formula_data_node)
           h_formula_data_name
           var_names
-    | Cformula.ViewNode _ -> failwith "TODO: Implement of_sleek_cformula on ViewNodes"
+    | Cformula.ViewNode {h_formula_view_node; h_formula_view_name; h_formula_view_arguments; _} ->
+        let var_names = List.map (fun spec_var -> Pure_expression.var (Identifier.of_sleek_spec_var spec_var)) h_formula_view_arguments in
+        points_to (Identifier.of_sleek_spec_var h_formula_view_node)
+          h_formula_view_name
+          var_names
     | _ -> failwith "Unsupported SLEEK heap formula found" (* TODO more descriptive error message *)
 end
 
@@ -208,8 +213,7 @@ module Meta_formula = struct
         of_heap_and_pure (Heap_formula.of_sleek_cformula formula_base_heap) (Pure_formula.of_sleek_cformula pure_f)
     | _ -> failwith "Unsupported SLEEK Cformula" (* TODO more descriptive error *)
 
-  let to_string formula = Sleekcommons.string_of_meta_formula (Sleekcommons.MetaForm (to_sleek_formula formula))
-
+  let pp = pp_meta_formula
 end
 
 module Structured = struct
