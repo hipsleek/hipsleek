@@ -156,8 +156,10 @@ module Heap_formula = struct
   type t = heap_formula
 
   let emp = Empty
+
+  let int_pointer_view = "int_ptr"
   let points_to ident view fields = PointsTo (ident, view, fields)
-  let points_to_int ident n = points_to ident "int_ptr" [Pure_expression.intl n]
+  let points_to_int ident n = points_to ident int_pointer_view [Pure_expression.intl n]
 
   let sep lhs rhs = SepConj (lhs, rhs)
   (* Heap formulae *)

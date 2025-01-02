@@ -84,6 +84,8 @@ module Heap_formula : sig
   val sep : t -> t -> t
   (* TODO: Are htrue and hfalse necessary? *)
 
+  val int_pointer_view : string
+
   val points_to_int : variable -> int -> t
   (** [points_to_int_f s i] returns a heap formula denoting that a variable
       with the name [s] is pointing to the integer [i].
