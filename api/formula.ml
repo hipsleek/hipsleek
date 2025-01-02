@@ -146,8 +146,7 @@ module Pure_formula = struct
     | Cpure.BForm ((Cpure.Lt (lhs, rhs, _), _), _) -> BinPredicate (LessThan, of_expr lhs, of_expr rhs)
     | Cpure.BForm ((Cpure.Lte (lhs, rhs, _), _), _) -> BinPredicate (LessThanEq, of_expr lhs, of_expr rhs)
     | Cpure.BForm ((Cpure.Eq (lhs, rhs, _), _), _) -> BinPredicate (Equal, of_expr lhs, of_expr rhs)
-    | Cpure.BForm (_, _) -> failwith "Converted SLEEK formula with unsupported boolean formula" (* TODO more error info *)
-    | _ -> failwith "Converted SLEEK formula with unsupported connective" (* TODO more error info *)
+    | unknown -> raise (Invalid_argument ("Unknown SLEEK pure formula: " ^ (Cprinter.string_of_pure_formula unknown)))
 end
 
 module Heap_formula = struct
@@ -185,7 +184,7 @@ module Heap_formula = struct
         points_to (Identifier.of_sleek_spec_var h_formula_view_node)
           h_formula_view_name
           var_names
-    | _ -> failwith "Unsupported SLEEK heap formula found" (* TODO more descriptive error message *)
+    | unknown -> raise (Invalid_argument ("Unknown SLEEK heap formula: " ^ (Cprinter.string_of_h_formula unknown)))
 end
 
 open Hipsleek_common
@@ -213,7 +212,7 @@ module Meta_formula = struct
   let of_sleek_cformula = function
     | Cformula.Base({ formula_base_heap; formula_base_pure = OnePF pure_f; _ }) ->
         of_heap_and_pure (Heap_formula.of_sleek_cformula formula_base_heap) (Pure_formula.of_sleek_cformula pure_f)
-    | _ -> failwith "Unsupported SLEEK Cformula" (* TODO more descriptive error *)
+    | unknown -> raise (Invalid_argument ("Unknown SLEEK meta formula: "^ (Cprinter.string_of_formula unknown)))
 
   let pp = pp_meta_formula
 end
