@@ -36,43 +36,105 @@ let check antes conseq =
 
 let%expect_test "entailment smoke test" =
   check [(Meta_formula.of_heap_and_pure emp true_f)] (Structured.of_heap_and_pure emp true_f);
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap = Formula.Empty;
+               meta_pure = (Formula.Constant true) }
+    |}]
 
 let%expect_test "pure integer entailment" =
   let x = Identifier.make "x" in
   let x_prime = Identifier.primed "x" in
-  check [(Meta_formula.of_heap_and_pure emp (and_f (gt (var x) (intl 0)) (eq (var x_prime) (intl 1))))]
+  check [(Meta_formula.of_heap_and_pure emp (and_f (gt (var x) (intl 0)) (eq (var x_prime) (add (var x) (intl 1)))))]
     (Structured.of_heap_and_pure emp (gt (var x_prime) (intl 1)));
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap = Formula.Empty;
+               meta_pure =
+               (Formula.And (
+                  (Formula.BinPredicate (Formula.Equal,
+                     (Formula.Var (Formula.Primed "x")),
+                     (Formula.Add ((Formula.Intl 1),
+                        (Formula.Var (Formula.Normal "x"))))
+                     )),
+                  (Formula.BinPredicate (Formula.LessThan, (Formula.Intl 0),
+                     (Formula.Var (Formula.Normal "x"))))
+                  ))
+               }
+    |}]
 
 let%expect_test "heap entailment reflexivity" =
   let x = Identifier.make "x" in
   check [(Meta_formula.of_heap_and_pure (points_to_int x 1) true_f)] (Structured.of_heap_and_pure (points_to_int x 1) true_f);
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap = Formula.Empty;
+               meta_pure =
+               (Formula.BinPredicate (Formula.Equal,
+                  (Formula.Var (Formula.Normal "flted_0_2492")), (Formula.Intl 1)
+                  ))
+               }
+    |}]
 
 let%expect_test "data view entailment" =
   let x = Identifier.make "x" in
   check [(Meta_formula.of_heap_and_pure (points_to x "node" [(intl 1); null]) true_f)]
     (Structured.of_heap_and_pure emp (not_f (eq (var x) null)));
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap =
+               (Formula.PointsTo ((Formula.Normal "x"), "node",
+                  [(Formula.Var (Formula.Normal "flted_0_2511"));
+                    (Formula.Var (Formula.Normal "flted_0_2510"))]
+                  ));
+               meta_pure =
+               (Formula.And (
+                  (Formula.BinPredicate (Formula.Equal,
+                     (Formula.Var (Formula.Normal "flted_0_2510")), Formula.Null
+                     )),
+                  (Formula.BinPredicate (Formula.Equal,
+                     (Formula.Var (Formula.Normal "flted_0_2511")),
+                     (Formula.Intl 1)))
+                  ))
+               }
+    |}]
 
 let%expect_test "pred view entailment" =
   let x = Identifier.make "x" in
   check [(Meta_formula.of_heap_and_pure emp (eq (var x) null))] (Structured.of_heap_and_pure (points_to x "ll" [(intl 0)]) true_f);
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap = Formula.Empty;
+               meta_pure =
+               (Formula.BinPredicate (Formula.Equal,
+                  (Formula.Var (Formula.Normal "x")), Formula.Null))
+               }
+    |}]
 
 let%expect_test "frame rule" =
   let y = Identifier.make "y" in
   let x = Identifier.make "x" in
   check [(Meta_formula.of_heap_and_pure (sep (points_to_int y 1) (points_to_int x 2)) true_f)] (Structured.of_heap_and_pure (points_to_int x 2) true_f);
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap =
+               (Formula.PointsTo ((Formula.Normal "y"), "int_ptr",
+                  [(Formula.Var (Formula.Normal "flted_0_2542"))]));
+               meta_pure =
+               (Formula.And (
+                  (Formula.BinPredicate (Formula.Equal,
+                     (Formula.Var (Formula.Normal "flted_0_2541")),
+                     (Formula.Intl 2))),
+                  (Formula.BinPredicate (Formula.Equal,
+                     (Formula.Var (Formula.Normal "flted_0_2542")),
+                     (Formula.Intl 1)))
+                  ))
+               }
+    |}]
 
 let%expect_test "lemma entailment" =
   let x = Identifier.make "x" in
   let a = Identifier.make "a" in
   let b = Identifier.make "b" in
   check [Meta_formula.of_heap_and_pure (points_to x "sortl" [var a; var b]) true_f] (Structured.of_heap_and_pure (points_to x "ll" [var a]) true_f);
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap = Formula.Empty;
+               meta_pure = (Formula.Constant true) }
+    |}]
 
 let%expect_test "linked list chaining" =
   let x = Identifier.make "x" in
@@ -81,7 +143,42 @@ let%expect_test "linked list chaining" =
   let anon = Identifier.anon in
   check [Meta_formula.of_heap_and_pure (sep (points_to x "node" [var (anon ()); var r1]) (points_to r1 "node" [var (anon ()); null])) true_f]
     (Structured.of_heap_and_pure (points_to x "ll" [var c]) true_f);
-  [%expect{| |}]
+  [%expect{|
+    Success: { Formula.meta_heap = Formula.Empty;
+               meta_pure =
+               (Formula.And (
+                  (Formula.And (
+                     (Formula.And (
+                        (Formula.And (
+                           (Formula.And (
+                              (Formula.BinPredicate (Formula.Equal,
+                                 (Formula.Add (
+                                    (Formula.Add ((Formula.Intl 0),
+                                       (Formula.Intl 1))),
+                                    (Formula.Intl 1))),
+                                 (Formula.Var (Formula.Normal "c")))),
+                              (Formula.BinPredicate (Formula.Equal,
+                                 (Formula.Var (Formula.Normal "r_2591")),
+                                 (Formula.Var (Formula.Normal "r1"))))
+                              )),
+                           (Formula.BinPredicate (Formula.Equal,
+                              (Formula.Var (Formula.Anonymous "Anon_2590")),
+                              (Formula.Var (Formula.Normal "_2576"))))
+                           )),
+                        (Formula.BinPredicate (Formula.Equal,
+                           (Formula.Var (Formula.Normal "flted_0_2579")),
+                           Formula.Null))
+                        )),
+                     (Formula.BinPredicate (Formula.Equal,
+                        (Formula.Var (Formula.Anonymous "Anon_2596")),
+                        (Formula.Var (Formula.Normal "_2575"))))
+                     )),
+                  (Formula.BinPredicate (Formula.Equal,
+                     (Formula.Var (Formula.Normal "r_2597")),
+                     (Formula.Var (Formula.Normal "flted_0_2579"))))
+                  ))
+               }
+    |}]
 
 let%expect_test "Entailment checking" =
   let open EntailmentProver in
@@ -216,10 +313,7 @@ let%expect_test "Entailment checking" =
   entail_7 ();
   [%expect{| true |}];
   entail_8 ();
-  [%expect{|
-    Entailing lemma lem_2500: Valid.
-
-    true |}];
+  [%expect{| true |}];
   entail_9 ();
   [%expect{| true |}]
 
