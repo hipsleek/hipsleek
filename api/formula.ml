@@ -209,6 +209,9 @@ module Meta_formula = struct
       formula_base_and = [];
       formula_base_pos = Common_util.no_pos})
 
+  let heap_formula {meta_heap; _} = meta_heap
+  let pure_formula {meta_pure; _} = meta_pure
+
   let of_sleek_cformula = function
     | Cformula.Base({ formula_base_heap; formula_base_pure = OnePF pure_f; _ }) ->
         of_heap_and_pure (Heap_formula.of_sleek_cformula formula_base_heap) (Pure_formula.of_sleek_cformula pure_f)

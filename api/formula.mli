@@ -111,6 +111,10 @@ module Meta_formula : sig
   type t = meta_formula
   (** Type to represent a metaformula. Currently, this contains a heap constraint and a pure logic constraint. *)
   val of_heap_and_pure : Heap_formula.t -> Pure_formula.t -> t
+
+  val heap_formula : t -> Heap_formula.t
+  val pure_formula : t -> Pure_formula.t
+
   (** Output a string representation of this base formula. This is provided as a debugging aid;
       the format may change at any time. *)
   val to_sleek_formula : t -> Iformula.formula
