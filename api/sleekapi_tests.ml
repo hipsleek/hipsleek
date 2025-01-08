@@ -30,110 +30,50 @@ open Pure_expression
 open Heap_formula
 
 let check antes conseq =
-  let result = EntailmentProver.entail_with_frame antes conseq in
-  Format.printf "%a@." EntailmentProver.pp_entail_result result
+  match EntailmentProver.entail_with_frame antes conseq with
+    | EntailFailure _ -> Printf.printf "[failure]";
+    | EntailSuccess frames -> List.iter (fun frame -> Printf.printf "Succeeded with frame: %s\n" (Meta_formula.to_string frame)) 
+      (EntailmentProver.inferred_frames frames)
 
 let%expect_test "entailment smoke test" =
   check [(Meta_formula.make ~heap:emp ~pure:true_f)] (Structured.make ~heap:emp ~pure:true_f);
-  [%expect{|
-    Success: { Formula.meta_heap = Formula.Empty;
-               meta_pure = (Formula.Constant true) }
-    |}]
+  [%expect{| Succeeded with frame: true & (emp) |}]
 
 let%expect_test "pure integer entailment" =
   let x = Identifier.make "x" in
   let x_prime = Identifier.primed "x" in
   check [(Meta_formula.make ~heap:emp ~pure:(and_f (gt (var x) (intl 0)) (eq (var x_prime) (add (var x) (intl 1)))))]
     (Structured.make ~heap:emp ~pure:(gt (var x_prime) (intl 1)));
-  [%expect{|
-    Success: { Formula.meta_heap = Formula.Empty;
-               meta_pure =
-               (Formula.And (
-                  (Formula.BinPredicate (Formula.Equal,
-                     (Formula.Var (Formula.Primed "x")),
-                     (Formula.Add ((Formula.Intl 1),
-                        (Formula.Var (Formula.Normal "x"))))
-                     )),
-                  (Formula.BinPredicate (Formula.LessThan, (Formula.Intl 0),
-                     (Formula.Var (Formula.Normal "x"))))
-                  ))
-               }
-    |}]
+  [%expect{| Succeeded with frame: ((x' = (1 + x)) & (0 < x)) & (emp) |}]
 
 let%expect_test "heap entailment reflexivity" =
   let x = Identifier.make "x" in
   check [(Meta_formula.make ~heap:(points_to_int x 1) ~pure:true_f)] (Structured.make ~heap:(points_to_int x 1) ~pure:true_f);
-  [%expect{|
-    Success: { Formula.meta_heap = Formula.Empty;
-               meta_pure =
-               (Formula.BinPredicate (Formula.Equal,
-                  (Formula.Var (Formula.Normal "flted_0_2492")), (Formula.Intl 1)
-                  ))
-               }
-    |}]
+  [%expect{| Succeeded with frame: (flted_0_2492 = 1) & (emp) |}]
 
 let%expect_test "data view entailment" =
   let x = Identifier.make "x" in
   check [(Meta_formula.make ~heap:(points_to x "node" [(intl 1); null]) ~pure:true_f)]
     (Structured.make ~heap:emp ~pure:(not_f (eq (var x) null)));
-  [%expect{|
-    Success: { Formula.meta_heap =
-               (Formula.PointsTo ((Formula.Normal "x"), "node",
-                  [(Formula.Var (Formula.Normal "flted_0_2511"));
-                    (Formula.Var (Formula.Normal "flted_0_2510"))]
-                  ));
-               meta_pure =
-               (Formula.And (
-                  (Formula.BinPredicate (Formula.Equal,
-                     (Formula.Var (Formula.Normal "flted_0_2510")), Formula.Null
-                     )),
-                  (Formula.BinPredicate (Formula.Equal,
-                     (Formula.Var (Formula.Normal "flted_0_2511")),
-                     (Formula.Intl 1)))
-                  ))
-               }
-    |}]
+  [%expect{| Succeeded with frame: ((flted_0_2510 = null) & (flted_0_2511 = 1)) & (x::node<flted_0_2511, flted_0_2510>) |}]
 
 let%expect_test "pred view entailment" =
   let x = Identifier.make "x" in
   check [(Meta_formula.make ~heap:emp ~pure:(eq (var x) null))] (Structured.make ~heap:(points_to x "ll" [(intl 0)]) ~pure:true_f);
-  [%expect{|
-    Success: { Formula.meta_heap = Formula.Empty;
-               meta_pure =
-               (Formula.BinPredicate (Formula.Equal,
-                  (Formula.Var (Formula.Normal "x")), Formula.Null))
-               }
-    |}]
+  [%expect{| Succeeded with frame: (x = null) & (emp) |}]
 
 let%expect_test "frame rule" =
   let y = Identifier.make "y" in
   let x = Identifier.make "x" in
   check [(Meta_formula.make ~heap:(sep (points_to_int y 1) (points_to_int x 2)) ~pure:true_f)] (Structured.make ~heap:(points_to_int x 2) ~pure:true_f);
-  [%expect{|
-    Success: { Formula.meta_heap =
-               (Formula.PointsTo ((Formula.Normal "y"), "int_ptr",
-                  [(Formula.Var (Formula.Normal "flted_0_2542"))]));
-               meta_pure =
-               (Formula.And (
-                  (Formula.BinPredicate (Formula.Equal,
-                     (Formula.Var (Formula.Normal "flted_0_2541")),
-                     (Formula.Intl 2))),
-                  (Formula.BinPredicate (Formula.Equal,
-                     (Formula.Var (Formula.Normal "flted_0_2542")),
-                     (Formula.Intl 1)))
-                  ))
-               }
-    |}]
+  [%expect{| Succeeded with frame: ((flted_0_2541 = 2) & (flted_0_2542 = 1)) & (y::int_ptr<flted_0_2542>) |}]
 
 let%expect_test "lemma entailment" =
   let x = Identifier.make "x" in
   let a = Identifier.make "a" in
   let b = Identifier.make "b" in
   check [Meta_formula.make ~heap:(points_to x "sortl" [var a; var b]) ~pure:true_f] (Structured.make ~heap:(points_to x "ll" [var a]) ~pure:true_f);
-  [%expect{|
-    Success: { Formula.meta_heap = Formula.Empty;
-               meta_pure = (Formula.Constant true) }
-    |}]
+  [%expect{| Succeeded with frame: true & (emp) |}]
 
 let%expect_test "linked list chaining" =
   let x = Identifier.make "x" in
@@ -142,42 +82,7 @@ let%expect_test "linked list chaining" =
   let anon = Identifier.anon in
   check [Meta_formula.make ~heap:(sep (points_to x "node" [var (anon ()); var r1]) (points_to r1 "node" [var (anon ()); null])) ~pure:true_f]
     (Structured.make ~heap:(points_to x "ll" [var c]) ~pure:true_f);
-  [%expect{|
-    Success: { Formula.meta_heap = Formula.Empty;
-               meta_pure =
-               (Formula.And (
-                  (Formula.And (
-                     (Formula.And (
-                        (Formula.And (
-                           (Formula.And (
-                              (Formula.BinPredicate (Formula.Equal,
-                                 (Formula.Add (
-                                    (Formula.Add ((Formula.Intl 0),
-                                       (Formula.Intl 1))),
-                                    (Formula.Intl 1))),
-                                 (Formula.Var (Formula.Normal "c")))),
-                              (Formula.BinPredicate (Formula.Equal,
-                                 (Formula.Var (Formula.Normal "r_2591")),
-                                 (Formula.Var (Formula.Normal "r1"))))
-                              )),
-                           (Formula.BinPredicate (Formula.Equal,
-                              (Formula.Var (Formula.Anonymous "Anon_2590")),
-                              (Formula.Var (Formula.Normal "_2576"))))
-                           )),
-                        (Formula.BinPredicate (Formula.Equal,
-                           (Formula.Var (Formula.Normal "flted_0_2579")),
-                           Formula.Null))
-                        )),
-                     (Formula.BinPredicate (Formula.Equal,
-                        (Formula.Var (Formula.Anonymous "Anon_2596")),
-                        (Formula.Var (Formula.Normal "_2575"))))
-                     )),
-                  (Formula.BinPredicate (Formula.Equal,
-                     (Formula.Var (Formula.Normal "r_2597")),
-                     (Formula.Var (Formula.Normal "flted_0_2579"))))
-                  ))
-               }
-    |}]
+  [%expect{| Succeeded with frame: ((((((((0 + 1) + 1) = c) & (r_2591 = r1)) & ([anon var Anon_2590] = _2576)) & (flted_0_2579 = null)) & ([anon var Anon_2596] = _2575)) & (r_2597 = flted_0_2579)) & (emp) |}]
 
 let%expect_test "RHS existential quantifier on pure constraint" =
   let x = Identifier.make "x" in
@@ -185,7 +90,7 @@ let%expect_test "RHS existential quantifier on pure constraint" =
   let z = Identifier.make "z" in
   check [Meta_formula.make ~heap:emp ~pure:(and_f (gt (var x) (intl 0)) (gt (var y) (intl 0)))]
     (Structured.of_meta (Meta_formula.exists [z] (Base_formula.make ~heap:emp ~pure:(gt (var z) (intl 0)))));
-  [%expect{| |}]
+  [%expect{| Succeeded with frame: ((0 < y) & (0 < x)) & (emp) |}]
 
 
 let%expect_test "Entailment checking" =

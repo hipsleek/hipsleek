@@ -53,6 +53,7 @@ module Pure_expression : sig
   val mul : pure_expr -> pure_expr -> pure_expr
   val div : pure_expr -> pure_expr -> pure_expr
 
+  val to_string : t -> string
   (* TODO add strings, booleans, lists? *)
 end
 
@@ -75,6 +76,8 @@ module Pure_formula : sig
   val or_f      : t -> t -> t
   val implies  : t -> t -> t
   val iff      : t -> t -> t
+
+  val to_string : t -> string
 end
 
 module Heap_formula : sig
@@ -97,6 +100,7 @@ module Heap_formula : sig
       with the name [s1] is pointing to a [s2] heap node. [l] is the list of
       data fields of the heap node.
   *)
+  val to_string : t -> string
 end
 
 open Hipsleek_common
@@ -119,6 +123,7 @@ module Base_formula : sig
 
   val heap_formula : t -> Heap_formula.t
   val pure_formula : t -> Pure_formula.t
+  val to_string : t -> string
 end
 
 module Meta_formula : sig
@@ -139,6 +144,7 @@ module Meta_formula : sig
   val pp : Format.formatter -> t -> unit
   (** Output a string representation of this base formula. This is provided as a debugging aid;
       the format may change at any time. *)
+  val to_string : t -> string
 end
 
 module Structured : sig
@@ -148,4 +154,5 @@ module Structured : sig
   val make : heap:Heap_formula.t -> pure:Pure_formula.t -> t
   val of_meta : Meta_formula.t -> t
   val to_sleek_formula : t -> Iformula.struc_formula
+  val to_string : t -> string
 end

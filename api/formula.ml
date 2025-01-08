@@ -100,6 +100,16 @@ module Pure_expression = struct
     | Sub(a, b) -> Ipure.Subtract(to_sleek_expr a, to_sleek_expr b, no_pos)
     | Mul(a, b) -> Ipure_D.Mult(to_sleek_expr a, to_sleek_expr b, no_pos)
     | Div(a, b) -> Ipure_D.Div(to_sleek_expr a, to_sleek_expr b, no_pos)
+
+  let rec to_string = function
+    | Null -> "null"
+    | Var(ident) -> Identifier.to_string ident
+    | Intl(i) -> string_of_int i
+    | Floatl(f) -> string_of_float f
+    | Add (a, b) -> Format.sprintf "(%s + %s)" (to_string a) (to_string b)
+    | Sub (a, b) -> Format.sprintf "(%s - %s)" (to_string a) (to_string b)
+    | Mul (a, b) -> Format.sprintf "(%s * %s)" (to_string a) (to_string b)
+    | Div (a, b) -> Format.sprintf "(%s / %s)" (to_string a) (to_string b)
 end
 
 module Pure_formula = struct
@@ -140,16 +150,27 @@ module Pure_formula = struct
     let of_expr = Pure_expression.of_sleek_cexpr in
     function
     | Cpure.Not (f, _, _) -> Not (of_sleek_cformula f)
-    | Cpure.And (lhs, rhs, _) -> And (of_sleek_cformula lhs, of_sleek_cformula rhs)
-    | Cpure.Or (lhs, rhs, _, _) -> Or (of_sleek_cformula lhs, of_sleek_cformula rhs)
-    | Cpure.BForm ((Cpure.BConst (true, _), _), _) -> Constant (true)
-    | Cpure.BForm ((Cpure.BConst (false, _), _), _) -> Constant (false)
-    | Cpure.BForm ((Cpure.Gt (lhs, rhs, _), _), _) -> BinPredicate (GreaterThan, of_expr lhs, of_expr rhs)
+    | Cpure.And (lhs, rhs, _) -> And (of_sleek_cformula lhs, of_sleek_cformula rhs) | Cpure.Or (lhs, rhs, _, _) -> Or (of_sleek_cformula lhs, of_sleek_cformula rhs) | Cpure.BForm ((Cpure.BConst (true, _), _), _) -> Constant (true) | Cpure.BForm ((Cpure.BConst (false, _), _), _) -> Constant (false) | Cpure.BForm ((Cpure.Gt (lhs, rhs, _), _), _) -> BinPredicate (GreaterThan, of_expr lhs, of_expr rhs)
     | Cpure.BForm ((Cpure.Gte (lhs, rhs, _), _), _) -> BinPredicate (GreaterThanEq, of_expr lhs, of_expr rhs)
     | Cpure.BForm ((Cpure.Lt (lhs, rhs, _), _), _) -> BinPredicate (LessThan, of_expr lhs, of_expr rhs)
     | Cpure.BForm ((Cpure.Lte (lhs, rhs, _), _), _) -> BinPredicate (LessThanEq, of_expr lhs, of_expr rhs)
     | Cpure.BForm ((Cpure.Eq (lhs, rhs, _), _), _) -> BinPredicate (Equal, of_expr lhs, of_expr rhs)
     | unknown -> raise (Invalid_argument ("Unknown SLEEK pure formula: " ^ (Cprinter.string_of_pure_formula unknown)))
+
+  let rec to_string = function
+    | Constant true -> "true"
+    | Constant false -> "false"
+    | BinPredicate (pred, lhs, rhs) ->
+        let pred_string = match pred with
+          | GreaterThan -> ">"
+          | GreaterThanEq -> ">="
+          | LessThan -> "<"
+          | LessThanEq -> "<="
+          | Equal -> "=" in
+        Format.sprintf "(%s %s %s)" (Pure_expression.to_string lhs) pred_string (Pure_expression.to_string rhs)
+    | Not f -> "~"^(to_string f)
+    | And (lhs, rhs) -> Format.sprintf "(%s & %s)" (to_string lhs) (to_string rhs)
+    | Or (lhs, rhs) -> Format.sprintf "(%s | %s)" (to_string lhs) (to_string rhs)
 end
 
 module Heap_formula = struct
@@ -188,6 +209,13 @@ module Heap_formula = struct
           h_formula_view_name
           var_names
     | unknown -> raise (Invalid_argument ("Unknown SLEEK heap formula: " ^ (Cprinter.string_of_h_formula unknown)))
+
+  let rec to_string = function
+    | Empty -> "emp"
+    | SepConj (lhs, rhs) -> Format.sprintf "%s * %s" (to_string lhs) (to_string rhs)
+    | PointsTo (ident, view, fields) ->
+        let field_list = String.concat ", " (List.map Pure_expression.to_string fields) in
+        Format.sprintf "%s::%s<%s>" (Identifier.to_string ident) view field_list
 end
 
 open Hipsleek_common
@@ -227,6 +255,7 @@ module Base_formula = struct
   let pure_formula {base_pure; _} = base_pure
 
   let empty = make ~heap:Heap_formula.emp ~pure:Pure_formula.true_f
+  let to_string {base_heap; base_pure} = Format.sprintf "%s & (%s)" (Pure_formula.to_string base_pure) (Heap_formula.to_string base_heap)
 end
 
 module Meta_formula = struct
@@ -267,6 +296,14 @@ module Meta_formula = struct
     | unknown -> raise (Invalid_argument ("Unknown SLEEK meta formula: "^ (Cprinter.string_of_formula unknown)))
 
   let pp = pp_meta_formula
+  let to_string mf =
+    let convert_one = function
+      | ([], base) -> Base_formula.to_string base
+      | (quantified, base) ->
+          let var_list = String.concat ", " (List.map Identifier.to_string quantified) in
+          Format.sprintf "exists (%s): %s" var_list (Base_formula.to_string base)
+    in
+    String.concat " | " (List.map convert_one mf)
 end
 
 module Structured = struct
@@ -283,4 +320,5 @@ module Structured = struct
       Iformula.formula_struc_continuation = None;
       Iformula.formula_struc_pos = Common_util.no_pos}
 
+  let to_string {structured_base} = Meta_formula.to_string structured_base
 end
