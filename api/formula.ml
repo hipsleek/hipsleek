@@ -27,8 +27,11 @@ type variable =
   | Empty
   | PointsTo of variable * string * pure_expr list
   | SepConj of heap_formula * heap_formula
-  and meta_formula = {meta_heap : heap_formula; meta_pure : pure_formula}
-  and structured_meta_formula = {structured_heap : heap_formula; structured_pure : pure_formula}
+  and base_formula = {base_heap : heap_formula; base_pure : pure_formula}
+  and meta_formula = (variable list * base_formula) list
+  (** Internally, meta formulas are represented as a disjunction of base_formulas,
+  where each base formula may have an associated list of existentially quantified variables. *)
+  and structured_meta_formula = {structured_base: meta_formula}
   [@@deriving show]
 
 module Identifier = struct
@@ -62,11 +65,11 @@ module Identifier = struct
     | Cpure.SpecVar (_, name, VarGen.Unprimed) -> Normal name
 end
 
+let no_pos = Common_util.no_pos
 
 module Pure_expression = struct
   open Hipsleek_common
   type t = pure_expr
-  let no_pos = Common_util.no_pos
 
   let null = Null
   let var s = Var s
@@ -196,25 +199,71 @@ open Hipsleek_common
    - Structured specifications (for consequents)
 *)
 
-module Meta_formula = struct
-  type t = meta_formula
-  let of_heap_and_pure meta_heap meta_pure = {meta_heap; meta_pure}
-  let to_sleek_formula {meta_heap; meta_pure} =
+module Base_formula = struct
+  type t = base_formula
+
+  let make ~heap ~pure = {base_heap = heap; base_pure = pure}
+  let to_sleek_formula {base_heap; base_pure} =
     let open Iformula in
-    Iformula.Base({
-      formula_base_heap = Heap_formula.to_sleek_formula meta_heap;
-      formula_base_pure = Pure_formula.to_sleek_formula meta_pure;
+    {
+      formula_base_heap = Heap_formula.to_sleek_formula base_heap;
+      formula_base_pure = Pure_formula.to_sleek_formula base_pure;
       formula_base_vperm = IvpermUtils.empty_vperm_sets;
       formula_base_flow = "__norm";
       formula_base_and = [];
-      formula_base_pos = Common_util.no_pos})
+      formula_base_pos = Common_util.no_pos
+  }
 
-  let heap_formula {meta_heap; _} = meta_heap
-  let pure_formula {meta_pure; _} = meta_pure
+  let of_sleek_cformula cf =
+    let open Cformula in
+    match cf with
+      | {formula_base_pure = OnePF pure_f;
+        formula_base_heap = heap_f; _ } ->
+        make ~heap:(Heap_formula.of_sleek_cformula heap_f)
+          ~pure:(Pure_formula.of_sleek_cformula pure_f)
+      | _ -> raise (Invalid_argument "Converting memoized formulas to API type is unsupported")
+
+  let heap_formula {base_heap; _} = base_heap
+  let pure_formula {base_pure; _} = base_pure
+
+  let empty = make ~heap:Heap_formula.emp ~pure:Pure_formula.true_f
+end
+
+module Meta_formula = struct
+  type t = meta_formula
+  let of_base base = [([], base)]
+  let make ~heap ~pure = of_base (Base_formula.make ~heap ~pure)
+
+  let exists qvars base = [(qvars, base)]
+  let disjunction = List.concat
+  let to_list f = f
+
+  let rec to_sleek_formula mf =
+    let convert_one = function
+      | ([], base) -> Iformula.Base(Base_formula.to_sleek_formula base)
+      | (quantified, base) ->
+        let sleek_base = Base_formula.to_sleek_formula base in
+        Iformula.Exists({
+            formula_exists_qvars = List.map Identifier.to_sleek_ident quantified;
+            formula_exists_heap = sleek_base.formula_base_heap;
+            formula_exists_pure = sleek_base.formula_base_pure;
+            formula_exists_vperm = sleek_base.formula_base_vperm;
+            formula_exists_flow = sleek_base.formula_base_flow;
+            formula_exists_and = sleek_base.formula_base_and;
+            formula_exists_pos = sleek_base.formula_base_pos})
+    in
+    match mf with
+    | [] -> convert_one ([], Base_formula.empty)
+    | [one] -> convert_one one
+    | x::xs -> Iformula.Or({
+      formula_or_f1 = convert_one x;
+      formula_or_f2 = to_sleek_formula xs;
+      formula_or_pos = no_pos
+  })
 
   let of_sleek_cformula = function
     | Cformula.Base({ formula_base_heap; formula_base_pure = OnePF pure_f; _ }) ->
-        of_heap_and_pure (Heap_formula.of_sleek_cformula formula_base_heap) (Pure_formula.of_sleek_cformula pure_f)
+        make ~heap:(Heap_formula.of_sleek_cformula formula_base_heap) ~pure:(Pure_formula.of_sleek_cformula pure_f)
     | unknown -> raise (Invalid_argument ("Unknown SLEEK meta formula: "^ (Cprinter.string_of_formula unknown)))
 
   let pp = pp_meta_formula
@@ -222,14 +271,14 @@ end
 
 module Structured = struct
   type t = structured_meta_formula
-  let of_heap_and_pure structured_heap structured_pure = {structured_heap; structured_pure}
+  let of_meta structured_base = {structured_base}
+  let make ~heap ~pure = of_meta (Meta_formula.make ~heap ~pure)
 
-  let to_sleek_formula {structured_heap; structured_pure} =
-    let base_formula = Meta_formula.to_sleek_formula (Meta_formula.of_heap_and_pure structured_heap structured_pure) in
+  let to_sleek_formula {structured_base} =
     Iformula.EBase {Iformula.formula_struc_explicit_inst = [];
       Iformula.formula_struc_implicit_inst = [];
       Iformula.formula_struc_exists = [];
-      Iformula.formula_struc_base = base_formula;
+      Iformula.formula_struc_base = Meta_formula.to_sleek_formula structured_base;
       Iformula.formula_struc_is_requires = false; (* Not sure what this is *)
       Iformula.formula_struc_continuation = None;
       Iformula.formula_struc_pos = Common_util.no_pos}

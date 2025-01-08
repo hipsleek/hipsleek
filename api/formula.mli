@@ -24,6 +24,7 @@ type variable
   | Empty
   | PointsTo of variable * string * pure_expr list
   | SepConj of heap_formula * heap_formula
+  and base_formula
   and meta_formula
   and structured_meta_formula
 
@@ -107,27 +108,44 @@ open Hipsleek_common
    - Structured specifications (for consequents)
 *)
 
-module Meta_formula : sig
-  type t = meta_formula
-  (** Type to represent a metaformula. Currently, this contains a heap constraint and a pure logic constraint. *)
-  val of_heap_and_pure : Heap_formula.t -> Pure_formula.t -> t
+module Base_formula : sig
+  type t = base_formula
+  (** Type to represent a basic formula.
+      . Currently, this contains a heap constraint and a pure logic constraint. *)
+
+  val make : heap:Heap_formula.t -> pure:Pure_formula.t -> t
+  val to_sleek_formula : t -> Iformula.formula_base
+  val of_sleek_cformula : Cformula.formula_base -> t
 
   val heap_formula : t -> Heap_formula.t
   val pure_formula : t -> Pure_formula.t
+end
 
-  (** Output a string representation of this base formula. This is provided as a debugging aid;
-      the format may change at any time. *)
+module Meta_formula : sig
+  type t = meta_formula
+  (** Type to represent a meta formula: which is a base formula
+      that may be existentially quantified. Disjunctions of meta formulas
+      are also possible. *)
+
+  val make : heap:Heap_formula.t -> pure:Pure_formula.t -> t
+  val exists : Identifier.t list -> Base_formula.t -> t
+  val disjunction : t list -> t
+
+  val to_list : t -> (Identifier.t list * Base_formula.t) list
+  (** Convert a meta formula to a list of disjunctions, each one containing a list
+    of existentially quantified variables, and a base formula. *)
   val to_sleek_formula : t -> Iformula.formula
   val of_sleek_cformula : Cformula.formula -> t
   val pp : Format.formatter -> t -> unit
+  (** Output a string representation of this base formula. This is provided as a debugging aid;
+      the format may change at any time. *)
 end
 
 module Structured : sig
   type t = structured_meta_formula
   (** Type to represent a metaformula with additional context to aid in proving. For more information, refer to
    the linked publication on structured specifications. *)
-  val of_heap_and_pure : Heap_formula.t -> Pure_formula.t -> t
-  (** Output a string representation of this structured formula. This is provided as a debugging aid;
-      the format may change at any time. *)
+  val make : heap:Heap_formula.t -> pure:Pure_formula.t -> t
+  val of_meta : Meta_formula.t -> t
   val to_sleek_formula : t -> Iformula.struc_formula
 end
