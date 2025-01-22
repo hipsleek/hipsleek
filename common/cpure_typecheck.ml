@@ -310,7 +310,8 @@ let substitute_ast (substitutions : (int * typ) list) (ast : typ formula_annot) 
     (* Note that 'a = typ in this visitor. *)
     method visit_'a substitutions = function
       | TVar x -> List.assoc_opt x substitutions |> Option.value ~default:(TVar x)
-      | typ -> self#visit_'a substitutions typ
+      | ListT typ -> ListT (self#visit_'a substitutions typ)
+      | typ -> typ
       
   end in
   go#visit_formula_annot substitutions ast
