@@ -78,20 +78,45 @@ type sort_def = {
 }
 
 let uninterpreted_sort_def = 
-  let name = "__T" in
-  {sort_type = None; sort_smt_name = name; sort_smt_defn = Format.sprintf "(declare-sort %s 0)\n" name; sort_smt_function_defns = []}
+  (* Due to the TVar workaround explained below, we use Int to represent the uninterpreted sort. *)
+  let name = "Int" in
+  {sort_type = None; sort_smt_name = name; sort_smt_defn = ""; sort_smt_function_defns = []}
 (* Z3 already has some built-in sorts. This map stores the sorts we define ourselves. *)
 let sort_defs = [(None, uninterpreted_sort_def)] |> List.to_seq |> Hashtbl.of_seq
 
+let rec normalize_tvars = function
+  | TVar _ -> TVar 0
+  | List typ -> List (normalize_tvars typ)
+  | typ -> typ
+
 let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
+  (* Filter out TVars to all be the same, so they all get mapped
+     to the same uninterpreted sort. *)
+  let typ = normalize_tvars typ in
+  let mangle smt_name =
+    (* Turn an existing SMT sort name which may contain parenthesis and whitespace
+    into a substring of a valid identifier. *)
+    (*TODO *)
+    smt_name
+  in
   let make_list_sort subtyp = 
     let subtype_sort_name = sort_name_of_cpure_typ subtyp in 
+    let sort_smt_name = "(List " ^ subtype_sort_name ^ ")" in
   (* Z3 already has a built-in parametric List sort; so there's no need to fill in our own definition. *)
     let sort_smt_defn = "" in
   (* However, we need to define our own functions. *)
   (* TODO define List.mem List.length *)
-    let sort_smt_function_defns = [] in
-    {sort_type = Some (List subtyp); sort_smt_name = "(List " ^ subtype_sort_name ^ ")"; sort_smt_defn; sort_smt_function_defns}
+    let sort_smt_function_defns = [
+      ("length",
+        let func_smt_name = "length" in
+        {
+          func_smt_name;
+          func_smt_defn = 
+          "(define-fun-rec length ((ls " ^ sort_smt_name ^ ")) Int " ^
+           "(if ((_ is (nil () " ^ sort_smt_name ^ ")) ls) 0 (+ 1 (length (tail ls)))))\n"
+        }
+      )] in
+    {sort_type = Some (List subtyp); sort_smt_name; sort_smt_defn; sort_smt_function_defns}
   in
   match Hashtbl.find_opt sort_defs (Some typ) with
   | Some def -> def.sort_smt_name
@@ -119,6 +144,13 @@ let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
     | FuncT (t1, t2) -> "(" ^ (sort_name_of_cpure_typ t1) ^ ") " ^ (sort_name_of_cpure_typ t2) 
     | _ -> "Int"
     (* | _ -> uninterpreted_sort_def.sort_smt_name *)
+
+let associated_function (typ : Cpure_typecheck.typ) (func: string) : func_def =
+  let typ = normalize_tvars typ in
+  Printf.printf " Finding sort of %s" (Globals.string_of_typ typ);
+  let sort = Hashtbl.find sort_defs (Some typ) in
+  List.assoc func sort.sort_smt_function_defns
+
 
 let custom_sort_of_cpure_typ (typ : Cpure_typecheck.typ) : sort_def option =
   Hashtbl.find_opt sort_defs (Some typ)
@@ -149,7 +181,7 @@ let smt_of_typed_spec_var sv =
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
-let rec smt_of_checked_exp ((exp, typ) : Cpure_typecheck.typ Cpure_typecheck.exp_annot) =
+let rec smt_of_checked_exp ((exp, typ) : Cpure_typecheck.(typ exp_annot)) =
   match exp with
   | Null _ -> "0"
   | Var (sv, _) -> smt_of_spec_var sv
@@ -160,8 +192,11 @@ let rec smt_of_checked_exp ((exp, typ) : Cpure_typecheck.typ Cpure_typecheck.exp
   | Mult (lhs, rhs, _) -> Format.sprintf "(* %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
   | Div (lhs, rhs, _) -> Format.sprintf "(/ %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
   | List (elements, _) -> 
-      List.fold_right (fun elem acc -> Format.sprintf "(insert %s %s)" (smt_of_checked_exp elem) acc) elements "nil"
+      List.fold_right (fun elem acc -> Format.sprintf "(insert %s %s)" (smt_of_checked_exp elem) acc) elements
+      ("(as nil " ^ (sort_name_of_cpure_typ typ) ^ ")")
   | ListCons (head, tail, _) -> Format.sprintf "(insert %s %s)" (smt_of_checked_exp head) (smt_of_checked_exp tail)
+  | ListLength ((_, ls_typ) as ls, _) -> 
+      Format.sprintf "(%s %s)" (associated_function ls_typ "length").func_smt_name (smt_of_checked_exp ls)
   | _ -> illegal_format("z3.smt_of_checked_exp: Max, Min, List operations, ArrayAt, Func, Template currently not supported")
 
 let rec smt_of_exp a =
@@ -949,6 +984,7 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
     |> Seq.concat
     |> Seq.map (fun (_, fun_decl) -> fun_decl.func_smt_defn)
     |> List.of_seq
+    |> List.sort_uniq String.compare
     |> String.concat "\n" in
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
@@ -976,11 +1012,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
     ";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
     "(check-sat)" ^
     (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")) in
-  (*
   Printf.printf "ante %s\n" (CP.string_of_ls_pure_formula [ante]);
   Printf.printf "conseqqqq %s\n" (CP.string_of_ls_pure_formula [conseq]);
   Printf.printf "Sending SMTLIB\n===\n%s\n===\n" (final_smt);
-  *)
   final_smt;
 
 (* output for smt-lib v1.2 format *)

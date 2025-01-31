@@ -88,7 +88,7 @@ let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
   (* However, we need to define our own functions. *)
   (* TODO define List.mem List.length *)
     let sort_smt_function_defns = [] in
-    {sort_type = Some (ListT subtyp); sort_smt_name = "List " ^ subtype_sort_name; sort_smt_defn; sort_smt_function_defns}
+    {sort_type = Some (List subtyp); sort_smt_name = "List " ^ subtype_sort_name; sort_smt_defn; sort_smt_function_defns}
   in
   match Hashtbl.find_opt sort_defs (Some typ) with
   | Some def -> def.sort_smt_name
@@ -96,7 +96,7 @@ let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
     | TVar x -> uninterpreted_sort_def.sort_smt_name
     | Bool -> "Bool"
     | Int -> "Int"
-    | ListT subtyp -> 
+    | List subtyp -> 
       let sort = make_list_sort subtyp in
       Hashtbl.replace sort_defs (Some typ) sort;
       sort.sort_smt_name
