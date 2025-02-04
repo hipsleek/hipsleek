@@ -382,7 +382,7 @@ let cexp_to_pure2 fct f01 f02 =
   match (f01,f02) with
   | Pure_c f1, Pure_c f2 -> (
       match f1 with
-      | P.List(explist,pos) ->
+      | P.ExpPack(explist,pos) ->
           let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist in
           let len =  List.length tmp in
           let res =
@@ -391,7 +391,7 @@ let cexp_to_pure2 fct f01 f02 =
           Pure_f(res)
       | _ -> (
           match f2 with
-          | P.List(explist,pos) ->
+          | P.ExpPack(explist,pos) ->
               let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None)) explist in
               let len = List.length tmp in
               let res =
@@ -2289,7 +2289,7 @@ cexp_w:
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         end
     | peek_cexp_list; ocl = opt_comma_list ->
-        Pure_c(P.List(ocl, get_pos_camlp4 _loc 1))
+        Pure_c(P.ExpPack(ocl, get_pos_camlp4 _loc 1))
     | t = cid ->
         let id,p = t in
         if String.contains id '.' then
