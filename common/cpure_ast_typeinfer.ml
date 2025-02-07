@@ -104,8 +104,7 @@ and 'a p_formula =
   and 'a b_formula = ('a p_formula_annot * ('a bf_annot option))
   and 'a b_formula_annot = ('a b_formula * 'a)
   and 'a formula_annot = ('a formula * 'a)
-  [@@deriving visitors { variety = "mapreduce" },
-    visitors { variety = "map" }]
+  [@@deriving visitors { variety = "mapreduce" }, visitors {variety = "map"}]
 
 let equal_types (t1 : typ) (t2 : typ) : bool = cmp_typ t1 t2
 
@@ -126,7 +125,7 @@ let assign_type typ (expr, _) = (expr, typ)
 let rec annotate_cpure_exp (exp : Cpure.exp) : typ option exp_annot =
   match exp with
   | Cpure.Null loc -> Null loc, Some Int
-  | Cpure.Var (SpecVar (typ, name, _) as var, loc) -> 
+  | Cpure.Var (SpecVar (typ, _, _) as var, loc) -> 
       Var (var, loc), Some typ
   | Cpure.IConst (n, loc) -> 
       IConst (n, loc), Some Int
@@ -302,7 +301,7 @@ let fill_missing_annotations (fill: unit -> 'a) (f : 'a option formula_annot) =
   end in
   go#visit_formula_annot () f
 
-let infer_cpure_types (f: Cpure.formula) : typ formula_annot option =
+let infer_cpure_types (f: Cpure.formula) : typ formula_annot =
   (* Printf.printf "Given formula %s to infer\n" (Cpure.string_of_ls_pure_formula [f]); *)
   let annotated = annotate_cpure_formula f in
   let rec do_further_inference (exp : typ option formula_annot) : typ option formula_annot =
@@ -313,4 +312,4 @@ let infer_cpure_types (f: Cpure.formula) : typ formula_annot option =
     else exp
   in
   let result = do_further_inference annotated in
-  Some (fill_missing_annotations fresh_tvar result)
+  (fill_missing_annotations fresh_tvar result)

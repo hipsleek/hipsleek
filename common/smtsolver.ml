@@ -64,6 +64,12 @@ let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 (***************************************************************
             TRANSLATE CPURE FORMULA TO SMT FORMULA              
  **************************************************************)
+let annotate_with_types (f : Cpure.formula) : Cpure_ast_typeinfer.(typ formula_annot) =
+  try 
+    Cpure_ast_typeinfer.infer_cpure_types f
+  with
+    (* Rethrow, but attach the formula for easier debugging *)
+    | Invalid_argument e -> raise (Invalid_argument ("Formula failed typecheck: " ^ (Cpure.string_of_ls_pure_formula [f]) ^ " due to " ^ e))
 
 type func_def = {
   func_smt_name: string;
@@ -71,7 +77,7 @@ type func_def = {
 }
 
 type sort_def = {
-  sort_type: Cpure_typecheck.typ option; (* None is used for an uninterpreted sort *)
+  sort_type: Cpure_ast_typeinfer.typ option; (* None is used for an uninterpreted sort *)
   sort_smt_name: string;
   sort_smt_defn: string;
   sort_smt_function_defns: (string * func_def) list
@@ -89,7 +95,7 @@ let rec normalize_tvars = function
   | List typ -> List (normalize_tvars typ)
   | typ -> typ
 
-let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
+let rec sort_name_of_cpure_typ (typ : Cpure_ast_typeinfer.typ) : string =
   (* Filter out TVars to all be the same, so they all get mapped
      to the same uninterpreted sort. *)
   let typ = normalize_tvars typ in
@@ -145,14 +151,14 @@ let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
     | _ -> "Int"
     (* | _ -> uninterpreted_sort_def.sort_smt_name *)
 
-let associated_function (typ : Cpure_typecheck.typ) (func: string) : func_def =
+let associated_function (typ : Cpure_ast_typeinfer.typ) (func: string) : func_def =
   let typ = normalize_tvars typ in
-  Printf.printf " Finding sort of %s" (Globals.string_of_typ typ);
+  (*Printf.printf " Finding sort of %s" (Globals.string_of_typ typ);*)
   let sort = Hashtbl.find sort_defs (Some typ) in
   List.assoc func sort.sort_smt_function_defns
 
 
-let custom_sort_of_cpure_typ (typ : Cpure_typecheck.typ) : sort_def option =
+let custom_sort_of_cpure_typ (typ : Cpure_ast_typeinfer.typ) : sort_def option =
   Hashtbl.find_opt sort_defs (Some typ)
 
 (* Construct [f(1) ... f(n)] *)
@@ -181,7 +187,7 @@ let smt_of_typed_spec_var sv =
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
-let rec smt_of_checked_exp ((exp, typ) : Cpure_typecheck.(typ exp_annot)) =
+let rec smt_of_checked_exp ((exp, typ) : Cpure_ast_typeinfer.(typ exp_annot)) =
   match exp with
   | Null _ -> "0"
   | Var (sv, _) -> smt_of_spec_var sv
@@ -237,7 +243,7 @@ let rec smt_of_exp a =
   | CP.InfConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (infconst should not appear here)")
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
-let rec smt_of_checked_p_formula ((pf, typ) : Cpure_typecheck.typ Cpure_typecheck.p_formula_annot) =
+let rec smt_of_checked_p_formula ((pf, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.p_formula_annot) =
   match pf with
   | BConst (c, _) -> if c then "true" else "false"
   | BVar (sv, _) -> smt_of_spec_var sv
@@ -351,7 +357,7 @@ let smt_of_b_formula b =
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
 
-let rec smt_of_checked_formula ((f, typ) : Cpure_typecheck.typ Cpure_typecheck.formula_annot) =
+let rec smt_of_checked_formula ((f, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.formula_annot) =
   match f with
   (* NOTE: The processing of drop_complex_ops is currently handled elsewhere: LexVars are dropped
     during the conversion to the typed AST, and Z3 can support relations, so they do not new_pred_syn
@@ -988,13 +994,13 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
     |> String.concat "\n" in
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
-  let checked_ante_clauses = List.map Cpure_typecheck.infer_cpure_types ante_clauses 
-    |> Cpure_typecheck.lift_option_from_list
+  let checked_ante_clauses = List.map Cpure_ast_typeinfer.infer_cpure_types ante_clauses 
+    |> Cpure_ast_typeinfer.lift_option_from_list
     |> Option.get (*TODO proper error reporting when type check fails*) in 
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_checked_formula x) ^ ")\n") checked_ante_clauses in
   (* let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in *)
   let ante_str = String.concat "" ante_strs in
-  let conseq_str = smt_of_checked_formula (Option.get (Cpure_typecheck.infer_cpure_types conseq)) in
+  let conseq_str = smt_of_checked_formula (Option.get (Cpure_ast_typeinfer.infer_cpure_types conseq)) in
   (* let conseq_str = smt_of_formula pr_weak pr_strong conseq in *)
   let final_smt = (
     "; Custom sorts\n" ^

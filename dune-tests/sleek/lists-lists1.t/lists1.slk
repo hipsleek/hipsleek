@@ -1,0 +1,11 @@
+checkentail x=[|2|] |- x=(2:::[||]).
+
+checkentail x=(2:::(3:::[||])) |- x=(2:::(3:::[||])).
+
+checkentail x=(2:::z) |- exists y: x=(2:::y).
+
+checkentail x=[||] |- len(x)=0.
+checkentail x=(2:::(3:::(4:::[||]))) |- len(x) = 3.
+checkentail x=2:::y & len(y) = len_y |- len(x) = 1 + len_y.
+
+checkentail z=[||] & y=[||]:::z |- len(y) = 1.

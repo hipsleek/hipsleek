@@ -8,7 +8,7 @@
   (preprocess (per_module
     ((action (run camlp4of %{input-file})) parser)
     ((action (run cppo -I . -D TRACE %{input-file})) ssat trans_arr global_var omega GlobProver fileutil procutils timelog smtsolver z3m z3 cfout lem_store redlog cvc4 coq mathematica excore cast cprinter iprinter others immutils cvpermUtils cformula sleekcommons token ivpermUtils iformula slicing mcpure_D mcpure cpure tree_shares ipure_D wrapper label_only label ipure perm exc hipUtil error gen frac globals iast machdep)
-    ((pps visitors.ppx ppx_expect) cpure_typecheck))))
+    ((pps visitors.ppx ppx_expect) cpure_ast_typeinfer))))
 
 (ocamllex
  (modules lexer rllexer z3mlexer oclexer))

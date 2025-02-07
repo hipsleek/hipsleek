@@ -67,7 +67,7 @@ type func_def = {
 }
 
 type sort_def = {
-  sort_type: Cpure_typecheck.typ option; (* None is used for an uninterpreted sort *)
+  sort_type: Cpure_ast_typeinfer.typ option; (* None is used for an uninterpreted sort *)
   sort_smt_name: string;
   sort_smt_defn: string;
   sort_smt_function_defns: (string * func_def) list
@@ -80,7 +80,7 @@ let uninterpreted_sort_def =
 (* Z3 already has some built-in sorts. This map stores the sorts we define ourselves. *)
 let sort_defs = [(None, uninterpreted_sort_def)] |> List.to_seq |> Hashtbl.of_seq
 
-let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
+let rec sort_name_of_cpure_typ (typ : Cpure_ast_typeinfer.typ) : string =
   let make_list_sort subtyp = 
     let subtype_sort_name = sort_name_of_cpure_typ subtyp in 
   (* Z3 already has a built-in parametric List sort; so there's no need to fill in our own definition. *)
@@ -101,7 +101,7 @@ let rec sort_name_of_cpure_typ (typ : Cpure_typecheck.typ) : string =
       Hashtbl.replace sort_defs (Some typ) sort;
       sort.sort_smt_name
 
-let custom_sort_of_cpure_typ (typ : Cpure_typecheck.typ) : sort_def option =
+let custom_sort_of_cpure_typ (typ : Cpure_ast_typeinfer.typ) : sort_def option =
   Hashtbl.find_opt sort_defs (Some typ)
 
 (* Construct [f(1) ... f(n)] *)
@@ -114,7 +114,7 @@ let rec compute f n b =
   if (n = 0) then b
   else f (compute f (n-1) b)
 
-(* Each type has two converters to SMT: one from Cpure.typ (for backwards compatibility), and one from Cpure_typecheck.typ. *)
+(* Each type has two converters to SMT: one from Cpure.typ (for backwards compatibility), and one from Cpure_ast_typeinfer.typ. *)
 let smt_of_checked_typ = sort_name_of_cpure_typ
 
 let rec smt_of_typ t =
@@ -155,7 +155,7 @@ let smt_of_typed_spec_var sv =
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
-let rec smt_of_checked_exp ((exp, typ) : Cpure_typecheck.typ Cpure_typecheck.exp_annot) =
+let rec smt_of_checked_exp ((exp, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.exp_annot) =
   match exp with
   | Null _ -> "0"
   | Var (sv, _) -> smt_of_spec_var sv
@@ -208,7 +208,7 @@ let rec smt_of_exp a =
   | CP.InfConst _ -> Error.report_no_pattern ()
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
-let rec smt_of_checked_p_formula ((pf, typ) : Cpure_typecheck.typ Cpure_typecheck.p_formula_annot) =
+let rec smt_of_checked_p_formula ((pf, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.p_formula_annot) =
   match pf with
   | BConst (c, _) -> if c then "true" else "false"
   | BVar (sv, _) -> smt_of_spec_var sv
@@ -308,7 +308,7 @@ let smt_of_b_formula b =
 (* | CP.XPure _ -> Error.report_no_pattern () *)
 
   (* TODO what is pr_w...? *)
-let rec smt_of_checked_formula ((f, typ) : Cpure_typecheck.typ Cpure_typecheck.formula_annot) =
+let rec smt_of_checked_formula ((f, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.formula_annot) =
   match f with
   | BForm (((pf, _) as b, _),_) -> smt_of_checked_p_formula pf
   | And (lhs, rhs, _) -> Printf.sprintf "(and %s %s)" (smt_of_checked_formula lhs) (smt_of_checked_formula rhs)
@@ -861,12 +861,10 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info bget_cex=
     |> String.concat "\n" in
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
-  let checked_ante_clauses = List.map Cpure_typecheck.infer_cpure_types ante_clauses 
-    |> Cpure_typecheck.lift_option_from_list
-    |> Option.get (*TODO proper error reporting when type check fails*) in
+  let checked_ante_clauses = List.map Cpure_ast_typeinfer.infer_cpure_types ante_clauses in
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_checked_formula x) ^ ")\n") checked_ante_clauses in
   let ante_str = String.concat "" ante_strs in
-  let conseq_str = smt_of_checked_formula (Option.get (Cpure_typecheck.infer_cpure_types conseq)) in (
+  let conseq_str = smt_of_checked_formula (Cpure_ast_typeinfer.infer_cpure_types conseq) in (
     ";Variables declarations\n" ^ 
     smt_var_decls ^
     ";Relations declarations\n" ^ 
