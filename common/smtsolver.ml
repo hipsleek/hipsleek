@@ -1012,9 +1012,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
     ";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
     "(check-sat)" ^
     (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")) in
-  Printf.printf "ante %s\n" (CP.string_of_ls_pure_formula [ante]);
-  Printf.printf "conseqqqq %s\n" (CP.string_of_ls_pure_formula [conseq]);
-  Printf.printf "Sending SMTLIB\n===\n%s\n===\n" (final_smt);
+  (* Printf.printf "ante %s\n" (CP.string_of_ls_pure_formula [ante]);
+  Printf.printf "conseq %s\n" (CP.string_of_ls_pure_formula [conseq]);
+  Printf.printf "Sending SMTLIB\n===\n%s\n===\n" (final_smt); *)
   final_smt;
 
 (* output for smt-lib v1.2 format *)
