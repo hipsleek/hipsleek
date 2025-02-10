@@ -64,7 +64,7 @@ let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 (***************************************************************
             TRANSLATE CPURE FORMULA TO SMT FORMULA              
  **************************************************************)
-let annotate_with_types (f : Cpure.formula) : Cpure_ast_typeinfer.(typ formula_annot) =
+let annotate_with_types (f : Cpure.formula) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.formula_annot =
   try 
     Cpure_ast_typeinfer.infer_cpure_types f
   with
@@ -187,7 +187,7 @@ let smt_of_typed_spec_var sv =
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
-let rec smt_of_checked_exp ((exp, typ) : Cpure_ast_typeinfer.(typ exp_annot)) =
+let rec smt_of_checked_exp ((exp, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.exp_annot) =
   match exp with
   | Null _ -> "0"
   | Var (sv, _) -> smt_of_spec_var sv
@@ -372,7 +372,32 @@ let rec smt_of_checked_formula ((f, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typ
   | Exists (sv, f, _, _) ->
       Printf.sprintf "(exists (%s) %s)" (smt_of_typed_spec_var sv) (smt_of_checked_formula f)
 
-let rec smt_of_formula pr_w pr_s f = f |> annotate_with_types |> smt_of_checked_formula
+let rec smt_of_formula pr_w pr_s f =
+  let fallback pr_w pr_s f =
+    let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
+    let rec helper f= (
+      match f with
+      | CP.BForm ((b,_) as bf,_) -> (
+          match (pr_w b) with
+          | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
+          | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
+        )
+      | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
+      | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
+      | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
+      | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
+      | CP.Forall (sv, p, _,_) ->
+        "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+      | CP.Exists (sv, p, _,_) ->
+        "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+    ) in
+    helper f
+  in
+  try
+    let checked_f = annotate_with_types f in
+    smt_of_checked_formula checked_f 
+  with
+    | Invalid_argument _ -> fallback pr_w pr_s f
 
 let smt_of_formula pr_w pr_s f =
   let () = set_prover_type () in
@@ -484,13 +509,11 @@ let add_axiom h dir c =
       | IMPLIES -> "=>" 
       | IFF -> "=" in
     let (pr_w,pr_s) = CP.drop_complex_ops_z3 in
-    let h_checked = annotate_with_types h in
-    let c_checked = annotate_with_types c in
     let cache_smt_input = (
       "(assert " ^ 
       (if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
-      "\t(" ^ op ^ " " ^ (smt_of_checked_formula h_checked) ^ 
-      "\n\t" ^ (smt_of_checked_formula c_checked) ^ ")" ^ (* close the main part of the axiom *)
+      "\t(" ^ op ^ " " ^ (smt_of_formula pr_w pr_s h) ^ 
+      "\n\t" ^ (smt_of_formula pr_w pr_s c) ^ ")" ^ (* close the main part of the axiom *)
       (if params = [] then "" else ")") (* close the forall if added *) ^ ")\n" (* close the assert *) 
     ) in
     (* Add 'h dir c' to the global axioms *)
@@ -1486,9 +1509,7 @@ let get_model is_linear vars assertions =
   let smt_var_decls = String.concat "" smt_var_decls in
 
   let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
-  let smt_asserts = List.map (fun a ->
-    let a_checked = annotate_with_types a in
-      "(assert " ^ (smt_of_checked_formula a_checked) ^ ")\n") assertions in
+  let smt_asserts = List.map (fun a -> "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp = 
     ";Variables Declarations\n" ^ smt_var_decls ^

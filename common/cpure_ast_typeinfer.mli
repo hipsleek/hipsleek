@@ -107,4 +107,7 @@ and 'a p_formula =
 
 (** Useful for converting a list of results from type checking into a single Option. *)
 val lift_option_from_list : 'a option list -> 'a list option
-val infer_cpure_types : Cpure.formula -> typ formula_annot option
+
+(** Convert a Cpure AST into one with complete types. Raises Invalid_argument
+    upon typecheck failure. *)
+val infer_cpure_types : Cpure.formula -> typ formula_annot

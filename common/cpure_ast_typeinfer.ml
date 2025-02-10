@@ -106,8 +106,6 @@ and 'a p_formula =
   and 'a formula_annot = ('a formula * 'a)
   [@@deriving visitors { variety = "mapreduce" }, visitors {variety = "map"}]
 
-let equal_types (t1 : typ) (t2 : typ) : bool = cmp_typ t1 t2
-
 (** Assign an unused TVar label. This uses negative numbers to avoid overlapping with
     the TVar indices assigned during upstream typechecking. *)
 let fresh_tvar =
@@ -198,11 +196,8 @@ let rec annotate_cpure_formula (f : Cpure.formula) : typ option formula_annot =
     | _ -> raise (Invalid_argument "Typechecker currently does not support Cpure.AndLists")
   with
     (* Rethrow, but attach the full formula as context *)
-    | Invalid_argument e -> raise (Invalid_argument (Printf.sprintf "Formula marked as invalid: %s %s" e (Cpure.string_of_ls_pure_formula [f])))
+    | Invalid_argument e -> raise (Invalid_argument (Printf.sprintf "Formula marked as invalid %s (context: %s)" (Cpure.string_of_ls_pure_formula [f]) e))
   
-
-let (let+) opt f = Option.map f opt
-let (let*) = Option.bind
 
 (** Propagate type information downward along the AST.
  The returned boolean indicates whether or not a checking rule was applied.*)
