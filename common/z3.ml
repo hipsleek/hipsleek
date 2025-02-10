@@ -149,11 +149,7 @@ let smt_of_typ t =
 let smt_of_spec_var sv =
   (CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
 
-let smt_of_typed_spec_var sv =
-  try
-    "(" ^ (smt_of_spec_var sv) ^ " " ^ (smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
-  with _ ->
-    illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
+let smt_of_typed_spec_var sv = Smtsolver.smt_of_typed_spec_var sv
 
 let rec smt_of_checked_exp ((exp, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.exp_annot) =
   match exp with
@@ -321,25 +317,7 @@ let rec smt_of_checked_formula ((f, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typ
       Printf.sprintf "(exists (%s) %s)" (smt_of_typed_spec_var sv) (smt_of_checked_formula f)
 
 
-let rec smt_of_formula pr_w pr_s f =
-  let () = x_dinfo_hp (add_str "f(z3)" !CP.print_formula) f no_pos in
-  let rec helper f= (
-    match f with
-    | CP.BForm ((b,_) as bf,_) -> (
-        match (pr_w b) with
-        | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
-        | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
-      )
-    | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
-    | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
-    | CP.Forall (sv, p, _,_) ->
-      "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-    | CP.Exists (sv, p, _,_) ->
-      "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-  ) in
-  helper f
+let rec smt_of_formula pr_w pr_s f = Smtsolver.smt_of_formula pr_w pr_s f
 
 let smt_of_formula pr_w pr_s f =
   let () = set_prover_type () in

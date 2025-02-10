@@ -105,5 +105,6 @@ and 'a p_formula =
   and 'a b_formula_annot = ('a b_formula * 'a)
   and 'a formula_annot = ('a formula * 'a)
 
+(** Useful for converting a list of results from type checking into a single Option. *)
 val lift_option_from_list : 'a option list -> 'a list option
 val infer_cpure_types : Cpure.formula -> typ formula_annot option

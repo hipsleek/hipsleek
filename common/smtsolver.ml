@@ -183,7 +183,7 @@ let smt_of_spec_var sv =
 
 let smt_of_typed_spec_var sv =
   try
-    "(" ^ (smt_of_spec_var sv) ^ " " ^ (smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
+    "(" ^ (smt_of_spec_var sv) ^ " " ^ (sort_name_of_cpure_typ (CP.type_of_spec_var sv)) ^ ")"
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
@@ -372,25 +372,7 @@ let rec smt_of_checked_formula ((f, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typ
   | Exists (sv, f, _, _) ->
       Printf.sprintf "(exists (%s) %s)" (smt_of_typed_spec_var sv) (smt_of_checked_formula f)
 
-let rec smt_of_formula pr_w pr_s f =
-  let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
-  let rec helper f= (
-    match f with
-    | CP.BForm ((b,_) as bf,_) -> (
-        match (pr_w b) with
-        | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
-        | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
-      )
-    | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
-    | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
-    | CP.Forall (sv, p, _,_) ->
-      "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-    | CP.Exists (sv, p, _,_) ->
-      "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-  ) in
-  helper f
+let rec smt_of_formula pr_w pr_s f = f |> annotate_with_types |> smt_of_checked_formula
 
 let smt_of_formula pr_w pr_s f =
   let () = set_prover_type () in
@@ -502,11 +484,13 @@ let add_axiom h dir c =
       | IMPLIES -> "=>" 
       | IFF -> "=" in
     let (pr_w,pr_s) = CP.drop_complex_ops_z3 in
+    let h_checked = annotate_with_types h in
+    let c_checked = annotate_with_types c in
     let cache_smt_input = (
       "(assert " ^ 
       (if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
-      "\t(" ^ op ^ " " ^ (smt_of_formula pr_w pr_s h) ^ 
-      "\n\t" ^ (smt_of_formula pr_w pr_s c) ^ ")" ^ (* close the main part of the axiom *)
+      "\t(" ^ op ^ " " ^ (smt_of_checked_formula h_checked) ^ 
+      "\n\t" ^ (smt_of_checked_formula c_checked) ^ ")" ^ (* close the main part of the axiom *)
       (if params = [] then "" else ")") (* close the forall if added *) ^ ")\n" (* close the assert *) 
     ) in
     (* Add 'h dir c' to the global axioms *)
@@ -994,13 +978,11 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
     |> String.concat "\n" in
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
-  let checked_ante_clauses = List.map Cpure_ast_typeinfer.infer_cpure_types ante_clauses 
-    |> Cpure_ast_typeinfer.lift_option_from_list
-    |> Option.get (*TODO proper error reporting when type check fails*) in 
+  let checked_ante_clauses = List.map annotate_with_types ante_clauses in
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_checked_formula x) ^ ")\n") checked_ante_clauses in
   (* let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in *)
   let ante_str = String.concat "" ante_strs in
-  let conseq_str = smt_of_checked_formula (Option.get (Cpure_ast_typeinfer.infer_cpure_types conseq)) in
+  let conseq_str = smt_of_checked_formula (annotate_with_types conseq) in
   (* let conseq_str = smt_of_formula pr_weak pr_strong conseq in *)
   let final_smt = (
     "; Custom sorts\n" ^
@@ -1505,7 +1487,8 @@ let get_model is_linear vars assertions =
 
   let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
   let smt_asserts = List.map (fun a ->
-      "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
+    let a_checked = annotate_with_types a in
+      "(assert " ^ (smt_of_checked_formula a_checked) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp = 
     ";Variables Declarations\n" ^ smt_var_decls ^
