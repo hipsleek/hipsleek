@@ -8,6 +8,9 @@ type variable
     | Sub of pure_expr * pure_expr
     | Mul of pure_expr * pure_expr
     | Div of pure_expr * pure_expr
+    | List of pure_expr list
+    | ListCons of pure_expr * pure_expr
+    | ListLength of pure_expr
   and bin_predicate_kind = private
     | GreaterThan
     | GreaterThanEq
@@ -52,6 +55,14 @@ module Pure_expression : sig
   val sub : pure_expr -> pure_expr -> pure_expr
   val mul : pure_expr -> pure_expr -> pure_expr
   val div : pure_expr -> pure_expr -> pure_expr
+
+  (* Namespace for operations on pure lists *)
+  module PList : sig
+    val make : pure_expr list -> pure_expr
+    val nil : pure_expr
+    val cons : pure_expr -> pure_expr -> pure_expr
+    val length : pure_expr -> pure_expr
+  end
 
   val to_string : t -> string
   (* TODO add strings, booleans, lists? *)

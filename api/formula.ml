@@ -11,6 +11,9 @@ type variable =
     | Sub of pure_expr * pure_expr
     | Mul of pure_expr * pure_expr
     | Div of pure_expr * pure_expr
+    | List of pure_expr list
+    | ListCons of pure_expr * pure_expr
+    | ListLength of pure_expr
   and bin_predicate_kind =
     | GreaterThan
     | GreaterThanEq
@@ -80,6 +83,13 @@ module Pure_expression = struct
   let mul a b = Mul (a, b)
   let div a b = Div (a, b)
 
+  module PList = struct
+    let make xs = List xs
+    let nil = make []
+    let cons x xs = ListCons (x, xs)
+    let length xs = ListLength xs
+  end
+
   let rec of_sleek_cexpr = function
     | Cpure.Null(_) -> Null
     | Cpure.Var(ident, _) -> Var (Identifier.of_sleek_spec_var ident)
@@ -89,6 +99,9 @@ module Pure_expression = struct
     | Cpure.Subtract(a, b, _) -> Sub(of_sleek_cexpr a, of_sleek_cexpr b)
     | Cpure.Mult(a, b, _) -> Mul(of_sleek_cexpr a, of_sleek_cexpr b)
     | Cpure.Div(a, b, _) -> Div(of_sleek_cexpr a, of_sleek_cexpr b)
+    | Cpure.List (xs, _) -> List (List.map of_sleek_cexpr xs)
+    | Cpure.ListCons (x, xs, _) -> ListCons (of_sleek_cexpr x, of_sleek_cexpr xs)
+    | Cpure.ListLength (xs, _) -> ListLength (of_sleek_cexpr xs)
     | _ -> failwith "Not supported"
 
   let rec to_sleek_expr = function
@@ -100,6 +113,9 @@ module Pure_expression = struct
     | Sub(a, b) -> Ipure.Subtract(to_sleek_expr a, to_sleek_expr b, no_pos)
     | Mul(a, b) -> Ipure_D.Mult(to_sleek_expr a, to_sleek_expr b, no_pos)
     | Div(a, b) -> Ipure_D.Div(to_sleek_expr a, to_sleek_expr b, no_pos)
+    | List xs -> Ipure_D.List (List.map to_sleek_expr xs, no_pos)
+    | ListCons (x, xs) -> Ipure_D.ListCons (to_sleek_expr x, to_sleek_expr xs, no_pos)
+    | ListLength xs -> Ipure_D.ListLength (to_sleek_expr xs, no_pos)
 
   let rec to_string = function
     | Null -> "null"
@@ -110,6 +126,9 @@ module Pure_expression = struct
     | Sub (a, b) -> Format.sprintf "(%s - %s)" (to_string a) (to_string b)
     | Mul (a, b) -> Format.sprintf "(%s * %s)" (to_string a) (to_string b)
     | Div (a, b) -> Format.sprintf "(%s / %s)" (to_string a) (to_string b)
+    | List xs -> Format.sprintf "[%s]" (String.concat ", " (List.map to_string xs))
+    | ListCons (x, xs) -> Format.sprintf "(%s :: %s)" (to_string x) (to_string xs)
+    | ListLength xs -> Format.sprintf "len(%s)" (to_string xs)
 end
 
 module Pure_formula = struct
