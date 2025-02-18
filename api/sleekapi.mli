@@ -137,13 +137,26 @@ module EntailmentProver :
     val conseq_f : hf -> pf -> mf
     val entail : mf -> mf -> bool
 
+    type success_info
+    type failure_info
+
+    type entail_result = private
+      | EntailSuccess of success_info
+      | EntailFailure of failure_info
+
+    val pp_entail_result : Format.formatter -> entail_result -> unit
+
+    val inferred_frames : success_info -> Formula.Meta_formula.t list
+
+    val entail_with_frame : Formula.Meta_formula.t list -> Formula.Structured.t -> entail_result
+
     val ante_printer : mf -> string
     val conseq_printer : mf -> string
   end
 
 module ForwardVerifier :
   sig
-    val init : string list -> unit
+    val init : ?with_default_prelude:bool -> string list -> unit
     (** [init files_names] initializes the api. This includes parsing the ss files in
         [files_names].
         Data, predicate, lemma declarations and function definitions inside of these

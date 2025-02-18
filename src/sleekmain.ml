@@ -437,6 +437,32 @@ let main () =
     | Scriptarguments.NativeFE -> NF.parse_slk x
     | Scriptarguments.XmlFE -> XF.parse x in
   let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
+  (* Given a string (possibly containing newlines), and a pair of (start, stop) Lexing.positions delineating
+    a substring, print the string with additional formatting to highlight the substring. *)
+  let output_string_with_highlight str (start: Lexing.position) (stop: Lexing.position) =
+    let column_number (pos: Lexing.position) = pos.pos_cnum - pos.pos_bol in
+    String.split_on_char '\n' str
+      |> List.iteri (fun i line ->
+          let i = i + 1 in (* Lexing's line numbers are 1-indexed *)
+          print_string_quiet (Printf.sprintf "> %s\n" line);
+          let is_highlighted col =
+            if i < start.pos_lnum || i > stop.pos_lnum
+            then false
+            else if i = start.pos_lnum && col < (column_number start)
+            then false
+            else not (i = stop.pos_lnum && col > (column_number stop)) in
+          let highlights = String.init (String.length line) (fun j -> if is_highlighted j then '^' else ' ') in
+          if String.contains highlights '^' then print_string_quiet ("  " ^ highlights);
+      );
+  in
+  (* Given a string from a failed parse, and the (locations, error) fail from the parser,
+   output diagnostic info. *)
+  let output_syntax_error_diag str (location: Camlp4.Struct.Loc.t) e =
+    print_string_quiet "Syntax error:\n";
+    let open Camlp4.Struct.Loc in
+    let dump_pos (pos: Lexing.position) = Printf.sprintf "%d(%d)" pos.pos_lnum (pos.pos_cnum - pos.pos_bol) in
+    output_string_with_highlight str (start_pos location) (stop_pos location);
+    warn_exception e; in
   let buffer = Buffer.create 10240 in
   try
     if (!inter) then
@@ -459,7 +485,7 @@ let main () =
                 let cts = Buffer.contents buffer in
                 if cts = "quit" || cts = "quit\n" then quit := true
                 else 
-                  try
+                  (try
                     let cmd = parse cts in
                     (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
                     proc_gen_cmd cmd;
@@ -467,10 +493,11 @@ let main () =
                     if !inter then
                       prompt := "SLEEK> "
                   with
+                  | Camlp4.Struct.Loc.Exc_located(loc, e) -> output_syntax_error_diag cts loc e;
                   | e -> warn_exception e;
                     print_string_quiet ("Error.\n");
                     print_endline_quiet "Last SLEEK FAILURE:";
-                    Log.last_cmd # dumping "sleek_dump(interactive)";
+                    Log.last_cmd # dumping "sleek_dump(interactive)";);
                     (*     sleek_command # dump; *)
                     (* print_endline "Last PURE PROOF FAILURE:"; *)
                     (* Log.last_proof_command # dump; *)

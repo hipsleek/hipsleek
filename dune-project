@@ -1,4 +1,5 @@
 (lang dune 3.14)
+(using dune_site 0.1)
 
 (name hipsleek)
 (generate_opam_files true)
@@ -15,6 +16,7 @@
  (name hipsleek)
  (synopsis "Separation logic verifier")
  (description "The HIP/SLEEK separation logic verifier")
+ (sites (share preludes))
  (depends
   (fileutils (>= 0.6.4))
   (batteries (>= 3.8.0))
@@ -25,6 +27,7 @@
   (ppx_deriving (>= 6.0.3))
   (visitors (>= 20210608))
   dune
+  dune-site
   (cppo :build)
 ))
 

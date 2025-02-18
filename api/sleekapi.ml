@@ -494,6 +494,31 @@ module EntailmentProver = struct
     let () = print_string ("\n" ^ (string_of_bool res)) in
     res
 
+  type success_info = Formula.Meta_formula.t list
+  type failure_info = unit
+
+  type entail_result =
+    | EntailSuccess of success_info
+    | EntailFailure of failure_info
+
+  let pp_entail_result out result =
+    match result with
+      | EntailSuccess (successes) ->
+          Format.fprintf out "Success: %a" (Format.pp_print_list Formula.Meta_formula.pp) successes
+      | EntailFailure () -> Format.fprintf out "Failure"
+
+  let inferred_frames result = result
+
+  let entail_with_frame ante conseq =
+    let sleek_antes = List.map (fun ante -> Sleekcommons.MetaForm(Formula.Meta_formula.to_sleek_formula ante)) ante in
+    let sleek_conseq = Sleekcommons.MetaEForm(Formula.Structured.to_sleek_formula conseq) in
+    let valid, (residue: CF.list_context), _ = Sleekengine.run_entail_check sleek_antes sleek_conseq (Some false) in
+    if not valid
+    then EntailFailure ()
+    else
+      let contexts_list = Cformula.list_formula_of_list_context residue in
+      EntailSuccess (List.map Formula.Meta_formula.of_sleek_cformula contexts_list)
+
   let ante_printer xs =
     let rec ante_printer_aux i xs =
       match xs with
@@ -551,8 +576,13 @@ module ForwardVerifier = struct
     exlist # compute_hierarchy
 
   (* Prelude of api *)
-  let init file_names =
-    let () = print_string "Initializing sleek api" in
+  let init ?(with_default_prelude = true) file_names =
+    let file_names = 
+          if with_default_prelude
+          then let prelude_locations = Hipsleek_sites.Sites.preludes in
+               let default_preludes = List.map (fun dir -> Filename.concat dir (Filename.concat "api" "api_prelude.ss")) prelude_locations in
+               List.concat [default_preludes; file_names]
+          else file_names in
     match file_names with
     | [] -> init_without_parsing ()
     | _ -> parse_files file_names

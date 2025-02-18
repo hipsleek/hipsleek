@@ -17,6 +17,7 @@ depends: [
   "ppx_deriving" {>= "6.0.3"}
   "visitors" {>= "20210608"}
   "dune" {>= "3.14"}
+  "dune-site"
   "cppo" {build}
   "odoc" {with-doc}
 ]
@@ -29,9 +30,11 @@ build: [
     name
     "-j"
     jobs
+    "--promote-install-files=false"
     "@install"
     "@runtest" {with-test}
     "@doc" {with-doc}
   ]
+  ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://github.com/hipsleek/hipsleek.git"

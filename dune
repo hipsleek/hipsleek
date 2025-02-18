@@ -12,17 +12,12 @@
   (flags
    (:standard -warn-error -A))))
 
-(rule
- (targets prelude.ss)
- (deps prelude_src/prelude.ss)
- (action
-  (run %{bin:cp} %{deps} %{targets})))
+(copy_files prelude_src/*)
 
-(rule
- (targets prelude.slk)
- (deps prelude_src/prelude.slk)
- (action
-  (run %{bin:cp} %{deps} %{targets})))
+(install
+  (section (site (hipsleek preludes)))
+  (files
+    (api_prelude.ss as api/api_prelude.ss)))
 
 (rule
  (alias hipsleek)
