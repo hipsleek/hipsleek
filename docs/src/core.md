@@ -168,6 +168,24 @@ It will then call `heap_entail_struc_list_partial_context_init` which will check
 the final proof state entails the post condition of the function. It it does, then the
 verification of the function succeeds. Otherwise, verification of the function fails.
 
+### Pure logic verification conditions
+
+Relevant files : `smtsolver.ml`, `z3.ml`
+
+Currently, by default, the prover discharges pure logic conditions to Z3 via invoking
+the instance present on the `PATH`. Each formula is translated into an equivalent
+statement in SMTLIB format, and the entailment (along with all custom relations,
+axioms, etc.) is verified via Z3. Each possible return value (`sat`, `unsat`, `unknown`)
+is then converted into either a proof success, or indicator of a may-failure or
+must-failure (indicating an unknown result, or a known invalid entailment, respectively.)
+
+For some pure values, some type information is necessary to properly generate
+monomorphic SMT statements. Although type checking is done earlier in the process, (in
+`typeinfer.ml` during the Iast-to-Cast lowering, and the aforementioned `typechecker.ml`), 
+the AST itself only contains partial type information (e.g. in spec var annotations.)
+`cpure_ast_typeinfer.ml` attempts to extend these annotations to something more fully usable
+by the SMT generator.
+
 # API docs
 
 ---

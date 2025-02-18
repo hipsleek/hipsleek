@@ -151,6 +151,8 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
+  (* List of expressions, e.g. the LHS of x, y >= 0. *)
+  | ExpPack of (exp list * loc)
   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
   | Func of (ident * (exp list) * loc)
   | BExpr of formula

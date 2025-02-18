@@ -52,3 +52,4 @@ mona_predicates.mona
 fixcalc_src
 omega_stub
 *.omega
+.envrc

@@ -64,6 +64,102 @@ let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 (***************************************************************
             TRANSLATE CPURE FORMULA TO SMT FORMULA              
  **************************************************************)
+let annotate_with_types (f : Cpure.formula) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.formula_annot =
+  try 
+    Cpure_ast_typeinfer.infer_cpure_types f
+  with
+    (* Rethrow, but attach the formula for easier debugging *)
+    | Invalid_argument e -> raise (Invalid_argument ("Formula failed typecheck: " ^ (Cpure.string_of_ls_pure_formula [f]) ^ " due to " ^ e))
+
+type func_def = {
+  func_smt_name: string;
+  func_smt_defn: string
+}
+
+type sort_def = {
+  sort_type: Cpure_ast_typeinfer.typ option; (* None is used for an uninterpreted sort *)
+  sort_smt_name: string;
+  sort_smt_defn: string;
+  sort_smt_function_defns: (string * func_def) list
+}
+
+let uninterpreted_sort_def = 
+  (* Due to the TVar workaround explained below, we use Int to represent the uninterpreted sort. *)
+  let name = "Int" in
+  {sort_type = None; sort_smt_name = name; sort_smt_defn = ""; sort_smt_function_defns = []}
+(* Z3 already has some built-in sorts. This map stores the sorts we define ourselves. *)
+let sort_defs = [(None, uninterpreted_sort_def)] |> List.to_seq |> Hashtbl.of_seq
+
+let rec normalize_tvars = function
+  | TVar _ -> TVar 0
+  | List typ -> List (normalize_tvars typ)
+  | typ -> typ
+
+let rec sort_name_of_cpure_typ (typ : Cpure_ast_typeinfer.typ) : string =
+  (* Filter out TVars to all be the same, so they all get mapped
+     to the same uninterpreted sort. *)
+  let typ = normalize_tvars typ in
+  let mangle smt_name =
+    (* Turn an existing SMT sort name which may contain parenthesis and whitespace
+    into a substring of a valid identifier. *)
+    (*TODO *)
+    smt_name
+  in
+  let make_list_sort subtyp = 
+    let subtype_sort_name = sort_name_of_cpure_typ subtyp in 
+    let sort_smt_name = "(List " ^ subtype_sort_name ^ ")" in
+  (* Z3 already has a built-in parametric List sort; so there's no need to fill in our own definition. *)
+    let sort_smt_defn = "" in
+  (* However, we need to define our own functions. *)
+  (* TODO define List.mem List.length *)
+    let sort_smt_function_defns = [
+      ("length",
+        let func_smt_name = "length" in
+        {
+          func_smt_name;
+          func_smt_defn = 
+          "(define-fun-rec length ((ls " ^ sort_smt_name ^ ")) Int " ^
+           "(if ((_ is (nil () " ^ sort_smt_name ^ ")) ls) 0 (+ 1 (length (tail ls)))))\n"
+        }
+      )] in
+    {sort_type = Some (List subtyp); sort_smt_name; sort_smt_defn; sort_smt_function_defns}
+  in
+  match Hashtbl.find_opt sort_defs (Some typ) with
+  | Some def -> def.sort_smt_name
+  | None -> match typ with
+    (* FIXME Bare TVars still appear as types in this stage, despite type inference
+    occurring somewhere above the processing chain. The previous implementation just assumed
+    everything unsupported as Int, so this workaround is here until type inference is fixed.*)
+    | TVar x -> "Int"
+    (* Despite Z3 having a proper Bool sort, HIP still uses Ints to model booleans,
+       so we must maintain compatibility. *)
+    | Bool -> "Int"
+    | Int -> "Int"
+    | List subtyp -> 
+      let sort = make_list_sort subtyp in
+      Hashtbl.replace sort_defs (Some typ) sort;
+      sort.sort_smt_name
+      (* A Named type refers to data on the heap. HIP and SLEEK both insert non-null pointer checks 
+       for every points-to constraint, so we need an Int to model them here.*)
+    | Named _ -> "Int"
+    | NUM -> "Int" (* Unable to deduce if we need an Int or a Float, just use Int for now.*)
+    | Array (et, d) ->
+        if d = 0
+        then (sort_name_of_cpure_typ et)
+        else Printf.sprintf "(Array %s)" (sort_name_of_cpure_typ (Array (et, d-1)))
+    | FuncT (t1, t2) -> "(" ^ (sort_name_of_cpure_typ t1) ^ ") " ^ (sort_name_of_cpure_typ t2) 
+    | _ -> "Int"
+    (* | _ -> uninterpreted_sort_def.sort_smt_name *)
+
+let associated_function (typ : Cpure_ast_typeinfer.typ) (func: string) : func_def =
+  let typ = normalize_tvars typ in
+  (*Printf.printf " Finding sort of %s" (Globals.string_of_typ typ);*)
+  let sort = Hashtbl.find sort_defs (Some typ) in
+  List.assoc func sort.sort_smt_function_defns
+
+
+let custom_sort_of_cpure_typ (typ : Cpure_ast_typeinfer.typ) : sort_def option =
+  Hashtbl.find_opt sort_defs (Some typ)
 
 (* Construct [f(1) ... f(n)] *)
 let rec generate_list n f =
@@ -75,32 +171,9 @@ let rec compute f n b =
   if (n = 0) then b
   else f (compute f (n-1) b)
 
-let rec smt_of_typ t =
-  match t with
-  | Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
-  | Float -> "Real" (* Currently, do not support real arithmetic! *)
-  | Tree_sh -> "Int"
-  | Int -> "Int"
-  | AnnT -> "Int"
-  | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
-  | NUM -> "Int" (* Use default Int for NUM *)
-  | BagT _ -> "Int"
-  | Tup2 _ -> "Int" (*TODO: handle this*)
-  | TVar _ -> "Int"
-  | Void -> "Int"
-  | List _ -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
-  | Named _ -> "Int" (* objects and records are just pointers *)
-  | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
-  | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
-  (* TODO *)
-  | RelT _ -> "Int"
-  | UtT _ -> "Int"
-  | HpT -> "Int"
-  | FORM -> "Int" (* is this correct? *)
-  (* | SLTyp *)
-  | INFInt 
-  | Pointer _ -> Error.report_no_pattern ()
-  | Bptyp -> "int-triple"
+let smt_of_checked_typ = sort_name_of_cpure_typ
+
+let smt_of_typ = smt_of_checked_typ
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t
@@ -110,9 +183,27 @@ let smt_of_spec_var sv =
 
 let smt_of_typed_spec_var sv =
   try
-    "(" ^ (smt_of_spec_var sv) ^ " " ^ (x_add_1 smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
+    "(" ^ (smt_of_spec_var sv) ^ " " ^ (sort_name_of_cpure_typ (CP.type_of_spec_var sv)) ^ ")"
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
+
+let rec smt_of_checked_exp ((exp, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.exp_annot) =
+  match exp with
+  | Null _ -> "0"
+  | Var (sv, _) -> smt_of_spec_var sv
+  | IConst (i, _) -> if i >= 0 then string_of_int i else Format.sprintf "(- 0 %s)" (string_of_int (-i))
+  | FConst (f, _) -> string_of_float f
+  | Add (lhs, rhs, _) -> Format.sprintf "(+ %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | Subtract (lhs, rhs, _) -> Format.sprintf "(- %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | Mult (lhs, rhs, _) -> Format.sprintf "(* %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | Div (lhs, rhs, _) -> Format.sprintf "(/ %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | List (elements, _) -> 
+      List.fold_right (fun elem acc -> Format.sprintf "(insert %s %s)" (smt_of_checked_exp elem) acc) elements
+      ("(as nil " ^ (sort_name_of_cpure_typ typ) ^ ")")
+  | ListCons (head, tail, _) -> Format.sprintf "(insert %s %s)" (smt_of_checked_exp head) (smt_of_checked_exp tail)
+  | ListLength ((_, ls_typ) as ls, _) -> 
+      Format.sprintf "(%s %s)" (associated_function ls_typ "length").func_smt_name (smt_of_checked_exp ls)
+  | _ -> illegal_format("z3.smt_of_checked_exp: Max, Min, List operations, ArrayAt, Func, Template currently not supported")
 
 let rec smt_of_exp a =
   let str = !Cpure.print_exp a in
@@ -152,7 +243,52 @@ let rec smt_of_exp a =
   | CP.InfConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (infconst should not appear here)")
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
-let rec smt_of_b_formula b =
+let rec smt_of_checked_p_formula ((pf, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.p_formula_annot) =
+  match pf with
+  | BConst (c, _) -> if c then "true" else "false"
+  | BVar (sv, _) -> smt_of_spec_var sv
+  | Lt (lhs, rhs, _) -> Format.sprintf "(< %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | Lte (lhs, rhs, _) -> Format.sprintf "(<= %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | Gt (lhs, rhs, _) -> Format.sprintf "(> %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | Gte (lhs, rhs, _) -> Format.sprintf "(>= %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  (* TODO the unchecked version has a special case for when one of these are null; do we need one here? *)
+  | Eq (lhs, rhs, _) -> Format.sprintf "(= %s %s)" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | Neq (lhs, rhs, _) -> Format.sprintf "(not (= %s %s))" (smt_of_checked_exp lhs) (smt_of_checked_exp rhs)
+  | EqMax (lhs, rhs1, rhs2, _) -> 
+      let l = smt_of_checked_exp lhs in
+      let r1 = smt_of_checked_exp rhs1 in
+      let r2 = smt_of_checked_exp rhs2 in
+      Format.sprintf "(or (and (= %s %s) (>= %s %s)) (and (>= %s %s) (= %s %s)))" l r1 l r2 l r1 l r2
+  | EqMin (lhs, rhs1, rhs2, _) -> 
+      let l = smt_of_checked_exp lhs in
+      let r1 = smt_of_checked_exp rhs1 in
+      let r2 = smt_of_checked_exp rhs2 in
+      Format.sprintf "(or (and (= %s %s) (<= %s %s)) (and (<= %s %s) (= %s %s)))" l r1 l r2 l r1 l r2
+  | ListIn (elem, ((_, ls_typ) as ls), _) ->
+      let list_sort = custom_sort_of_cpure_typ ls_typ |> Option.get in
+      let mem_name = List.assoc "mem" list_sort.sort_smt_function_defns in
+      Format.sprintf "(%s %s %s)" mem_name.func_smt_name (smt_of_checked_exp elem) (smt_of_checked_exp ls)
+  | ListNotIn (elem, ((_, ls_typ) as ls), _) ->
+      let list_sort = custom_sort_of_cpure_typ ls_typ |> Option.get in
+      let mem_name = List.assoc "mem" list_sort.sort_smt_function_defns in
+      Format.sprintf "(not (%s %s %s))" mem_name.func_smt_name (smt_of_checked_exp elem) (smt_of_checked_exp ls)
+  | RelForm (ident, args, _) ->
+    let rn = CP.name_of_spec_var ident in
+    let smt_args = List.map smt_of_checked_exp args in 
+    if Cpure.is_update_array_relation rn then
+      let orig_array::new_array::value::_ = smt_args in
+      let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
+      let last_index = List.hd index in
+      let rem_index = List.rev (List.tl index) in
+      let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
+      let arr_select = List.rev arr_select in
+      let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
+      let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
+      "(= " ^ new_array ^ " " ^ result ^ ")"
+    else
+      "(" ^ (CP.name_of_spec_var ident) ^ " " ^ (String.concat " " smt_args) ^ ")"
+
+let smt_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.Frm (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
@@ -221,25 +357,47 @@ let rec smt_of_b_formula b =
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
 
+let rec smt_of_checked_formula ((f, typ) : Cpure_ast_typeinfer.typ Cpure_ast_typeinfer.formula_annot) =
+  match f with
+  (* NOTE: The processing of drop_complex_ops is currently handled elsewhere: LexVars are dropped
+    during the conversion to the typed AST, and Z3 can support relations, so they do not new_pred_syn
+    to be dropped. *)
+  | BForm (((pf, _) as b, _),_) -> smt_of_checked_p_formula pf
+  | And (lhs, rhs, _) -> Printf.sprintf "(and %s %s)" (smt_of_checked_formula lhs) (smt_of_checked_formula rhs)
+  | Or (lhs, rhs, _, _) -> Printf.sprintf "(or %s %s)" (smt_of_checked_formula lhs) (smt_of_checked_formula rhs)
+  | Not (f, _, _) -> Printf.sprintf "(not %s)" (smt_of_checked_formula f)
+  (* TODO ensure there are no issues with the generated types here *)
+  | Forall (sv, f, _, _) ->
+      Printf.sprintf "(forall (%s) %s)" (smt_of_typed_spec_var sv) (smt_of_checked_formula f)
+  | Exists (sv, f, _, _) ->
+      Printf.sprintf "(exists (%s) %s)" (smt_of_typed_spec_var sv) (smt_of_checked_formula f)
+
 let rec smt_of_formula pr_w pr_s f =
-  let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
-  let rec helper f= (
-    match f with
-    | CP.BForm ((b,_) as bf,_) -> (
-        match (pr_w b) with
-        | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
-        | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
-      )
-    | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
-    | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
-    | CP.Forall (sv, p, _,_) ->
-      "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-    | CP.Exists (sv, p, _,_) ->
-      "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-  ) in
-  helper f
+  let fallback pr_w pr_s f =
+    let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
+    let rec helper f= (
+      match f with
+      | CP.BForm ((b,_) as bf,_) -> (
+          match (pr_w b) with
+          | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
+          | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
+        )
+      | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
+      | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
+      | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
+      | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
+      | CP.Forall (sv, p, _,_) ->
+        "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+      | CP.Exists (sv, p, _,_) ->
+        "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+    ) in
+    helper f
+  in
+  try
+    let checked_f = annotate_with_types f in
+    smt_of_checked_formula checked_f 
+  with
+    | Invalid_argument _ -> fallback pr_w pr_s f
 
 let smt_of_formula pr_w pr_s f =
   let () = set_prover_type () in
@@ -830,11 +988,30 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
       let ax = List.nth !global_axiom_defs ax_id in
       ax.axiom_cache_smt_assert) info.axioms) in
   (* Antecedent and consequence : split /\ into small asserts for easier management *)
+  let sort_decls = sort_defs |> Hashtbl.to_seq
+    |> Seq.map (fun (_, sort_defn) -> sort_defn.sort_smt_defn)
+    |> List.of_seq
+    |> String.concat "\n" in
+  let sort_function_decls = sort_defs |> Hashtbl.to_seq
+    |> Seq.map (fun (_, sort_defn) -> sort_defn.sort_smt_function_defns |> List.to_seq)
+    |> Seq.concat
+    |> Seq.map (fun (_, fun_decl) -> fun_decl.func_smt_defn)
+    |> List.of_seq
+    |> List.sort_uniq String.compare
+    |> String.concat "\n" in
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
-  let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
+  let checked_ante_clauses = List.map annotate_with_types ante_clauses in
+  let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_checked_formula x) ^ ")\n") checked_ante_clauses in
+  (* let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in *)
   let ante_str = String.concat "" ante_strs in
-  let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
+  let conseq_str = smt_of_checked_formula (annotate_with_types conseq) in
+  (* let conseq_str = smt_of_formula pr_weak pr_strong conseq in *)
+  let final_smt = (
+    "; Custom sorts\n" ^
+    sort_decls ^
+    "; Custom functions\n" ^
+    sort_function_decls ^
     ";Variables declarations\n" ^ 
     smt_var_decls ^
     ";Relations declarations\n" ^ 
@@ -845,8 +1022,11 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
     ante_str ^
     ";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
     "(check-sat)" ^
-    (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")
-  )
+    (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")) in
+  (* Printf.printf "ante %s\n" (CP.string_of_ls_pure_formula [ante]);
+  Printf.printf "conseq %s\n" (CP.string_of_ls_pure_formula [conseq]);
+  Printf.printf "Sending SMTLIB\n===\n%s\n===\n" (final_smt); *)
+  final_smt;
 
 (* output for smt-lib v1.2 format *)
 and to_smt_v1 ante conseq logic fvars =
@@ -1329,8 +1509,7 @@ let get_model is_linear vars assertions =
   let smt_var_decls = String.concat "" smt_var_decls in
 
   let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
-  let smt_asserts = List.map (fun a ->
-      "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
+  let smt_asserts = List.map (fun a -> "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp = 
     ";Variables Declarations\n" ^ smt_var_decls ^

@@ -382,7 +382,7 @@ let cexp_to_pure2 fct f01 f02 =
   match (f01,f02) with
   | Pure_c f1, Pure_c f2 -> (
       match f1 with
-      | P.List(explist,pos) ->
+      | P.ExpPack(explist,pos) ->
           let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist in
           let len =  List.length tmp in
           let res =
@@ -391,48 +391,14 @@ let cexp_to_pure2 fct f01 f02 =
           Pure_f(res)
       | _ -> (
           match f2 with
-          | P.List(explist,pos) ->
+          | P.ExpPack(explist,pos) ->
               let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None)) explist in
               let len = List.length tmp in
               let res =
                 if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                 else P.BForm (((fct f1 f2), None), None) in
               Pure_f(res)
-          | _ -> (
-              let typ1 = P.typ_of_exp f1 in
-              let typ2 = P.typ_of_exp f2 in
-              let rec arr_typ_check typ1 typ2 = (
-                match typ1 with
-                | Array (t1,_) -> begin
-                    match t1 with
-                      | Array _ -> arr_typ_check t1 typ2
-                      | _ ->
-                            if t1== UNK || t1 == typ2 then true
-                            else (
-                                match typ2 with
-                                  | Array (t2,_) -> begin
-                                      match t2 with
-                                        | Array _ -> arr_typ_check typ1 t2
-                                        | _ -> if t2== UNK || t1==t2 then true else false
-                                    end
-                                  | _ -> false
-                    )
-                  end
-                | _ -> (
-                    match typ2 with
-                    | Array (t,_) -> begin
-                        match t with
-                          | Array _ -> arr_typ_check typ1 t
-                          | _ -> if t== UNK || t==typ1 then true else false
-                      end
-                    | _ -> false
-                  )
-              ) in
-              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then
-                Pure_f (P.BForm(((fct f1 f2), None), None))
-              else
-                report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
-            )
+          | _ -> Pure_f (P.BForm(((fct f1 f2), None), None))
         )
     )
   | Pure_f f1 , Pure_c f2 -> (
@@ -2323,7 +2289,7 @@ cexp_w:
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         end
     | peek_cexp_list; ocl = opt_comma_list ->
-        Pure_c(P.List(ocl, get_pos_camlp4 _loc 1))
+        Pure_c(P.ExpPack(ocl, get_pos_camlp4 _loc 1))
     | t = cid ->
         let id,p = t in
         if String.contains id '.' then

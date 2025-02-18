@@ -239,6 +239,7 @@ let rec string_of_formula_exp = function
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ExpPack (elist, l)		-> "pack[" ^ (string_of_formula_exp_list elist) ^ "]"
   | P.Func (a, i, _)     ->  
     a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
   | P.Template t -> t.P.templ_id ^ "(" ^ (string_of_formula_exp_list t.P.templ_args) ^ ")"
